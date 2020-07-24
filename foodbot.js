@@ -156,7 +156,7 @@ bot.on('message', msg => {
 				return
 			}
 			msg.reply(actor+' fed '+amount+' '+type+' to child '+childIndex)
-			children[childIndex].food += amount
+			children[childIndex].food += Number(amount)
 			if (!referees.includes(actor)){
 				population[actor] -= Number(amount)
 			}
