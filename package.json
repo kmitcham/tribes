@@ -1,0 +1,13 @@
+{
+  "name": "tribesBot",
+  "version": "0.0.1",
+  "description": "A bot to track food and grain in Tribes",
+  "main": "foodbot.js",
+  "author": "Kevin.Mitcham",
+  "dependencies": {
+    "discord.io": "^2.5.3",
+    "discord.js": "^12.2.0",
+    "eslint": "^7.5.0",
+    "winston": "^3.3.3"
+  }
+}

@@ -1,7 +1,6 @@
 var Discord = require('discord.js');
 var bot = new Discord.Client()
 var logger = require('winston');
-var auth = require('./auth.json');
 
 var referees = ['kevinmitcham']
 
@@ -16,14 +15,32 @@ bot.on('ready', function (evt) {
 });
 
 bot.on('message', msg => {
-  if (!msg.content){
+  if (!msg.content ){
+	return
+  }
+  if (msg.content.substring(0,1) != '!'){
 	return
   }
   author = msg.author
   actor = author.username
+  bits = msg.content.split(' ')
+  command = bits[0]
+  command = command.toLowerCase().substring(1) // strip out the leading !
+  console.log('command:'+command+' bits:'+bits)  
+ 
+  if (command === 'promote' ){
+	target = bits.slice(1).join(' ')
+	console.log('promote:'+target+' by '+actor)
+	if (target && referees.includes(actor)){
+		referees.push(target)
+		msg.reply('referee list:'+referees)
+	} else {
+		msg.reply('No target to promote')
+	}
+	return 	
+  }
 
-  if (msg.content.toLowerCase().substring(0,5) === '!give'){
-      bits = msg.content.split(' ')
+  if (command === 'give'){
       target = bits.slice(3).join(' ')
       amount = bits[1]
       type = bits[2]
@@ -33,16 +50,16 @@ bot.on('message', msg => {
       	return
       }
       
-      if (amount < 0 &&  actor != referee){
+      if (amount < 0 &&  !referees.includes(actor) ){
       	msg.reply('Only the referee can reduce amounts')
       	return
       }
-	  if (!inventory[actor]){
+	  if (!inventory[actor] && !referees.includes(actor)  ){
 	  	inventory[actor] = {'food':0, 'grain':0}
 	  }	
 		      
       if ( referees.includes(actor) || inventory[actor][type] >= amount){
-         if (!inventory[target]){
+         if (!inventory[target]) {
          	msg.reply('making record for '+target)
          	inventory[target] = {'food':0, 'grain':0}
          }
@@ -60,8 +77,7 @@ bot.on('message', msg => {
       }
       return
   }
-  if (msg.content.toLowerCase().substring(0,5) === '!list'){
-  	bits = msg.content.split(' ')
+  if (command === 'list'){
     if (bits.length == 1){
     	if (referees.includes(actor)){
     	 	big_message = ''
