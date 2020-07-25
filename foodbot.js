@@ -3,16 +3,11 @@ var bot = new Discord.Client()
 var logger = require('winston');
 var referees = ['kevinmitcham']
 
-var types = ['food', 'grain', 'basket', 'spearpoint']
-
-var population = {
-}
+const types = ['food', 'grain', 'basket', 'spearpoint']
+const professions= ['hunter','gatherer', 'crafter']
+const genders = ['male','female']
+var population = {}
 var children = []
-
-bot.on('ready', function (evt) {
-    logger.info('Connected');
-    logger.info('Logged in as: ');
-});
 
 bot.on('message', msg => {
   if (!msg.content ){
@@ -21,7 +16,11 @@ bot.on('message', msg => {
   if (msg.content.substring(0,1) != '!'){
 	return
   }
-  author = msg.author
+  processMessage(msg)
+});
+
+function processMessage(msg){
+	  author = msg.author
   actor = author.username
   bits = msg.content.split(' ')
   command = bits[0]
@@ -40,7 +39,35 @@ bot.on('message', msg => {
 	}
 	return 	
   }
-
+  // add a person to the tribe
+  if (command === 'induct'){
+      target = bits.slice(3).join(' ')
+      profession = bits[1]
+	  gender = bits[2]
+	  if ( !target || !profession || !gender || !genders.includes(gender) || !professions.includes(profession)){
+		msg.reply('usage:!induct [hunter|gatherer|crafter] [female|male] name')
+		return
+	  }
+	  var person = {}
+	  person.gender= gender
+	  person.food = 10
+	  person.grain = 0
+	  person.basket = 0
+	  person.spearpoint = 0
+	  person.profession = profession
+	  if (profession === 'crafter'){
+		  person.canCraft = true
+	  } else {
+		  person.canCraft = false
+	  }
+	  population[target] = person
+	  msg.reply('added '+target+' to the tribe')
+	  return
+  }
+  // train a person to craft
+  if (command === 'train'){
+	  msg.reply('not implemented')
+  }
   // give stuff to a user; refs can give unlimited amounts, others are limited.
   // targets aren't checked to make sure they are valid
   if (command === 'give'){
@@ -194,7 +221,8 @@ bot.on('message', msg => {
 	  //    age += 1
 	  msg.reply('not implemented')
   }
-});
+
+}
 
 function Child(mother, father) {
 	this.mother = mother;
