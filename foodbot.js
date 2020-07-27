@@ -3,11 +3,15 @@ var bot = new Discord.Client()
 var logger = require('winston');
 var referees = ['kevinmitcham']
 
+const fs = require('fs');
+let rawdata = fs.readFileSync('./auth.json');
+let auth = JSON.parse(rawdata);
+
 const types = ['food', 'grain', 'basket', 'spearpoint']
 const professions= ['hunter','gatherer', 'crafter']
 const genders = ['male','female']
-var population = {}
-var children = []
+var population = require('./population.json')
+var children = require('./children.json')
 
 bot.on('message', msg => {
   if (!msg.content ){
@@ -19,14 +23,35 @@ bot.on('message', msg => {
   processMessage(msg)
 });
 
+function saveGameState(){
+	fs.writeFile("population.json", JSON.stringify(population), err => { 
+		// Checking for errors 
+		if (err) throw err;  
+		console.log("Done saving population"); // Success
+	}); 
+ 
+	fs.writeFile("children.json", JSON.stringify(children), err => { 
+		// Checking for errors 
+		if (err) throw err;  
+		console.log("Done writing children"); // Success \
+	}); 
+}
+
 function processMessage(msg){
-	  author = msg.author
+  author = msg.author
   actor = author.username
   bits = msg.content.split(' ')
   command = bits[0]
   command = command.toLowerCase().substring(1) // strip out the leading !
   console.log('command:'+command+' bits:'+bits)  
- 
+
+  if (command == 'save'){
+	if (referees.includes(actor)){
+		saveGameState()
+	}
+	return
+  }
+
   // add a user to the list of referees; any ref can do this
   if (command === 'promote' ){
 	target = bits.slice(1).join(' ')
@@ -239,4 +264,5 @@ Child.prototype.toString = function childToString() {
 bot.once('ready', ()=>{
   console.log('bot is alive')
 }) 
-bot.login('NzM1MTU2ODQ3ODk5ODM2NTg3.XxcKTQ.nUY0YXE99FztsbqPvSyo9X8I-Uk')
+
+bot.login(auth['token'])
