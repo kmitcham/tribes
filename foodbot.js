@@ -1,7 +1,7 @@
 var Discord = require('discord.js');
 var bot = new Discord.Client()
 var logger = require('winston');
-var referees = ['kevinmitcham']
+var referees = ['kevinmitcham','@kevinmitcham' ]
 
 const fs = require('fs');
 let rawdata = fs.readFileSync('./auth.json');
@@ -11,7 +11,8 @@ const types = ['food', 'grain', 'basket', 'spearpoint']
 const professions= ['hunter','gatherer', 'crafter']
 const genders = ['male','female']
 var population = require('./population.json')
-var children = require('./children.json')
+var children = require('./children.json');
+const { ExceptionHandler } = require('winston');
 
 bot.on('message', msg => {
   if (!msg.content ){
@@ -80,15 +81,25 @@ function processMessage(msg){
 	}
 	// add a person to the tribe
   	if (command === 'induct'){
-		if (!target || !referees.includes(actor)){
-			msg.reply('Only a referee can add tribe members')
-			return
-		}
 		target = bits.slice(3).join(' ')
 		profession = bits[1]
 		gender = bits[2]
+		if (!target ){
+			msg.reply('need a target')
+			return
+		}
+		if (profession === 'h'){profession = 'hunter'}
+		if (profession === 'c'){profession = 'crafter'}
+		if (profession === 'g'){profession = 'gatherer'}
+		if (gender === 'm'){gender = 'male'}
+		if (gender === 'f'){gender = 'female'}
 		if ( !target || !profession || !gender || !genders.includes(gender) || !professions.includes(profession)){
 			msg.reply('usage:!induct [hunter|gatherer|crafter] [female|male] name')
+			return
+		}
+		if ( !referees.includes(actor) ){
+			console.log(actor +" list:"+referees)
+			msg.reply('Only a referee can add tribe members')
 			return
 		}
 		var person = {}
@@ -198,7 +209,7 @@ function processMessage(msg){
 			if (child.dead){
 				message += '('+i+' is dead)'
 			} else if (referees.includes(actor) || (actor === child.mother || actor === child.father) ){
-				message += '(name'+i+':'+children[i].mother+'+'+children[i].father+' age:'+children[i].age+ ' food:'+child.food+')'
+				message += '(name='+i+':'+children[i].mother+'+'+children[i].father+' age:'+children[i].age+ ' food:'+child.food+')'
 			}
 		} 
 		msg.reply(message)
@@ -266,15 +277,17 @@ function processMessage(msg){
 		response = "Turn results:"
 		perished = []
 		for  (var target in population) {
-			target.food -= 4
-			if (target.food < 0 ){
-				target.grain -= target.food
-				target.food = 0
-				if (target.grain < 0){
+			population[target].food = population[target].food - 4
+			if (population[target].food < 0 ){
+				// food is negative, so just add it to grain here
+				population[target].grain = population[target].grain + population[target].food
+				population[target].food = 0
+				if (population[target].grain < 0){
 					response += "  "+target+" has starved to death."
 					perished.push(target)
 				}
 			}
+			console.log(target+' f:'+population[target].food+' g:'+population[target].grain)
 		} 
 		console.log('children are eating')
 		var arrayLength = children.length;
