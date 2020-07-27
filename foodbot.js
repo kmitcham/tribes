@@ -46,6 +46,17 @@ function processMessage(msg){
 	command = command.toLowerCase().substring(1) // strip out the leading !
 	console.log('command:'+command+' bits:'+bits)  
 
+	// list commands
+	if (command === 'help'){
+		msg.author.send('Player commands')
+		msg.author.send(' give <amt> <food|grain|spearpoint|basket> <player>')
+		msg.author.send( 'feed <amt> <food|grain> <childNumber>')
+		msg.author.send(' mate <player>  intend to mate with player this season')
+		msg.author.send(' work <hunt|gather|craft>  activity for season')
+		msg.author.send( '')
+		
+
+	}
 	// save the game state to file
 	if (command == 'save'){
 		if (referees.includes(actor)){
@@ -57,7 +68,9 @@ function processMessage(msg){
 	if (command === 'promote' ){
 		target = bits.slice(1).join(' ')
 		console.log('promote:'+target+' by '+actor)
-		if (target && referees.includes(actor)){
+		// disble ref checking for now
+		//if (target && referees.includes(actor)){
+		if (target){
 			referees.push(target)
 			msg.reply('referee list:'+referees)
 		} else {
@@ -65,13 +78,19 @@ function processMessage(msg){
 		}
 		return 	
 	}
+	if (command === 'demote'){
+		if (referees.includes(target)){
+			const index = referees.indexOf(target);
+			if (index > -1) {
+				referees.splice(index, 1);
+				console.log('demoted '+target)
+				return
+			}
+		}
+	}
 	// remove member from the tribe
 	if (command === 'banish'){
 		if (target && referees.includes(actor)){
-			const index = array.indexOf(target);
-			if (index > -1) {
-				array.splice(index, 1);
-			}
 			if (population[target]){
 				delete population[target]
 				msg.reply(target+' is banished from the tribe')
@@ -130,12 +149,12 @@ function processMessage(msg){
 		type = bits[2]
 		
 		if (isNaN(amount) || ! types.includes(type)){
-			msg.reply('Give syntax is give  <amount> <food|grain|spearpoint|basket> <recipient>')
+			msg.author.send('Give syntax is give  <amount> <food|grain|spearpoint|basket> <recipient>')
 			return
 		}
 		
 		if (amount < 0 &&  !referees.includes(actor) ){
-			msg.reply('Only the referee can reduce amounts')
+			msg.author.send('Only the referee can reduce amounts')
 			return
 		}
 		if (!population[actor] && !referees.includes(actor)  ){
@@ -157,10 +176,10 @@ function processMessage(msg){
 				population[actor] -= Number(amount)
 			}
 		} else {
-			msg.reply('You do not have that much '+type+': '+ population[actor][type])
+			msg.author.send('You do not have that much '+type+': '+ population[actor][type])
 		}
 		return
-  }
+  	}
 	// how much stuff does the target have?  if used by ref with no args, list whole population
 	if (command === 'list'){
 		if (bits.length == 1){
@@ -175,10 +194,10 @@ function processMessage(msg){
 					}
 					big_message += message +'\n'
 				}
-				msg.reply(big_message)
+				msg.author.send(big_message)
 				return
 			} 
-			msg.reply('I do not understand that list request.  Usage: list <target>')
+			msg.author.send('I do not understand that list request.  Usage: list <target>')
 			return
     	}
 	    target = bits.slice(1).join(' ')
@@ -193,9 +212,9 @@ function processMessage(msg){
 			} else {
 				message+=' nothing'
 			}
-			msg.reply(message)
+			msg.author.send(message)
 		} else {
-			msg.reply('You must ask '+target+' what they have.')
+			msg.author.send('You must ask '+target+' what they have.')
 		}
 	}
 	// list the children
@@ -212,7 +231,7 @@ function processMessage(msg){
 				message += '(name='+i+':'+children[i].mother+'+'+children[i].father+' age:'+children[i].age+ ' food:'+child.food+')'
 			}
 		} 
-		msg.reply(message)
+		msg.author.send(message)
 		return
 	}
   	// add food to a child
@@ -222,23 +241,23 @@ function processMessage(msg){
 		type = bits[2]
 		childFood = ['food', 'grain']
 		if (isNaN(amount) || !childFood.includes(type) || isNaN(childIndex) || childIndex >= children.length ){
-			msg.reply('feed syntax is give <amount> <food|grain> <childIndex #>')
+			msg.author.send('feed syntax is give <amount> <food|grain> <childIndex #>')
 			return
 		}
 		if (amount < 0 &&  !referees.includes(actor) ){
-			msg.reply('Only the referee can reduce amounts')
+			msg.author.send('Only the referee can reduce amounts')
 			return
 		}
 		if (!population[actor] && !referees.includes(actor)  ){
-			msg.reply("Children do not take food from strangers")
+			msg.author.send("Children do not take food from strangers")
 		}	
 		if (children[childIndex].dead){
-			msg.reply('That child is dead and cannot be fed anymore')
+			msg.author.send('That child is dead and cannot be fed anymore')
 			return
 		}		
 		if ( referees.includes(actor) || population[actor][type] >= amount){
 			if (!children[childIndex]) {
-				msg.reply('no such child as '+childIndex)
+				msg.author.send('no such child as '+childIndex)
 				return
 			}
 			msg.reply(actor+' fed '+amount+' '+type+' to child '+childIndex)
@@ -247,14 +266,14 @@ function processMessage(msg){
 				population[actor] -= Number(amount)
 			}
 		} else {
-			msg.reply('You do not have that much '+type+': '+ population[actor][type])
+			msg.author.send('You do not have that much '+type+': '+ population[actor][type])
 		}
 		return
 	} 
 	// add a child to tribe; args are parent names
-	if (command === 'mate'){
+	if (command === 'spawn'){
 		if (bits.length != 3){
-			msg.reply('usage: !mate mother father')
+			msg.author.send('usage: !mate mother father')
 			return
 		}
 		var child = Object()
@@ -277,7 +296,11 @@ function processMessage(msg){
 		response = "Turn results:"
 		perished = []
 		for  (var target in population) {
-			population[target].food = population[target].food - 4
+			var hunger = 4
+			if (population[target].isNursing && population[target].isPregnant){
+				hunger = 6
+			}
+			population[target].food = population[target].food - hunger
 			if (population[target].food < 0 ){
 				// food is negative, so just add it to grain here
 				population[target].grain = population[target].grain + population[target].food
@@ -300,24 +323,39 @@ function processMessage(msg){
 				} else {
 					children[i].age += 1
 				}
+				if (child[i].age == 0){
+					response += children[i].mother+' gives birth to '+i+' 3d:5+'
+					if (population[children[i].mother] && population[children[i].mother].isPregnant){
+						population[children[i].mother].isPregnant = false
+						population[children[i].mother].isNursing = true
+					}
+				}
+				if (child[i].age == 4){ // 2 years in SEASONS
+					if (population[children[i].mother] && population[children[i].mother].isNursing){
+						population[children[i].mother].isNursing = false
+					}
+				}
+			}
+		}
+		// check breeding
+		for  (var mother in population) {
+			if (population[mother].gender === 'female' && !population[mother].isPregnant){
+				father = population[mother].partner
+				if (population[father] && population[father].partner === mother){
+					response += " ( "+mother+" "+father+" attempted to reproduce. "
+				}
+				if (population[mother].isNursing){
+					response += ' 2d:10+ )'
+				} else {
+					response += ' 2d:9+ )'
+				}
+
 			}
 		}
 		msg.reply(response)
   	}
 
 }
-
-function Child(mother, father) {
-	this.mother = mother;
-	this.father = father;
-	this.food = 0
-	this.age = -2 // in seasons
-	return this
-}
-
-Child.prototype.toString = function childToString() {
-	return `${this.mother} ${this.father} ${this.age}`;
-};
 
 bot.once('ready', ()=>{
   console.log('bot is alive')
