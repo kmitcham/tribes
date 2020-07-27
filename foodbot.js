@@ -53,8 +53,21 @@ function processMessage(msg){
 		msg.author.send( 'feed <amt> <food|grain> <childNumber>')
 		msg.author.send(' mate <player>  intend to mate with player this season')
 		msg.author.send(' work <hunt|gather|craft>  activity for season')
+		msg.author.send(' list show inventory and character info')
+		msg.author.send( 'children shows the children ages and food status')
 		msg.author.send( '')
-		
+
+		if (referees.includes(actor)){
+			msg.author.send('Referee Commands')
+			msg.author.send(' save the game file')
+			msg.author.send(' list <player>  (no arg lists all players) ')
+			msg.author.send(' promote|demote <player> to the ref list')
+			msg.author.send(' induct|banish <player> add a member to the tribe')
+			msg.author.send(' check report on what would happen if you used endturn')
+			msg.author.send(' endturn check food, breeding')
+			msg.author.send(' spawn <mother> <father>  add a child with give parents')
+			msg.author.send(' give has quantity restrictions removed')
+		}
 
 	}
 	// save the game state to file
@@ -197,12 +210,11 @@ function processMessage(msg){
 				msg.author.send(big_message)
 				return
 			} 
-			msg.author.send('I do not understand that list request.  Usage: list <target>')
-			return
+			bits[1] = msg.author
     	}
-	    target = bits.slice(1).join(' ')
+	    target = bits[1]
 		if ( referees.includes(actor) || actor === target){
-			message = target +' has'
+			message = target +' stats:'
 			if (population[target]) {
 				for (var type in population[target]) {
 					if (Object.prototype.hasOwnProperty.call( population[target], type)) {
@@ -226,12 +238,16 @@ function processMessage(msg){
 		for (var i = 0; i < arrayLength; i++) {
 			child = children[i]
 			if (child.dead){
-				message += '('+i+' is dead)'
-			} else if (referees.includes(actor) || (actor === child.mother || actor === child.father) ){
-				message += '(name='+i+':'+children[i].mother+'+'+children[i].father+' age:'+children[i].age+ ' food:'+child.food+')'
+				response += '('+i+' is dead)'
+			} else {
+				response += '(name='+i+':'
+				if (referees.includes(actor) || (actor === child.mother || actor === child.father) ){
+					response += children[i].mother+'+'+children[i].father
+				}
+				response += ' age:'+children[i].age+ ' food:'+child.food+')'
 			}
 		} 
-		msg.author.send(message)
+		msg.author.send(response)
 		return
 	}
   	// add food to a child
@@ -279,16 +295,30 @@ function processMessage(msg){
 		var child = Object()
 		child.mother = bits[1]
 		child.father = bits[2]
+		if (!population[child.mother] || !population[child.father]){
+			msg.author.send('Parents not found in tribe')
+			return
+		}
+		if (population[child.mother].isPregnant){
+			msg.author.send(child.mother+' is already pregnant')
+			return
+		}
 		child.age = -2
 		child.food = 0
 		children.push(child)
 		index = children.length - 1
+		population[child.mother].isPregnant = true
 		msg.reply('Added child '+index+' with parents '+child.mother+ ' and '+child.father)
 		return
 	}
+	if (command === 'check'){
+		msg.author.send(command +'not implemmented' )
+	}
 	// advance the clock one season.  Reduce food/grain in population, as well as for children.
 	// message for every death, and remove the relevant items from the data structure. 
-	if (command === 'turn') {
+	// attempt to handle birth and nursing.  
+	// checks breeding but does NOT add children; rolls need to be made.
+	if (command === 'endturn') {
 		if (!referees.includes(actor)) {
 			return;
 		}  
