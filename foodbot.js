@@ -117,7 +117,16 @@ function processMessage(msg){
 		profession = bits[1]
 		gender = bits[2]
 		if (!target ){
-			msg.reply('need a target')
+			msg.author.send('need a target')
+			return
+		}
+		if (population[target]){
+			msg.author.send(target+' is already in the tribe')
+			return
+		}
+		if ( !referees.includes(actor) ){
+			console.log(actor +" list:"+referees)
+			msg.author.send('Only a referee can add tribe members')
 			return
 		}
 		if (profession === 'h'){profession = 'hunter'}
@@ -129,13 +138,8 @@ function processMessage(msg){
 			msg.reply('usage:!induct [hunter|gatherer|crafter] [female|male] name')
 			return
 		}
-		if ( !referees.includes(actor) ){
-			console.log(actor +" list:"+referees)
-			msg.reply('Only a referee can add tribe members')
-			return
-		}
 		var person = {}
-		person.gender= gender
+		person.gender = gender
 		person.food = 10
 		person.grain = 0
 		person.basket = 0
@@ -288,7 +292,7 @@ function processMessage(msg){
 	} 
 	// add a child to tribe; args are parent names
 	if (command === 'spawn'){
-		if (bits.length != 3){
+		if (bits.length != 3 || population[child.mother].gender == 'male' || population[child.father].gender == 'female'){
 			msg.author.send('usage: !mate mother father')
 			return
 		}
