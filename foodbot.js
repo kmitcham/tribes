@@ -9,6 +9,7 @@ let auth = JSON.parse(rawdata);
 
 const types = ['food', 'grain', 'basket', 'spearpoint']
 const professions= ['hunter','gatherer', 'crafter']
+const activities = ['hunt', 'gather', 'craft']
 const genders = ['male','female']
 var population = require('./population.json')
 var children = require('./children.json');
@@ -45,6 +46,12 @@ function processMessage(msg){
 	command = bits[0]
 	command = command.toLowerCase().substring(1) // strip out the leading !
 	console.log('command:'+command+' bits:'+bits)  
+
+	if (!population[author]  && !referees.includes(author)){
+		msg.author.send('You must be in the tribe or a referee to use commands')
+		// disabled for alpha testing
+		// return
+	}
 
 	// list commands
 	if (command === 'help'){
@@ -91,6 +98,17 @@ function processMessage(msg){
 		}
 		return 	
 	}
+	if (command === 'work'){
+		activity = bits[1]
+		if (! activities.includes(activity)){
+			msg.author.message('legal work types:'+activities)
+			return
+		}
+		if (population[actor]){
+			population[actor].activity = activity
+		}
+
+	}
 	if (command === 'demote'){
 		if (referees.includes(target)){
 			const index = referees.indexOf(target);
@@ -117,7 +135,7 @@ function processMessage(msg){
 		profession = bits[1]
 		gender = bits[2]
 		if (!target ){
-			msg.author.send('need a target')
+			msg.author.send('usage: <profession> <gender> <name>')
 			return
 		}
 		if (population[target]){
@@ -153,6 +171,22 @@ function processMessage(msg){
 		population[target] = person
 		msg.reply('added '+target+' to the tribe')
 		return
+	}
+	if (command === 'mate'){
+		if (bits.length < 2 ){
+			msg.author.send('usage: mate <target>')
+			return
+		}
+		target = bits.slice(1).join(' ')
+		if (!population[target]){
+			msg.author.send('no such target:'+target)
+			return
+		}
+		if (population[target].gender === population[actor].gender){
+			msg.author.send('Must mate with opposite gender')
+			return
+		}
+		population[actor].partner = target
 	}
 	// train a person to craft
 	if (command === 'train'){
@@ -235,8 +269,8 @@ function processMessage(msg){
 	}
 	// list the children
 	if (command === 'children'){
-		message = ''
-		message = 'There are '+children.length+' children '
+		response = ''
+		response = 'There are '+children.length+' children '
 		mine = 0 
 		var arrayLength = children.length;
 		for (var i = 0; i < arrayLength; i++) {
@@ -322,6 +356,7 @@ function processMessage(msg){
 	// message for every death, and remove the relevant items from the data structure. 
 	// attempt to handle birth and nursing.  
 	// checks breeding but does NOT add children; rolls need to be made.
+	// combine similar activities into lists for easier parsing
 	if (command === 'endturn') {
 		if (!referees.includes(actor)) {
 			return;
@@ -330,6 +365,7 @@ function processMessage(msg){
 		response = "Turn results:"
 		perished = []
 		for  (var target in population) {
+			console.log('target:'+target)
 			var hunger = 4
 			if (population[target].isNursing && population[target].isPregnant){
 				hunger = 6
@@ -340,7 +376,7 @@ function processMessage(msg){
 				population[target].grain = population[target].grain + population[target].food
 				population[target].food = 0
 				if (population[target].grain < 0){
-					response += "  "+target+" has starved to death."
+					response += "  "+target+" has starved to death.\n"
 					perished.push(target)
 				}
 			}
@@ -352,19 +388,19 @@ function processMessage(msg){
 			if (children[i].age < 24 && ! children[i].dead){
 				children[i].food -= 2
 				if (children[i].food < 0){
-					response += " child:"+i+"("+children[i].mother+"+"+children[i].father+") has starved to death"
+					response += " child:"+i+"("+children[i].mother+"+"+children[i].father+") has starved to death.\n"
 					children[i].dead = true
 				} else {
 					children[i].age += 1
 				}
-				if (child[i].age == 0){
+				if (children[i].age == 0){
 					response += children[i].mother+' gives birth to '+i+' 3d:5+'
 					if (population[children[i].mother] && population[children[i].mother].isPregnant){
 						population[children[i].mother].isPregnant = false
 						population[children[i].mother].isNursing = true
 					}
 				}
-				if (child[i].age == 4){ // 2 years in SEASONS
+				if (children[i].age == 4){ // 2 years in SEASONS
 					if (population[children[i].mother] && population[children[i].mother].isNursing){
 						population[children[i].mother].isNursing = false
 					}
@@ -373,18 +409,52 @@ function processMessage(msg){
 		}
 		// check breeding
 		for  (var mother in population) {
-			if (population[mother].gender === 'female' && !population[mother].isPregnant){
+			if (population[mother].gender === 'female' && !population[mother].isPregnant && population[mother].partner){
 				father = population[mother].partner
+				console.log('m:'+mother+' f:'+population[mother].partner)
 				if (population[father] && population[father].partner === mother){
 					response += " ( "+mother+" "+father+" attempted to reproduce. "
-				}
-				if (population[mother].isNursing){
-					response += ' 2d:10+ )'
+					if (population[mother].isNursing){
+						response += ' 2d:10+ )'
+					} else {
+						response += ' 2d:9+ )'
+					}
+					response += '\n'
 				} else {
-					response += ' 2d:9+ )'
+					console.log('breeding mismatch: f:'+population[father].partner)
 				}
-
 			}
+		}
+		// check activities
+		hunters = []
+		gatherers = []
+		crafters = []
+		craftTrainee = []
+		for  (var target in population) {
+			activity = population[target].activity
+			switch (activity){
+				case 'hunt':
+					hunters.push(target)
+					break
+				case 'gather':
+					gatherers.push[target]
+					break
+				case 'craft':
+					if (population[target].canCraft){crafters.push(target)}
+					else {craftTrainee.push(target)}
+					break
+				default:
+					// doing nothing is valid
+			}
+			population[target].activity = null
+		}
+		if (hunters.length){response += '\n Hunters:'+hunters}
+		if (gatherers.length){response += '\n Gathers:'+gatherers}
+		if(crafters.length) {response += '\n Crafters'+crafters}
+		if(craftTrainee.length) {response += '\n Craft training '+craftTrainee}
+		// clean up the dead
+		for (corpse in perished){
+			delete population[corpse]
 		}
 		msg.reply(response)
   	}
