@@ -70,7 +70,8 @@ function processMessage(msg){
 			msg.author.send(' list <player>  (no arg lists all players) ')
 			msg.author.send(' promote|demote <player> to the ref list')
 			msg.author.send(' induct|banish <player> add a member to the tribe')
-			msg.author.send(' check report on what would happen if you used endturn')
+			msg.author.send(' edit target <canCraft|isNursing|isPregnan|professio|gender>  NOT YET' )
+			msg.author.send(' check report on what would happen if you used endturn   NOT YET')
 			msg.author.send(' endturn check food, breeding')
 			msg.author.send(' spawn <mother> <father>  add a child with give parents')
 			msg.author.send(' give has quantity restrictions removed')
@@ -99,15 +100,8 @@ function processMessage(msg){
 		return 	
 	}
 	if (command === 'work'){
-		activity = bits[1]
-		if (! activities.includes(activity)){
-			msg.author.message('legal work types:'+activities)
-			return
-		}
-		if (population[actor]){
-			population[actor].activity = activity
-		}
-
+		doWork(msg, author, bits)
+		return
 	}
 	if (command === 'demote'){
 		if (referees.includes(target)){
@@ -466,3 +460,20 @@ bot.once('ready', ()=>{
 }) 
 
 bot.login(auth['token'])
+
+function doWork(message, author, bits){
+	activity = bits[1]
+	if (! activities.includes(activity)){
+		msg.author.message('legal work types:'+activities)
+		return
+	}
+	if (population[actor]){
+		if ('craft' === activity && ! population[actor].canCraft){
+			message.author.send("You will be attempting to learn to craft")
+		} else {
+			population[actor].activity = activity
+			message.author.send("This season you will "+activity)
+		}
+	}
+	return
+}
