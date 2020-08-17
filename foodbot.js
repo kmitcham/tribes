@@ -10,7 +10,7 @@ let auth = JSON.parse(rawdata);
 const types = ['food', 'grain', 'basket', 'spearpoint']
 const professions= ['hunter','gatherer', 'crafter']
 const activities = ['hunt', 'gather', 'craft']
-const member_properties = ['canCraft','isNursing','isPregnant','profession','gender','partner']
+const member_properties = ['canCraft','isNursing','isPregnant','profession','gender','partner','work']
 const genders = ['male','female']
 var population = require('./population.json')
 var children = require('./children.json');
@@ -59,7 +59,7 @@ function processMessage(msg){
 		 addToPopulation(msg, author, bits, actor)
 	}
 	if (!population[actor]  && !referees.includes(actor)){
-		msg.author.send('You must join the tribe use other commands: ')
+		msg.author.send('You must join the tribe use commands: join <hunter|gatherer|crafter> <male|female> ')
 		// disabled for alpha testing
 		// return
 	}
@@ -84,7 +84,7 @@ function handleCommand(msg, author, command, bits){
 			text = ''
 			text+='\nReferee Commands\n'
 			text+=' check report on what would happen if you used endturn   NOT YET\n'
-			text+=' edit target <canCraft|isNursing|isPregnant|profession|gender|mate>\n' 
+			text+=' edit target <canCraft|isNursing|isPregnant|profession|gender|partner|work>\n' 
 			text+=' endturn check food, breeding\n'
 			text+=' give <amt> <food|grain|spearpoint|basket> <player> has quantity restrictions removed\n'
 			text+=' list <player>  (no arg lists all players)\n '
@@ -258,9 +258,9 @@ function handleCommand(msg, author, command, bits){
 		}	
 				
 		if ( referees.includes(actor) || population[actor][type] >= amount){
-			if (!population[target]) {
-				console.log('making population record for '+target)
-				population[target] = {'food':0, 'grain':0}
+			if (!population[target] ) {
+				msg.author.send('target is not in living in the tribe')
+				return
 			}
 			msg.reply(actor+' gave '+amount+' '+type+' to '+target)
 			if (!population[target][type]){
@@ -493,8 +493,8 @@ function handleCommand(msg, author, command, bits){
 		crafters = []
 		craftTrainee = []
 		for  (var target in population) {
-			activity = population[target].activity
-			switch (activity){
+			work = population[target].work
+			switch (work){
 				case 'hunt':
 					hunters.push(target)
 					break
@@ -508,7 +508,7 @@ function handleCommand(msg, author, command, bits){
 				default:
 					// doing nothing is valid
 			}
-			population[target].activity = null
+			population[target].work = null
 		}
 		if (hunters.length){response += '\n Hunters:'+hunters}
 		if (gatherers.length){response += '\n Gathers:'+gatherers}
@@ -530,17 +530,17 @@ bot.once('ready', ()=>{
 bot.login(auth['token'])
 
 function doWork(message, author, bits){
-	activity = bits[1]
-	if (! activities.includes(activity)){
+	work = bits[1]
+	if (! activities.includes(work)){
 		msg.author.message('legal work types:'+activities)
 		return
 	}
 	if (population[actor]){
-		if ('craft' === activity && ! population[actor].canCraft){
-			message.author.send("You will be attempting to learn to craft")
+		if ('craft' === work && ! population[actor].canCraft){
+			message.author.send("You will be attempting to learn to craft, if someone will teach you")
 		} else {
-			population[actor].activity = activity
-			message.author.send("This season you will "+activity)
+			population[actor].work = work
+			message.author.send("This season you will "+work)
 		}
 	}
 	return
