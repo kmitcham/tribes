@@ -10,7 +10,7 @@ let auth = JSON.parse(rawdata);
 const types = ['food', 'grain', 'basket', 'spearpoint']
 const professions= ['hunter','gatherer', 'crafter']
 const activities = ['hunt', 'gather', 'craft']
-const member_properties = ['canCraft','isNursing','isPregnant','profession','gender']
+const member_properties = ['canCraft','isNursing','isPregnant','profession','gender','partner']
 const genders = ['male','female']
 var population = require('./population.json')
 var children = require('./children.json');
@@ -55,8 +55,11 @@ function processMessage(msg){
 	command = command.toLowerCase().substring(1) // strip out the leading !
 	console.log('command:'+command+' bits:'+bits+' actor:'+actor )  
 
+	if (command == 'join'){
+		 addToPopulation(msg, author, bits, actor)
+	}
 	if (!population[actor]  && !referees.includes(actor)){
-		msg.author.send('You must be in the tribe or a referee to use commands')
+		msg.author.send('You must join the tribe use other commands: ')
 		// disabled for alpha testing
 		// return
 	}
@@ -81,7 +84,7 @@ function handleCommand(msg, author, command, bits){
 			text = ''
 			text+='\nReferee Commands\n'
 			text+=' check report on what would happen if you used endturn   NOT YET\n'
-			text+=' edit target <canCraft|isNursing|isPregnant|profession|gender>\n' 
+			text+=' edit target <canCraft|isNursing|isPregnant|profession|gender|mate>\n' 
 			text+=' endturn check food, breeding\n'
 			text+=' give <amt> <food|grain|spearpoint|basket> <player> has quantity restrictions removed\n'
 			text+=' list <player>  (no arg lists all players)\n '
@@ -110,9 +113,9 @@ function handleCommand(msg, author, command, bits){
 			targetObj = population[target.username]
 			targetObj[key] = value
 			message = target.username+ ' now has value '
-			for (var type in population[target]) {
-				if (Object.prototype.hasOwnProperty.call( population[target], type)) {
-					message+= ' '+type+' '+population[target][type]
+			for (var type in targetObj) {
+				if (Object.prototype.hasOwnProperty.call( targetObj, type)) {
+					message+= ' '+type+' '+targetObj[type]
 				}
 			}
 			msg.author.send(message)
@@ -194,49 +197,17 @@ function handleCommand(msg, author, command, bits){
 	}
 	// add a person to the tribe
   	if (command === 'induct'){
-		if (! msg.mentions || ! msg.mentions.users){
-			msg.author.send(command+' requires at least one @target')
-			return
-		}
-		var target = msg.mentions.users.first().username
-		profession = bits[1]
-		gender = bits[2]
-		if (!target ){
-			msg.author.send('usage: <profession> <gender> <name>')
-			return
-		}
-		if (population[target]){
-			msg.author.send(target+' is already in the tribe')
-			return
-		}
 		if ( !referees.includes(actor) ){
 			console.log(actor +" list:"+referees)
 			msg.author.send('Only a referee can add tribe members')
 			return
 		}
-		if (profession === 'h'){profession = 'hunter'}
-		if (profession === 'c'){profession = 'crafter'}
-		if (profession === 'g'){profession = 'gatherer'}
-		if (gender === 'm'){gender = 'male'}
-		if (gender === 'f'){gender = 'female'}
-		if ( !target || !profession || !gender || !genders.includes(gender) || !professions.includes(profession)){
-			msg.author.send('usage:!induct [hunter|gatherer|crafter] [female|male] name')
-			return
+		if (! msg.mentions || ! msg.mentions.users){
+			msg.author.send(command+' requires at least one @target')
+		return
 		}
-		var person = {}
-		person.gender = gender
-		person.food = 10
-		person.grain = 0
-		person.basket = 0
-		person.spearpoint = 0
-		person.profession = profession
-		if (profession === 'crafter'){
-			person.canCraft = true
-		} else {
-			person.canCraft = false
-		}
-		population[target] = person
-		msg.reply('added '+target+' to the tribe')
+		var target = msg.mentions.users.first().username
+		addToPopulation(msg, author, bits, target)
 		return
 	}
 	if (command === 'mate'){
@@ -573,4 +544,40 @@ function doWork(message, author, bits){
 		}
 	}
 	return
+}
+
+function addToPopulation(msg, author, bits, target){
+		profession = bits[1]
+	gender = bits[2]
+	if (!target ){
+		msg.author.send('usage: <profession> <gender> <name>')
+		return
+	}
+	if (population[target]){
+		msg.author.send(target+' is already in the tribe')
+		return
+	}
+	if (profession === 'h'){profession = 'hunter'}
+	if (profession === 'c'){profession = 'crafter'}
+	if (profession === 'g'){profession = 'gatherer'}
+	if (gender === 'm'){gender = 'male'}
+	if (gender === 'f'){gender = 'female'}
+	if ( !target || !profession || !gender || !genders.includes(gender) || !professions.includes(profession)){
+		msg.author.send('usage:!induct [hunter|gatherer|crafter] [female|male] name')
+		return
+	}
+	var person = {}
+	person.gender = gender
+	person.food = 10
+	person.grain = 0
+	person.basket = 0
+	person.spearpoint = 0
+	person.profession = profession
+	if (profession === 'crafter'){
+		person.canCraft = true
+	} else {
+		person.canCraft = false
+	}
+	population[target] = person
+	msg.reply('added '+target+' to the tribe')
 }
