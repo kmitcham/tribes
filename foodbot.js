@@ -10,6 +10,7 @@ let auth = JSON.parse(rawdata);
 const types = ['food', 'grain', 'basket', 'spearpoint']
 const professions= ['hunter','gatherer', 'crafter']
 const activities = ['hunt', 'gather', 'craft']
+const member_properties = ['canCraft','isNursing','isPregnant','profession','gender']
 const genders = ['male','female']
 var population = require('./population.json')
 var children = require('./children.json');
@@ -48,42 +49,79 @@ function saveGameState(){
 
 function processMessage(msg){
 	author = msg.author
-	actor = author.tag
+	actor = author.username
 	bits = msg.content.split(' ')
 	command = bits[0]
 	command = command.toLowerCase().substring(1) // strip out the leading !
-	console.log('command:'+command+' bits:'+bits)  
+	console.log('command:'+command+' bits:'+bits+' actor:'+actor )  
 
 	if (!population[actor]  && !referees.includes(actor)){
 		msg.author.send('You must be in the tribe or a referee to use commands')
 		// disabled for alpha testing
 		// return
 	}
+	handleCommand(msg, author, command, bits)
+	return	
+}
 
+function handleCommand(msg, author, command, bits){
 	// list commands
 	if (command === 'help'){
-		msg.author.send('Player commands')
-		msg.author.send(' give <amt> <food|grain|spearpoint|basket> <player>')
-		msg.author.send( 'feed <amt> <food|grain> <childNumber>')
-		msg.author.send(' mate <player>  intend to mate with player this season')
-		msg.author.send(' work <hunt|gather|craft>  activity for season')
-		msg.author.send(' list show inventory and character info')
-		msg.author.send( 'children shows the children ages and food status')
-		msg.author.send( '')
+		text = ''
+		text+='Player commands\n'
+		text+=' give <amt> <food|grain|spearpoint|basket> <player>\n'
+		text+=' feed <amt> <food|grain> <childNumber>\n'
+		text+=' mate <player>  intend to mate with player this season\n'
+		text+=' work <hunt|gather|craft>  activity for season\n'
+		text+=' list show inventory and character info\n'
+		text+=' children shows the children ages and food status\n'
+		msg.author.send( text)
 
 		if (referees.includes(actor)){
-			msg.author.send('Referee Commands')
-			msg.author.send(' save the game file')
-			msg.author.send(' list <player>  (no arg lists all players) ')
-			msg.author.send(' promote|demote <player> to the ref list')
-			msg.author.send(' induct|banish <player> add a member to the tribe')
-			msg.author.send(' edit target <canCraft|isNursing|isPregnan|professio|gender>  NOT YET' )
-			msg.author.send(' check report on what would happen if you used endturn   NOT YET')
-			msg.author.send(' endturn check food, breeding')
-			msg.author.send(' spawn <mother> <father>  add a child with give parents')
-			msg.author.send(' give has quantity restrictions removed')
+			text = ''
+			text+='\nReferee Commands\n'
+			text+=' check report on what would happen if you used endturn   NOT YET\n'
+			text+=' edit target <canCraft|isNursing|isPregnant|profession|gender>\n' 
+			text+=' endturn check food, breeding\n'
+			text+=' give <amt> <food|grain|spearpoint|basket> <player> has quantity restrictions removed\n'
+			text+=' list <player>  (no arg lists all players)\n '
+			text+=' induct|banish <player> add a member to the tribe\n'
+			text+=' promote|demote <player> to the ref list\n'
+			text+=' save the game file\n'
+			text+=' spawn <mother> <father>  add a child with give parents\n'
+			msg.author.send( text)
 		}
 
+	}
+	if (command == 'edit'){
+		if (! msg.mentions || ! msg.mentions.users){
+			msg.author.send(command+' requires at least one @target')
+			return
+		}
+		var target = msg.mentions.users.first()
+		key = bits[2]
+		if (!member_properties.includes(key)){
+			msg.author.send('Legal properties to set are '+member_properties)
+			return
+		}
+		value = bits[3]
+		console.log('edit '+target.username+' '+key+' '+value )
+		if (population[target.username]){
+			targetObj = population[target.username]
+			targetObj[key] = value
+			message = target.username+ ' now has value '
+			for (var type in population[target]) {
+				if (Object.prototype.hasOwnProperty.call( population[target], type)) {
+					message+= ' '+type+' '+population[target][type]
+				}
+			}
+			msg.author.send(message)
+			population[target.username] = targetObj
+			return
+		} else{
+			msg.author.send(target.username+' is not in the tribe')
+			return
+		}
 	}
 	// save the game state to file
 	if (command == 'save'){
@@ -95,15 +133,19 @@ function processMessage(msg){
 	}
 	// add a user to the list of referees; any ref can do this
 	if (command === 'promote' ){
-		var target = msg.mentions.users.first()
-		console.log('promote:'+target.tag+' by '+actor)
+		if (! msg.mentions || ! msg.mentions.users){
+			msg.author.send(command+' requires at least one @target')
+			return
+		}
+		var target = msg.mentions.users.first()		
+		console.log('promote:'+target.username+' by '+actor)
 		// disble ref checking for now
 		//if (target && referees.includes(actor)){
 		if (target){
-			if (referees.includes(target.tag)){
-				msg.author.send(target.tag+' is already a referee')
+			if (referees.includes(target.username)){
+				msg.author.send(target.username+' is already a referee')
 			} else {
-				referees.push(target.tag)
+				referees.push(target.username)
 				msg.author.send('referee list:'+referees)
 			}
 		} else {
@@ -116,26 +158,34 @@ function processMessage(msg){
 		return
 	}
 	if (command === 'demote'){
+		if (! msg.mentions || ! msg.mentions.users){
+			msg.author.send(command+' requires at least one @target')
+			return
+		}
 		var target = msg.mentions.users.first()
-		if (referees.includes(target.tag)){
-			const index = referees.indexOf(target.tag);
+		if (referees.includes(target.username)){
+			const index = referees.indexOf(target.username);
 			if (index > -1) {
 				referees.splice(index, 1);
-				console.log('demoted '+target.tag)
-				msg.author.send('demoted '+target.tag)
+				console.log('demoted '+target.username)
+				msg.author.send('demoted '+target.username)
 				return
 			}
 		} else{
-			msg.author.send(target.tag+' is not a referee:'+referees)
+			msg.author.send(target.username+' is not a referee:'+referees)
 		}
 	}
 	// remove member from the tribe
 	if (command === 'banish'){
+		if (! msg.mentions || ! msg.mentions.users){
+			msg.author.send(command+' requires at least one @target')
+			return
+		}
 		var target = msg.mentions.users.first()
 		if (target && referees.includes(actor)){
-			if (population[target.tag]){
-				delete population[target.tag]
-				msg.reply(target.tag+' is banished from the tribe')
+			if (population[target.username]){
+				delete population[target.username]
+				msg.reply(target.username+' is banished from the tribe')
 				return
 			}
 		} else {
@@ -144,7 +194,11 @@ function processMessage(msg){
 	}
 	// add a person to the tribe
   	if (command === 'induct'){
-		var target = msg.mentions.users.first().tag
+		if (! msg.mentions || ! msg.mentions.users){
+			msg.author.send(command+' requires at least one @target')
+			return
+		}
+		var target = msg.mentions.users.first().username
 		profession = bits[1]
 		gender = bits[2]
 		if (!target ){
@@ -186,11 +240,15 @@ function processMessage(msg){
 		return
 	}
 	if (command === 'mate'){
+		if (! msg.mentions || ! msg.mentions.users){
+			msg.author.send(command+' requires at least one @target')
+			return
+		}
 		if (bits.length < 2 ){
 			msg.author.send('usage: mate <target>')
 			return
 		}
-		var target = msg.mentions.users.first().tag
+		var target = msg.mentions.users.first().username
 		if (!population[target]){
 			msg.author.send('no such target:'+target)
 			return
@@ -208,7 +266,11 @@ function processMessage(msg){
 	// give stuff to a user; refs can give unlimited amounts, others are limited.
 	// targets aren't checked to make sure they are valid
 	if (command === 'give'){
-		var target = msg.mentions.users.first().tag
+		if (! msg.mentions || ! msg.mentions.users){
+			msg.author.send(command+' requires at least one @target')
+			return
+		}
+		var target = msg.mentions.users.first().username
 		amount = bits[1]
 		type = bits[2]
 		
@@ -216,7 +278,6 @@ function processMessage(msg){
 			msg.author.send('Give syntax is give  <amount> <food|grain|spearpoint|basket> <recipient>')
 			return
 		}
-		
 		if (amount < 0 &&  !referees.includes(actor) ){
 			msg.author.send('Only the referee can reduce amounts')
 			return
@@ -263,7 +324,7 @@ function processMessage(msg){
 			} 
     	}
 		if (! msg.mentions || ! msg.mentions.users){
-			msg.author.send('list requires targets')
+			msg.author.send(command+' requires at least one @target')
 			return
 		}
 		var targets = msg.mentions.users
@@ -353,8 +414,12 @@ function processMessage(msg){
 			return
 		}
 		var child = Object()
-		child.mother = msg.mentions.users.first().tag
-		child.father = msg.mentions.users.last().tag
+		if (! msg.mentions || ! msg.mentions.users){
+			msg.author.send(command+' requires at least one @target')
+			return
+		}
+		child.mother = msg.mentions.users.first().username
+		child.father = msg.mentions.users.last().username
 		if (!population[child.mother] || !population[child.father]){
 			msg.author.send('Parents not found in tribe')
 			return
