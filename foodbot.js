@@ -9,7 +9,7 @@ let auth = JSON.parse(rawdata);
 
 const types = ['food', 'grain', 'basket', 'spearpoint']
 const professions= ['hunter','gatherer', 'crafter']
-const activities = ['hunt', 'gather', 'craft']
+const activities = ['hunt', 'gather', 'craft','nothing']
 const member_properties = ['canCraft','isNursing','isPregnant','profession','gender','partner','work']
 const genders = ['male','female']
 var population = require('./population.json')
@@ -75,7 +75,7 @@ function handleCommand(msg, author, command, bits){
 		text+=' give <amt> <food|grain|spearpoint|basket> <player>\n'
 		text+=' feed <amt> <food|grain> <childNumber>\n'
 		text+=' mate <player>  intend to mate with player this season\n'
-		text+=' work <hunt|gather|craft>  activity for season\n'
+		text+=' work <hunt|gather|craft|nothing>  activity for season\n'
 		text+=' list show inventory and character info\n'
 		text+=' children shows the children ages and food status\n'
 		msg.author.send( text)
@@ -229,6 +229,7 @@ function handleCommand(msg, author, command, bits){
 			return
 		}
 		population[actor].partner = target
+		msg.author.send('Your mating partner for the season is '+target)
 	}
 	// train a person to craft
 	if (command === 'train'){
@@ -252,25 +253,19 @@ function handleCommand(msg, author, command, bits){
 		if (amount < 0 &&  !referees.includes(actor) ){
 			msg.author.send('Only the referee can reduce amounts')
 			return
-		}
-		if (!population[actor] && !referees.includes(actor)  ){
-			population[actor] = {'food':0, 'grain':0}
-		}	
-				
+		}			
 		if ( referees.includes(actor) || population[actor][type] >= amount){
 			if (!population[target] ) {
-				msg.author.send('target is not in living in the tribe')
+				msg.author.send('target is not living in the tribe')
 				return
 			}
 			msg.reply(actor+' gave '+amount+' '+type+' to '+target)
 			if (!population[target][type]){
 				population[target][type] = Number(amount)
 			} else {
-			population[target][type] += Number(amount)
+				population[target][type] += Number(amount)
 			}         
-			if (!referees.includes(actor)){
-				population[actor] -= Number(amount)
-			}
+			population[actor][type] -= Number(amount)
 		} else {
 			msg.author.send('You do not have that much '+type+': '+ population[actor][type])
 		}
@@ -292,30 +287,43 @@ function handleCommand(msg, author, command, bits){
 				}
 				msg.author.send(big_message)
 				return
-			} 
-    	}
+			} else {
+				if (population[actor]) {
+					message = ''
+					for (var type in population[actor]) {
+						if (Object.prototype.hasOwnProperty.call( population[actor], type)) {
+						message+= ' '+type+' '+population[actor][type]
+						}
+					}
+					msg.author.send(message)
+					return
+				}
+			}
+		}
+		console.log('not a simple list')
 		if (! msg.mentions || ! msg.mentions.users){
 			msg.author.send(command+' requires at least one @target')
 			return
 		}
-		var targets = msg.mentions.users
-		for (var target in targets){
-			if ( referees.includes(actor) || actor === target){
-				message = target +' stats:'
-				if (population[target]) {
-					for (var type in population[target]) {
-						if (Object.prototype.hasOwnProperty.call( population[target], type)) {
-						message+= ' '+type+' '+population[target][type]
-						}
+		var target = msg.mentions.users.first()
+
+		console.log('list for actor:'+actor+" target:"+target.username)
+		if ( referees.includes(actor) || actor === target.username){
+			message = target.username +' stats:'
+			if (population[target.username]) {
+				for (var type in population[target.username]) {
+					if (Object.prototype.hasOwnProperty.call( population[target.username], type)) {
+					message+= ' '+type+' '+population[target.username][type]
 					}
-				} else {
-					message+=' nothing'
 				}
-				msg.author.send(message)
 			} else {
-				msg.author.send('You must ask '+target+' what they have.')
+				message+=' nothing'
 			}
+			msg.author.send(message)
+		} else {
+			msg.author.send('You must ask '+target.username+' what they have.')
 		}
+	
 	}
 	// list the children
 	if (command === 'children'){
@@ -424,7 +432,7 @@ function handleCommand(msg, author, command, bits){
 			return;
 		}  
 		console.log('adults are eating')
-		response = "Turn results:"
+		response = "Turn results:\n"
 		perished = []
 		for  (var target in population) {
 			console.log('target:'+target)
@@ -492,30 +500,52 @@ function handleCommand(msg, author, command, bits){
 		gatherers = []
 		crafters = []
 		craftTrainee = []
+		huntMessage = 'Hunters:'
+		gatherMessage = 'Gatherers:'
+		idlers = []
 		for  (var target in population) {
 			work = population[target].work
+			console.log(target+' is doing '+work)
 			switch (work){
 				case 'hunt':
+					huntMessage+= "\t"+target
+					if (! (population[target].profession === 'hunter')){ huntMessage += '(-3)'}
 					hunters.push(target)
+					if (population[target].spearpoint > 0){
+						huntMessage+= '(spearpoint)\n'
+					}
+					console.log(huntMessage)
 					break
 				case 'gather':
-					gatherers.push[target]
+					gatherMessage+= "\t"+target
+					if (!(population[target].profession === 'gatherer')){ gatherMessage += '(-3)'}
+					gatherers.push(target)
+					if (population[target].basket > 0){
+						gatherMessage+= '(basket)\n'
+					}
 					break
 				case 'craft':
-					if (population[target].canCraft){crafters.push(target)}
-					else {craftTrainee.push(target)}
+					if (population[target].canCraft){
+						crafters.push(target)}
+					else {
+						craftTrainee.push(target)}
 					break
 				default:
+					idlers.push(target)
 					// doing nothing is valid
 			}
-			population[target].work = null
+			//population[target].work = null // default to repating the work
 		}
-		if (hunters.length){response += '\n Hunters:'+hunters}
-		if (gatherers.length){response += '\n Gathers:'+gatherers}
-		if(crafters.length) {response += '\n Crafters'+crafters}
-		if(craftTrainee.length) {response += '\n Craft training '+craftTrainee}
+		if (hunters.length){response += '\n'+huntMessage}
+		if (gatherers.length){response += '\n'+gatherMessage}
+		if(crafters.length) {response += '\n Crafters:'+crafters}
+		if(craftTrainee.length) {response += '\n Craft training: '+craftTrainee}
+		if(idlers.length) {response += '\n Idle: '+idlers}
 		// clean up the dead
-		for (corpse in perished){
+		var perishedCount = perished.length;
+		for (var i = 0; i < arrayLength; i++) {
+    		corpse = perished[i]
+			console.log('removing corpse '+corpse)
 			delete population[corpse]
 		}
 		msg.reply(response)
@@ -547,7 +577,7 @@ function doWork(message, author, bits){
 }
 
 function addToPopulation(msg, author, bits, target){
-		profession = bits[1]
+	profession = bits[1]
 	gender = bits[2]
 	if (!target ){
 		msg.author.send('usage: <profession> <gender> <name>')
