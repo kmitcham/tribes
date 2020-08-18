@@ -75,6 +75,7 @@ function handleCommand(msg, author, command, bits){
 		text+=' give <amt> <food|grain|spearpoint|basket> <player>\n'
 		text+=' feed <amt> <food|grain> <childNumber>\n'
 		text+=' mate <player>  intend to mate with player this season\n'
+		text+=' roll <#dice>'
 		text+=' work <hunt|gather|craft|nothing>  activity for season\n'
 		text+=' list show inventory and character info\n'
 		text+=' children shows the children ages and food status\n'
@@ -95,6 +96,21 @@ function handleCommand(msg, author, command, bits){
 			msg.author.send( text)
 		}
 
+	}
+	if (command == 'roll'){
+		count = bits[1]
+		if (!count){
+			count = 3
+		}
+		total = 0
+		message = ''
+		for (var i = 0; i < count; i++){
+			var roll = Math.trunc( Math.random ( ) * 5)+1
+			message += roll+' '
+			total += roll
+		}
+		msg.reply(actor+' rolls '+message+' total:'+total)
+		return
 	}
 	if (command == 'edit'){
 		if (! msg.mentions || ! msg.mentions.users){
