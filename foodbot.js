@@ -10,7 +10,7 @@ let auth = JSON.parse(rawdata);
 const types = ['food', 'grain', 'basket', 'spearpoint']
 const professions= ['hunter','gatherer', 'crafter']
 const activities = ['hunt', 'gather', 'craft','nothing']
-const member_properties = ['canCraft','isNursing','isPregnant','profession','gender','partner','work']
+const member_properties = ['canCraft','isNursing','isPregnant','profession','gender','partner','work','food','grain']
 const genders = ['male','female']
 var population = require('./population.json')
 var children = require('./children.json');
@@ -27,6 +27,12 @@ bot.on('message', msg => {
   }
   processMessage(msg)
 });
+// TODO: when child dies young, clear isPregnant
+// TODO: rolls should be public
+// TODO: handle rolls internally
+// TODO: craft takes an arg
+// TODO: Work Round, Food Round Reproduction round
+// TODO: track calendar/ seasons
 
 function saveGameState(){
 	fs.writeFile("population.json", JSON.stringify(population), err => { 
@@ -75,19 +81,19 @@ function handleCommand(msg, author, command, bits){
 		text+=' give <amt> <food|grain|spearpoint|basket> <player>\n'
 		text+=' feed <amt> <food|grain> <childNumber>\n'
 		text+=' mate <player>  intend to mate with player this season\n'
-		text+=' roll <#dice>'
+		text+=' roll <#dice>\n'
 		text+=' work <hunt|gather|craft|nothing>  activity for season\n'
 		text+=' list show inventory and character info\n'
 		text+=' children shows the children ages and food status\n'
 		msg.author.send( text)
 
 		if (referees.includes(actor)){
-			text = ''
+			text = '<amt> <food|grain|spearpoint|basket> <player>\n'
 			text+='\nReferee Commands\n'
 			text+=' check report on what would happen if you used endturn   NOT YET\n'
-			text+=' edit target <canCraft|isNursing|isPregnant|profession|gender|partner|work>\n' 
+			text+=' edit target <canCraft|isNursing|isPregnant|profession|gender|partner|work|food|grain>\n' 
 			text+=' endturn check food, breeding\n'
-			text+=' give <amt> <food|grain|spearpoint|basket> <player> has quantity restrictions removed\n'
+			text+=' award <amt> <food|grain|spearpoint|basket> <player>\n'
 			text+=' list <player>  (no arg lists all players)\n '
 			text+=' induct|banish <player> add a member to the tribe\n'
 			text+=' promote|demote <player> to the ref list\n'
@@ -105,7 +111,7 @@ function handleCommand(msg, author, command, bits){
 		total = 0
 		message = ''
 		for (var i = 0; i < count; i++){
-			var roll = Math.trunc( Math.random ( ) * 5)+1
+			var roll = Math.trunc( Math.random ( ) * 6)+1
 			message += roll+' '
 			total += roll
 		}
@@ -254,11 +260,12 @@ function handleCommand(msg, author, command, bits){
 	// give stuff to a user; refs can give unlimited amounts, others are limited.
 	// targets aren't checked to make sure they are valid
 	if (command === 'give'){
-		if (! msg.mentions || ! msg.mentions.users){
+		if (! msg.mentions || ! msg.mentions.users || ! msg.mentions.users.first() ){
 			msg.author.send(command+' requires at least one @target')
 			return
 		}
-		var target = msg.mentions.users.first().username
+		var target = msg.mentions.users.first()
+		var username = target.username
 		amount = bits[1]
 		type = bits[2]
 		
@@ -266,24 +273,58 @@ function handleCommand(msg, author, command, bits){
 			msg.author.send('Give syntax is give  <amount> <food|grain|spearpoint|basket> <recipient>')
 			return
 		}
-		if (amount < 0 &&  !referees.includes(actor) ){
-			msg.author.send('Only the referee can reduce amounts')
+		if (amount <= 0  ){
+			msg.author.send('Can not give negative amounts')
 			return
 		}			
-		if ( referees.includes(actor) || population[actor][type] >= amount){
+		if (!population[username] ) {
+				msg.author.send('username is not living in the tribe')
+				return
+		}
+		if (  population[actor][type] >= amount){
+			msg.reply(actor+' gave '+amount+' '+type+' to '+username)
+			if (!population[username][type]){
+				population[username][type] = Number(amount)
+			} else {
+				population[username][type] += Number(amount)
+			}         
+			population[actor][type] -= Number(amount)
+			target.send(actor+' gave you '+amount+' '+type)
+		} else {
+			msg.author.send('You do not have that much '+type+': '+ population[actor][type])
+		}
+		return
+	}
+	if (command === 'award'){
+		if (referees.includes(actor)){
+			var target
+			if (msg.mentions.users && msg.mentions.users.first() ){
+				target = msg.mentions.users.first().username
+			}
+			amount = bits[1]
+			type = bits[2]
+			if (!target){ target = bits[3]}
+			targetName = resolveTarget(target)
+		
+			if (isNaN(amount) || ! types.includes(type)){
+				msg.author.send('award syntax is give  <amount> <food|grain|spearpoint|basket> <recipient>')
+				return
+			}
 			if (!population[target] ) {
 				msg.author.send('target is not living in the tribe')
 				return
 			}
-			msg.reply(actor+' gave '+amount+' '+type+' to '+target)
+			msg.reply(actor+' awarding '+amount+' '+type+' to '+target)
+			if (msg.mentions.users && msg.mentions.users.first()){
+				msg.mentions.users.first().send('You earned '+amount+' '+type)
+			}
 			if (!population[target][type]){
 				population[target][type] = Number(amount)
 			} else {
 				population[target][type] += Number(amount)
 			}         
-			population[actor][type] -= Number(amount)
 		} else {
-			msg.author.send('You do not have that much '+type+': '+ population[actor][type])
+			msg.author.send('Only referees can award ')
 		}
 		return
 	}
@@ -304,6 +345,7 @@ function handleCommand(msg, author, command, bits){
 				msg.author.send(big_message)
 				return
 			} else {
+				// list the actor
 				if (population[actor]) {
 					message = ''
 					for (var type in population[actor]) {
@@ -317,27 +359,22 @@ function handleCommand(msg, author, command, bits){
 			}
 		}
 		console.log('not a simple list')
-		if (! msg.mentions || ! msg.mentions.users){
-			msg.author.send(command+' requires at least one @target')
-			return
-		}
-		var target = msg.mentions.users.first()
-
-		console.log('list for actor:'+actor+" target:"+target.username)
-		if ( referees.includes(actor) || actor === target.username){
-			message = target.username +' stats:'
-			if (population[target.username]) {
-				for (var type in population[target.username]) {
-					if (Object.prototype.hasOwnProperty.call( population[target.username], type)) {
-					message+= ' '+type+' '+population[target.username][type]
+		for (var i = 1; i < bits.length; i++){
+			username = resolveTarget(bits[i])
+			console.log(i+' '+username)
+			if ( referees.includes(actor) || actor === username){
+				message = username +' stats:'
+				if (population[username]) {
+					for (var type in population[username]) {
+						if (Object.prototype.hasOwnProperty.call( population[username], type)) {
+						message+= ' '+type+' '+population[username][type]
+						}
 					}
+				} else {
+					message+=' nothing'
 				}
-			} else {
-				message+=' nothing'
+				msg.author.send(message)
 			}
-			msg.author.send(message)
-		} else {
-			msg.author.send('You must ask '+target.username+' what they have.')
 		}
 	
 	}
@@ -390,9 +427,7 @@ function handleCommand(msg, author, command, bits){
 			}
 			msg.reply(actor+' fed '+amount+' '+type+' to child '+childIndex)
 			children[childIndex].food += Number(amount)
-			if (!referees.includes(actor)){
-				population[actor] -= Number(amount)
-			}
+			population[actor].food -= Number(amount)
 		} else {
 			msg.author.send('You do not have that much '+type+': '+ population[actor][type])
 		}
@@ -401,10 +436,6 @@ function handleCommand(msg, author, command, bits){
 	// add a child to tribe; args are parent names
 	if (command === 'spawn'){
 		if (bits.length != 3){
-			msg.author.send('usage: !spawn mother father')
-			return
-		}
-		if (msg.mentions.users.length != 2){
 			msg.author.send('usage: !spawn mother father')
 			return
 		}
@@ -437,6 +468,7 @@ function handleCommand(msg, author, command, bits){
 	}
 	if (command === 'check'){
 		msg.author.send(command +'not implemmented' )
+		return
 	}
 	// advance the clock one season.  Reduce food/grain in population, as well as for children.
 	// message for every death, and remove the relevant items from the data structure. 
@@ -463,6 +495,7 @@ function handleCommand(msg, author, command, bits){
 				population[target].food = 0
 				if (population[target].grain < 0){
 					response += "  "+target+" has starved to death.\n"
+					population[target].grain = 0
 					perished.push(target)
 				}
 			}
@@ -528,8 +561,9 @@ function handleCommand(msg, author, command, bits){
 					if (! (population[target].profession === 'hunter')){ huntMessage += '(-3)'}
 					hunters.push(target)
 					if (population[target].spearpoint > 0){
-						huntMessage+= '(spearpoint)\n'
+						huntMessage+= '(spearpoint)'
 					}
+					huntMessage+='\n'
 					console.log(huntMessage)
 					break
 				case 'gather':
@@ -537,8 +571,9 @@ function handleCommand(msg, author, command, bits){
 					if (!(population[target].profession === 'gatherer')){ gatherMessage += '(-3)'}
 					gatherers.push(target)
 					if (population[target].basket > 0){
-						gatherMessage+= '(basket)\n'
+						gatherMessage+= '(basket)'
 					}
+					gatherMessage+='\n'
 					break
 				case 'craft':
 					if (population[target].canCraft){
@@ -565,8 +600,9 @@ function handleCommand(msg, author, command, bits){
 			delete population[corpse]
 		}
 		msg.reply(response)
+		return
   	}
-
+	
 }
 
 bot.once('ready', ()=>{
@@ -575,10 +611,22 @@ bot.once('ready', ()=>{
 
 bot.login(auth['token'])
 
+// convert the target to a string in Population, if possible
+function resolveTarget(target){
+	if (population[target]){
+		return target;
+	}
+	if (target.username){
+		return resolve (target.username)
+	}
+	console.log('not sure how to resolve this target:'+target)
+	return 'elephant'
+}
+
 function doWork(message, author, bits){
 	work = bits[1]
 	if (! activities.includes(work)){
-		msg.author.message('legal work types:'+activities)
+		message.author.message('legal work types:'+activities)
 		return
 	}
 	if (population[actor]){
