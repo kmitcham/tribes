@@ -80,11 +80,12 @@ function handleCommand(msg, author, command, bits){
 		text+='Player commands\n'
 		text+=' give <amt> <food|grain|spearpoint|basket> <player>\n'
 		text+=' feed <amt> <food|grain> <childNumber>\n'
-		text+=' mate <player>  intend to mate with player this season\n'
 		text+=' roll <#dice>\n'
-		text+=' work <hunt|gather|craft|nothing>  activity for season\n'
 		text+=' list show inventory and character info\n'
 		text+=' children shows the children ages and food status\n'
+		text+=' hunt <with @target>'
+		text+=' gather'
+		text+=' craft <spearpoint|basket>'
 		msg.author.send( text)
 
 		if (referees.includes(actor)){
