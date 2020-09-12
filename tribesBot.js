@@ -7,7 +7,7 @@ const fs = require('fs');
 let rawdata = fs.readFileSync('./auth.json');
 let auth = JSON.parse(rawdata);
 
-const types = ['food', 'grain', 'basket', 'spearpoint']
+const types = ['food', 'grain', 'basket', 'spearhead']
 const professions= ['hunter','gatherer', 'crafter']
 const member_properties = ['canCraft','isNursing','isPregnant','isInjured','guarding','profession','gender','partner','worked','food','grain', 'handle']
 
@@ -112,63 +112,6 @@ function displayPlayer(player){
 	return big_message
 }
 
-function gather(playername, player, roll_value){
-	var message = ' gathers ';
-	netRoll = roll_value
-	modifier = 0
-	if (isColdSeason()){
-		message+= '(-3 season) '
-		modifier -= 3
-	}
-	if ( player.profession != 'gatherer'){
-		message+=('(-3 skill)')
-		modifier -= 3
-	}
-	netRoll = roll_value + modifier
-	console.log('gather roll:'+roll_value+' mod:'+modifier+' net:'+netRoll)
-	gatherData = locations[currentLocationName]['gather']
-	for (var i = 0; i < gatherData.length; i++){
-		if (netRoll <= gatherData[i][0]){
-			message += gatherData[i][3]
-			player.food += gatherData[i][1]
-			player.grain += gatherData[i][2]
-			break
-		}
-	}
-	if (player.basket > 0){
-		var broll = roll(3)+modifier
-		message+= ' basket:'
-		for (var i = 0; i < gatherData.length;i++){
-			if (netRoll <= gatherData[i][0]){
-				message += gatherData[i][3]
-				player.food += gatherData[i][1]
-				player.grain += gatherData[i][2]
-				break
-			}
-		}
-		// check for basket loss
-		if (roll(1) == 1){
-			message+= ' basket broke!'
-			player.basket -= 1
-		}
-	}
-	player.worked = true
-	return message
-}
-function craft(playername, player, type, roll_value){
-	console.log('type'+type+' roll '+roll)
-	player.worked = true
-	if (roll != 1) {
-		if (type == 'basket'){
-			player.basket += 1
-		} else {
-			player.spearpoint += 1
-		}
-		return ' crafts a '+type
-	}
-	return 'crafts a worthless '+type
-}
-
 function roll(count){
 		if (!count){
 			count = 3
@@ -185,21 +128,21 @@ function handleCommand(msg, author, player, command, bits){
 	if (command === 'help'){
 		text = ''
 		text+='Player commands\n'
-		text+=' give <amt> <food|grain|spearpoint|basket> <player>\n'
+		text+=' give <amt> <food|grain|spearhead|basket> <player>\n'
 		text+=' feed <amt> <food|grain> <childNumber>\n'
 		text+=' list (show inventory and character info)\n'
 		text+=' children (shows the children ages and food status)\n'
 		text+='-=Work Phase Commands=-'
 		text+=' hunt <with @target>'
 		text+=' gather'
-		text+=' craft <spearpoint|basket>'
+		text+=' craft <spearhead|basket>'
 		msg.author.send( text)
 
 		if (referees.includes(actor)){
-			text = '<amt> <food|grain|spearpoint|basket> <player>\n'
+			text = '<amt> <food|grain|spearhead|basket> <player>\n'
 			text+='\nReferee Commands\n'
 			text+=' edit target <canCraft|isNursing|isPregnant|profession|gender|partner|work|food|grain> <value>\n' 
-			text+=' award <amt> <food|grain|spearpoint|basket> <player>\n'
+			text+=' award <amt> <food|grain|spearhead|basket> <player>\n'
 			text+=' list <player>  (no arg lists all players)\n '
 			text+=' induct|banish <player> add a member to the tribe\n'
 			text+=' promote|demote <player> to the ref list\n'
@@ -245,21 +188,24 @@ function handleCommand(msg, author, player, command, bits){
 				msg.author.send('You do not know how to craft')
 				return
 			}
-			if (type != 'basket' && type != 'spearpoint'){
-				msg.author.send('Must craft basket or spearpoint')
+			if (type != 'basket' && type != 'spearhead'){
+				msg.author.send('Must craft basket or spearhead')
 				return	
 			}
 			message = craft( author.username, player, type, roll(1))
 			msg.reply( message )
 			return	
 		} else if (command == 'assist'){
-			msg.author.send('NOT IMPLEMENTED')
+			target = msg.mentions.users.first()
+			message = assist(author.username, player, target)
+			msg.reply( message )
 			return	
 		} else if (command == 'train'){
 			msg.author.send('NOT IMPLEMENTED')
 			return	
 		} else if (command == 'hunt'){
-			msg.author.send('NOT IMPLEMENTED')
+			message = hunt(author.username, player, roll(3))
+			msg.reply( message )
 			return	
 		}
 	}
@@ -441,7 +387,7 @@ function handleCommand(msg, author, player, command, bits){
 		type = bits[2]
 		
 		if (isNaN(amount) || ! types.includes(type)){
-			msg.author.send('Give syntax is give  <amount> <food|grain|spearpoint|basket> <recipient>')
+			msg.author.send('Give syntax is give  <amount> <food|grain|spearhead|basket> <recipient>')
 			return
 		}
 		if (amount <= 0  ){
@@ -478,7 +424,7 @@ function handleCommand(msg, author, player, command, bits){
 			targetName = resolveTarget(target)
 		
 			if (isNaN(amount) || ! types.includes(type)){
-				msg.author.send('award syntax is give  <amount> <food|grain|spearpoint|basket> <recipient>')
+				msg.author.send('award syntax is give  <amount> <food|grain|spearhead|basket> <recipient>')
 				return
 			}
 			if (!population[target] ) {
@@ -500,7 +446,7 @@ function handleCommand(msg, author, player, command, bits){
 		return
 	}
 	// how much stuff does the target have?  if used by ref with no args, list whole population
-	if (command === 'list'){
+	if (command === 'list' || command == 'inventory'){
 		if (bits.length == 1){
 			if (referees.includes(actor)){
 				big_message = ''
@@ -685,8 +631,8 @@ function handleCommand(msg, author, player, command, bits){
 					huntMessage+= "\t"+target
 					if (! (population[target].profession === 'hunter')){ huntMessage += '(-3)'}
 					hunters.push(target)
-					if (population[target].spearpoint > 0){
-						huntMessage+= '(spearpoint)'
+					if (population[target].spearhead > 0){
+						huntMessage+= '(spearhead)'
 					}
 					huntMessage+='\n'
 					console.log(huntMessage)
@@ -790,9 +736,10 @@ function addToPopulation(msg, author, bits, target,targetObject){
 	person.food = 10
 	person.grain = 0
 	person.basket = 0
-	person.spearpoint = 0
+	person.spearhead = 0
 	person.profession = profession
 	person.handle = targetObject
+	person.name = target
 	if (profession === 'crafter'){
 		person.canCraft = true
 	} else {
@@ -849,4 +796,143 @@ function consumeFood(){
 				}
 			}
 		}
+}
+
+//////////////////////////////////////////////////////////
+/////  WORK SECTION   
+/////////////////////////////////////////////////////////
+var locations = require('./locations.json');
+
+
+function gather(playername, player, roll_value){
+	var message = ' gathers ';
+	netRoll = roll_value
+	modifier = 0
+	if (isColdSeason()){
+		message+= '(-3 season) '
+		modifier -= 3
+	}
+	if ( player.profession != 'gatherer'){
+		message+=('(-3 skill)')
+		modifier -= 3
+	}
+	netRoll = roll_value + modifier
+	console.log('gather roll:'+roll_value+' mod:'+modifier+' net:'+netRoll)
+	gatherData = locations[currentLocationName]['gather']
+	for (var i = 0; i < gatherData.length; i++){
+		if (netRoll <= gatherData[i][0]){
+			message += gatherData[i][3]
+			player.food += gatherData[i][1]
+			player.grain += gatherData[i][2]
+			break
+		}
+	}
+	if (player.basket > 0){
+		var broll = roll(3)+modifier
+		message+= ' basket:'
+		for (var i = 0; i < gatherData.length;i++){
+			if (netRoll <= gatherData[i][0]){
+				message += gatherData[i][3]
+				player.food += gatherData[i][1]
+				player.grain += gatherData[i][2]
+				break
+			}
+		}
+		// check for basket loss
+		if (roll(1) == 1){
+			message+= ' basket broke!'
+			player.basket -= 1
+		}
+	}
+	player.worked = true
+	return message
+}
+function craft(playername, player, type, roll_value){
+	console.log('type'+type+' roll '+roll)
+	player.worked = true
+	if (roll != 1) {
+		if (type == 'basket'){
+			player.basket += 1
+		} else {
+			player.spearhead += 1
+		}
+		return ' crafts a '+type
+	}
+	return 'crafts a worthless '+type
+}
+function assist(playername, player, helpedPlayer){
+	player.worked = true
+	bonus = 0
+	if (player.spearhead > 0){
+		bonus += 1
+	}
+	if (player.profession == 'hunter'){
+		bonus += 1
+	} else {
+		bonus += 0.5
+	}
+	if (helpedPlayer.bonus ){
+		helpedPlayer.bonus += bonus
+	} else {
+		helpedPlayer.bonus = bonus	
+	}
+	if (!helpedPlayer.helpers){
+		helpedPlayer.helpers = [playername]
+	} else {
+		helpedPlayer.helpers.push(playername)
+	}
+	return ' goes hunting to assist '+helpedPlayer
+}
+function hunt(playername, player, roll_value){
+	player.worked = true
+	mods = 0
+	message = ' goes hunting '
+	var modifier = 0
+	if ( player.profession != 'hunter'){
+		message+=('(-3 skill)')
+		modifier -= 3
+	}
+	if (isColdSeason()){
+		message+= '(-3 season) '
+		modifier -= 3
+	}
+	if (player.bonus && player.bonus >0 ){
+		if (player.bonus > 3){
+		  mods += 3
+		} else {
+		  mods += player.bonus
+		}
+		message += ' (with '+player.helpers+')'
+	}
+	if (player.spearhead > 0 && roll_value >= 9){
+		mods += 3
+	}
+	if (roll_value < 7){
+		// injury section
+		if (roll_value == 6){
+			if (player.profession != 'hunter'){
+				message += 'Injury!'
+				player.isInjured = true
+			}
+		} else {
+		// TODO: make this also possibly inure the helpers
+			message += 'Injury!'
+			player.isInjured = true
+		}
+	} else {
+		// rewards section
+		netRoll = roll_value + mods
+		huntData = locations[currentLocationName]['hunt']
+		for (var i = 0; i < huntData.length; i++){
+			if (netRoll <= huntData[i][0]){
+				message += huntData[i][2]
+				player.food += huntData[i][1]
+				break
+			}
+		}
+	}
+	// clear the stuff for group hunting
+	player.bonus = 0
+	player.helpers = []
+	return message
 }
