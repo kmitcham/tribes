@@ -1,28 +1,28 @@
 var Discord = require('discord.js');
 var bot = new Discord.Client()
 var logger = require('winston');
-var referees = ['kevinmitcham','@kevinmitcham' ]
-
+const { ExceptionHandler } = require('winston');
 const fs = require('fs');
+const { resolve } = require('path');
+const { ConsoleTransportOptions } = require('winston/lib/winston/transports');
+
 let rawdata = fs.readFileSync('./auth.json');
 let auth = JSON.parse(rawdata);
 
 const types = ['food', 'grain', 'basket', 'spearhead']
 const professions= ['hunter','gatherer', 'crafter']
 const member_properties = ['canCraft','isNursing','isPregnant','isInjured','guarding','profession','gender','partner','worked','food','grain', 'handle']
-
 const genders = ['male','female']
+
 var population = require('./population.json')
 var children = require('./children.json');
 var referees = require('./referees.json');
 var locations = require('./locations.json');
-const { ExceptionHandler } = require('winston');
 var seasonCounter = 1;
 var currentLocationName = "veldt";
 var workRound = true;
 var foodRound = false;
 var reproductionRound = false;
-const { resolve } = require('path');
 
 function isColdSeason(){
 	return (seasonCounter%2 == 0);
@@ -30,7 +30,17 @@ function isColdSeason(){
 function getYear(){
 	return seasonCounter/2;
 }
-
+function nextSeason(){
+	seasonCounter += 1
+	if (isColdSeason()){
+		for (locationName in locations){
+			modifier = locations[locationName]['game_track_recover']
+			oldTrack = locations[locationName]['game_track']
+			locations[locationName]['game_track'] -= modifier
+			console.log(locationName+' game_track moves from '+oldTrack+' to '+locations[locationName]['game_track'])
+		}
+	}
+}
 
 bot.on('message', msg => {
   if (!msg.content ){
@@ -213,6 +223,7 @@ function handleCommand(msg, author, player, command, bits){
 		}
 	}
 	if (command == 'startwork'){
+		// advance the calendar
 		workRound = true
 		foodRound = false
 		reproductionRound = false
@@ -221,9 +232,8 @@ function handleCommand(msg, author, player, command, bits){
 		workRound = false
 		foodRound = true
 		reproductionRound = false
-		// check who would starve
 		// clear work flags
-		// if injured, set worked to true, injured to false
+		clearWorkFlags(population)
 	}
 	if (command == 'startReproduction'){
 		// actually consume food here
@@ -347,31 +357,6 @@ function handleCommand(msg, author, player, command, bits){
 		var target = msg.mentions.users.first().username
 		addToPopulation(msg, author, bits, target, msg.mentions.users.first())
 		return
-	}
-	if (command === 'mate'){
-		if (! msg.mentions || ! msg.mentions.users){
-			msg.author.send(command+' requires at least one @target')
-			return
-		}
-		if (bits.length < 2 ){
-			msg.author.send('usage: mate <target>')
-			return
-		}
-		var target = msg.mentions.users.first().username
-		if (!population[target]){
-			msg.author.send('no such target:'+target)
-			return
-		}
-		if (population[target].gender === population[actor].gender){
-			msg.author.send('Must mate with opposite gender')
-			return
-		}
-		population[actor].partner = target
-		msg.author.send('Your mating partner for the season is '+target)
-	}
-	// train a person to craft
-	if (command === 'train'){
-		msg.author.send(command+' not implemented')
 	}
 	// give stuff to a user; refs can give unlimited amounts, others are limited.
 	// targets aren't checked to make sure they are valid
@@ -600,91 +585,12 @@ function handleCommand(msg, author, player, command, bits){
 			return;
 		}  
 		consumeFood()
-		// check breeding
-		for  (var mother in population) {
-			if (population[mother].gender === 'female' && !population[mother].isPregnant && population[mother].partner){
-				father = population[mother].partner
-				console.log('m:'+mother+' f:'+population[mother].partner)
-				if (population[father] && population[father].partner === mother){
-					response += " ( "+mother+" "+father+" attempted to reproduce. "
-					if (population[mother].isNursing){
-						response += ' 2d:10+ )'
-					} else {
-						response += ' 2d:9+ )'
-					}
-					response += '\n'
-				} else {
-					console.log('breeding mismatch: f:'+population[father].partner)
-				}
-			}
-		}
-		// check activities
-		hunters = []
-		gatherers = []
-		crafters = []
-		craftTrainee = []
-		huntMessage = 'Hunters:'
-		gatherMessage = 'Gatherers:'
-		idlers = []
-		for  (var target in population) {
-			work = population[target].work
-			console.log(target+' is doing '+work)
-			switch (work){
-				case 'hunt':
-					huntMessage+= "\t"+target
-					if (! (population[target].profession === 'hunter')){ huntMessage += '(-3)'}
-					hunters.push(target)
-					if (population[target].spearhead > 0){
-						huntMessage+= '(spearhead)'
-					}
-					huntMessage+='\n'
-					console.log(huntMessage)
-					break
-				case 'gather':
-					gatherMessage+= "\t"+target
-					if (!(population[target].profession === 'gatherer')){ gatherMessage += '(-3)'}
-					gatherers.push(target)
-					if (population[target].basket > 0){
-						gatherMessage+= '(basket)'
-					}
-					gatherMessage+='\n'
-					break
-				case 'craft':
-					if (population[target].canCraft){
-						crafters.push(target)}
-					else {
-						craftTrainee.push(target)}
-					break
-				default:
-					idlers.push(target)
-					// doing nothing is valid
-			}
-			//population[target].work = null // default to repating the work
-		}
-		if (hunters.length){response += '\n'+huntMessage}
-		if (gatherers.length){response += '\n'+gatherMessage}
-		if(crafters.length) {response += '\n Crafters:'+crafters}
-		if(craftTrainee.length) {response += '\n Craft training: '+craftTrainee}
-		if(idlers.length) {response += '\n Idle: '+idlers}
-		// clean up the dead
-		var perishedCount = perished.length;
-		for (var i = 0; i < arrayLength; i++) {
-    		corpse = perished[i]
-			console.log('removing corpse '+corpse)
-			delete population[corpse]
-		}
-		msg.reply(response)
-		return
   	}
 	
 }
 
 bot.once('ready', ()=>{
-  console.log('does this happen')
   console.log('bot is alive')
-  console.log('and ready for testing')
-  console.log('this does not show up? '+roll(4))
-
 }) 
 
 bot.login(auth['token'])
@@ -717,7 +623,23 @@ function doWork(message, author, bits){
 	}
 	return
 }
-
+function clearWorkFlags(population){
+	// for every person
+	// if injured and !worked, injured = false
+	// worked = false
+	for  (var targetname in population) {
+		person = population[targetname]
+		if (! person){
+			console.log('null person for name '+targetname)
+			continue
+		}
+		if (person.isInjured && person.isInjured == true && person.work == false){
+			// did not work means rested
+			person.isInjured == false
+		}
+		person.work = false
+	}
+}
 function addToPopulation(msg, author, bits, target,targetObject){
 	profession = bits[1]
 	gender = bits[2]
@@ -757,7 +679,7 @@ function addToPopulation(msg, author, bits, target,targetObject){
 }
 function consumeFood(){
 		console.log('adults are eating')
-		response = "Round results:\n"
+		response = "Food round results:\n"
 		perished = []
 		for  (var target in population) {
 			console.log('target:'+target)
@@ -803,14 +725,21 @@ function consumeFood(){
 				}
 			}
 		}
+		// clean up the dead
+		var perishedCount = perished.length;
+		for (var i = 0; i < arrayLength; i++) {
+    		corpse = perished[i]
+			console.log('removing corpse '+corpse)
+			delete population[corpse]
+		}
+		msg.reply(response)
+		return
+
 }
 
 //////////////////////////////////////////////////////////
 /////  WORK SECTION   
 /////////////////////////////////////////////////////////
-var locations = require('./locations.json');
-
-
 function gather(playername, player, roll_value){
 	var message = ' gathers ';
 	netRoll = roll_value
@@ -900,8 +829,8 @@ function hunt(playername, player, roll_value){
 		modifier -= 3
 	}
 	if (isColdSeason()){
-		message+= '(-3 season) '
-		modifier -= 3
+		message+= '(-1 season) '
+		modifier -= 1
 	}
 	if (player.bonus && player.bonus >0 ){
 		if (player.bonus > 3){
@@ -938,8 +867,19 @@ function hunt(playername, player, roll_value){
 			}
 		}
 	}
+	// update the game track
+	var huntercount = 1
+	if (player.helpers ){
+		huntercount += length(player.helpers)
+	}
+	var oldTrack = locations[currentLocationName]['game_track'] 
+	locations[currentLocationName]['game_track'] += huntercount
+	console.log('Game Track for '+currentLocationName+' advnced from '+oldTrack+' to '+locations[currentLocationName]['game_track'])
+	ConsoleTransportOptions.
 	// clear the stuff for group hunting
 	player.bonus = 0
 	player.helpers = []
 	return message
 }
+
+
