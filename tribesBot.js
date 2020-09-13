@@ -171,8 +171,11 @@ function handleCommand(msg, author, player, command, bits){
 			return
 		}
 		if (player == null){
-			msg.author.send('Only tribe members can work.  Maybe !join?')
+			msg.author.send('Only tribe members can work.  Maybe !join')
 			return
+		}
+		if (player.isInjured == true){
+			msg.author.send('you can not work while you are injured')
 		}
 		if (player.worked == true){
 			msg.author.send('You cannot work (again) this round')
@@ -276,7 +279,7 @@ function handleCommand(msg, author, player, command, bits){
 	// add a user to the list of referees; any ref can do this
 	if (command === 'promote' ){
 		if (! msg.mentions || ! msg.mentions.users){
-			msg.author.send(command+' requires at least one @target')
+			msg.author.send(command+' requires one @target')
 			return
 		}
 		var target = msg.mentions.users.first()		
@@ -677,7 +680,11 @@ function handleCommand(msg, author, player, command, bits){
 }
 
 bot.once('ready', ()=>{
+  console.log('does this happen')
   console.log('bot is alive')
+  console.log('and ready for testing')
+  console.log('this does not show up? '+roll(4))
+
 }) 
 
 bot.login(auth['token'])
