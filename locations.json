@@ -30,9 +30,9 @@
 		"game_track":1,
 		"game_track_recover":2,		
 		"gather":[
-			[7,4,0,"grubs"],
+			[7,3,0,"grubs"],
 			[8,0,3,"Grain"],
-			[9,6,0,"small rodents"],
+			[9,5,0,"small rodents"],
 			[10,6,0,"wild vegetables"],
 			[11,7,0,"wild vegetables"],
 			[12,7,0,"wild vegetables"],
