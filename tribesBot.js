@@ -112,6 +112,9 @@ function personByName(name){
 	console.log("No such person in population:"+name)
 	return null
 }
+function capitalizeFirstLetter(string) {
+	return string.charAt(0).toUpperCase() + string.slice(1);
+  }
 function displayPlayer(player){
 	message = ""
 	if (! player.gender){
@@ -248,6 +251,10 @@ function handleCommand(msg, author, player, command, bits){
 			return			
 		}
 		if (command == 'gather'){
+			if (player.watching && player.watching.length > 5){
+				msg.author.send('You can not gather while watching more than 5 children.  You are watching '+player.watching)
+				return
+			}
 			message = gather( author.username, player, roll(3))
 			msg.reply( message )// this should go to the channel!
 			return
@@ -255,6 +262,10 @@ function handleCommand(msg, author, player, command, bits){
 			type = bits[1]
 			if (player.canCraft == false){
 				msg.author.send('You do not know how to craft')
+				return
+			}
+			if (player.watching && player.watching.length > 2){
+				msg.author.send('You can not craft while watching more than 2 children.  You are watching '+player.watching)
 				return
 			}
 			if (type != 'basket' && type != 'spearhead'){
@@ -270,9 +281,28 @@ function handleCommand(msg, author, player, command, bits){
 			msg.reply( message )
 			return	
 		} else if (command == 'train'){
-			msg.author.send('NOT IMPLEMENTED')
+			if (player.canCraft){
+				msg.author.send('You already know how to craft')
+				return
+			}
+			if (player.watching && player.watching.length > 2){
+				msg.author.send('You can not learn crafting while watching more than 2 children.  You are watching '+player.watching)
+				return
+			}
+			if ( roll(2) >=10 ){
+				player.canCraft = true
+				msg.reply(playername+' learns to craft.')
+				return
+			} else {
+				msg.reply(playername+' watches a crafter, trying to learn.')
+			}
+			player.worked = true
 			return	
 		} else if (command == 'hunt'){
+			if (player.watching && player.watching.leastWatched > 0){
+				msg.author.send('You can not go hunting while watching '+player.watching)
+				return
+			}
 			message = hunt(author.username, player, roll(3))
 			msg.reply( message )
 			return	
@@ -352,18 +382,101 @@ function handleCommand(msg, author, player, command, bits){
 		foodRound = false
 		reproductionRound = true
 	}
+	if (command == 'leastwatched'){
+		// watch score = 6 if unwatched; otherwise is the length of the watchers 'watching' array
+		var watchChildSort = []
+		var leastWatched = []
+		if (Object.keys(children).length == 0){
+			msg.author.send('No children to sort')
+			return
+		}
+		for (var childName in children){
+			child = children[childName]
+			if (child.age < 0 ){
+				// unborn children should be skipped
+				continue
+			}	
+			if (! child.guardian || child.guardian == '' || child.guardian == null){
+				watchChildSort.push({'name':childName, 'score':6})
+			} else {
+				personName = child.guardian
+				person = population[personName]
+				if (!person){
+					console.log(childName+' has a bogus guardian:'+personName)
+					child.guardian = null
+					watchChildSort.push({'name':childName, 'score':6})
+				} else {
+					watchChildSort.push({'name':childName, 'score': (person.watching).length})
+				}
+			}
+		}
+		watchChildSort.sort((a,b) => parseFloat(b.score) - parseFloat(a.score))
+		startValue = watchChildSort[0].score;
+		for (var i = 0; i < watchChildSort.length; i++){
+			if (watchChildSort[i].score == startValue){
+				leastWatched.push(watchChildSort[i])
+			} else {
+				// we are out of the tie, so ignore the rest
+				break
+			}
+		}
+		unluckyIndex = Math.trunc( Math.random ( ) * leastWatched.length)
+		leastWatchedName = leastWatched[unluckyIndex].name
+		msg.reply(leastWatchedName+' is the least watched child. ' )
+		return 
+	}
 	if (command == 'watch'){
-		if (bits.length < 2){
-			msg.author.send('watch <childName> <childName>  <childName>  <childName> ')
+		if (bits.length != 2){
+			msg.author.send('watch <childName>')
 			return		
 		}
-		// watch up to 5
-		// set guardian - if set, steal from previous
-		// add to watching on person
+		person = population[actor]
+		if (person.watching && person.watching.length > 4){
+			msg.author.send('You are already watching a lot of children: '+person.watching)
+			return
+		}
+		childName = bits[1]
+		child = children[childName]
+		if (!child ){
+			msg.author.send('Could not find child: '+childName)
+			return
+		}
+		child.guardian = person.name
+		if (person.watching){
+			person.watching.push(childName)
+		} else {
+			person.watching = [childName]
+		}
+		msg.reply(actor+' starts watching '+childName)
+		return
 	}
 	if (command == 'ignore'){
-		// delete guardian
-		// update watching
+		if (bits.length != 2){
+			msg.author.send('ignore <childName>')
+			return		
+		}
+		person = population[actor]
+		childName = bits[1]
+		child = children[childName]
+		if (!person.watching || person.watching.indexOf(childName) == -1 ){
+			msg.author.send('You are not watching '+childName)
+			return
+		}
+		if (workRound == true){
+			msg.author.send('Can not change watch status during the work round')
+			return
+		}
+		childIndex = person.watching.indexOf(childName)
+		if (childIndex > -1) {
+			person.watching.splice(childIndex, 1);
+		  }
+		if (!child ){
+			msg.author.send('Could not find child: '+childName)
+		} else {
+			child.guardian = null
+		}
+		msg.reply(actor+' stops watching '+childName)
+		return
 	}
 	if (command == 'editchild'){
 		childProperties = ['mother','father','age','food','guardian','name']
@@ -386,6 +499,17 @@ function handleCommand(msg, author, player, command, bits){
 		if (!childProperties.includes(attribute)){
 			msg.author.send('Legal properties to set are '+childProperties)
 			return
+		}
+		if (attribute == 'mother'|| attribute == 'father' || attribue == 'guardian'){
+			parent = population[value]
+			if (!parent){
+				msg.author.send('Could not find tribemember '+value)
+				return
+			}
+		}
+		if ((attribute == 'age'|| attribute == 'food') && isNaN(value) ){
+			msg.author.send('Food and age take number values '+value)
+				return
 		}
 		child[attribute] = value
 		children[childName] = child
@@ -701,11 +825,15 @@ function handleCommand(msg, author, player, command, bits){
 			if (child.dead){
 				response += '('+childName+' is dead)'
 			} else {
-				response += '(name='+childName+':'
+				response += '('+childName+':'
 				if (referees.includes(actor) || (actor === child.mother || actor === child.father) ){
-					response += child.mother+'+'+child.father
+					response += ' parents:'+child.mother+'+'+child.father
 				}
-				response += ' age:'+child.age+ ' food:'+child.food+')\n'
+				response += ' age:'+child.age+ ' needs '+(2-child.food)+' food'
+				if (child.guardian && child.guardian != ''){
+					response += ' guardian:'+child.guardian
+				}
+				response += ')\n'
 			}
 		} 
 		msg.author.send(response)
@@ -713,10 +841,15 @@ function handleCommand(msg, author, player, command, bits){
 	}
   	// add food to a child
 	if (command === 'feed'){
+		if (bits.length != 4 ){
+			msg.author.send('feed syntax is feed <amount> <food|grain> <childname>')
+			return
+		}
 		childName = bits[3]
 		amount = bits[1]
 		type = bits[2]
 		childFood = ['food', 'grain']
+		childName = capitalizeFirstLetter(childName)
 		if (isNaN(amount) || !childFood.includes(type) || ! (childName in children)){
 			msg.author.send('feed syntax is feed <amount> <food|grain> <childname>')
 			return
@@ -807,12 +940,16 @@ function getNextChildName(children, childNames){
 	nextIndex = (numberOfChildren % 26 )
 	possibles = childNames['names'][nextIndex]
 	counter = 0
-	possibleName = possibles[ (Math.trunc( Math.random ( ) * possibles.length)+1)]
+	possibleName = possibles[ (Math.trunc( Math.random ( ) * possibles.length))]
 	while (counter < 10 && (possibleName in currentNames) ){
-		possibleName = possibles[ (Math.trunc( Math.random ( ) * possibles.length)+1)]	
+		possibleName = possibles[ (Math.trunc( Math.random ( ) * possibles.length))]	
 	}
 	if (counter == 10){
 		console.log('could not get a unique child name. '+currentNames+' tried:'+possibleName)
+	}
+	if (!possibleName){
+		console.log('Failed to get a possible name.  counter:'+counter+' nextIndex='+nextIndex)
+		possibleName = 'Bug'
 	}
 	return possibleName
 }
@@ -822,6 +959,7 @@ function addChild(mother, father){
 	child.father = father
 	child.age = -2
 	child.food = 0
+	child.gender = genders[ (Math.trunc( Math.random ( ) * genders.length))]
 	child.guardian = null
 	child.name = getNextChildName(children, allNames)
 	children[child.name] = child
@@ -1041,6 +1179,21 @@ function gather(playername, player, roll_value){
 		message+=('(-3 skill) ')
 		modifier -= 3
 	}
+	if (player.watching){
+		watchCount = player.watching.length
+		if (watchCount == 3){
+			message+= '(-2 kids) '
+			modifier-= 2
+		}
+		if (watchCount == 4){
+			message+= '(-4 kids) '
+			modifier-= 4
+		}
+		if (watchCount > 4){
+			console.log(' gather with more than 4 kids shoild not happen')
+			return ' fails to get anything, too many kids in the way'
+		}
+	}
 	netRoll = roll_value + modifier
 	console.log('gather roll:'+roll_value+' mod:'+modifier+' net:'+netRoll)
 	gatherData = locations[currentLocationName]['gather']
@@ -1075,15 +1228,17 @@ function gather(playername, player, roll_value){
 function craft(playername, player, type, roll_value){
 	console.log('craft type'+type+' roll '+roll_value)
 	player.worked = true
-	if (roll_value != 1) {
-		if (type == 'basket'){
-			player.basket += 1
-		} else {
-			player.spearhead += 1
-		}
-		return ' crafts a '+type
+	if (player.profession != 'crafter'){
+		roll_value -= 1
 	}
-	return 'crafts a worthless '+type
+	if (roll_value > 1 && type == 'basket'){
+			player.basket += 1
+	} else if (roll_value > 2 && type == 'spearhead') {		
+			player.spearhead += 1
+	} else {
+		return 'crafts a worthless '+type
+	}
+	return ' crafts a '+type
 }
 function assist(playername, player, helpedPlayer){
 	player.worked = true
