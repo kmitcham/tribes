@@ -190,6 +190,7 @@ function handleCommand(msg, author, player, command, bits){
 		msg.reply(roll(bits[1]))
 		return
 	}
+
 	if (command == 'foodcheck'){
 		message = checkFood()
 		msg.author.send( message)
@@ -350,6 +351,53 @@ function handleCommand(msg, author, player, command, bits){
 		workRound = false
 		foodRound = false
 		reproductionRound = true
+	}
+	if (command == 'watch'){
+		if (bits.length < 2){
+			msg.author.send('watch <childName> <childName>  <childName>  <childName> ')
+			return		
+		}
+		// watch up to 5
+		// set guardian - if set, steal from previous
+		// add to watching on person
+	}
+	if (command == 'ignore'){
+		// delete guardian
+		// update watching
+	}
+	if (command == 'editchild'){
+		childProperties = ['mother','father','age','food','guardian','name']
+		if (!referees.includes(actor)){
+			msg.author.send(command+' requires referee priviliges')
+			return
+		}
+		if (bits.length != 4){
+			msg.author.send('editchild <childname> <attribute> <value>')
+			return		
+		}
+		childName = bits[1]
+		attribute = bits[2]
+		value = bits[3]
+		child = children[childName]
+		if (!child){
+			msg.author.send('Could not find '+childName)
+			return
+		}
+		if (!childProperties.includes(attribute)){
+			msg.author.send('Legal properties to set are '+childProperties)
+			return
+		}
+		child[attribute] = value
+		children[childName] = child
+		message = childName +' now has values '
+		for (var type in child) {
+			if (Object.prototype.hasOwnProperty.call( child, type)) {
+				message+= ' '+type+' '+child[type]
+			}
+		}
+		msg.author.send(message)
+		return
+
 	}
 	if (command == 'edit'){
 		if (!referees.includes(actor)){
@@ -641,7 +689,7 @@ function handleCommand(msg, author, player, command, bits){
 	
 	}
 	// list the children
-	if (command === 'children'){
+	if (command == 'children'){
 		response = ''
 		childNames = Object.keys(children)
 		response = 'There are '+childNames.length+' children '
@@ -657,7 +705,7 @@ function handleCommand(msg, author, player, command, bits){
 				if (referees.includes(actor) || (actor === child.mother || actor === child.father) ){
 					response += child.mother+'+'+child.father
 				}
-				response += ' age:'+child.age+ ' food:'+child.food+')'
+				response += ' age:'+child.age+ ' food:'+child.food+')\n'
 			}
 		} 
 		msg.author.send(response)
@@ -780,7 +828,6 @@ function addChild(mother, father){
 	population[child.mother].isPregnant = child.name
 	return child
 }
-
 // convert the target to a string in Population, if possible
 function resolveTarget(target){
 	if (population[target]){

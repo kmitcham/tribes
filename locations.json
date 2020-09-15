@@ -9,8 +9,8 @@
 			[10,4,0,"wild vegetables"],
 			[11,5,0,"wild vegetables"],
 			[12,5,0,"wild vegetables"],
-			[13,6,0,"Succulent Yams"],
-			[14,6,0,"Succulent Yams"],
+			[13,6,0,"succulent yams"],
+			[14,6,0,"succulent yams"],
 			[15,0,6,"grain"]
 		],
 		"hunt":[
@@ -31,7 +31,7 @@
 		"game_track_recover":2,		
 		"gather":[
 			[7,3,0,"grubs"],
-			[8,0,3,"Grain"],
+			[8,0,3,"grain"],
 			[9,5,0,"small rodents"],
 			[10,6,0,"wild vegetables"],
 			[11,7,0,"wild vegetables"],
@@ -44,13 +44,13 @@
 			[9,2,"small game"],
 			[10,4,"small game"],
 			[11,8,"small game"],
-			[12,12,"small fish"],
-			[13,15,"waterfowl"],
+			[12,15,"fish"],
+			[13,25,"deer"],
 			[14,25,"deer"],
-			[15,30,"sea lion"],
-			[16,35,"alligator"],
-			[17,40,"sturgeon"],
-			[18,80,"hippo"]			
+			[15,30,"deer"],
+			[16,40,"deer"],
+			[17,50,"moose"],
+			[18,60,"bear"]			
 		]
 	},	
 	"marsh":{
@@ -64,10 +64,10 @@
 			[11,7,0,"eggs"],
 			[12,8,0,"wild vegetables"],
 			[13,8,0,"wild vegetables"],
-			[14,6,0,"Grain"],
-			[15,6,0,"Grain"],
-			[16,6,0,"Grain"],
-			[17,12,0,"Grain"]
+			[14,0,6,"grain"],
+			[15,0,6,"grain"],
+			[16,0,6,"grain"],
+			[17,0,12,"grain"]
 		],
 		"hunt":[
 			[9,2,"small game"],
@@ -93,7 +93,8 @@
 			[11,5,0,"eggs"],
 			[12,6,0,"wild vegetables"],
 			[13,6,0,"wild vegetables"],
-			[14,0,4,"Grain"],
+			[14,0,4,"grain"],
+			[15,0,4,"grain"],
 			[16,12,0,"ripe fruit and berries"]
 		],
 		"hunt":[
