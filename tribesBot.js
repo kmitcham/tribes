@@ -160,15 +160,15 @@ function handleCommand(msg, author, player, command, bits){
 		text+=' !inventory (show inventory and character info)\n'
 		text+=' !children (shows the children ages and food status)\n'
 		text+=' !foodcheck (examine the food situation for every adult and living child'
-		text+='-=Work Round Commands=-'
+		text+='\n-=Work Round Commands=-'
 		text+=' !hunt'
 		text+=' !gather'
 		text+=' !craft <spearhead|basket>'
 		text+=' !assist <hunter>'
-		text+='-=Food Round Commands=-'
+		text+='\n-=Food Round Commands=-'
 		text+=' !give <amt> <food|grain|spearhead|basket> <player>\n'
 		text+=' !feed <amt> <food|grain> <childName>\n'
-		text+='-=Reproduction Round Commands=-'
+		text+='\n-=Reproduction Round Commands=-'
 		text+=' !cuddle <target> (attempt to mate; if target reciprocates, make sure the referee notices'
 
 		msg.author.send( text)
@@ -188,6 +188,8 @@ function handleCommand(msg, author, player, command, bits){
 			text+=' startreproduction'
 			msg.author.send( text)
 		}
+		msg.delete({timeout: 3000}); //delete question command in 3sec 
+		return
 	}
 	if (command == 'roll'){
 		msg.reply(roll(bits[1]))
