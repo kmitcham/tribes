@@ -23,28 +23,74 @@ var referees = require('./referees.json');
 var locations = require('./locations.json');
 var allNames = require('./names.json')
 var seasonCounter = 1;
+gameTrack = {}
+for (locationName in locations){
+	gameTrack[locationName] = 0
+}
 var currentLocationName = "veldt";
 
 var workRound = true;
 var foodRound = false;
 var reproductionRound = false;
+var games = {}
 
+function initGame(gameName){
+	game = Object()
+	game.name = gameName
+	game.tribes = {}
+	game.gameTrack = {}
+	game.seasonCounter = 1
+	for (locationName in locations){
+		game.gameTrack[locationName] = 0
+	}
+	games[gameName]= game
+}
+function initTribe(game, tribeName){
+	tribe = Object()
+	tribe.name = tribeName
+	tribe.population = {}
+	tribe.children = {}
+	tribe.currentLocation = 'veldt'
+	game.tribes[tribeName] = tribe
+}
 function isColdSeason(){
 	return (seasonCounter%2 == 0);
 }
 function getYear(){
 	return seasonCounter/2;
 }
+function getYearMessage(){
+	response = 'Year '+seasonCounter/2
+	if (seasonCounter%2==0){
+		response += ' cold season'
+	} else {
+		response += ' warm season'
+	}
+	return response;
+}
+function gameState(){
+	message = "Year "+(seasonCounter/2)+', '
+	season = 'warm season.'
+	if (isColdSeason()){
+		season = 'cold season.'
+	}
+	var numAdults = (Object.keys(population)).length
+	var numKids = (Object.keys(children)).length
+
+	message+=season+'The tribe has '+numAdults+' adults and '+numKids+' children'
+	message+= ' The '+currentLocationName+' game track is at '+ gameTrack[currentLocationName]
+	return message
+}
 function nextSeason(){
 	if (isColdSeason()){
 		for (locationName in locations){
 			modifier = locations[locationName]['game_track_recover']
-			oldTrack = locations[locationName]['game_track']
+			oldTrack = gameTrack[locationName]
 			locations[locationName]['game_track'] -= modifier
-			if (locations[locationName]['game_track'] < 0){
-				locations[locationName]['game_track'] = 0
+			if (gameTrack[locationName]< 0){
+				gameTrack[locationName] = 0
 			}
-			console.log(locationName+' game_track moves from '+oldTrack+' to '+locations[locationName]['game_track'])
+			console.log(locationName+' game_track moves from '+oldTrack+' to '+gameTrack[locationName])
 		}
 	}
 	seasonCounter += 1
@@ -114,27 +160,8 @@ function personByName(name){
 }
 function capitalizeFirstLetter(string) {
 	return string.charAt(0).toUpperCase() + string.slice(1);
-  }
-function displayPlayer(player){
-	message = ""
-	if (! player.gender){
-		console.log('bad player display')
-		return "buggy player has no gender"
-	}
-	message += "gender:"+ player.gender
-	message += " profession:"+ player.profession
-	message += "gender:"+ player.gender
-	message += "gender:"+ player.gender
-	big_message = ''
-	message =  'player has'
-	for (var type in player) {
-		if (Object.prototype.hasOwnProperty.call( player, type)) {
-			message+= '\n\t '+type+' '+player[type]
-		}
-	}
-	big_message += message +'\n'
-	return big_message
 }
+
 function chanceRoll(msg){
 	msg.reply('Do a chance roll!')
 	return
@@ -188,7 +215,7 @@ function handleCommand(msg, author, player, command, bits){
 			text+=' startreproduction'
 			msg.author.send( text)
 		}
-		msg.delete({timeout: 3000}); //delete question command in 3sec 
+		msg.delete({timeout: 3000}); //delete command in 3sec 
 		return
 	}
 	if (command == 'roll'){
@@ -199,6 +226,7 @@ function handleCommand(msg, author, player, command, bits){
 	if (command == 'foodcheck'){
 		message = checkFood()
 		msg.author.send( message)
+		msg.delete({timeout: 3000}); //delete command in 3sec 
 		return
 	}
 	if (command == 'cuddle'){
@@ -247,6 +275,7 @@ function handleCommand(msg, author, player, command, bits){
 		}
 		if (player.isInjured == true){
 			msg.author.send('you can not work while you are injured')
+			return
 		}
 		if (player.worked == true){
 			msg.author.send('You cannot work (again) this round')
@@ -329,19 +358,13 @@ function handleCommand(msg, author, player, command, bits){
 			nextSeason()
 		}
 		chanceRoll(msg)
-		message = "\n<===== Year "+(seasonCounter/2)+', '
-		season = 'warm season.'
-		if (isColdSeason()){
-			season = 'cold season.'
-		}
-		var numAdults = (Object.keys(population)).length
-		var numKids = (Object.keys(children)).length
-		message+=season+'.  The tribe has '+numAdults+' adults and '+numKids+' children ====>\n'
+		message = gameState()
 		msg.reply(message)
 		msg.reply('\nStarting the work round.  Hunt, gather, or craft')
 		workRound = true
 		foodRound = false
 		reproductionRound = false
+		return
 	}
 	if (command == 'startfood' || command.startsWith('startf')){
 		if (!referees.includes(actor)){
@@ -361,7 +384,7 @@ function handleCommand(msg, author, player, command, bits){
 		workRound = false
 		foodRound = true
 		reproductionRound = false
-		// clear work flags
+		return
 	}
 	if (command == 'startreproduction' || command.startsWith('startr')){
 		if (!referees.includes(actor)){
@@ -380,9 +403,74 @@ function handleCommand(msg, author, player, command, bits){
 		foodMessage = consumeFood()
 		msg.reply(foodMessage)
 		msg.reply('Starting the Reproduction round; invite other tribe members to reproduce (not automated)')
+		msg.reply(' The tribe can decide to move to a new location, but the injured and children under 2 will need 2 food')
 		workRound = false
 		foodRound = false
 		reproductionRound = true
+		return
+	}
+	if (command == 'changelocation' ){
+		if (!referees.includes(actor)){
+			msg.author.send(command+' requires referee priviliges')
+			return
+		}
+		newLocation = bits[1]
+		legalLocations = Object.keys(locations)
+		if (!legalLocations.includes(newLocation) ){
+			msg.author.send(newLocation+' not a valid location.  Valid locations:'+legalLocations)
+			return
+		}
+		msg.reply('Setting the current location to '+newLocation)
+		currentLocation = newLocation
+		// every injured person pays 2 food, or dies.
+		deceasedPeople = []
+		deceasedChildren = []
+		for (personName in population){
+			person = personByName(personName)
+			need = 2
+			eaten = 0
+			while (eaten < need){
+				if (person.food > 0 ){
+					person.food--
+					eaten++
+				} else if (person.grain > 0){
+					person.grain--
+					eaten++
+				}else {
+					deceasedPeople.push(personName)
+				}
+			}
+		}
+		for (childName in children){
+			child = children[childName]
+			// child age is in seasons
+			if (child.age < 5){
+				if (child.food < 2){
+					deceasedChildren.push(childName)
+				}
+			}
+		}
+		if (deceasedPeople.length > 0 || deceasedChildren.length > 0){
+			response = 'The following people died along the way:'
+			// every child under 2 needs 2 food, or dies
+			// clean up the dead
+			var perishedCount = deceasedPeople.length;
+			for (var i = 0; i < perishedCount; i++) {
+				corpse = deceasedPeople[i]
+				console.log('leaving the corpse '+corpse)
+				response+= " "+corpse
+				delete population[corpse]
+			}
+			perishedCount = deceasedChildren.length;
+			for (var i = 0; i < perishedCount; i++) {
+				corpse = deceasedChildren[i]
+				console.log('removing corpse '+corpse)
+				response+= " "+corpse
+				delete children[corpse]
+			}
+			msg.reply(response)
+		}
+		return
 	}
 	if (command == 'leastwatched'){
 		// watch score = 6 if unwatched; otherwise is the length of the watchers 'watching' array
@@ -425,6 +513,7 @@ function handleCommand(msg, author, player, command, bits){
 		unluckyIndex = Math.trunc( Math.random ( ) * leastWatched.length)
 		leastWatchedName = leastWatched[unluckyIndex].name
 		msg.reply(leastWatchedName+' is the least watched child. ' )
+		msg.delete({timeout: 3000}); //delete command in 3sec 
 		return 
 	}
 	if (command == 'watch'){
@@ -632,14 +721,15 @@ function handleCommand(msg, author, player, command, bits){
 			return
 		}
 		var target = msg.mentions.users.first()
-		if (target && referees.includes(actor)){
+		if (target ){
 			if (population[target.username]){
 				delete population[target.username]
 				msg.reply(target.username+' is banished from the tribe')
 				return
 			}
 		} else {
-
+			msg.author.send(command+' could not find '+target)
+			return
 		}
 	}
 	// add a person to the tribe
@@ -715,7 +805,7 @@ function handleCommand(msg, author, player, command, bits){
 			targetName = resolveTarget(target)
 		
 			if (isNaN(amount) || ! types.includes(type)){
-				msg.author.send('award syntax is give  <amount> <food|grain|spearhead|basket> <recipient>')
+				msg.author.send('award syntax is award <amount> <food|grain|spearhead|basket> <recipient>')
 				return
 			}
 			if (!population[target] ) {
@@ -724,7 +814,7 @@ function handleCommand(msg, author, player, command, bits){
 			}
 			msg.reply(actor+' awarding '+amount+' '+type+' to '+target)
 			if (msg.mentions.users && msg.mentions.users.first()){
-				msg.mentions.users.first().send('You earned '+amount+' '+type)
+				msg.reply('The game awards '+targetName+' with '+amount+' '+type)
 			}
 			if (!population[target][type]){
 				population[target][type] = Number(amount)
@@ -762,13 +852,15 @@ function handleCommand(msg, author, player, command, bits){
 			message += ' is injured'
 		}
 		msg.author.send(message)
+		msg.delete({timeout: 3000}); //delete command in 3sec 
 		return
 	}
 	// how much stuff does the target have?  if used by ref with no args, list whole population
 	if (command == 'list' || command == 'inventory'){
+		msg.delete({timeout: 3000}); //delete command in 3sec 
 		if (bits.length == 1){
 			if (referees.includes(actor)){
-				big_message = ''
+				big_message = 'list:\n'
 				for (var target in population){
 					message = target +' has '
 					for (var type in population[target]) {
@@ -812,7 +904,7 @@ function handleCommand(msg, author, player, command, bits){
 				msg.author.send(message)
 			}
 		}
-	
+		return
 	}
 	// list the children
 	if (command == 'children'){
@@ -839,6 +931,7 @@ function handleCommand(msg, author, player, command, bits){
 			}
 		} 
 		msg.author.send(response)
+		msg.delete({timeout: 3000}); //delete command in 3sec 
 		return
 	}
   	// add food to a child
@@ -933,7 +1026,11 @@ function handleCommand(msg, author, player, command, bits){
 	if (command === 'foodcheck'){
 		msg.author.send(foodCheck())
 		return
-	}	
+	}
+	msg.author.send('TribesBot did not understand the command '+bits)
+	msg.author.send('Try !help ')
+	msg.delete({timeout: 3000}); //delete command in 3sec 
+	return	
 }
 
 function getNextChildName(children, childNames){
@@ -993,7 +1090,7 @@ function clearWorkFlags(population){
 		}
 		if (person.isInjured && person.isInjured == true && person.worked == false){
 			// did not work means rested
-			person.isInjured == false
+			person.isInjured = false
 		}
 		person.worked = false
 	}
@@ -1322,9 +1419,9 @@ function hunt(playername, player, roll_value){
 	if (player.helpers ){
 		huntercount += length(player.helpers)
 	}
-	var oldTrack = locations[currentLocationName]['game_track'] 
-	locations[currentLocationName]['game_track'] += huntercount
-	console.log('Game Track for '+currentLocationName+' advnced from '+oldTrack+' to '+locations[currentLocationName]['game_track'])
+	var oldTrack = gameTrack[currentLocationName]
+	gameTrack[currentLocationName] += huntercount
+	console.log('Game Track for '+currentLocationName+' advanced from '+oldTrack+' to '+gameTrack[currentLocationName])
 	// clear the stuff for group hunting
 	if (player.bonus && player.bonus != 0){
 		player.bonus = 0
