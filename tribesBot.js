@@ -13,63 +13,84 @@ const types = ['food', 'grain', 'basket', 'spearhead']
 const professions= ['hunter','gatherer', 'crafter']
 const member_properties = ['canCraft','isNursing','isPregnant','isInjured','guarding','profession','gender','partner','worked','food','grain', 'handle']
 const genders = ['male','female']
+const locations = require('./locations.json');
+const allNames = require('./names.json')
 const locationDecay = [20,20,20,17,17,
 					15,15,14,14,13,
 					13,12,12,11,11,
 					10,10,9,9,8]
-var population = require('./population.json')
-var children = require('./children.json');
-var referees = require('./referees.json');
-var locations = require('./locations.json');
-var allNames = require('./names.json')
-var seasonCounter = 1;
-gameTrack = {}
-for (locationName in locations){
-	gameTrack[locationName] = 0
-}
-var currentLocationName = "veldt";
+
+var gameState = Object()
+var referees = ["kevinmitcham", "@kevinmitcham"]
+//var referees = require('./referees.json')
 
 var workRound = true;
 var foodRound = false;
 var reproductionRound = false;
 var games = {}
 
-function initGame(gameName){
-	game = Object()
-	game.name = gameName
-	game.tribes = {}
-	game.gameTrack = {}
-	game.seasonCounter = 1
-	for (locationName in locations){
-		game.gameTrack[locationName] = 0
+function loadJson(fileName){
+	let rawdata = fs.readFileSync(fileName);
+	return JSON.parse(rawdata);	
+}
+function loadGame(gameName){
+	if (fs.existsSync('./gameState.json')) {
+		gameState = loadJson('./gameState.json') 
+	} else {
+		initGame(gameName)
 	}
-	games[gameName]= game
+	if (fs.existsSync('./population.json')) {
+		population = loadJson('./population.json') 
+	}  else {
+		population = {}
+	}
+	if (fs.existsSync('./children.json')) {
+		children = loadJson('./children.json') 
+	} else {
+		children = {}
+	}
+}
+
+function initGame(gameName){
+	gameState.seasonCounter = 1
+	gameState.gameTrack = {}
+	gameState.name = gameName
+	for (locationName in locations){
+		gameState.gameTrack[locationName] = 0
+	}
+	gameState.currentLocationName = "veldt";
+	gameState.graveyard = {}
+	population = {}
+	children = {}
+	graveyard = {}
+	return
 }
 function initTribe(game, tribeName){
 	tribe = Object()
 	tribe.name = tribeName
 	tribe.population = {}
 	tribe.children = {}
-	tribe.currentLocation = 'veldt'
+	tribe.graveyard = {}
+	tribe.gameState.currentLocation = 'veldt'
 	game.tribes[tribeName] = tribe
 }
 function isColdSeason(){
-	return (seasonCounter%2 == 0);
+	return (gameState.seasonCounter%2 == 0);
 }
 function getYear(){
-	return seasonCounter/2;
+	return gameState.seasonCounter/2;
 }
 function getYearMessage(){
-	response = 'Year '+seasonCounter/2
-	if (seasonCounter%2==0){
+	response = 'Year '+gameState.seasonCounter/2
+	if (gameState.seasonCounter%2==0){
 		response += ' cold season'
 	} else {
 		response += ' warm season'
 	}
 	return response;
 }
-function gameState(){
-	message = "Year "+(seasonCounter/2)+', '
+function gameStateMessage(){
+	message = "Year "+(gameState.seasonCounter/2)+', '
 	season = 'warm season.'
 	if (isColdSeason()){
 		season = 'cold season.'
@@ -78,22 +99,22 @@ function gameState(){
 	var numKids = (Object.keys(children)).length
 
 	message+=season+'The tribe has '+numAdults+' adults and '+numKids+' children'
-	message+= ' The '+currentLocationName+' game track is at '+ gameTrack[currentLocationName]
+	message+= ' The '+gameState.currentLocationName+' game track is at '+ gameState.gameTrack[gameState.currentLocationName]
 	return message
 }
 function nextSeason(){
 	if (isColdSeason()){
 		for (locationName in locations){
 			modifier = locations[locationName]['game_track_recover']
-			oldTrack = gameTrack[locationName]
-			locations[locationName]['game_track'] -= modifier
-			if (gameTrack[locationName]< 0){
-				gameTrack[locationName] = 0
+			oldTrack = gameState.gameTrack[locationName]
+			gameState.gameTrack[locationName]  -= modifier
+			if (gameState.gameTrack[locationName]< 0){
+				gameState.gameTrack[locationName] = 0
 			}
-			console.log(locationName+' game_track moves from '+oldTrack+' to '+gameTrack[locationName])
+			console.log(locationName+' game_track moves from '+oldTrack+' to '+gameState.gameTrack[locationName])
 		}
 	}
-	seasonCounter += 1
+	gameState.seasonCounter += 1
 }
 
 bot.on('message', msg => {
@@ -106,7 +127,12 @@ bot.on('message', msg => {
   processMessage(msg)
 });
 
-function saveGameState(){
+function savegameState(){
+	fs.writeFile("gameState.json", JSON.stringify(gameState), err => { 
+		// Checking for errors 
+		if (err) throw err;  
+		console.log("Done saving gameState"); // Success
+	}); 
 	fs.writeFile("population.json", JSON.stringify(population), err => { 
 		// Checking for errors 
 		if (err) throw err;  
@@ -131,27 +157,20 @@ function processMessage(msg){
 	bits = msg.content.split(' ')
 	command = bits[0]
 	command = command.toLowerCase().substring(1) // strip out the leading !
-	console.log('command:'+command+' bits:'+bits+' actor:'+actor )  
-
-	if (command == 'join'){
-		 addToPopulation(msg, author, bits, actor, author)
-	}
-	if (!population[actor]  && !referees.includes(actor)){
-		msg.author.send('You must join the tribe use commands: join <hunter|gatherer|crafter> <male|female> ')
-		// disabled for alpha testing
-		// return
-	}
-	player = population[actor]
-	handleCommand(msg, author, player,  command, bits)
-
+	console.log('command:'+command+' bits:'+bits+' actor:'+author.username )  
+	handleCommand(msg, author, actor,  command, bits)
 	return	
 }
 
 function personByName(name){
+	if (name == null){
+		console.log('attempt to find person for null name '+name)
+		return null
+	}
 	if (population[name] != null){
 		return population[name]
 	}
-	if (population[name.username] != null){
+	if (name && population[name.username] != null){
 		return population[name.username]
 	}
 
@@ -177,8 +196,11 @@ function roll(count){
 		}
 		return total
 }
-function handleCommand(msg, author, player, command, bits){
-	actor = author.username
+function handleCommand(msg, author, actor, command, bits){
+	player = personByName(actor)
+	channelName = msg.channel.name
+	msgChannelType = msg.channel.type
+	console.log('channel '+channelName+' type'+msgChannelType)
 	// list commands
 	if (command === 'help'){
 		text = ''
@@ -186,6 +208,7 @@ function handleCommand(msg, author, player, command, bits){
 		text+=' !list (show inventory and character info)\n'
 		text+=' !inventory (show inventory and character info)\n'
 		text+=' !children (shows the children ages and food status)\n'
+		text+=' !leastwatched (shows the least supervised child (ties resolved randomly))\n'
 		text+=' !foodcheck (examine the food situation for every adult and living child'
 		text+='\n-=Work Round Commands=-'
 		text+=' !hunt'
@@ -203,16 +226,18 @@ function handleCommand(msg, author, player, command, bits){
 		if (referees.includes(actor)){
 			text+='\nReferee Commands\n'
 			text+=' edit target <canCraft|isNursing|isPregnant|profession|gender|partner|worked|food|grain> <value>\n' 
+			text+=' editchild <food|age|mother|father> <value>\n' 
 			text+=' award <amt> <food|grain|spearhead|basket> <player>\n'
 			text+=' list <player>  (no arg lists all players)\n '
 			text+=' induct|banish <player> add a member to the tribe\n'
 			text+=' promote|demote <player> to the ref list\n'
+			text+=' spawn <mother> <father> add a child with parents\n'
 			text+=' save the game file (automatically done at the start of every work round)\n'
 			text+=' load the saved file\n'
-			text+=' spawn <mother> <father>  add a child with parents\n'
-			text+=' startwork (begins the work round, enabling work attempts and rolls;)'
-			text+=' startfood (ends the work round; subtract food/grain; birth; child age increase)'
-			text+=' startreproduction'
+			text+=' changelocation <newlocation>\n'
+			text+=' startwork (begins the work round, enabling work attempts and rolls)\n'
+			text+=' startfood (ends the work round; subtract food/grain; birth; child age increase)\n'
+			text+=' startreproduction (Players verbally express intentions, use spawn.  Also when location can change)\n'
 			msg.author.send( text)
 		}
 		msg.delete({timeout: 3000}); //delete command in 3sec 
@@ -339,6 +364,20 @@ function handleCommand(msg, author, player, command, bits){
 			return	
 		}
 	}
+	if (command.startsWith('initg')){
+		if (!referees.includes(actor)){
+			msg.author.send(command+' requires referee priviliges')
+			return
+		}
+		if (bits.length > 1){
+			initGame(bits[1])
+		} else {
+			initGame()
+		}
+		msg.reply('starting game with initial conditions')
+		msg.reply(gameStateMessage())
+		return
+	}
 	if (command == 'startwork' || command.startsWith('startw')){
 		if (!referees.includes(actor)){
 			msg.author.send(command+' requires referee priviliges')
@@ -352,13 +391,14 @@ function handleCommand(msg, author, player, command, bits){
 			msg.author.send('Can only go to work from reproduction')
 			return 
 		}
-		saveGameState()
+		savegameState()
+		gameStateMessage()
 		// advance the calendar; the if should only skip on the 0->1 transition
 		if (workRound == false){
 			nextSeason()
 		}
 		chanceRoll(msg)
-		message = gameState()
+		message = gameStateMessage()
 		msg.reply(message)
 		msg.reply('\nStarting the work round.  Hunt, gather, or craft')
 		workRound = true
@@ -523,7 +563,11 @@ function handleCommand(msg, author, player, command, bits){
 		}
 		person = population[actor]
 		if (person.watching && person.watching.length > 4){
-			msg.author.send('You are already watching a lot of children: '+person.watching)
+			msg.author.send('You are already watching enough children: '+person.watching)
+			return
+		}
+		if (workRound == true){
+			msg.author.send('You can not change watch status during the work round')
 			return
 		}
 		childName = bits[1]
@@ -828,6 +872,9 @@ function handleCommand(msg, author, player, command, bits){
 	}
 	if (command == 'inventory'){
 		target = bits[1]
+		if (!target){
+			target = actor
+		}
 		person = personByName(target)
 		if (!person || person == null){
 			msg.author.send(target+' does not seem to be a person')
@@ -985,7 +1032,7 @@ function handleCommand(msg, author, player, command, bits){
 		return
 	} 
 	if (command == 'scout'){
-		message = "\n<===== Year "+(seasonCounter/2)+', '
+		message = "\n<===== Year "+(gameState.seasonCounter/2)+', '
 		season = 'warm season.'
 		if (isColdSeason()){
 			season = 'cold season.'
@@ -1262,7 +1309,44 @@ function consumeFood(){
 	
 	return response
 }
-
+function kill(name, message){
+	if (! message || message == ''){
+		message = 'unknown causes'
+	}
+	if (name in population){
+		unsetGuardian(name)
+		person = population[name]
+		person.deathMessage = message
+		gameState.graveyard[name] = person
+		delete population[name]
+	} else if (name in children){
+		unwatchChild(name)
+		child = children[name]
+		child.deathMessage = message
+		gameState.graveyard[name] = child
+		delete children[name]
+	} else {
+		console.log('Tried to kill '+name+' but could not find them')
+	}
+	return 
+}
+function unsetGuardian(watcherName, children){
+	for (childName in children){
+		child = children[childName]
+		if (child.guardian && child.guardian == watcherName){
+			child.guardian = ''
+		}
+	}
+}
+function unwatchChild(childName, population){
+	for (personName in population){
+		person = population[personName]
+		if (person.watching && person.watching.indexOf(childName) != -1){
+			childIndex = person.watching.indexOf(childName)
+			person.watching.splice(childIndex, 1);
+		}
+	}
+}
 //////////////////////////////////////////////////////////
 /////  WORK SECTION   
 /////////////////////////////////////////////////////////
@@ -1295,7 +1379,7 @@ function gather(playername, player, roll_value){
 	}
 	netRoll = roll_value + modifier
 	console.log('gather roll:'+roll_value+' mod:'+modifier+' net:'+netRoll)
-	gatherData = locations[currentLocationName]['gather']
+	gatherData = locations[gameState.currentLocationName]['gather']
 	for (var i = 0; i < gatherData.length; i++){
 		if (netRoll <= gatherData[i][0]){
 			player.food += gatherData[i][1]
@@ -1335,9 +1419,9 @@ function craft(playername, player, type, roll_value){
 	} else if (roll_value > 2 && type == 'spearhead') {		
 			player.spearhead += 1
 	} else {
-		return 'crafts a worthless '+type
+		return playername+ ' crafts a worthless '+type
 	}
-	return ' crafts a '+type
+	return playername+' crafts a '+type
 }
 function assist(playername, player, helpedPlayer){
 	player.worked = true
@@ -1401,11 +1485,11 @@ function hunt(playername, player, roll_value){
 	} else {
 		// rewards section
 		netRoll = roll_value + mods
-		if (netRoll > locationDecay[locations[currentLocationName]['game_track']]){
+		if (netRoll > locationDecay[locations[gameState.currentLocationName]['game_track']]){
 			message += ' (less game found)'
-			netRoll = locationDecay[locations[currentLocationName]['game_track']]
+			netRoll = locationDecay[locations[gameState.currentLocationName]['game_track']]
 		}
-		huntData = locations[currentLocationName]['hunt']
+		huntData = locations[gameState.currentLocationName]['hunt']
 		for (var i = 0; i < huntData.length; i++){
 			if (netRoll <= huntData[i][0]){
 				message += huntData[i][2] + ' +'+huntData[i][1]+' food'
@@ -1419,9 +1503,9 @@ function hunt(playername, player, roll_value){
 	if (player.helpers ){
 		huntercount += length(player.helpers)
 	}
-	var oldTrack = gameTrack[currentLocationName]
-	gameTrack[currentLocationName] += huntercount
-	console.log('Game Track for '+currentLocationName+' advanced from '+oldTrack+' to '+gameTrack[currentLocationName])
+	var oldTrack = gameState.gameTrack[gameState.currentLocationName]
+	gameState.gameTrack[gameState.currentLocationName] += huntercount
+	console.log('Game Track for '+gameState.currentLocationName+' advanced from '+oldTrack+' to '+gameState.gameTrack[gameState.currentLocationName])
 	// clear the stuff for group hunting
 	if (player.bonus && player.bonus != 0){
 		player.bonus = 0
@@ -1434,5 +1518,6 @@ function hunt(playername, player, roll_value){
 
 bot.once('ready', ()=>{
 	console.log('bot is alive')
+	loadGame('default')
   })   
 bot.login(auth['token'])

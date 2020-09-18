@@ -1,6 +1,5 @@
 {
 	"veldt":{
-		"game_track":1,
 		"game_track_recover":3,
 		"gather":[
 			[7,2,0,"grubs"],
@@ -27,7 +26,6 @@
 		]
 	},
 	"forest":{
-		"game_track":1,
 		"game_track_recover":2,		
 		"gather":[
 			[7,3,0,"grubs"],
@@ -54,7 +52,6 @@
 		]
 	},	
 	"marsh":{
-		"game_track":1,
 		"game_track_recover":3,		
 		"gather":[
 			[7,4,0,"clams"],
@@ -83,7 +80,6 @@
 		]
 	},
 	"hills":{
-		"game_track":1,
 		"game_track_recover":2,
 		"gather":[
 			[7,2,0,"grubs"],
