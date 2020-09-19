@@ -64,6 +64,10 @@ function initGame(gameName){
 	population = {}
 	children = {}
 	graveyard = {}
+	workRound = true;
+	foodRound = false;
+	reproductionRound = false;
+	chanceRound = false;
 	return
 }
 function initTribe(game, tribeName){
@@ -298,7 +302,7 @@ function handleCommand(msg, author, actor, command, bits){
 			msg.author.send('Only tribe members can work.  Maybe !join')
 			return
 		}
-		if (player.isInjured == true){
+		if (person.isInjured && person.isInjured != 'false'){
 			msg.author.send('you can not work while you are injured')
 			return
 		}
@@ -332,8 +336,19 @@ function handleCommand(msg, author, actor, command, bits){
 			msg.reply( message )
 			return	
 		} else if (command == 'assist'){
-			target = msg.mentions.users.first()
-			message = assist(author.username, player, target)
+			var target = ''
+			if (bits.length > 1){
+				target = bits[1]
+			} 
+			if (msg.mentions.users.first()){
+				target= msg.mentions.users.first().username
+			}
+			assistedPlayer = personByName(target)
+			if (!assistedPlayer){
+				msg.author.send('Could not find '+target)
+				return	
+			}
+			message = assist(author.username, player, assistedPlayer)
 			msg.reply( message )
 			return	
 		} else if (command == 'train'){
@@ -947,7 +962,7 @@ function handleCommand(msg, author, actor, command, bits){
 			message += '\n is nursing '+person.isNursing
 		}
 		if (person.isInjured && person.isInjured != 'false' ){
-			message += '\n is injured and unable to work this season'
+			message += '\n is injured and unable to work'
 		}
 		msg.author.send(message)
 		msg.delete({timeout: 3000}); //delete command in 3sec 
@@ -1172,7 +1187,7 @@ function clearWorkFlags(population){
 			console.log('null person for name '+targetname)
 			continue
 		}
-		if (person.isInjured && person.isInjured == true && person.worked == false){
+		if (person.isInjured && person.isInjured != 'false' && person.worked == false){
 			// did not work means rested
 			person.isInjured = false
 		}
@@ -1525,6 +1540,7 @@ function hunt(playername, player, roll_value){
 		modifier -= 1
 	}
 	if (player.bonus && player.bonus >0 ){
+		player.bonus = Math.trunc(player.bonus)
 		if (player.bonus > 3){
 		  mods += 3
 		} else {
