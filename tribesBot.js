@@ -177,6 +177,14 @@ function randomMemberName(){
 	var random =  Math.trunc( Math.random ( ) * nameList.length )
 	return nameList[random]
 }
+function countByType(dictionary, key, value){
+	count = 0
+	for (name in dictionary){
+		element = dictionary[name]
+		if (element[key] && element[key] == value){ count++}
+	}
+	return count
+}
 function doChance(rollValue){
 	chanceRoll = Number(rollValue)
 	if (!rollValue || rollValue < 3 || rollValue > 18 ){
@@ -323,7 +331,8 @@ function handleCommand(msg, author, actor, command, bits){
 		text+=' !children (shows the children ages and food status)\n'
 		text+=' !watch | !ignore <child>   take on child care responsibilities for the child'
 		text+=' !leastwatched (shows the least supervised child (ties resolved randomly))\n'
-		text+=' !foodcheck (examine the food situation for every adult and living child\n'
+		text+=' !foodcheck (examine the food situation for every adult and living child)\n'
+		text+=' !ready (list who is still available to work)\n'
 		text+=' !graveyard (list of all deceased members and children)\n'
 		text+=' !scout (see the current location, year, season and local game)\n'
 		text+='-=Work Round Commands=-\n'
@@ -406,6 +415,29 @@ function handleCommand(msg, author, actor, command, bits){
 		msg.reply(response)
 		return
 	}
+	if (command == 'addchild'){
+		if (!referees.includes(actor)){
+			msg.author.send(command+' requires referee priviliges')
+			return
+		}
+		var mother = 'unknown'
+		var father = 'unknown'
+		if (msg.mentions.users.first() && msg.mentions.users.last() ){
+			mother = msg.mentions.users.first().username
+			father = msg.mentions.users.last().username
+		} else {
+			mother = bits[1]
+			father = bits[2]
+		}
+		if (!population[mother] || !population[father]){
+			msg.author.send('Parents not found in tribe')
+			msg.delete({timeout: 3000}); //delete command in 3sec 
+			return
+		}
+		child = addChild(mother, father)	
+		msg.reply("The referee adds a child ")
+		return
+	}
 	if (command == 'kill'){
 		if (!referees.includes(actor)){
 			msg.author.send(command+' requires referee priviliges')
@@ -429,6 +461,12 @@ function handleCommand(msg, author, actor, command, bits){
 		msg.reply('The referee kills '+targetName)
 		return
 	}
+	if (command == 'ready'){
+		message = "People available to work: "+listReadyToWork(population)
+		msg.reply(message)
+		return
+	}
+
 	// WORK ROUND COMMANDS
 	if (command == 'gather' 
 		|| command == 'craft'
@@ -437,46 +475,58 @@ function handleCommand(msg, author, actor, command, bits){
 		|| command == 'train'
 		){
 		var message = 'no work done'	
+		//////////////////////////////
+		/// shared work checks
+		/////////////////////////////
 		if (workRound == false ){
 			msg.author.send('Can only work during the work round')
+			msg.delete({timeout: 3000}); //delete command in 3sec 
 			return
 		}
 		if (player == null){
 			msg.author.send('Only tribe members can work.  Maybe !join')
+			msg.delete({timeout: 3000}); //delete command in 3sec 
 			return
 		}
 		if (player.isInjured && player.isInjured != 'false'){
 			msg.author.send('you can not work while you are injured')
+			msg.delete({timeout: 3000}); //delete command in 3sec 
 			return
 		}
 		if (player.worked == true){
 			msg.author.send('You cannot work (again) this round')
+			msg.delete({timeout: 3000}); //delete command in 3sec 
 			return			
 		}
+		//// begin work; fail and return, or generate a success message
 		if (command == 'gather'){
 			if (player.watching && player.watching.length > 5){
 				msg.author.send('You can not gather while watching more than 5 children.  You are watching '+player.watching)
+				msg.delete({timeout: 3000}); //delete command in 3sec 
 				return
 			}
 			message = gather( author.username, player, roll(3))
-			msg.reply( message )// this should go to the channel!
-			return
-		} else if (command == 'craft'){
+		} 
+		if (command == 'craft'){
 			type = bits[1]
 			if (player.canCraft == false){
 				msg.author.send('You do not know how to craft')
+				msg.delete({timeout: 3000}); //delete command in 3sec 
 				return
 			}
 			if (player.watching && player.watching.length > 2){
 				msg.author.send('You can not craft while watching more than 2 children.  You are watching '+player.watching)
+				msg.delete({timeout: 3000}); //delete command in 3sec 
 				return
 			}
 			if (type != 'basket' && type != 'spearhead'){
 				msg.author.send('Must craft basket or spearhead')
+				msg.delete({timeout: 3000}); //delete command in 3sec 
 				return	
 			}
 			message = craft( author.username, player, type, roll(1))
-		} else if (command == 'assist'){
+		} 
+		if (command == 'assist'){
 			var target = ''
 			if (bits.length > 1){
 				target = bits[1]
@@ -487,42 +537,49 @@ function handleCommand(msg, author, actor, command, bits){
 			assistedPlayer = personByName(target)
 			if (!assistedPlayer){
 				msg.author.send('Could not find '+target)
+				msg.delete({timeout: 3000}); //delete command in 3sec 
 				return	
 			}
 			message = assist(author.username, player, assistedPlayer)
-			msg.reply( message + target )
-			return	
-		} else if (command == 'train'){
+			message += target 
+		} 
+		if (command == 'train'){
 			if (player.canCraft){
 				msg.author.send('You already know how to craft')
+				msg.delete({timeout: 3000}); //delete command in 3sec 
 				return
 			}
 			if (player.watching && player.watching.length > 2){
 				msg.author.send('You can not learn crafting while watching more than 2 children.  You are watching '+player.watching)
 				return
 			}
-			if ( roll(2) >=10 ){
-				player.canCraft = true
-				message = playername+' learns to craft.'
+			crafters = countByType(population, 'canCraft', true)
+			if (crafters < 1){
+				msg.author.send('No on in the tribe can teach you craft')
 				return
-			} else {
-				message = playername+' watches a crafter, trying to learn.'
 			}
-			player.worked = true
-		} else if (command == 'hunt'){
+			if ( roll(2) >= 10 ){
+				player.canCraft = true
+				message = actor+' learns to craft.'
+			} else {
+				message = actor+' watches a crafter, trying to learn.'
+			}
+		} 
+		if (command == 'hunt'){
 			if (player.watching && player.watching.length > 0){
 				msg.author.send('You can not go hunting while watching '+player.watching)
 				return
 			}
-			message = hunt(author.username, player, roll(3))
+			message = hunt(actor, player, roll(3))
 		}
 		msg.reply( message )
+		player.worked = true
 		slackers = listReadyToWork(population)
 		if (slackers && slackers.length == 0){
-			message += ' Everyone has worked.'
+			msg.reply('-= Everyone available to work, has worked =-')
 		}
 		return	
-}
+	}
 	if (command.startsWith('initg')){
 		if (!referees.includes(actor)){
 			msg.author.send(command+' requires referee priviliges')
