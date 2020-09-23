@@ -11,7 +11,7 @@ let auth = JSON.parse(rawdata);
 
 const types = ['food', 'grain', 'basket', 'spearhead']
 const professions= ['hunter','gatherer', 'crafter']
-const member_properties = ['canCraft','isNursing','isPregnant','isInjured','watching','profession','gender','partner','worked','food','grain', 'handle']
+const member_properties = ['canCraft','nursing','isPregnant','isInjured','guarding','profession','gender','partner','worked','food','grain', 'handle']
 const genders = ['male','female']
 const locations = require('./locations.json');
 const allNames = require('./names.json')
@@ -170,19 +170,24 @@ bot.on('message', msg => {
 });
 
 function savegameState(){
-	fs.writeFile("gameState.json", JSON.stringify(gameState), err => { 
-		// Checking for errors 
-		if (err) throw err;  
-	}); 
-	fs.writeFile("population.json", JSON.stringify(population), err => { 
-		// Checking for errors 
-		if (err) throw err;  
-	}); 
-	
-	fs.writeFile("children.json", JSON.stringify(children), err => { 
-		// Checking for errors 
-		if (err) throw err;  
-	}); 
+	if (gameState){
+		fs.writeFile("gameState.json", JSON.stringify(gameState), err => { 
+			// Checking for errors 
+			if (err) throw err;  
+		}); 
+	}
+	if (population){
+		fs.writeFile("population.json", JSON.stringify(population), err => { 
+			// Checking for errors 
+			if (err) throw err;  
+		}); 
+	}
+	if (children){
+		fs.writeFile("children.json", JSON.stringify(children), err => { 
+			// Checking for errors 
+			if (err) throw err;  
+		}); 
+	}
 	fs.writeFile("referees.json", JSON.stringify(referees), err => { 
 		// Checking for errors 
 		if (err) throw err;  
@@ -196,6 +201,9 @@ function processMessage(msg){
 	command = bits[0]
 	command = command.toLowerCase().substring(1) // strip out the leading !
 	console.log('command:'+command+' bits:'+bits+' actor:'+author.username )  
+	if (!gameState || !population){
+		msg.author.send('please wait')
+	}
 	handleCommand(msg, author, actor,  command, bits)
 	return	
 }
@@ -222,6 +230,22 @@ function randomMemberName(){
 	nameList = Object.keys(population)
 	var random =  Math.trunc( Math.random ( ) * nameList.length )
 	return nameList[random]
+}
+function reproductionList(population){
+	nameList = []
+	var tag = '?'
+	for (var name in population){
+		person = personByName(name)
+		tag = person.gender.charAt(0).toUpperCase()
+		if (person.nursing){
+			tag = person.nursing.length
+		}
+		if (person.isPregnant){
+			tag = 'P'
+		}
+		nameList.push(name+'('+tag+')')
+	}
+	return nameList
 }
 function countByType(dictionary, key, value){
 	count = 0
@@ -377,8 +401,8 @@ function handleCommand(msg, author, actor, command, bits){
 		text+='Player commands\n'
 		text+=' !inventory <target>  (show inventory and character info (no arg means self))\n'
 		text+=' !children (shows the children ages and food status)\n'
-		text+=' !watch | !ignore <child>   take on child care responsibilities for the child\n'
-		text+=' !leastwatched (shows the least supervised child (ties resolved randomly))\n'
+		text+=' !guard | !ignore <child>   take on child care responsibilities for the child\n'
+		text+=' !leastguarded (shows the least supervised child (ties resolved randomly))\n'
 		text+=' !foodcheck (examine the food situation for every adult and living child)\n'
 		text+=' !ready (list who is still available to work)\n'
 		text+=' !graveyard (list of all deceased members and children)\n'
@@ -400,7 +424,7 @@ function handleCommand(msg, author, actor, command, bits){
 		if (referees.includes(actor)){
 			text = ''
 			text+='\nReferee Commands\n'
-			text+=' edit <target> <canCraft|isNursing|isPregnant|profession|gender|partner|worked|food|grain> <value>\n' 
+			text+=' edit <target> <canCraft|nursing|isPregnant|profession|gender|partner|worked|food|grain> <value>\n' 
 			text+=' editchild <food|age|mother|father> <value>\n' 
 			text+=' award <amt> <food|grain|spearhead|basket> <player>\n'
 			text+=' kill <name> <message> kill a person or child\n'
@@ -539,24 +563,8 @@ function handleCommand(msg, author, actor, command, bits){
 			msg.author.send(command+' requires referee priviliges')
 			return
 		}
-		var outcomes = {
-			0:0,
-			1:0,
-			2:0,
-			3:0,
-			4:0,
-			5:0,
-			6:0,
-			7:0
-		}
-		for (var i = 0; i < 6000; i++){
-			outcomes[roll(1)] += 1
-		}
-		message = 'outcomes:\n'
-		for (key in outcomes){
-			message+= key+' '+outcomes[key]+'\n'
-		}
-		msg.reply(message)
+		
+		msg.reply("list "+reproductionList(population))
 		return
 	}
 
@@ -593,8 +601,8 @@ function handleCommand(msg, author, actor, command, bits){
 		}
 		//// begin work; fail and return, or generate a success message
 		if (command == 'gather'){
-			if (player.watching && player.watching.length > 5){
-				msg.author.send('You can not gather while watching more than 5 children.  You are watching '+player.watching)
+			if (player.guarding && player.guarding.length > 5){
+				msg.author.send('You can not gather while guarding more than 5 children.  You are guarding '+player.guarding)
 				msg.delete({timeout: 3000}); //delete command in 3sec 
 				return
 			}
@@ -607,8 +615,8 @@ function handleCommand(msg, author, actor, command, bits){
 				msg.delete({timeout: 3000}); //delete command in 3sec 
 				return
 			}
-			if (player.watching && player.watching.length > 2){
-				msg.author.send('You can not craft while watching more than 2 children.  You are watching '+player.watching)
+			if (player.guarding && player.guarding.length > 2){
+				msg.author.send('You can not craft while guarding more than 2 children.  You are guarding '+player.guarding)
 				msg.delete({timeout: 3000}); //delete command in 3sec 
 				return
 			}
@@ -642,30 +650,32 @@ function handleCommand(msg, author, actor, command, bits){
 				msg.delete({timeout: 3000}); //delete command in 3sec 
 				return
 			}
-			if (player.watching && player.watching.length > 2){
-				msg.author.send('You can not learn crafting while watching more than 2 children.  You are watching '+player.watching)
+			if (player.guarding && player.guarding.length > 2){
+				msg.author.send('You can not learn crafting while guarding more than 2 children.  You are guarding '+player.guarding)
 				return
 			}
 			crafters = countByType(population, 'canCraft', true)
-			if (crafters < 1){
-				msg.author.send('No on in the tribe can teach you craft')
+			noteach = coundByType(population, 'noTeach', true)
+			if (crafters < 1 && crafters > noteach){
+				msg.author.send('No on in the tribe is able and willing to teach you crafting')
 				return
 			}
+
 			if ( roll(2) >= 10 ){
 				player.canCraft = true
 				message = actor+' learns to craft.'
 			} else {
-				message = actor+' watches a crafter, trying to learn.'
+				message = actor+' observes a crafter, trying to learn.'
 			}
 		} 
 		if (command == 'hunt'){
-			if (player.watching && player.watching.length > 0){
-				msg.author.send('You can not go hunting while watching '+player.watching)
+			if (player.guarding && player.guarding.length > 0){
+				msg.author.send('You can not go hunting while guarding '+player.guarding)
 				msg.delete({timeout: 3000}); //delete command in 3sec 
 				return
 			}
-			if (player.isPregnant){
-				msg.author.send('You can not while pregnant')
+			if (player.isPregnant && player.isPregnant != 'false'){
+				msg.author.send('You can not hunt while pregnant')
 				msg.delete({timeout: 3000}); //delete command in 3sec 
 				return
 			}
@@ -775,7 +785,7 @@ function handleCommand(msg, author, actor, command, bits){
 		msg.reply('Starting the Reproduction round; invite other tribe members to reproduce (not automated)')
 		msg.reply(gameStateMessage())
 		msg.reply('The tribe can decide to move to a new location, but the injured and children under 2 will need 2 food')
-		namelist = Object.keys(population)
+		namelist = reproductionList(population)
 		msg.reply("Invitation order: "+shuffle(namelist))
 		workRound = false
 		foodRound = false
@@ -813,10 +823,10 @@ function handleCommand(msg, author, actor, command, bits){
 		msg.reply(message)
 		return
 	}
-	if (command == 'leastwatched'){
-		// watch score = 6 if unwatched; otherwise is the length of the watchers 'watching' array
-		var watchChildSort = []
-		var leastWatched = []
+	if (command == 'leastguarded'){
+		// guard score = 7 if unguarded; otherwise is the length of the guarders 'guarding' array
+		var guardChildSort = []
+		var leastGuarded = []
 		if (Object.keys(children).length == 0){
 			msg.author.send('No children to sort')
 			return
@@ -828,48 +838,48 @@ function handleCommand(msg, author, actor, command, bits){
 				continue
 			}	
 			if (! child.guardian || child.guardian == '' || child.guardian == null){
-				watchChildSort.push({'name':childName, 'score':6})
+				guardChildSort.push({'name':childName, 'score':7})
 			} else {
 				personName = child.guardian
 				person = population[personName]
 				if (!person){
 					console.log(childName+' has a bogus guardian:'+personName)
 					child.guardian = null
-					watchChildSort.push({'name':childName, 'score':6})
+					guardChildSort.push({'name':childName, 'score':6})
 				} else {
-					watchChildSort.push({'name':childName, 'score': (person.watching).length})
+					guardChildSort.push({'name':childName, 'score': (person.guarding).length})
 				}
 			}
 		}
-		watchChildSort.sort((a,b) => parseFloat(b.score) - parseFloat(a.score))
-		startValue = watchChildSort[0].score;
-		for (var i = 0; i < watchChildSort.length; i++){
-			if (watchChildSort[i].score == startValue){
-				leastWatched.push(watchChildSort[i])
+		guardChildSort.sort((a,b) => parseFloat(b.score) - parseFloat(a.score))
+		startValue = guardChildSort[0].score;
+		for (var i = 0; i < guardChildSort.length; i++){
+			if (guardChildSort[i].score == startValue){
+				leastGuarded.push(guardChildSort[i])
 			} else {
 				// we are out of the tie, so ignore the rest
 				break
 			}
 		}
-		unluckyIndex = Math.trunc( Math.random ( ) * leastWatched.length)
-		leastWatchedName = leastWatched[unluckyIndex].name
-		msg.reply(leastWatchedName+' is the least watched child.  Watch number is '+startValue )
+		unluckyIndex = Math.trunc( Math.random ( ) * leastGuarded.length)
+		leastGuardedName = leastGuarded[unluckyIndex].name
+		msg.reply(leastGuardedName+' is the least guarded child.  guard number is '+startValue )
 		msg.delete({timeout: 3000}); //delete command in 3sec 
 		return 
 	}
-	if (command == 'watch'){
+	if (command == 'guard'){
 		if (bits.length != 2){
-			msg.author.send('watch <childName>')
+			msg.author.send('guard <childName>')
 			return		
 		}
 		person = population[actor]
-		if (person.watching && person.watching.length > 4){
-			msg.author.send('You are already watching enough children: '+person.watching)
+		if (person.guarding && person.guarding.length > 4){
+			msg.author.send('You are already guarding enough children: '+person.guarding)
 			msg.delete({timeout: 3000}); //delete command in 3sec 
 			return
 		}
 		if (workRound == true){
-			msg.author.send('You can not change watch status during the work round')
+			msg.author.send('You can not change guard status during the work round')
 			msg.delete({timeout: 3000}); //delete command in 3sec 
 			return
 		}
@@ -880,18 +890,18 @@ function handleCommand(msg, author, actor, command, bits){
 			msg.delete({timeout: 3000}); //delete command in 3sec 
 			return
 		}
-		if (!person.watching || person.watching.indexOf(childName) != -1 ){
-			msg.author.send('You are already watching '+childName)
+		if (!person.guarding || person.guarding.indexOf(childName) != -1 ){
+			msg.author.send('You are already guarding '+childName)
 			msg.delete({timeout: 3000}); //delete command in 3sec 
 			return
 		}
 		child.guardian = person.name
-		if (person.watching){
-			person.watching.push(childName)
+		if (person.guarding){
+			person.guarding.push(childName)
 		} else {
-			person.watching = [childName]
+			person.guarding = [childName]
 		}
-		msg.reply(actor+' starts watching '+childName)
+		msg.reply(actor+' starts guarding '+childName)
 		return
 	}
 	if (command == 'ignore'){
@@ -903,26 +913,26 @@ function handleCommand(msg, author, actor, command, bits){
 		person = population[actor]
 		childName = capitalizeFirstLetter(bits[1])
 		child = children[childName]
-		if (!person.watching || person.watching.indexOf(childName) == -1 ){
-			msg.author.send('You are not watching '+childName)
+		if (!person.guarding || person.guarding.indexOf(childName) == -1 ){
+			msg.author.send('You are not guarding '+childName)
 			msg.delete({timeout: 3000}); //delete command in 3sec 
 			return
 		}
 		if (workRound == true){
-			msg.author.send('Can not change watch status during the work round')
+			msg.author.send('Can not change guard status during the work round')
 			msg.delete({timeout: 3000}); //delete command in 3sec 
 			return
 		}
-		childIndex = person.watching.indexOf(childName)
+		childIndex = person.guarding.indexOf(childName)
 		if (childIndex > -1) {
-			person.watching.splice(childIndex, 1);
+			person.guarding.splice(childIndex, 1);
 		}
 		if (!child ){
 			msg.author.send('Could not find child: '+childName)
 		} else {
 			child.guardian = null
 		}
-		msg.reply(actor+' stops watching '+childName)
+		msg.reply(actor+' stops guarding '+childName)
 		return
 	}
 	if (command == 'editchild'){
@@ -1253,8 +1263,8 @@ function handleCommand(msg, author, actor, command, bits){
 		if (person.isPregnant && person.isPregnant != ''){
 			message += '\n is pregnant with '+person.isPregnant
 		}
-		if (person.isNursing && person.isNursing != '' ){
-			message += '\n is nursing '+person.isNursing
+		if (person.nursing && person.nursing.length > 0 ){
+			message += '\n is nursing '+person.nursing
 		}
 		if (person.isInjured && person.isInjured != 'false' ){
 			message += '\n is injured and unable to work'
@@ -1322,14 +1332,14 @@ function handleCommand(msg, author, actor, command, bits){
 	}
   	// add food to a child
 	if (command === 'feed'){
-		if (bits.length != 3){
+		if (bits.length != 3 || isNaN(bits[1])){
 			msg.author.send('feed syntax is feed <amount>  <childname>')
 			msg.delete({timeout: 3000}); //delete command in 3sec 
 			return
 		}
 		childName = capitalizeFirstLetter(bits[2])
-		amount = bits[1]
-		if (isNaN(amount) || ! (childName in children)){
+		amount = Number(bits[1])
+		if ( ! (childName in children)){
 			msg.author.send('feed syntax is feed <amount> <childname>')
 			msg.delete({timeout: 3000}); //delete command in 3sec 
 			return
@@ -1351,7 +1361,7 @@ function handleCommand(msg, author, actor, command, bits){
 			return
 		}
 		child = children[childName]
-		if ( child.food >= 2 ){
+		if (  Number(child.food) >= 2 ){
 			msg.author.send(childName+' has enough food already')
 			msg.delete({timeout: 3000}); //delete command in 3sec 
 			return
@@ -1425,14 +1435,16 @@ function handleCommand(msg, author, actor, command, bits){
 			return
 		}
 		spawnChance = 9
-		if (population[mother].isNursing && population[mother].isNursing != 'false'){
+		if (population[mother].nursing && population[mother].nursing.length > 0){
 			spawnChance = 10
 		}
-		if (bits.length == 4 || roll(2) >= spawnChance ){
+		mroll = roll(1)
+		droll = roll(1)
+		if (bits.length == 4 || (mroll+droll) >= spawnChance ){
 			child = addChild(mother, father)
-			msg.reply('The mating of '+mother+ ' and '+father+' spawned '+child.name)
+			msg.reply('The mating of '+mother+':'+mroll+' and '+father+':'+droll+' spawned '+child.name)
 		} else {
-			msg.reply('The mating of '+mother+ ' and '+father+' was not productive')
+			msg.reply('The mating of '+mother+':'+mroll+' and '+father+':'+droll+' produced only good feelings')
 		}	
 		return
 	}
@@ -1557,6 +1569,18 @@ function addToPopulation(msg, author, bits, target,targetObject){
 	msg.reply(response)
 	return
 }
+function countChildrenOfParentUnderAge(children, parentName, age){
+	var count = 0
+	for (var childName in children){
+		var child = children[childName]
+		if (child.mother == parentName || child.father == parentName){
+			if (child.age < age){
+				count++
+			}
+		}
+	}
+	return count
+}
 function checkFood(){
 	message = ''
 	hungryAdults = []
@@ -1566,7 +1590,7 @@ function checkFood(){
 	for  (var targetname in population) {
 		person = population[targetname]
 		hunger = 4
-		if (person.isNursing && person.isPregnant != ''){
+		if (countChildrenOfParentUnderAge(children, targetname, 4) > 1){
 			hunger = 6
 		}
 		snacks = person.food + person.grain
@@ -1610,7 +1634,8 @@ function consumeFood(){
 				perished.push(target)
 			}
 		}
-		if (population[target].isNursing && population[target].isPregnant != ''){
+		//if (population[target].nursing && population[target].isPregnant != ''){
+		if (countChildrenOfParentUnderAge(children, target, 2) > 1 ){
 			// extra food issues here; mom needs 2 more food, or the child will die.
 			population[target].food -= 2
 			if (population[target].food < 0 ){
@@ -1621,7 +1646,7 @@ function consumeFood(){
 					childname = population[target].isPregnant 
 					response += target+' lost her child '+child+' due to lack of food\n'
 					kill(childName, 'prenatal starvation')
-					population[target].isPregnant  = ''
+					delete population[target].isPregnant 
 				}
 			}
 		}
@@ -1641,8 +1666,8 @@ function consumeFood(){
 			if (child.food < 0){
 				response += " child:"+childName+"("+child.mother+"+"+child.father+") has starved to death.\n"
 				child.dead = true
-				if (population[child.mother] && population[child.mother].isPregnant != '' ) {
-					population[child.mother].isPregnant = ''
+				if (population[child.mother] && population[child.mother].isPregnant ) {
+					delete population[child.mother].isPregnant
 				}
 				perishedChildren.push(childName)
 			} else {
@@ -1650,7 +1675,7 @@ function consumeFood(){
 			}
 			if (child.age == 0){
 				birthRoll = roll(3)
-				response += child.mother+' gives birth to '+child.name+' '
+				response += '\n\t'+child.mother+' gives birth to '+child.name+' '
 				if (birthRoll < 5 ){
 					response += 'but the child did not survive\n'
 					child.dead = true
@@ -1660,14 +1685,18 @@ function consumeFood(){
 					twin = addChild(child.mother, child.father);
 					reponse += child.mother+' gives birth to a twin! Meet '+twin.name+'\n'
 				}
-				if (population[child.mother] && population[child.mother].isPregnant != ''){
-					population[child.mother].isPregnant = ''
-					population[child.mother].isNursing = child.name
+				if (population[child.mother] && population[child.mother].isPregnant){
+					delete population[child.mother].isPregnant
+					if (! population[child.mother].nursing){
+						population[child.mother].nursing = []
+					}
+					population[child.mother].nursing.push( child.name)
 				}
 			}
 			if (child.age == 4){ // 2 years in SEASONS
-				if (population[child.mother] && population[child.mother].isNursing){
-					population[child.mother].isNursing = ''
+				if (population[child.mother] &&  population[child.mother].nursing.indexOf(childName) > -1 ){
+					childIndex = population[child.mother].nursing.indexOf(childName)
+					population[child.mother].nursing.indexOf(childName).splice(childIndex, 1);
 					response += child.name+' is weaned.\n'
 				}
 			}
@@ -1700,14 +1729,13 @@ function kill(name, message){
 		if (person.isPregnant ){
 			kill(person.isPregnant, 'mother-died')
 		}
-		if (person.isNursing){
-			kill(person.isNursing, 'no-milk')
+		if (person.nursing){
+			person.nursing.forEach(childName=>kill(childName, 'no-milk'))
 		}
 		gameState.graveyard[name] = person
-
 		delete population[name]
 	} else if (name in children){
-		unwatchChild(name)
+		unguardChild(name)
 		clearNursingPregnant(name)
 		var child = children[name]
 		child.deathMessage = message
@@ -1721,29 +1749,32 @@ function kill(name, message){
 function clearNursingPregnant(childName){
 	for (personName in population){
 		person = population[personName]
-		if (person.isNursing && person.isNursing == childName){
-			person.isNursing = ''
+		if (person.nursing && person.nursing.indexOf(childName) > -1 ){
+			childIndex = person.nursing.indexOf(childName)
+			person.nursing.indexOf(childName).splice(childIndex, 1);
+			console.log(personName+' is no longer nursing '+childName)
 		}
 		if (person.isPregnant && person.isPregnant == childName){
 			person.isPregnant = ''
+			console.log(personName+' is no longer pregnant with '+childName)
 		}
 	}
 }
 
-function unsetGuardian(watcherName, children){
+function unsetGuardian(guarderName, children){
 	for (childName in children){
 		child = children[childName]
-		if (child.guardian && child.guardian == watcherName){
+		if (child.guardian && child.guardian == guarderName){
 			child.guardian = ''
 		}
 	}
 }
-function unwatchChild(childName, population){
+function unguardChild(childName, population){
 	for (personName in population){
 		person = population[personName]
-		if (person.watching && person.watching.indexOf(childName) != -1){
-			childIndex = person.watching.indexOf(childName)
-			person.watching.splice(childIndex, 1);
+		if (person.guarding && person.guarding.indexOf(childName) != -1){
+			childIndex = person.guarding.indexOf(childName)
+			person.guarding.splice(childIndex, 1);
 		}
 	}
 }
@@ -1867,17 +1898,17 @@ function gather(playername, player, rollValue){
 		message+=('(-3 skill) ')
 		modifier -= 3
 	}
-	if (player.watching){
-		watchCount = player.watching.length
-		if (watchCount == 3){
+	if (player.guarding){
+		guardCount = player.guarding.length
+		if (guardCount == 3){
 			message+= '(-2 kids) '
 			modifier-= 2
 		}
-		if (watchCount == 4){
+		if (guardCount == 4){
 			message+= '(-4 kids) '
 			modifier-= 4
 		}
-		if (watchCount > 4){
+		if (guardCount > 4){
 			console.log(' gather with more than 4 kids should not happen')
 			return ' fails to get anything, too many kids in the way'
 		}
