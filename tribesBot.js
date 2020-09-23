@@ -661,6 +661,12 @@ function handleCommand(msg, author, actor, command, bits){
 		if (command == 'hunt'){
 			if (player.watching && player.watching.length > 0){
 				msg.author.send('You can not go hunting while watching '+player.watching)
+				msg.delete({timeout: 3000}); //delete command in 3sec 
+				return
+			}
+			if (player.isPregnant){
+				msg.author.send('You can not while pregnant')
+				msg.delete({timeout: 3000}); //delete command in 3sec 
 				return
 			}
 			message = hunt(actor, player, roll(3))
@@ -867,7 +873,7 @@ function handleCommand(msg, author, actor, command, bits){
 			msg.delete({timeout: 3000}); //delete command in 3sec 
 			return
 		}
-		childName = bits[1]
+		childName = capitalizeFirstLetter(bits[1])
 		child = children[childName]
 		if (!child ){
 			msg.author.send('Could not find child: '+childName)
@@ -895,7 +901,7 @@ function handleCommand(msg, author, actor, command, bits){
 			return		
 		}
 		person = population[actor]
-		childName = bits[1]
+		childName = capitalizeFirstLetter(bits[1])
 		child = children[childName]
 		if (!person.watching || person.watching.indexOf(childName) == -1 ){
 			msg.author.send('You are not watching '+childName)
@@ -931,7 +937,7 @@ function handleCommand(msg, author, actor, command, bits){
 			msg.delete({timeout: 3000}); //delete command in 3sec 
 			return		
 		}
-		childName = bits[1]
+		childName = capitalizeFirstLetter(bits[1])
 		attribute = bits[2]
 		value = bits[3]
 		child = children[childName]
@@ -1321,9 +1327,8 @@ function handleCommand(msg, author, actor, command, bits){
 			msg.delete({timeout: 3000}); //delete command in 3sec 
 			return
 		}
-		childName = bits[2]
+		childName = capitalizeFirstLetter(bits[2])
 		amount = bits[1]
-		childName = capitalizeFirstLetter(childName)
 		if (isNaN(amount) || ! (childName in children)){
 			msg.author.send('feed syntax is feed <amount> <childname>')
 			msg.delete({timeout: 3000}); //delete command in 3sec 
@@ -1444,7 +1449,8 @@ function listReadyToWork(tribe){
 	var unworked = []
 	for (name in tribe){
 		person = tribe[name]
-		if (person.worked || person.isInjured == 'true'){
+		// edit can leave isinjured as the string 'false'
+		if (person.worked || (person.isInjured && person.isInjured != 'false')){
 			// do nothing
 		} else {
 			unworked.push(name)
@@ -1931,7 +1937,7 @@ function craft(playername, player, type, rollValue){
 	} else if (rollValue > 2 && type == 'spearhead') {		
 			player.spearhead += 1
 	} else {
-		return playername+ ' crafts a worthless '+type
+		return playername+ ' fails at crafting a '+type
 	}
 	return playername+' crafts a '+type
 }
@@ -1992,6 +1998,7 @@ function hunt(playername, player, rollValue){
 	}
 	if (player.spearhead > 0 && rollValue >= 9){
 		mods += 3
+		message+= '(spearhead)'
 	}
 	message += '(rolls a '+rollValue+' ) '
 	if (rollValue < 7){
@@ -2049,5 +2056,6 @@ function hunt(playername, player, rollValue){
 bot.once('ready', ()=>{
 	console.log('bot is alive')
 	loadGame('default')
+	// TODO send a message to the channel here?
   })   
 bot.login(auth['token'])
