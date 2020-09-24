@@ -231,17 +231,17 @@ function randomMemberName(){
 	var random =  Math.trunc( Math.random ( ) * nameList.length )
 	return nameList[random]
 }
-function reproductionList(population){
+function genderList(population){
 	nameList = []
 	var tag = '?'
 	for (var name in population){
 		person = personByName(name)
-		tag = person.gender.charAt(0).toUpperCase()
+		tag = person.gender
 		if (person.nursing){
-			tag = person.nursing.length
+			tag = 'nursing '+person.nursing.length
 		}
 		if (person.isPregnant){
-			tag = 'P'
+			tag = 'pregnant'
 		}
 		nameList.push(name+'('+tag+')')
 	}
@@ -411,6 +411,7 @@ function handleCommand(msg, author, actor, command, bits){
 		text+=' !hunt\n'
 		text+=' !gather\n'
 		text+=' !craft <spearhead|basket>\n'
+		text+=' !train \n'
 		text+=' !assist <hunter>\n'
 		text+='-=Food Round Commands=-\n'
 		text+=' !give <amt> <food|grain|spearhead|basket> <player>\n'
@@ -564,7 +565,7 @@ function handleCommand(msg, author, actor, command, bits){
 			return
 		}
 		
-		msg.reply("list "+reproductionList(population))
+		msg.reply("list "+genderList(population))
 		return
 	}
 
@@ -785,7 +786,7 @@ function handleCommand(msg, author, actor, command, bits){
 		msg.reply('Starting the Reproduction round; invite other tribe members to reproduce (not automated)')
 		msg.reply(gameStateMessage())
 		msg.reply('The tribe can decide to move to a new location, but the injured and children under 2 will need 2 food')
-		namelist = reproductionList(population)
+		namelist = genderList(population)
 		msg.reply("Invitation order: "+shuffle(namelist))
 		workRound = false
 		foodRound = false
@@ -867,7 +868,7 @@ function handleCommand(msg, author, actor, command, bits){
 		msg.delete({timeout: 3000}); //delete command in 3sec 
 		return 
 	}
-	if (command == 'guard'){
+	if (command == 'guard' || command == 'watch'){
 		if (bits.length != 2){
 			msg.author.send('guard <childName>')
 			return		
@@ -878,8 +879,8 @@ function handleCommand(msg, author, actor, command, bits){
 			msg.delete({timeout: 3000}); //delete command in 3sec 
 			return
 		}
-		if (workRound == true){
-			msg.author.send('You can not change guard status during the work round')
+		if (person.worked == true){
+			msg.author.send('You can not change guard status after having worked')
 			msg.delete({timeout: 3000}); //delete command in 3sec 
 			return
 		}
@@ -890,12 +891,12 @@ function handleCommand(msg, author, actor, command, bits){
 			msg.delete({timeout: 3000}); //delete command in 3sec 
 			return
 		}
-		if (!person.guarding || person.guarding.indexOf(childName) != -1 ){
+		if (person.guarding && person.guarding.indexOf(childName) != -1 ){
 			msg.author.send('You are already guarding '+childName)
 			msg.delete({timeout: 3000}); //delete command in 3sec 
 			return
 		}
-		child.guardian = person.name
+		child.guardian = actor
 		if (person.guarding){
 			person.guarding.push(childName)
 		} else {
@@ -918,8 +919,8 @@ function handleCommand(msg, author, actor, command, bits){
 			msg.delete({timeout: 3000}); //delete command in 3sec 
 			return
 		}
-		if (workRound == true){
-			msg.author.send('Can not change guard status during the work round')
+		if (person.worked == true){
+			msg.author.send('Can not change guard status after having worked')
 			msg.delete({timeout: 3000}); //delete command in 3sec 
 			return
 		}
@@ -1148,11 +1149,6 @@ function handleCommand(msg, author, actor, command, bits){
 		return
 	}
 	if (command === 'give'){
-		if (foodRound == false){
-			msg.author.send(command+' happens in the food round')
-			msg.delete({timeout: 3000}); //delete command in 3sec 
-			return 			
-		}
 		if (bits.length < 3){
 			msg.author.send('Give syntax is give  <amount> <food|grain|spearhead|basket> <recipient>')
 			msg.delete({timeout: 3000}); //delete command in 3sec 
@@ -1269,6 +1265,9 @@ function handleCommand(msg, author, actor, command, bits){
 		if (person.isInjured && person.isInjured != 'false' ){
 			message += '\n is injured and unable to work'
 		}
+		if (person.guarding){
+			message += '\n is guarding '+person.guarding
+		}
 		msg.author.send(message)
 		msg.delete({timeout: 3000}); //delete command in 3sec 
 		return
@@ -1304,7 +1303,7 @@ function handleCommand(msg, author, actor, command, bits){
 	if (command == 'children'){
 		response = ''
 		childNames = Object.keys(children)
-		response = 'There are '+childNames.length+' children '
+		response = 'There are '+childNames.length+' children \n'
 		mine = 0 
 		var arrayLength = childNames.length;
 		for (childName in children) {
@@ -1675,7 +1674,7 @@ function consumeFood(){
 			}
 			if (child.age == 0){
 				birthRoll = roll(3)
-				response += '\n\t'+child.mother+' gives birth to '+child.name+' '
+				response += '\n\t'+child.mother+' gives birth to a '+child.gender+'-child, '+child.name+' '
 				if (birthRoll < 5 ){
 					response += 'but the child did not survive\n'
 					child.dead = true
@@ -1946,7 +1945,7 @@ function gather(playername, player, rollValue){
 			}
 		}
 		// check for basket loss
-		if (roll(1) == 1){
+		if (roll(1) <= 2){
 			message+= ' basket broke!'
 			player.basket -= 1
 		}
@@ -2070,7 +2069,12 @@ function hunt(playername, player, rollValue){
 	// update the game track
 	var huntercount = 1
 	if (player.helpers ){
-		huntercount += player.helpers.length
+		huntercount += Math.min(player.helpers.length,3)
+	}
+	// check for spearhead loss
+	if (player.spearhead > 0 && roll(1) <= 2){
+		player.spearhead -= 1
+		message += '(the spearhead broke)'
 	}
 	var oldTrack = gameState.gameTrack[gameState.currentLocationName]
 	gameState.gameTrack[gameState.currentLocationName] += huntercount
