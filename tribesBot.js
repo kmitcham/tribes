@@ -486,14 +486,380 @@ function handleCommand(msg, author, actor, command, bits){
 		msg.delete({timeout: 3000}); //delete command in 3sec 
 		return
 	}
-	if (command == 'roll'){
-		msg.reply(roll(bits[1]))
+	if (command == 'addchild'){
+		if (!referees.includes(actor)){
+			msg.author.send(command+' requires referee priviliges')
+			return
+		}
+		var mother = 'unknown'
+		var father = 'unknown'
+		if (bits.length == 3 && msg.mentions.users.first() && msg.mentions.users.last() ){
+			mother = getUserFromMention(bits[1]).username
+			father = getUserFromMention(bits[2]).username
+		} else {
+			mother = bits[1]
+			father = bits[2]
+		}
+		if (!population[mother] || !population[father]){
+			msg.author.send('Parents not found in tribe')
+			msg.delete({timeout: 3000}); //delete command in 3sec 
+			return
+		}
+		var child = addChild(mother, father)	
+		msg.reply("The referee adds a child :"+child.name)
 		return
 	}
+	if (command === 'award'){
+		if (referees.includes(actor)){
+			var targetName = bits[3]
+			if (msg.mentions.users && msg.mentions.users.first() ){
+				targetName = msg.mentions.users.first().username
+			}
+			amount = bits[1]
+			type = bits[2]
+		
+			if (isNaN(amount) || ! types.includes(type)){
+				msg.author.send('award syntax is award <amount> <food|grain|spearhead|basket> <recipient>')
+				msg.delete({timeout: 3000}); //delete command in 3sec 
+				return
+			}
+			if (!population[targetName] ) {
+				msg.author.send(targetName+' is not living in the tribe')
+				msg.delete({timeout: 3000}); //delete command in 3sec 
+				return
+			}
+			msg.reply('The game awards '+targetName+' with '+amount+' '+type)
+			
+			if (!population[targetName][type]){
+				population[targetName][type] = Number(amount)
+			} else {
+				population[targetName][type] += Number(amount)
+			}
+			if (population[targetName][type] < 0){
+				population[targetName][type] = 0
+			}         
+		} else {
+			msg.author.send('Only referees can award ')
+			msg.delete({timeout: 3000}); //delete command in 3sec 
+			return
+		}
+		return
+	}
+	// remove member from the tribe
+	if (command === 'banish'){
+		if (!referees.includes(actor)){
+			msg.author.send(command+' requires referee priviliges')
+			return
+		}
+		if (! msg.mentions || ! msg.mentions.users){
+			msg.author.send(command+' requires at least one @target')
+			return
+		}
+		var target = msg.mentions.users.first()
+		targetName = target.username
+		if (target ){
+			if (population[targetName]){
+				unsetGuardian(targetName,children)
+				delete population[target.username]
+				msg.reply(target.username+' is banished from the tribe')
+				return
+			}
+		} else {
+			msg.author.send(command+' could not find '+target)
+			return
+		}
+	}
+	if (command == 'chance'){
+		if (!referees.includes(actor)){
+			msg.author.send(command+' requires referee priviliges')
+			return
+		}
+		if (reproductionRound){
+			response = doChance(bits[1])
+			msg.reply(response)
+			return
+		} else {
+			msg.author.send(command+' happens at the end of reproduction round')
+			return
+		}
+	}
+	// list the children
+	if (command == 'children'){
+		response = ''
+		childNames = Object.keys(children)
+		response = 'There are '+childNames.length+' children \n'
+		mine = 0 
+		var arrayLength = childNames.length;
+		for (childName in children) {
+			child = children[childName]
+			if (child.dead){
+				response += '('+childName+' is dead)'
+			} else {
+				response += '('+childName+':'+child.gender
+				response += ' age:'+((child.age)/2)+ ' needs '+(2-child.food)+' food'
+				response += ' parents:'+child.mother+'+'+child.father
+				if (child.guardian && child.guardian != ''){
+					response += ' guardian:'+child.guardian
+				}
+				if (child.newAdult){
+					response += ' Full grown!'
+				}
+				response += ')\n'
+			}
+		} 
+		msg.author.send(response)
+		msg.delete({timeout: 3000}); //delete command in 3sec 
+		return
+	}	
+	if (command == 'debug'){
+		if (!referees.includes(actor)){
+			msg.author.send(command+' requires referee priviliges')
+			return
+		}
+		
+		msg.reply("list "+genderList(population))
+		return
+	}
+	if (command === 'demote'){
+		if (!referees.includes(actor)){
+			msg.author.send(command+' requires referee priviliges')
+			return
+		}
+		if (! msg.mentions || ! msg.mentions.users){
+			msg.author.send(command+' requires at least one @target')
+			return
+		}
+		var target = msg.mentions.users.first()
+		if (referees.includes(target.username)){
+			const index = referees.indexOf(target.username);
+			if (index > -1) {
+				referees.splice(index, 1);
+				console.log('demoted '+target.username)
+				msg.author.send('demoted '+target.username)
+				return
+			}
+		} else{
+			msg.author.send(target.username+' is not a referee:'+referees)
+		}
+	}
+	if (command == 'edit'){
+		if (!referees.includes(actor)){
+			msg.author.send(command+' requires referee priviliges')
+			msg.delete({timeout: 3000}); //delete command in 3sec 
+			return
+		}
+		if (bits.length < 3 || bits.length > 4){
+			msg.author.send('usage: !edit <targetname> <type> <value>')
+			msg.delete({timeout: 3000}); //delete command in 3sec 
+			return
+		}
+		var targetName = bits[1]
+		if (msg.mentions.users && msg.mentions.users.first() ){
+			targetName = msg.mentions.users.first().username
+		}
+		key = bits[2]
+		if (!member_properties.includes(key)){
+			msg.author.send('Legal properties to set are '+member_properties)
+			msg.delete({timeout: 3000}); //delete command in 3sec 
+			return
+		}
+		value = bits[3]
+		console.log('edit '+targetName+' '+key+' '+value )
+		person = personByName(targetName)
+		if (person){
+			person[key] = value
+			message = targetName+ ' now has values: '
+			for (var type in person) {
+				if (Object.prototype.hasOwnProperty.call( person, type)) {
+					message+= ' '+type+' '+person[type]
+				}
+			}
+			msg.author.send(message)
+			population[targetName] = person
+			return
+		} else{
+			msg.author.send(targetName+' is not in the tribe')
+			msg.delete({timeout: 3000}); //delete command in 3sec 
+			return
+		}
+	}
+	if (command == 'editchild'){
+		childProperties = ['mother','father','age','food','guardian','name']
+		if (!referees.includes(actor)){
+			msg.author.send(command+' requires referee priviliges')
+			msg.delete({timeout: 3000}); //delete command in 3sec 
+			return
+		}
+		if (bits.length != 4){
+			msg.author.send('editchild <childname> <attribute> <value>')
+			msg.delete({timeout: 3000}); //delete command in 3sec 
+			return		
+		}
+		childName = capitalizeFirstLetter(bits[1])
+		attribute = bits[2]
+		value = bits[3]
+		child = children[childName]
+		if (!child){
+			msg.author.send('Could not find '+childName)
+			msg.delete({timeout: 3000}); //delete command in 3sec 
+			return
+		}
+		if (!childProperties.includes(attribute)){
+			msg.author.send('Legal properties to set are '+childProperties)
+			msg.delete({timeout: 3000}); //delete command in 3sec 
+			return
+		}
+		if (attribute == 'mother'|| attribute == 'father' || attribute == 'guardian'){
+			parent = population[value]
+			if (!parent){
+				msg.author.send('Could not find tribemember '+value)
+				msg.delete({timeout: 3000}); //delete command in 3sec 
+				return
+			}
+		}
+		if ((attribute == 'age'|| attribute == 'food') && isNaN(value) ){
+			msg.author.send('Food and age take number values '+value)
+			msg.delete({timeout: 3000}); //delete command in 3sec 
+			return
+		}
+		child[attribute] = value
+		children[childName] = child
+		message = childName +' now has values '
+		for (var type in child) {
+			if (Object.prototype.hasOwnProperty.call( child, type)) {
+				message+= ' '+type+' '+child[type]
+			}
+		}
+		msg.author.send(message)
+		return
+
+	}
+	if (command == 'endgame'){
+		if (!referees.includes(actor)){
+			msg.author.send(command+' requires referee priviliges')
+			return
+		}
+		msg.reply(endGame())
+		return
+	}
+  	// add food to a child
+	if (command === 'feed'){
+		if (bits.length != 3 || isNaN(bits[1])){
+			msg.author.send('feed syntax is feed <amount>  <childname>')
+			msg.delete({timeout: 3000}); //delete command in 3sec 
+			return
+		}
+		childName = capitalizeFirstLetter(bits[2])
+		amount = Number(bits[1])
+		if ( ! (childName in children)){
+			msg.author.send('feed syntax is feed <amount> <childname>')
+			msg.delete({timeout: 3000}); //delete command in 3sec 
+			return
+		}
+		if (amount < 0 &&  !referees.includes(actor) ){
+			msg.author.send('Only the referee can reduce amounts')
+			msg.delete({timeout: 3000}); //delete command in 3sec 
+			return
+		}
+		if (!population[actor] && !referees.includes(actor)  ){
+			// this makes sure the author is in the tribe
+			msg.delete({timeout: 3000}); //delete command in 3sec 
+			msg.author.send("Children do not take food from strangers")
+			return
+		}		
+		if (!children[childName]) {
+			msg.author.send('no such child as '+childName)
+			msg.delete({timeout: 3000}); //delete command in 3sec 
+			return
+		}
+		child = children[childName]
+		if (  Number(child.food) >= 2 ){
+			msg.author.send(childName+' has enough food already')
+			msg.delete({timeout: 3000}); //delete command in 3sec 
+			return
+		}
+		if ( (child.food + amount) > 2 ){
+			msg.author.send(childName+' does not need that much food')
+			msg.delete({timeout: 3000}); //delete command in 3sec 
+			return
+		}
+		if ( child.newAdult && child.newAdult == true){
+			msg.author.send(childName+' is all grown up and does not need food')
+			msg.delete({timeout: 3000}); //delete command in 3sec 
+			return
+		}
+		var fed = 0
+		if ( ( population[actor]['food']+population[actor]['grain'] ) >= amount){
+			if (population[actor]['food'] >= amount){
+				population[actor].food -= Number(amount)
+			} else {
+				fed -= population[actor].food
+				population[actor].food = 0
+				population[actor]['grain'] -= (amount-fed)
+			}
+			msg.reply(actor+' fed '+amount+' to child '+childName)
+			children[childName].food += Number(amount)
+		} else {
+			msg.author.send('You do not have enough food or grain to feed the child')
+			msg.delete({timeout: 3000}); //delete command in 3sec 
+			return
+		}
+		return
+	} 
 	if (command == 'foodcheck'){
 		message = checkFood()
 		msg.author.send( message)
 		msg.delete({timeout: 3000}); //delete command in 3sec 
+		return
+	}
+	if (command === 'give'){
+		if (bits.length < 3){
+			msg.author.send('Give syntax is give  <amount> <food|grain|spearhead|basket> <recipient>')
+			msg.delete({timeout: 3000}); //delete command in 3sec 
+			return
+		}
+		var username = ''
+		if (bits.length >= 4){
+			username = bits[3]
+		} 
+		if (msg.mentions.users.first()){
+			username= msg.mentions.users.first().username
+		}
+		if (!username){
+			msg.author.send('Give syntax is give  <amount> <food|grain|spearhead|basket> <recipient>')
+			msg.delete({timeout: 3000}); //delete command in 3sec 
+			return
+		}
+		amount = bits[1]
+		type = bits[2]
+
+		if (isNaN(amount) || ! types.includes(type)){
+			msg.author.send('Give syntax is give  <amount> <food|grain|spearhead|basket> <recipient>')
+			msg.delete({timeout: 3000}); //delete command in 3sec 
+			return
+		}
+		if (amount <= 0  ){
+			msg.author.send('Can not give negative amounts')
+			msg.delete({timeout: 3000}); //delete command in 3sec 
+			return
+		}			
+		if (!population[username] ) {
+				msg.author.send(username+' is not a member of the tribe')
+				msg.delete({timeout: 3000}); //delete command in 3sec 
+				return
+		}
+		if (  population[actor][type] >= amount){
+			msg.reply(actor+' gave '+amount+' '+type+' to '+username)
+			if (!population[username][type]){
+				population[username][type] = Number(amount)
+			} else {
+				population[username][type] += Number(amount)
+			}         
+			population[actor][type] -= Number(amount)
+		} else {
+			msg.author.send('You do not have that much '+type+': '+ population[actor][type])
+			msg.delete({timeout: 3000}); //delete command in 3sec 
+		}
 		return
 	}
 	if (command == 'graveyard'){
@@ -518,53 +884,160 @@ function handleCommand(msg, author, actor, command, bits){
 		msg.author.send(response)
 		return
 	}
-	if (command == 'scorechildren'){
-		msg.author.send(scoreChildren(children))
-		return
-	}
-	if (command == 'endgame'){
-		if (!referees.includes(actor)){
-			msg.author.send(command+' requires referee priviliges')
-			return
+	if (command == 'guard' || command == 'watch'){
+		if (bits.length != 2){
+			msg.author.send('guard <childName>')
+			return		
 		}
-		msg.reply(endGame())
-		return
-	}
-	if (command == 'chance'){
-		if (!referees.includes(actor)){
-			msg.author.send(command+' requires referee priviliges')
-			return
-		}
-		if (reproductionRound){
-			response = doChance(bits[1])
-			msg.reply(response)
-			return
-		} else {
-			msg.author.send(command+' happens at the end of reproduction round')
-			return
-		}
-	}
-	if (command == 'addchild'){
-		if (!referees.includes(actor)){
-			msg.author.send(command+' requires referee priviliges')
-			return
-		}
-		var mother = 'unknown'
-		var father = 'unknown'
-		if (bits.length == 3 && msg.mentions.users.first() && msg.mentions.users.last() ){
-			mother = getUserFromMention(bits[1]).username
-			father = getUserFromMention(bits[2]).username
-		} else {
-			mother = bits[1]
-			father = bits[2]
-		}
-		if (!population[mother] || !population[father]){
-			msg.author.send('Parents not found in tribe')
+		person = population[actor]
+		if (person.guarding && person.guarding.length > 4){
+			msg.author.send('You are already guarding enough children: '+person.guarding)
 			msg.delete({timeout: 3000}); //delete command in 3sec 
 			return
 		}
-		var child = addChild(mother, father)	
-		msg.reply("The referee adds a child :"+child.name)
+		if (person.worked == true|| workRound == false){
+			msg.author.send('You can not change guard status after having worked, or outside the work round')
+			msg.delete({timeout: 3000}); //delete command in 3sec 
+			return
+		}
+		childName = capitalizeFirstLetter(bits[1])
+		child = children[childName]
+		if (!child ){
+			msg.author.send('Could not find child: '+childName)
+			msg.delete({timeout: 3000}); //delete command in 3sec 
+			return
+		}
+		if (person.guarding && person.guarding.indexOf(childName) != -1 ){
+			msg.author.send('You are already guarding '+childName)
+			msg.delete({timeout: 3000}); //delete command in 3sec 
+			return
+		}
+		if (child.age < 1){
+			msg.author.send('You can not watch an unborn child ')
+			msg.delete({timeout: 3000}); //delete command in 3sec 
+			return
+		}
+		child.guardian = actor
+		if (person.guarding){
+			person.guarding.push(childName)
+		} else {
+			person.guarding = [childName]
+		}
+		msg.reply(actor+' starts guarding '+childName)
+		return
+	}
+	if (command == 'ignore'){
+		if (bits.length != 2){
+			msg.author.send('ignore <childName>')
+			msg.delete({timeout: 3000}); //delete command in 3sec 
+			return		
+		}
+		person = population[actor]
+		childName = capitalizeFirstLetter(bits[1])
+		child = children[childName]
+		if (!person.guarding || person.guarding.indexOf(childName) == -1 ){
+			msg.author.send('You are not guarding '+childName)
+			msg.delete({timeout: 3000}); //delete command in 3sec 
+			return
+		}
+		if (person.worked == true){
+			msg.author.send('Can not change guard status after having worked')
+			msg.delete({timeout: 3000}); //delete command in 3sec 
+			return
+		}
+		childIndex = person.guarding.indexOf(childName)
+		if (childIndex > -1) {
+			person.guarding.splice(childIndex, 1);
+		}
+		if (!child ){
+			msg.author.send('Could not find child: '+childName)
+		} else {
+			child.guardian = null
+		}
+		msg.reply(actor+' stops guarding '+childName)
+		return
+	}
+	// add a person to the tribe
+	if (command === 'induct'){
+		if (!referees.includes(actor)){
+			msg.author.send(command+' requires referee priviliges')
+			return
+		}
+		if ( !referees.includes(actor) ){
+			console.log(actor +" list:"+referees)
+			msg.author.send('Only a referee can add tribe members')
+			return
+		}
+		if (! msg.mentions || ! msg.mentions.users || ! msg.mentions.users.first()){
+			msg.author.send(command+' requires at least one @target')
+		return
+		}
+		var target = msg.mentions.users.first().username
+		addToPopulation(msg, author, bits, target, msg.mentions.users.first())
+		return
+	}
+	if (command.startsWith('initg')){
+		if (!referees.includes(actor)){
+			msg.author.send(command+' requires referee priviliges')
+			msg.delete({timeout: 3000}); //delete command in 3sec 
+			return
+		}
+		if (bits.length > 1){
+			initGame(bits[1])
+		} else {
+			initGame()
+		}
+		msg.reply('starting game with initial conditions')
+		msg.reply(gameStateMessage())
+		return
+	}
+	if (command == 'inventory'){
+		var targetName = bits[1]
+		if (msg.mentions.users.first()){
+			targetName = msg.mentions.users.first().username
+		}
+		if (!targetName){
+			targetName = actor
+		}
+		response = 'error'
+		if (targetName == 'all'){
+			response = 'Whole Tribe Inventory:'
+			for (var personName in population){
+				response += '\n  '+inventoryMessage(personName)
+			}
+		}else {
+			person = personByName(targetName)
+			if (!person || person == null){
+				msg.author.send(target+' does not seem to be a person')
+				return
+			}
+			response = inventoryMessage(targetName)
+		}
+		msg.delete({timeout: 3000}); //delete command in 3sec 
+		msg.author.send(response)
+		return
+	}	
+	if (command == 'jerk' || command.startsWith('jerk') ){
+		msg.delete({timeout: 3000}); //delete command in 3sec 
+		if (!canJerky){
+			msg.author.send(' conditions are not right to make jerky')
+			return
+		}
+		var amount = bits[1]
+		if (!amount || isNaN(amount) ){
+			msg.author.send('jerk <amount>')
+			return	
+		}
+		person = personByName(actor)
+		if (person.food < amount ){
+			msg.author.send('You do not have that much food')
+			return	
+		}
+		var output = Math.trunc(amount/3)
+		response = actor +' converts '+amount+' food into '+output+' grain'
+		person.food -= amount
+		person.grain += output
+		msg.reply(response)
 		return
 	}
 	if (command == 'kill'){
@@ -590,22 +1063,260 @@ function handleCommand(msg, author, actor, command, bits){
 		msg.reply('The referee kills '+targetName)
 		return
 	}
+	if (command == 'leastguarded' || command == 'leastwatched'){
+		response  = findLeastGuarded(children, population)
+		msg.reply(response )
+		msg.delete({timeout: 3000}); //delete command in 3sec 
+		return 
+	}
+	// how much stuff does the target have?  if used by ref with no args, list whole population
+	if (command == 'list' || command == 'self'){
+		msg.delete({timeout: 1000}); //delete command in 1sec 
+		if (referees.includes(actor)){
+				big_message = 'list:\n'
+				for (var target in population){
+					message = target +' has '
+					for (var type in population[target]) {
+						if (Object.prototype.hasOwnProperty.call( population[target], type)) {
+							message+= type+':'+population[target][type]+', '
+						}
+					}
+					big_message += message +'\n'
+				}
+				msg.author.send(big_message)
+				return
+		} else {
+			message = ''
+			for (var type in player) {
+				if (Object.prototype.hasOwnProperty.call( player, type)) {
+					message+= type+':'+player[type]+', '
+				}
+			}
+			msg.author.send(message)
+			return
+		}
+	}	
+	if (command == 'listchildren'){
+		namelist = Object.keys(children)
+		response = "Tribe children: "+namelist
+		msg.reply(response)
+		return
+	}
+	if (command == 'listnames'){
+		namelist = Object.keys(population)
+		response = "Tribe members: "+shuffle(namelist)
+		msg.reply(response)
+		return
+	}
+	if (command == 'migrate' ){
+		if (!referees.includes(actor)){
+			msg.author.send(command+' requires referee priviliges')
+			return
+		}
+		destination = bits[1]
+		if (!destination){
+			msg.author.send(command+' requires a destination (and optional force)')
+			return
+		}
+		if (!reproductionRound){
+			msg.author.send("migration happens in the reproduction round")
+			return
+		}
+		force = bits[2]
+		message = migrate(msg, destination, force, population, children)
+		msg.reply(message)
+		return
+	}
+	// add a user to the list of referees; any ref can do this
+	if (command === 'promote' ){
+		if (!referees.includes(actor)){
+			msg.author.send(command+' requires referee priviliges')
+			return 
+		}
+		if (! msg.mentions || ! msg.mentions.users){
+			msg.author.send(command+' requires one @target')
+			return
+		}
+		var target = msg.mentions.users.first()		
+		console.log('promote:'+target.username+' by '+actor)
+		// disble ref checking for now
+		//if (target && referees.includes(actor)){
+		if (target){
+			if (referees.includes(target.username)){
+				msg.author.send(target.username+' is already a referee')
+			} else {
+				referees.push(target.username)
+				msg.author.send('referee list:'+referees)
+			}
+		} else {
+			msg.author.send('No target to promote, or you lack privileges')
+		}
+		return 	
+	}
 	if (command == 'ready'){
 		message = "People available to work: "+listReadyToWork(population)
 		msg.reply(message)
 		return
 	}
-	if (command == 'debug'){
+	if (command == 'roll'){
+		msg.reply(roll(bits[1]))
+		return
+	}
+	// save the game state to file
+	if (command == 'save'){
+		if (referees.includes(actor)){
+			savegameState()
+			msg.author.send('game state saved')
+		}
+		return
+	}	
+	if (command == 'scorechildren'){
+		msg.author.send(scoreChildren(children))
+		return
+	}
+	if (command == 'scout'){
+		message = gameStateMessage()
+		if (workRound ) {message += '  (work round)'}
+		if (foodRound ) {message += '  (food round)'}
+		if (reproductionRound ) {message += '  (reproduction round)'}
+		msg.author.send(message)
+		msg.delete({timeout: 3000}); //delete command in 3sec 
+		return
+	}
+	// add a child to tribe; args are parent names
+	if (command === 'spawn'){
+		if (bits.length < 3 || bits.length > 4){
+			msg.author.send('usage: !spawn mother father <force>')
+			msg.delete({timeout: 3000}); //delete command in 3sec 
+			return
+		}
+		var mother = 'unknown'
+		var father = 'unknown'
+		if (msg.mentions.users.first() && msg.mentions.users.last() ){
+			mother = msg.mentions.users.first().username
+			father = msg.mentions.users.last().username
+		} else {
+			mother = bits[1]
+			father = bits[2]
+		}
+		if (!population[mother] || !population[father]){
+			msg.author.send('Parents not found in tribe')
+			msg.delete({timeout: 3000}); //delete command in 3sec 
+			return
+		}
+		if (population[mother].gender != 'female' || population[father].gender != "male"){
+			msg.author.send("First parent must be female, last parent male")
+			msg.delete({timeout: 3000}); //delete command in 3sec 
+			return
+		}
+		if (population[mother].isPregnant  && population[mother].isPregnant != ''){
+			msg.author.send(mother+' is already pregnant')
+			msg.delete({timeout: 3000}); //delete command in 3sec 
+			return
+		}
+		spawnChance = 9
+		if (population[mother].nursing && population[mother].nursing.length > 0){
+			spawnChance = 10
+		}
+		mroll = roll(1)
+		droll = roll(1)
+		if (bits.length == 4 || (mroll+droll) >= spawnChance ){
+			child = addChild(mother, father)
+			msg.reply('The mating of '+mother+':'+mroll+' and '+father+':'+droll+' spawned '+child.name)
+		} else {
+			msg.reply('The mating of '+mother+':'+mroll+' and '+father+':'+droll+' produced only good feelings')
+		}	
+		return
+	}
+	if (command == 'startwork' || command.startsWith('startw')){
 		if (!referees.includes(actor)){
 			msg.author.send(command+' requires referee priviliges')
 			return
 		}
-		
-		msg.reply("list "+genderList(population))
+		if (workRound == true){
+			msg.author.send('already in the work round')
+			return 
+		}
+		if(reproductionRound == false){
+			msg.author.send('Can only go to work from reproduction')
+			return 
+		}
+		if (needChanceRoll){
+			msg.author.send('You still need to do the !chanceroll ')
+			return
+		}
+		savegameState()
+		// advance the calendar; the if should only skip on the 0->1 transition
+		if (workRound == false){
+			nextSeason()
+		}
+		message = gameStateMessage()
+		msg.reply(message)
+		msg.reply('\nStarting the work round.  Hunt, gather, or craft')
+		workRound = true
+		foodRound = false
+		reproductionRound = false
+		canJerky = false
 		return
 	}
-
-	// WORK ROUND COMMANDS
+	if (command == 'startfood' || command.startsWith('startf')){
+		if (!referees.includes(actor)){
+			msg.author.send(command+' requires referee priviliges')
+			msg.delete({timeout: 3000}); //delete command in 3sec 
+			return
+		}
+		if (foodRound == true){
+			msg.author.send('already in the foodRound')
+			msg.delete({timeout: 3000}); //delete command in 3sec 
+			return 
+		}
+		if(workRound == false){
+			msg.author.send('Can only go to food round from work round')
+			msg.delete({timeout: 3000}); //delete command in 3sec 
+			return 
+		}
+		clearWorkFlags(population)
+		savegameState()
+		message = gameStateMessage()
+		msg.reply(message+' \nStarting the food and trading round.  Make sure everyone has enough to eat, or they will starve')
+		msg.reply(checkFood())
+		workRound = false
+		foodRound = true
+		reproductionRound = false
+		return
+	}
+	if (command == 'startreproduction' || command.startsWith('startr')){
+		if (!referees.includes(actor)){
+			msg.author.send(command+' requires referee priviliges')
+			msg.delete({timeout: 3000}); //delete command in 3sec 
+			return
+		}
+		if (reproductionRound == true){
+			msg.author.send('already in the reproductionRound ')
+			msg.delete({timeout: 3000}); //delete command in 3sec 
+			return 
+		}		
+		if(foodRound == false){
+			msg.author.send('Can only go to reproduction from food')
+			msg.delete({timeout: 3000}); //delete command in 3sec 
+			return 
+		}
+		savegameState()
+		// actually consume food here
+		foodMessage = consumeFood()
+		needChanceRoll = true  // this magic boolean prevents starting work until we did chance roll
+		msg.reply(foodMessage+'\n')
+		msg.reply('Starting the Reproduction round; invite other tribe members to reproduce (not automated)')
+		msg.reply(gameStateMessage())
+		msg.reply('The tribe can decide to move to a new location, but the injured and children under 2 will need 2 food')
+		namelist = genderList(population)
+		msg.reply("Invitation order: "+shuffle(namelist))
+		workRound = false
+		foodRound = false
+		reproductionRound = true
+		return
+	}
+	/////////// WORK ROUND COMMANDS  ////////////////////////////////////
 	if (command == 'gather' 
 		|| command == 'craft'
 		|| command == 'hunt'
@@ -725,722 +1436,6 @@ function handleCommand(msg, author, actor, command, bits){
 			msg.reply('-= Everyone available to work, has worked =-')
 		}
 		return	
-	}
-	if (command.startsWith('initg')){
-		if (!referees.includes(actor)){
-			msg.author.send(command+' requires referee priviliges')
-			msg.delete({timeout: 3000}); //delete command in 3sec 
-			return
-		}
-		if (bits.length > 1){
-			initGame(bits[1])
-		} else {
-			initGame()
-		}
-		msg.reply('starting game with initial conditions')
-		msg.reply(gameStateMessage())
-		return
-	}
-	if (command == 'startwork' || command.startsWith('startw')){
-		if (!referees.includes(actor)){
-			msg.author.send(command+' requires referee priviliges')
-			return
-		}
-		if (workRound == true){
-			msg.author.send('already in the work round')
-			return 
-		}
-		if(reproductionRound == false){
-			msg.author.send('Can only go to work from reproduction')
-			return 
-		}
-		if (needChanceRoll){
-			msg.author.send('You still need to do the !chanceroll ')
-			return
-		}
-		savegameState()
-		// advance the calendar; the if should only skip on the 0->1 transition
-		if (workRound == false){
-			nextSeason()
-		}
-		message = gameStateMessage()
-		msg.reply(message)
-		msg.reply('\nStarting the work round.  Hunt, gather, or craft')
-		workRound = true
-		foodRound = false
-		reproductionRound = false
-		canJerky = false
-		return
-	}
-	if (command == 'startfood' || command.startsWith('startf')){
-		if (!referees.includes(actor)){
-			msg.author.send(command+' requires referee priviliges')
-			msg.delete({timeout: 3000}); //delete command in 3sec 
-			return
-		}
-		if (foodRound == true){
-			msg.author.send('already in the foodRound')
-			msg.delete({timeout: 3000}); //delete command in 3sec 
-			return 
-		}
-		if(workRound == false){
-			msg.author.send('Can only go to food round from work round')
-			msg.delete({timeout: 3000}); //delete command in 3sec 
-			return 
-		}
-		clearWorkFlags(population)
-		savegameState()
-		message = gameStateMessage()
-		msg.reply(message+' \nStarting the food and trading round.  Make sure everyone has enough to eat, or they will starve')
-		msg.reply(checkFood())
-		workRound = false
-		foodRound = true
-		reproductionRound = false
-		return
-	}
-	if (command == 'startreproduction' || command.startsWith('startr')){
-		if (!referees.includes(actor)){
-			msg.author.send(command+' requires referee priviliges')
-			msg.delete({timeout: 3000}); //delete command in 3sec 
-			return
-		}
-		if (reproductionRound == true){
-			msg.author.send('already in the reproductionRound ')
-			msg.delete({timeout: 3000}); //delete command in 3sec 
-			return 
-		}		
-		if(foodRound == false){
-			msg.author.send('Can only go to reproduction from food')
-			msg.delete({timeout: 3000}); //delete command in 3sec 
-			return 
-		}
-		savegameState()
-		// actually consume food here
-		foodMessage = consumeFood()
-		needChanceRoll = true  // this magic boolean prevents starting work until we did chance roll
-		msg.reply(foodMessage+'\n')
-		msg.reply('Starting the Reproduction round; invite other tribe members to reproduce (not automated)')
-		msg.reply(gameStateMessage())
-		msg.reply('The tribe can decide to move to a new location, but the injured and children under 2 will need 2 food')
-		namelist = genderList(population)
-		msg.reply("Invitation order: "+shuffle(namelist))
-		workRound = false
-		foodRound = false
-		reproductionRound = true
-		return
-	}
-	if (command == 'listnames'){
-		namelist = Object.keys(population)
-		response = "Tribe members: "+shuffle(namelist)
-		msg.reply(response)
-		return
-	}
-	if (command == 'listchildren'){
-		namelist = Object.keys(children)
-		response = "Tribe children: "+namelist
-		msg.reply(response)
-		return
-	}
-	if (command == 'migrate' ){
-		if (!referees.includes(actor)){
-			msg.author.send(command+' requires referee priviliges')
-			return
-		}
-		destination = bits[1]
-		if (!destination){
-			msg.author.send(command+' requires a destination (and optional force)')
-			return
-		}
-		if (!reproductionRound){
-			msg.author.send("migration happens in the reproduction round")
-			return
-		}
-		force = bits[2]
-		message = migrate(msg, destination, force, population, children)
-		msg.reply(message)
-		return
-	}
-	if (command == 'leastguarded' || command == 'leastwatched'){
-		response  = findLeastGuarded(children, population)
-		msg.reply(response )
-		msg.delete({timeout: 3000}); //delete command in 3sec 
-		return 
-	}
-	if (command == 'guard' || command == 'watch'){
-		if (bits.length != 2){
-			msg.author.send('guard <childName>')
-			return		
-		}
-		person = population[actor]
-		if (person.guarding && person.guarding.length > 4){
-			msg.author.send('You are already guarding enough children: '+person.guarding)
-			msg.delete({timeout: 3000}); //delete command in 3sec 
-			return
-		}
-		if (person.worked == true|| workRound == false){
-			msg.author.send('You can not change guard status after having worked, or outside the work round')
-			msg.delete({timeout: 3000}); //delete command in 3sec 
-			return
-		}
-		childName = capitalizeFirstLetter(bits[1])
-		child = children[childName]
-		if (!child ){
-			msg.author.send('Could not find child: '+childName)
-			msg.delete({timeout: 3000}); //delete command in 3sec 
-			return
-		}
-		if (person.guarding && person.guarding.indexOf(childName) != -1 ){
-			msg.author.send('You are already guarding '+childName)
-			msg.delete({timeout: 3000}); //delete command in 3sec 
-			return
-		}
-		if (child.age < 1){
-			msg.author.send('You can not watch an unborn child ')
-			msg.delete({timeout: 3000}); //delete command in 3sec 
-			return
-		}
-		child.guardian = actor
-		if (person.guarding){
-			person.guarding.push(childName)
-		} else {
-			person.guarding = [childName]
-		}
-		msg.reply(actor+' starts guarding '+childName)
-		return
-	}
-	if (command == 'ignore'){
-		if (bits.length != 2){
-			msg.author.send('ignore <childName>')
-			msg.delete({timeout: 3000}); //delete command in 3sec 
-			return		
-		}
-		person = population[actor]
-		childName = capitalizeFirstLetter(bits[1])
-		child = children[childName]
-		if (!person.guarding || person.guarding.indexOf(childName) == -1 ){
-			msg.author.send('You are not guarding '+childName)
-			msg.delete({timeout: 3000}); //delete command in 3sec 
-			return
-		}
-		if (person.worked == true){
-			msg.author.send('Can not change guard status after having worked')
-			msg.delete({timeout: 3000}); //delete command in 3sec 
-			return
-		}
-		childIndex = person.guarding.indexOf(childName)
-		if (childIndex > -1) {
-			person.guarding.splice(childIndex, 1);
-		}
-		if (!child ){
-			msg.author.send('Could not find child: '+childName)
-		} else {
-			child.guardian = null
-		}
-		msg.reply(actor+' stops guarding '+childName)
-		return
-	}
-	if (command == 'editchild'){
-		childProperties = ['mother','father','age','food','guardian','name']
-		if (!referees.includes(actor)){
-			msg.author.send(command+' requires referee priviliges')
-			msg.delete({timeout: 3000}); //delete command in 3sec 
-			return
-		}
-		if (bits.length != 4){
-			msg.author.send('editchild <childname> <attribute> <value>')
-			msg.delete({timeout: 3000}); //delete command in 3sec 
-			return		
-		}
-		childName = capitalizeFirstLetter(bits[1])
-		attribute = bits[2]
-		value = bits[3]
-		child = children[childName]
-		if (!child){
-			msg.author.send('Could not find '+childName)
-			msg.delete({timeout: 3000}); //delete command in 3sec 
-			return
-		}
-		if (!childProperties.includes(attribute)){
-			msg.author.send('Legal properties to set are '+childProperties)
-			msg.delete({timeout: 3000}); //delete command in 3sec 
-			return
-		}
-		if (attribute == 'mother'|| attribute == 'father' || attribute == 'guardian'){
-			parent = population[value]
-			if (!parent){
-				msg.author.send('Could not find tribemember '+value)
-				msg.delete({timeout: 3000}); //delete command in 3sec 
-				return
-			}
-		}
-		if ((attribute == 'age'|| attribute == 'food') && isNaN(value) ){
-			msg.author.send('Food and age take number values '+value)
-			msg.delete({timeout: 3000}); //delete command in 3sec 
-			return
-		}
-		child[attribute] = value
-		children[childName] = child
-		message = childName +' now has values '
-		for (var type in child) {
-			if (Object.prototype.hasOwnProperty.call( child, type)) {
-				message+= ' '+type+' '+child[type]
-			}
-		}
-		msg.author.send(message)
-		return
-
-	}
-	if (command == 'edit'){
-		if (!referees.includes(actor)){
-			msg.author.send(command+' requires referee priviliges')
-			msg.delete({timeout: 3000}); //delete command in 3sec 
-			return
-		}
-		if (bits.length < 3 || bits.length > 4){
-			msg.author.send('usage: !edit <targetname> <type> <value>')
-			msg.delete({timeout: 3000}); //delete command in 3sec 
-			return
-		}
-		var targetName = bits[1]
-		if (msg.mentions.users && msg.mentions.users.first() ){
-			targetName = msg.mentions.users.first().username
-		}
-		key = bits[2]
-		if (!member_properties.includes(key)){
-			msg.author.send('Legal properties to set are '+member_properties)
-			msg.delete({timeout: 3000}); //delete command in 3sec 
-			return
-		}
-		value = bits[3]
-		console.log('edit '+targetName+' '+key+' '+value )
-		person = personByName(targetName)
-		if (person){
-			person[key] = value
-			message = targetName+ ' now has values: '
-			for (var type in person) {
-				if (Object.prototype.hasOwnProperty.call( person, type)) {
-					message+= ' '+type+' '+person[type]
-				}
-			}
-			msg.author.send(message)
-			population[targetName] = person
-			return
-		} else{
-			msg.author.send(targetName+' is not in the tribe')
-			msg.delete({timeout: 3000}); //delete command in 3sec 
-			return
-		}
-	}
-	// save the game state to file
-	if (command == 'save'){
-		if (referees.includes(actor)){
-			savegameState()
-			msg.author.send('game state saved')
-		}
-		return
-	}
-	// add a user to the list of referees; any ref can do this
-	if (command === 'promote' ){
-		if (!referees.includes(actor)){
-			msg.author.send(command+' requires referee priviliges')
-			return 
-		}
-		if (! msg.mentions || ! msg.mentions.users){
-			msg.author.send(command+' requires one @target')
-			return
-		}
-		var target = msg.mentions.users.first()		
-		console.log('promote:'+target.username+' by '+actor)
-		// disble ref checking for now
-		//if (target && referees.includes(actor)){
-		if (target){
-			if (referees.includes(target.username)){
-				msg.author.send(target.username+' is already a referee')
-			} else {
-				referees.push(target.username)
-				msg.author.send('referee list:'+referees)
-			}
-		} else {
-			msg.author.send('No target to promote, or you lack privileges')
-		}
-		return 	
-	}
-	if (command === 'demote'){
-		if (!referees.includes(actor)){
-			msg.author.send(command+' requires referee priviliges')
-			return
-		}
-		if (! msg.mentions || ! msg.mentions.users){
-			msg.author.send(command+' requires at least one @target')
-			return
-		}
-		var target = msg.mentions.users.first()
-		if (referees.includes(target.username)){
-			const index = referees.indexOf(target.username);
-			if (index > -1) {
-				referees.splice(index, 1);
-				console.log('demoted '+target.username)
-				msg.author.send('demoted '+target.username)
-				return
-			}
-		} else{
-			msg.author.send(target.username+' is not a referee:'+referees)
-		}
-	}
-	// remove member from the tribe
-	if (command === 'banish'){
-		if (!referees.includes(actor)){
-			msg.author.send(command+' requires referee priviliges')
-			return
-		}
-		if (! msg.mentions || ! msg.mentions.users){
-			msg.author.send(command+' requires at least one @target')
-			return
-		}
-		var target = msg.mentions.users.first()
-		targetName = target.username
-		if (target ){
-			if (population[targetName]){
-				unsetGuardian(targetName,children)
-				delete population[target.username]
-				msg.reply(target.username+' is banished from the tribe')
-				return
-			}
-		} else {
-			msg.author.send(command+' could not find '+target)
-			return
-		}
-	}
-	// add a person to the tribe
-  	if (command === 'induct'){
-		if (!referees.includes(actor)){
-			msg.author.send(command+' requires referee priviliges')
-			return
-		}
-		if ( !referees.includes(actor) ){
-			console.log(actor +" list:"+referees)
-			msg.author.send('Only a referee can add tribe members')
-			return
-		}
-		if (! msg.mentions || ! msg.mentions.users || ! msg.mentions.users.first()){
-			msg.author.send(command+' requires at least one @target')
-		return
-		}
-		var target = msg.mentions.users.first().username
-		addToPopulation(msg, author, bits, target, msg.mentions.users.first())
-		return
-	}
-	if (command == 'jerk' || command.startsWith('jerk') ){
-		msg.delete({timeout: 3000}); //delete command in 3sec 
-		if (!canJerky){
-			msg.author.send(' conditions are not right to make jerky')
-			return
-		}
-		var amount = bits[1]
-		if (!amount || isNaN(amount) ){
-			msg.author.send('jerk <amount>')
-			return	
-		}
-		person = personByName(actor)
-		if (person.food < amount ){
-			msg.author.send('You do not have that much food')
-			return	
-		}
-		var output = Math.trunc(amount/3)
-		response = actor +' converts '+amount+' food into '+output+' grain'
-		person.food -= amount
-		person.grain += output
-		msg.reply(response)
-		return
-	}
-	if (command === 'give'){
-		if (bits.length < 3){
-			msg.author.send('Give syntax is give  <amount> <food|grain|spearhead|basket> <recipient>')
-			msg.delete({timeout: 3000}); //delete command in 3sec 
-			return
-		}
-		var username = ''
-		if (bits.length >= 4){
-			username = bits[3]
-		} 
-		if (msg.mentions.users.first()){
-			username= msg.mentions.users.first().username
-		}
-		if (!username){
-			msg.author.send('Give syntax is give  <amount> <food|grain|spearhead|basket> <recipient>')
-			msg.delete({timeout: 3000}); //delete command in 3sec 
-			return
-		}
-		amount = bits[1]
-		type = bits[2]
-
-		if (isNaN(amount) || ! types.includes(type)){
-			msg.author.send('Give syntax is give  <amount> <food|grain|spearhead|basket> <recipient>')
-			msg.delete({timeout: 3000}); //delete command in 3sec 
-			return
-		}
-		if (amount <= 0  ){
-			msg.author.send('Can not give negative amounts')
-			msg.delete({timeout: 3000}); //delete command in 3sec 
-			return
-		}			
-		if (!population[username] ) {
-				msg.author.send(username+' is not a member of the tribe')
-				msg.delete({timeout: 3000}); //delete command in 3sec 
-				return
-		}
-		if (  population[actor][type] >= amount){
-			msg.reply(actor+' gave '+amount+' '+type+' to '+username)
-			if (!population[username][type]){
-				population[username][type] = Number(amount)
-			} else {
-				population[username][type] += Number(amount)
-			}         
-			population[actor][type] -= Number(amount)
-		} else {
-			msg.author.send('You do not have that much '+type+': '+ population[actor][type])
-			msg.delete({timeout: 3000}); //delete command in 3sec 
-		}
-		return
-	}
-	if (command === 'award'){
-		if (referees.includes(actor)){
-			var targetName = bits[3]
-			if (msg.mentions.users && msg.mentions.users.first() ){
-				targetName = msg.mentions.users.first().username
-			}
-			amount = bits[1]
-			type = bits[2]
-		
-			if (isNaN(amount) || ! types.includes(type)){
-				msg.author.send('award syntax is award <amount> <food|grain|spearhead|basket> <recipient>')
-				msg.delete({timeout: 3000}); //delete command in 3sec 
-				return
-			}
-			if (!population[targetName] ) {
-				msg.author.send(targetName+' is not living in the tribe')
-				msg.delete({timeout: 3000}); //delete command in 3sec 
-				return
-			}
-			msg.reply('The game awards '+targetName+' with '+amount+' '+type)
-			
-			if (!population[targetName][type]){
-				population[targetName][type] = Number(amount)
-			} else {
-				population[targetName][type] += Number(amount)
-			}
-			if (population[targetName][type] < 0){
-				population[targetName][type] = 0
-			}         
-		} else {
-			msg.author.send('Only referees can award ')
-			msg.delete({timeout: 3000}); //delete command in 3sec 
-			return
-		}
-		return
-	}
-	if (command == 'inventory'){
-		var targetName = bits[1]
-		if (msg.mentions.users.first()){
-			targetName = msg.mentions.users.first().username
-		}
-		if (!targetName){
-			targetName = actor
-		}
-		response = 'error'
-		if (targetName == 'all'){
-			response = 'Whole Tribe Inventory:'
-			for (var personName in population){
-				response += '\n  '+inventoryMessage(personName)
-			}
-		}else {
-			person = personByName(targetName)
-			if (!person || person == null){
-				msg.author.send(target+' does not seem to be a person')
-				return
-			}
-			response = inventoryMessage(targetName)
-		}
-		msg.delete({timeout: 3000}); //delete command in 3sec 
-		msg.author.send(response)
-		return
-	}
-	// how much stuff does the target have?  if used by ref with no args, list whole population
-	if (command == 'list' || command == 'self'){
-		msg.delete({timeout: 1000}); //delete command in 1sec 
-		if (referees.includes(actor)){
-				big_message = 'list:\n'
-				for (var target in population){
-					message = target +' has '
-					for (var type in population[target]) {
-						if (Object.prototype.hasOwnProperty.call( population[target], type)) {
-							message+= type+':'+population[target][type]+', '
-						}
-					}
-					big_message += message +'\n'
-				}
-				msg.author.send(big_message)
-				return
-		} else {
-			message = ''
-			for (var type in player) {
-				if (Object.prototype.hasOwnProperty.call( player, type)) {
-					message+= type+':'+player[type]+', '
-				}
-			}
-			msg.author.send(message)
-			return
-		}
-	}
-	// list the children
-	if (command == 'children'){
-		response = ''
-		childNames = Object.keys(children)
-		response = 'There are '+childNames.length+' children \n'
-		mine = 0 
-		var arrayLength = childNames.length;
-		for (childName in children) {
-			child = children[childName]
-			if (child.dead){
-				response += '('+childName+' is dead)'
-			} else {
-				response += '('+childName+':'+child.gender
-				response += ' age:'+((child.age)/2)+ ' needs '+(2-child.food)+' food'
-				response += ' parents:'+child.mother+'+'+child.father
-				if (child.guardian && child.guardian != ''){
-					response += ' guardian:'+child.guardian
-				}
-				if (child.newAdult){
-					response += ' Full grown!'
-				}
-				response += ')\n'
-			}
-		} 
-		msg.author.send(response)
-		msg.delete({timeout: 3000}); //delete command in 3sec 
-		return
-	}
-  	// add food to a child
-	if (command === 'feed'){
-		if (bits.length != 3 || isNaN(bits[1])){
-			msg.author.send('feed syntax is feed <amount>  <childname>')
-			msg.delete({timeout: 3000}); //delete command in 3sec 
-			return
-		}
-		childName = capitalizeFirstLetter(bits[2])
-		amount = Number(bits[1])
-		if ( ! (childName in children)){
-			msg.author.send('feed syntax is feed <amount> <childname>')
-			msg.delete({timeout: 3000}); //delete command in 3sec 
-			return
-		}
-		if (amount < 0 &&  !referees.includes(actor) ){
-			msg.author.send('Only the referee can reduce amounts')
-			msg.delete({timeout: 3000}); //delete command in 3sec 
-			return
-		}
-		if (!population[actor] && !referees.includes(actor)  ){
-			// this makes sure the author is in the tribe
-			msg.delete({timeout: 3000}); //delete command in 3sec 
-			msg.author.send("Children do not take food from strangers")
-			return
-		}		
-		if (!children[childName]) {
-			msg.author.send('no such child as '+childName)
-			msg.delete({timeout: 3000}); //delete command in 3sec 
-			return
-		}
-		child = children[childName]
-		if (  Number(child.food) >= 2 ){
-			msg.author.send(childName+' has enough food already')
-			msg.delete({timeout: 3000}); //delete command in 3sec 
-			return
-		}
-		if ( (child.food + amount) > 2 ){
-			msg.author.send(childName+' does not need that much food')
-			msg.delete({timeout: 3000}); //delete command in 3sec 
-			return
-		}
-		if ( child.newAdult && child.newAdult == true){
-			msg.author.send(childName+' is all grown up and does not need food')
-			msg.delete({timeout: 3000}); //delete command in 3sec 
-			return
-		}
-		var fed = amount
-		if ( ( population[actor]['food']+population[actor]['grain'] ) >= amount){
-			if (population[actor]['food'] >= amount){
-				population[actor].food -= Number(amount)
-			} else {
-				fed -= population[actor].food
-				population[actor].food = 0
-				population[actor]['grain'] -= (amount-fed)
-			}
-			msg.reply(actor+' fed '+amount+' to child '+childName)
-			children[childName].food += Number(amount)
-		} else {
-			msg.author.send('You do not have enough food or grain to feed the child')
-			msg.delete({timeout: 3000}); //delete command in 3sec 
-			return
-		}
-		return
-	} 
-	if (command == 'scout'){
-		message = gameStateMessage()
-		if (workRound ) {message += '  (work round)'}
-		if (foodRound ) {message += '  (food round)'}
-		if (reproductionRound ) {message += '  (reproduction round)'}
-		msg.author.send(message)
-		msg.delete({timeout: 3000}); //delete command in 3sec 
-		return
-	}
-	// add a child to tribe; args are parent names
-	if (command === 'spawn'){
-		if (bits.length < 3 || bits.length > 4){
-			msg.author.send('usage: !spawn mother father <force>')
-			msg.delete({timeout: 3000}); //delete command in 3sec 
-			return
-		}
-		var mother = 'unknown'
-		var father = 'unknown'
-		if (msg.mentions.users.first() && msg.mentions.users.last() ){
-			mother = msg.mentions.users.first().username
-			father = msg.mentions.users.last().username
-		} else {
-			mother = bits[1]
-			father = bits[2]
-		}
-		if (!population[mother] || !population[father]){
-			msg.author.send('Parents not found in tribe')
-			msg.delete({timeout: 3000}); //delete command in 3sec 
-			return
-		}
-		if (population[mother].gender != 'female' || population[father].gender != "male"){
-			msg.author.send("First parent must be female, last parent male")
-			msg.delete({timeout: 3000}); //delete command in 3sec 
-			return
-		}
-		if (population[mother].isPregnant  && population[mother].isPregnant != ''){
-			msg.author.send(mother+' is already pregnant')
-			msg.delete({timeout: 3000}); //delete command in 3sec 
-			return
-		}
-		spawnChance = 9
-		if (population[mother].nursing && population[mother].nursing.length > 0){
-			spawnChance = 10
-		}
-		mroll = roll(1)
-		droll = roll(1)
-		if (bits.length == 4 || (mroll+droll) >= spawnChance ){
-			child = addChild(mother, father)
-			msg.reply('The mating of '+mother+':'+mroll+' and '+father+':'+droll+' spawned '+child.name)
-		} else {
-			msg.reply('The mating of '+mother+':'+mroll+' and '+father+':'+droll+' produced only good feelings')
-		}	
-		return
-	}
-	if (command === 'foodcheck'){
-		msg.author.send(foodCheck())
-		return
 	}
 	msg.author.send('TribesBot did not understand the command '+bits)
 	msg.author.send('Try !help ')
