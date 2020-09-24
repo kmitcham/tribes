@@ -60,7 +60,7 @@ function initGame(gameName){
 	gameState.seasonCounter = 1
 	gameState.gameTrack = {}
 	gameState.name = gameName
-	gamestate.populationCounter = 0
+	gameState.populationCounter = 0
 	for (locationName in locations){
 		gameState.gameTrack[locationName] = 0
 	}
@@ -69,9 +69,9 @@ function initGame(gameName){
 	population = {}
 	children = {}
 	graveyard = {}
-	workRound = true;
-	foodRound = false;
-	reproductionRound = false;
+	gameState.workRound = true;
+	gameState.foodRound = false;
+	gameState.reproductionRound = false;
 	return
 }
 function endGame(){
@@ -201,18 +201,18 @@ function savegameState(){
 		}); 
 	}
 	if (population){
-		fs.writeFile("population.json", JSON.stringify(population), err => { 
+		fs.writeFile("population.json", JSON.stringify(population,null, 2), err => { 
 			// Checking for errors 
 			if (err) throw err;  
 		}); 
 	}
 	if (children){
-		fs.writeFile("children.json", JSON.stringify(children), err => { 
+		fs.writeFile("children.json", JSON.stringify(children,null, 2), err => { 
 			// Checking for errors 
 			if (err) throw err;  
 		}); 
 	}
-	fs.writeFile("referees.json", JSON.stringify(referees), err => { 
+	fs.writeFile("referees.json", JSON.stringify(referees,null, 2), err => { 
 		// Checking for errors 
 		if (err) throw err;  
 	}); 
@@ -227,6 +227,7 @@ function processMessage(msg){
 	console.log('command:'+command+' bits:'+bits+' actor:'+author.username )  
 	if (!gameState || !population){
 		msg.author.send('please wait')
+		return
 	}
 	handleCommand(msg, author, actor,  command, bits)
 	return	
@@ -447,7 +448,7 @@ function handleCommand(msg, author, actor, command, bits){
 		text+=' !hunt\n'
 		text+=' !gather\n'
 		text+=' !craft <spearhead|basket>\n'
-		text+=' !train \n'
+		text+=' !train (learn crafting, if there is a willing teacher)\n'
 		text+=' !assist <hunter>\n'
 		text+='-=Food Round Commands=-\n'
 		text+=' !give <amt> <food|grain|spearhead|basket> <player>\n'
@@ -574,7 +575,7 @@ function handleCommand(msg, author, actor, command, bits){
 			msg.author.send(command+' requires referee priviliges')
 			return
 		}
-		if (reproductionRound){
+		if (gameState.reproductionRound){
 			response = doChance(bits[1])
 			msg.reply(response)
 			return
@@ -844,9 +845,14 @@ function handleCommand(msg, author, actor, command, bits){
 			return
 		}			
 		if (!population[username] ) {
-				msg.author.send(username+' is not a member of the tribe')
-				msg.delete({timeout: 3000}); //delete command in 3sec 
-				return
+			msg.author.send(username+' is not a member of the tribe')
+			msg.delete({timeout: 3000}); //delete command in 3sec 
+			return
+		}
+		if ((type == 'spearhead' || type =='basket') && player.worked && player.profession != 'crafter'){
+			msg.author.send('The game suspects you used that item to work with.  Ask the referee to help trade it if you did not.')
+			msg.delete({timeout: 3000}); //delete command in 3sec 
+			return
 		}
 		if (  population[actor][type] >= amount){
 			msg.reply(actor+' gave '+amount+' '+type+' to '+username)
@@ -895,7 +901,7 @@ function handleCommand(msg, author, actor, command, bits){
 			msg.delete({timeout: 3000}); //delete command in 3sec 
 			return
 		}
-		if (person.worked == true|| workRound == false){
+		if (person.worked == true|| gameState.workRound == false){
 			msg.author.send('You can not change guard status after having worked, or outside the work round')
 			msg.delete({timeout: 3000}); //delete command in 3sec 
 			return
@@ -1118,7 +1124,7 @@ function handleCommand(msg, author, actor, command, bits){
 			msg.author.send(command+' requires a destination (and optional force)')
 			return
 		}
-		if (!reproductionRound){
+		if (!gameState.reproductionRound){
 			msg.author.send("migration happens in the reproduction round")
 			return
 		}
@@ -1176,9 +1182,9 @@ function handleCommand(msg, author, actor, command, bits){
 	}
 	if (command == 'scout'){
 		message = gameStateMessage()
-		if (workRound ) {message += '  (work round)'}
-		if (foodRound ) {message += '  (food round)'}
-		if (reproductionRound ) {message += '  (reproduction round)'}
+		if (gameState.workRound ) {message += '  (work round)'}
+		if (gameState.foodRound ) {message += '  (food round)'}
+		if (gameState.reproductionRound ) {message += '  (reproduction round)'}
 		msg.author.send(message)
 		msg.delete({timeout: 3000}); //delete command in 3sec 
 		return
@@ -1233,11 +1239,11 @@ function handleCommand(msg, author, actor, command, bits){
 			msg.author.send(command+' requires referee priviliges')
 			return
 		}
-		if (workRound == true){
+		if (gameState.workRound == true){
 			msg.author.send('already in the work round')
 			return 
 		}
-		if(reproductionRound == false){
+		if(gameState.reproductionRound == false){
 			msg.author.send('Can only go to work from reproduction')
 			return 
 		}
@@ -1247,15 +1253,15 @@ function handleCommand(msg, author, actor, command, bits){
 		}
 		savegameState()
 		// advance the calendar; the if should only skip on the 0->1 transition
-		if (workRound == false){
+		if (gameState.workRound == false){
 			nextSeason()
 		}
 		message = gameStateMessage()
 		msg.reply(message)
 		msg.reply('\nStarting the work round.  Hunt, gather, or craft')
-		workRound = true
-		foodRound = false
-		reproductionRound = false
+		gameState.workRound = true
+		gameState.foodRound = false
+		gameState.reproductionRound = false
 		canJerky = false
 		return
 	}
@@ -1265,12 +1271,12 @@ function handleCommand(msg, author, actor, command, bits){
 			msg.delete({timeout: 3000}); //delete command in 3sec 
 			return
 		}
-		if (foodRound == true){
+		if (gameState.foodRound == true){
 			msg.author.send('already in the foodRound')
 			msg.delete({timeout: 3000}); //delete command in 3sec 
 			return 
 		}
-		if(workRound == false){
+		if(gameState.workRound == false){
 			msg.author.send('Can only go to food round from work round')
 			msg.delete({timeout: 3000}); //delete command in 3sec 
 			return 
@@ -1280,9 +1286,9 @@ function handleCommand(msg, author, actor, command, bits){
 		message = gameStateMessage()
 		msg.reply(message+' \nStarting the food and trading round.  Make sure everyone has enough to eat, or they will starve')
 		msg.reply(checkFood())
-		workRound = false
-		foodRound = true
-		reproductionRound = false
+		gameState.workRound = false
+		gameState.foodRound = true
+		gameState.reproductionRound = false
 		return
 	}
 	if (command == 'startreproduction' || command.startsWith('startr')){
@@ -1291,12 +1297,12 @@ function handleCommand(msg, author, actor, command, bits){
 			msg.delete({timeout: 3000}); //delete command in 3sec 
 			return
 		}
-		if (reproductionRound == true){
+		if (gameState.reproductionRound == true){
 			msg.author.send('already in the reproductionRound ')
 			msg.delete({timeout: 3000}); //delete command in 3sec 
 			return 
 		}		
-		if(foodRound == false){
+		if(gameState.foodRound == false){
 			msg.author.send('Can only go to reproduction from food')
 			msg.delete({timeout: 3000}); //delete command in 3sec 
 			return 
@@ -1311,9 +1317,9 @@ function handleCommand(msg, author, actor, command, bits){
 		msg.reply('The tribe can decide to move to a new location, but the injured and children under 2 will need 2 food')
 		namelist = genderList(population)
 		msg.reply("Invitation order: "+shuffle(namelist))
-		workRound = false
-		foodRound = false
-		reproductionRound = true
+		gameState.workRound = false
+		gameState.foodRound = false
+		gameState.reproductionRound = true
 		return
 	}
 	/////////// WORK ROUND COMMANDS  ////////////////////////////////////
@@ -1327,7 +1333,7 @@ function handleCommand(msg, author, actor, command, bits){
 		//////////////////////////////
 		/// shared work checks
 		/////////////////////////////
-		if (workRound == false ){
+		if (gameState.workRound == false ){
 			msg.author.send('Can only work during the work round')
 			msg.delete({timeout: 3000}); //delete command in 3sec 
 			return
@@ -1748,7 +1754,7 @@ function consumeFood(){
 			if (child.age == 4){ // 2 years in SEASONS
 				if (population[child.mother] &&  population[child.mother].nursing.indexOf(childName) > -1 ){
 					childIndex = population[child.mother].nursing.indexOf(childName)
-					population[child.mother].nursing.indexOf(childName).splice(childIndex, 1);
+					population[child.mother].nursing.splice(childIndex, 1);
 					response += child.name+' is weaned.\n'
 				}
 			}
