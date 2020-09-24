@@ -60,6 +60,7 @@ function initGame(gameName){
 	gameState.seasonCounter = 1
 	gameState.gameTrack = {}
 	gameState.name = gameName
+	gamestate.populationCounter = 0
 	for (locationName in locations){
 		gameState.gameTrack[locationName] = 0
 	}
@@ -230,7 +231,19 @@ function processMessage(msg){
 	handleCommand(msg, author, actor,  command, bits)
 	return	
 }
+function getUserFromMention(mention) {
+	if (!mention) return;
 
+	if (mention.startsWith('<@') && mention.endsWith('>')) {
+		mention = mention.slice(2, -1);
+
+		if (mention.startsWith('!')) {
+			mention = mention.slice(1);
+		}
+
+		return bot.users.cache.get(mention);
+	}
+}
 function personByName(name){
 	if (name == null){
 		console.log('attempt to find person for null name '+name)
@@ -538,9 +551,9 @@ function handleCommand(msg, author, actor, command, bits){
 		}
 		var mother = 'unknown'
 		var father = 'unknown'
-		if (msg.mentions.users.first() && msg.mentions.users.last() ){
-			mother = msg.mentions.users.first().username
-			father = msg.mentions.users.last().username
+		if (bits.length == 3 && msg.mentions.users.first() && msg.mentions.users.last() ){
+			mother = getUserFromMention(bits[1]).username
+			father = getUserFromMention(bits[2]).username
 		} else {
 			mother = bits[1]
 			father = bits[2]
@@ -847,47 +860,9 @@ function handleCommand(msg, author, actor, command, bits){
 		msg.reply(message)
 		return
 	}
-	if (command == 'leastguarded'){
-		// guard score = 7 if unguarded; otherwise is the length of the guarders 'guarding' array
-		var guardChildSort = []
-		var leastGuarded = []
-		if (Object.keys(children).length == 0){
-			msg.author.send('No children to sort')
-			return
-		}
-		for (var childName in children){
-			child = children[childName]
-			if (child.age < 0 ){
-				// unborn children should be skipped
-				continue
-			}	
-			if (! child.guardian || child.guardian == '' || child.guardian == null){
-				guardChildSort.push({'name':childName, 'score':7})
-			} else {
-				personName = child.guardian
-				person = population[personName]
-				if (!person){
-					console.log(childName+' has a bogus guardian:'+personName)
-					child.guardian = null
-					guardChildSort.push({'name':childName, 'score':6})
-				} else {
-					guardChildSort.push({'name':childName, 'score': (person.guarding).length})
-				}
-			}
-		}
-		guardChildSort.sort((a,b) => parseFloat(b.score) - parseFloat(a.score))
-		startValue = guardChildSort[0].score;
-		for (var i = 0; i < guardChildSort.length; i++){
-			if (guardChildSort[i].score == startValue){
-				leastGuarded.push(guardChildSort[i])
-			} else {
-				// we are out of the tie, so ignore the rest
-				break
-			}
-		}
-		unluckyIndex = Math.trunc( Math.random ( ) * leastGuarded.length)
-		leastGuardedName = leastGuarded[unluckyIndex].name
-		msg.reply(leastGuardedName+' is the least guarded child.  guard number is '+startValue )
+	if (command == 'leastguarded' || command == 'leastwatched'){
+		response  = findLeastGuarded(children, population)
+		msg.reply(response )
 		msg.delete({timeout: 3000}); //delete command in 3sec 
 		return 
 	}
@@ -902,8 +877,8 @@ function handleCommand(msg, author, actor, command, bits){
 			msg.delete({timeout: 3000}); //delete command in 3sec 
 			return
 		}
-		if (person.worked == true){
-			msg.author.send('You can not change guard status after having worked')
+		if (person.worked == true|| workRound == false){
+			msg.author.send('You can not change guard status after having worked, or outside the work round')
 			msg.delete({timeout: 3000}); //delete command in 3sec 
 			return
 		}
@@ -916,6 +891,11 @@ function handleCommand(msg, author, actor, command, bits){
 		}
 		if (person.guarding && person.guarding.indexOf(childName) != -1 ){
 			msg.author.send('You are already guarding '+childName)
+			msg.delete({timeout: 3000}); //delete command in 3sec 
+			return
+		}
+		if (child.age < 1){
+			msg.author.send('You can not watch an unborn child ')
 			msg.delete({timeout: 3000}); //delete command in 3sec 
 			return
 		}
@@ -1118,8 +1098,10 @@ function handleCommand(msg, author, actor, command, bits){
 			return
 		}
 		var target = msg.mentions.users.first()
+		targetName = target.username
 		if (target ){
-			if (population[target.username]){
+			if (population[targetName]){
+				unsetGuardian(targetName,children)
 				delete population[target.username]
 				msg.reply(target.username+' is banished from the tribe')
 				return
@@ -1322,11 +1304,9 @@ function handleCommand(msg, author, actor, command, bits){
 			if (child.dead){
 				response += '('+childName+' is dead)'
 			} else {
-				response += '('+childName+':'
-				if (referees.includes(actor) || (actor === child.mother || actor === child.father) ){
-					response += ' parents:'+child.mother+'+'+child.father
-				}
+				response += '('+childName+':'+child.gender
 				response += ' age:'+((child.age)/2)+ ' needs '+(2-child.food)+' food'
+				response += ' parents:'+child.mother+'+'+child.father
 				if (child.guardian && child.guardian != ''){
 					response += ' guardian:'+child.guardian
 				}
@@ -1480,10 +1460,12 @@ function listReadyToWork(tribe){
 	}
 	return unworked
 }
-function getNextChildName(children, childNames){
-	currentNames = Object.keys(children)
-	numberOfChildren = currentNames.length
-	nextIndex = (numberOfChildren % 26 )
+function getNextChildName(children, childNames, nextIndex){
+	if (!nextIndex){
+		currentNames = Object.keys(children)
+		numberOfChildren = currentNames.length
+		nextIndex = (numberOfChildren % 26 )
+	}
 	possibles = childNames['names'][nextIndex]
 	counter = 0
 	possibleName = possibles[ (Math.trunc( Math.random ( ) * possibles.length))]
@@ -1507,7 +1489,9 @@ function addChild(mother, father){
 	child.food = 0
 	child.gender = genders[ (Math.trunc( Math.random ( ) * genders.length))]
 	child.guardian = null
-	child.name = getNextChildName(children, allNames)
+	nextIndex = (gameState.populationCounter % 26 )
+	child.name = getNextChildName(children, allNames, nextIndex)
+	gameState.populationCounter++
 	children[child.name] = child	
 	person = personByName(mother)
 	population[child.mother].isPregnant = child.name
@@ -1578,6 +1562,61 @@ function addToPopulation(msg, author, bits, target,targetObject){
 	population[target] = person
 	msg.reply(response)
 	return
+}
+function findLeastGuarded(children, population){
+	// guard score = 7 if unguarded; otherwise is the length of the guarders 'guarding' array
+	var guardChildSort = []
+	var leastGuarded = []
+	if (Object.keys(children).length == 0){
+		msg.author.send('No children to sort')
+		return
+	}
+	for (var childName in children){
+		var child = children[childName]
+		if (child.age < 1 ){
+			// unborn children should be skipped
+			continue
+		}	
+		if (! child.guardian || child.guardian == '' || child.guardian == null){
+			guardChildSort.push({'name':childName, 'score':7})
+		} else {
+			personName = child.guardian
+			person = population[personName]
+			if (!person){
+				console.log(childName+' has a bogus guardian:'+personName)
+				child.guardian = null
+				guardChildSort.push({'name':childName, 'score':7, 'age':child.age})
+			} else {
+				guardChildSort.push({'name':childName, 'score': (person.guarding).length, 'age':child.age})
+			}
+		}
+	}
+	guardChildSort.sort((a,b) => parseFloat(b.score) - parseFloat(a.score))
+	lowGuardValue = guardChildSort[0].score;
+	for (var i = 0; i < guardChildSort.length; i++){
+		if (guardChildSort[i].score == lowGuardValue){
+			leastGuarded.push(guardChildSort[i])
+		} else {
+			// we are out of the tie, so ignore the rest
+			break
+		}
+	}
+	if (leastGuarded.length == 1){
+		leastGuardedName = leastGuarded[0].name
+	} else {
+		// sort the least guarded by age
+		leastGuarded.sort((a,b)=> parseFloat(a.age)-parseFloat(b.age))
+		startAge = leastGuarded[0].age
+		maxIndex = 0
+		for (var j =1; j < leastGuarded.length; j++){
+			if (leastGuarded[j].age > startAge)
+			break;
+			maxIndex = j
+		}
+		unluckyIndex = Math.trunc( Math.random ( ) * maxIndex)
+		leastGuardedName = leastGuarded[unluckyIndex].name
+	}
+	return leastGuardedName+' is the least guarded child.  guard number is '+lowGuardValue
 }
 function countChildrenOfParentUnderAge(children, parentName, age){
 	var count = 0
@@ -1691,9 +1730,17 @@ function consumeFood(){
 					child.dead = true
 					perishedChildren.push(childName)
 				}
+				person = personByName(child.mother)
+				if (!person.guarding){
+					person.guarding = [child.name]
+				} else {
+					person.guarding.push(child.name)
+				}
+				
 				if (birthRoll == 17){
 					twin = addChild(child.mother, child.father);
 					reponse += child.mother+' gives birth to a twin! Meet '+twin.name+'\n'
+					person.guarding.push(twin.name)
 				}
 				if (population[child.mother] && population[child.mother].isPregnant){
 					delete population[child.mother].isPregnant
