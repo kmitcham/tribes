@@ -158,7 +158,30 @@ function nextSeason(){
 	}
 	gameState.seasonCounter += 1
 }
-
+function inventoryMessage(targetName){
+	person = personByName(targetName)
+	if (!person){
+		return 'No person '+targetName
+	}
+	message = person.food+' food \t'
+	message += person.grain+' grain \t'
+	message += person.basket+' baskets \t'
+	message += person.spearhead+' spearheads \t'
+	message += person.profession+' '+person.gender.substring(0,1)+'\t'+targetName
+	if (person.isPregnant && person.isPregnant != ''){
+		message += '\n\t\t is pregnant with '+person.isPregnant
+	}
+	if (person.nursing && person.nursing.length > 0 ){
+		message += '\n\t\t is nursing '+person.nursing
+	}
+	if (person.isInjured && person.isInjured != 'false' ){
+		message += '\n\t\t is injured and unable to work'
+	}
+	if (person.guarding){
+		message += '\n\t\t is guarding '+person.guarding
+	}
+	return message
+}
 bot.on('message', msg => {
   if (!msg.content ){
 	return
@@ -399,7 +422,7 @@ function handleCommand(msg, author, actor, command, bits){
 	if (command === 'help'){
 		text = ''
 		text+='Player commands\n'
-		text+=' !inventory <target>  (show inventory and character info (no arg means self))\n'
+		text+=' !inventory <target|all>  (show inventory and character info (no arg means self))\n'
 		text+=' !children (shows the children ages and food status)\n'
 		text+=' !guard | !ignore <child>   take on child care responsibilities for the child\n'
 		text+=' !leastguarded (shows the least supervised child (ties resolved randomly))\n'
@@ -1242,34 +1265,22 @@ function handleCommand(msg, author, actor, command, bits){
 		if (!targetName){
 			targetName = actor
 		}
-		person = personByName(targetName)
-		if (!person || person == null){
-			msg.author.send(target+' does not seem to be a person')
-			return
+		response = 'error'
+		if (targetName == 'all'){
+			response = 'Whole Tribe Inventory:'
+			for (var personName in population){
+				response += '\n  '+inventoryMessage(personName)
+			}
+		}else {
+			person = personByName(targetName)
+			if (!person || person == null){
+				msg.author.send(target+' does not seem to be a person')
+				return
+			}
+			response = inventoryMessage(targetName)
 		}
-		message = targetName+' has: '
-		message += person.food+' food, '
-		message += person.grain+' grain, '
-		if (person.basket > 0 ){
-			message += person.basket+' baskets, '
-		}
-		if (person.spearhead > 0 ){
-			message += person.spearhead+' spearhead, '
-		}
-		if (person.isPregnant && person.isPregnant != ''){
-			message += '\n is pregnant with '+person.isPregnant
-		}
-		if (person.nursing && person.nursing.length > 0 ){
-			message += '\n is nursing '+person.nursing
-		}
-		if (person.isInjured && person.isInjured != 'false' ){
-			message += '\n is injured and unable to work'
-		}
-		if (person.guarding){
-			message += '\n is guarding '+person.guarding
-		}
-		msg.author.send(message)
 		msg.delete({timeout: 3000}); //delete command in 3sec 
+		msg.author.send(response)
 		return
 	}
 	// how much stuff does the target have?  if used by ref with no args, list whole population
@@ -1750,7 +1761,7 @@ function clearNursingPregnant(childName){
 		person = population[personName]
 		if (person.nursing && person.nursing.indexOf(childName) > -1 ){
 			childIndex = person.nursing.indexOf(childName)
-			person.nursing.indexOf(childName).splice(childIndex, 1);
+			person.nursing.splice(childIndex, 1);
 			console.log(personName+' is no longer nursing '+childName)
 		}
 		if (person.isPregnant && person.isPregnant == childName){
