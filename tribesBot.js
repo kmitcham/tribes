@@ -443,7 +443,7 @@ function handleCommand(msg, author, actor, command, bits){
 		text+=' !foodcheck (examine the food situation for every adult and living child)\n'
 		text+=' !ready (list who is still available to work)\n'
 		text+=' !graveyard (list of all deceased members and children)\n'
-		text+=' !scout (see the current location, year, season and local game)\n'
+		text+=' !status (see the current location, year, season and local game)\n'
 		text+='-=Work Round Commands=-\n'
 		text+=' !hunt\n'
 		text+=' !gather\n'
@@ -1181,12 +1181,28 @@ function handleCommand(msg, author, actor, command, bits){
 		return
 	}
 	if (command == 'scout'){
-		message = gameStateMessage()
-		if (gameState.workRound ) {message += '  (work round)'}
-		if (gameState.foodRound ) {message += '  (food round)'}
-		if (gameState.reproductionRound ) {message += '  (reproduction round)'}
-		msg.author.send(message)
-		msg.delete({timeout: 3000}); //delete command in 3sec 
+		locationName = gameState.currentLocationName
+		msg.delete({timeout: 1000}); //delete command in 1sec 
+		if (bits[1]){
+			locationName = bits[1]
+		}
+		response = 'The resources are:\n'
+		locationData = locations[locationName]
+		if (!locationData){
+			msg.author.send('Nothing known about '+locationName)
+			return
+		}
+		response += '\tGather:\n'
+		for (var index in locationData['gather']){
+			entry = locationData['gather'][index]
+			response += '\t\t'+entry[3]+'('+(Number(entry[1])+Number(entry[2]))+')\n'
+		}
+		response += '\tHunt:\n'
+		for (var index in locationData['hunt']){
+			entry = locationData['hunt'][index]
+			response += '\t\t'+entry[2]+'('+entry[1]+')\n'
+		}
+		msg.author.send(response)
 		return
 	}
 	// add a child to tribe; args are parent names
@@ -1331,6 +1347,15 @@ function handleCommand(msg, author, actor, command, bits){
 		gameState.workRound = false
 		gameState.foodRound = false
 		gameState.reproductionRound = true
+		return
+	}
+	if (command == 'status'){
+		message = gameStateMessage()
+		if (gameState.workRound ) {message += '  (work round)'}
+		if (gameState.foodRound ) {message += '  (food round)'}
+		if (gameState.reproductionRound ) {message += '  (reproduction round)'}
+		msg.author.send(message)
+		msg.delete({timeout: 3000}); //delete command in 3sec 
 		return
 	}
 	/////////// WORK ROUND COMMANDS  ////////////////////////////////////
