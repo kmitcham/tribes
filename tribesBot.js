@@ -1231,6 +1231,17 @@ function handleCommand(msg, author, actor, command, bits){
 			msg.reply('The mating of '+mother+':'+mroll+' and '+father+':'+droll+' spawned '+child.name)
 		} else {
 			msg.reply('The mating of '+mother+':'+mroll+' and '+father+':'+droll+' produced only good feelings')
+		}
+		var allPregnant = true
+		for (var personName in population){
+			var person = population[personName]
+			if (person.gender == 'female' && ! person.isPregnant){
+				allPregnant = false
+				break
+			}
+		}
+		if (allPregnant){
+			msg.reply('All the adult women of the tribe are pregnant')
 		}	
 		return
 	}
