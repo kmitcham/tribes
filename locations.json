@@ -13,6 +13,7 @@
 			[15,0,6,"grain"]
 		],
 		"hunt":[
+			[8,0,"nothing"],
 			[9,2,"small game"],
 			[10,2,"small game"],
 			[11,8,"small game"],

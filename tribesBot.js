@@ -617,8 +617,66 @@ function handleCommand(msg, author, actor, command, bits){
 			msg.author.send(command+' requires referee priviliges')
 			return
 		}
-		
-		msg.reply("list "+genderList(population))
+		GATHER = 0
+		GATHER_STRONG = 1
+		GRAIN = 2
+		GRAIN_STRONG = 3
+		HUNT = 4
+		var totals = {
+			'veldt':[0,0,0,0,0],
+			'hills':[0,0,0,0,0],
+			'marsh':[0,0,0,0,0],
+			'forest':[0,0,0,0,0]
+		}
+		for (var i =1; i <= 6; i++){
+			for (var j =1; j <= 6; j++){
+				for (var k =1; k <= 6; k++){
+					droll = i+j+k
+					for (locationName in totals){
+						locationData = locations[locationName]
+						data = gatherDataFor(locationName, droll)
+						totals[locationName][GATHER]+= data[1]
+						totals[locationName][GRAIN]+= data[2]
+						dataStrong = gatherDataFor(locationName, droll+1)
+						totals[locationName][GATHER_STRONG]+= dataStrong[1]
+						totals[locationName][GRAIN_STRONG]+= dataStrong[2]
+					}
+				}
+			}
+		}
+		response = '216 Gather totals:'
+		for (locationName in totals){
+			response += '\n'+locationName+' food:'+totals[locationName][GATHER]+' grain:'+totals[locationName][GRAIN]
+					+ ' sf:'+totals[locationName][GATHER_STRONG] +' sg:'+totals[locationName][GRAIN_STRONG]
+		}
+		msg.reply(response)
+		totals = {
+			'veldt':[0,0,0,0,0],
+			'hills':[0,0,0,0,0],
+			'marsh':[0,0,0,0,0],
+			'forest':[0,0,0,0,0]
+		}
+		MAX = 6000
+		for (var i = 0; i < MAX; i++){
+			val = roll(3)
+			for (locationName in totals){
+				locationData = locations[locationName]
+				data = gatherDataFor(locationName, val)
+				totals[locationName][GATHER]+= data[1]
+				totals[locationName][GRAIN]+= data[2]
+				dataStrong = gatherDataFor(locationName, val+1)
+				totals[locationName][GATHER_STRONG]+= dataStrong[1]
+				totals[locationName][GRAIN_STRONG]+= dataStrong[2]
+			}
+		}
+		response = '10x Random Gather avg:'
+		for (locationName in totals){
+			response += '\n'+locationName+' food:'+Math.round(10*totals[locationName][GATHER]/MAX)
+									    +' grain:'+Math.round(10*totals[locationName][GRAIN]/MAX)
+										+ ' sf:'  +Math.round(10*totals[locationName][GATHER_STRONG]/MAX)
+										 +' sg:'  +Math.round(10*totals[locationName][GRAIN_STRONG]/MAX)
+		}
+		msg.reply(response)
 		return
 	}
 	if (command === 'demote'){
@@ -2134,6 +2192,14 @@ function hunt(playername, player, rollValue){
 				message += 'Injury!'
 				player.isInjured = true
 			}
+		} else if (rollValue ==3 ){
+			message += 'Crippling injury!'
+			player.isInjured = true
+			if (player.strength = 'strong'){
+				delete player.strength
+			} else {
+				player.strength = 'weak'
+			}
 		} else {
 		// TODO: make this also possibly inure the helpers
 			message += 'Injury!'
@@ -2182,6 +2248,24 @@ function hunt(playername, player, rollValue){
 		player.helpers = []
 	}
 	return message
+}
+function gatherDataFor(locationName, roll){
+	resourceData = locations[locationName]['gather']
+	maxRoll = resourceData[resourceData.length-1][0]
+	minRoll = resourceData[0][0]
+	if (roll > maxRoll){
+		roll = maxRoll
+	}
+	if (roll < minRoll){
+		roll = minRoll
+	}
+	for (var i=0; i < resourceData.length; i++){
+		if (resourceData[i][0] == roll){
+			return resourceData[i]
+		}
+	}
+	console.log('error looking up resourceData for '+locationName+' '+type+' '+roll)
+	
 }
 bot.once('ready', ()=>{
 	console.log('bot is alive')
