@@ -13,7 +13,7 @@ let auth = JSON.parse(rawdata);
 
 const types = ['food', 'grain', 'basket', 'spearhead']
 const professions= ['hunter','gatherer', 'crafter']
-const member_properties = ['canCraft','nursing','isPregnant','isInjured','guarding','profession','gender','partner','worked','food','grain', 'handle']
+const member_properties = ['canCraft','chief','nursing','isPregnant','isInjured','guarding','profession','gender','partner','worked','food','grain', 'handle']
 const genders = ['male','female']
 const locations = require('./locations.json');
 const allNames = require('./names.json');
@@ -383,7 +383,8 @@ function doChance(rollValue){
 			}
 			break;
 		case 10 : 
-			message += "A hyena is stalking the tribe’s children! See 'Child In Danger!' to determine what happens."
+			//message += "A hyena is stalking the tribe’s children! See 'Child In Danger!' to determine what happens."
+			message += hyenaAttack(children, population)
 			break;
 		case 9 : 
 			name = randomMemberName()
@@ -489,8 +490,7 @@ function handleCommand(msg, author, actor, command, bits){
 
 		msg.author.send( text)
 
-		player = personByName(actor)
-		if (player.chief){
+		if (player && player.chief){
 			text = 'Chief Commands'
 			text+=' !induct|banish <player> add a member to the tribe\n'
 			text+=' !open|close  (toggle if people can join with "!join" or only with "!induct" by the chief\n'
@@ -1397,6 +1397,11 @@ function handleCommand(msg, author, actor, command, bits){
 	}
 	// add a child to tribe; args are parent names
 	if (command === 'spawn'){
+		if (!referees.includes(actor)){
+			msg.author.send('requires referee ')
+			msg.delete({timeout: 3000}); //delete command in 3sec 
+			return
+		}
 		if (bits.length < 3 || bits.length > 4){
 			msg.author.send('usage: !spawn mother father <force>')
 			msg.delete({timeout: 3000}); //delete command in 3sec 
@@ -1404,6 +1409,10 @@ function handleCommand(msg, author, actor, command, bits){
 		}
 		var mother = 'unknown'
 		var father = 'unknown'
+		var force = false
+		if (bits.length ==4 ){
+			force = bits[3]
+		}
 		if (msg.mentions.users.first() && msg.mentions.users.last() ){
 			mother = msg.mentions.users.first().username
 			father = msg.mentions.users.last().username
@@ -1699,8 +1708,8 @@ function listReadyToWork(tribe){
 	return unworked
 }
 function getNextChildName(children, childNames, nextIndex){
+	var currentNames = Object.keys(children)
 	if (!nextIndex){
-		currentNames = Object.keys(children)
 		numberOfChildren = currentNames.length
 		nextIndex = (numberOfChildren % 26 )
 	}
@@ -1770,7 +1779,7 @@ function spawnFunction(mother, father, msg, population, force = false){
 		mother = father;
 		father = temp
 	}
-	if (population[mother].isPregnant  && population[mother].isPregnant != ''){
+	if (population[mother].isPregnant  && population[mother].isPregnant != '' && population[mother].isPregnant != 'false'){
 		msg.author.send(mother+' is already pregnant')
 		msg.delete({timeout: 3000}); //delete command in 3sec 
 		return
@@ -1782,7 +1791,7 @@ function spawnFunction(mother, father, msg, population, force = false){
 	mroll = roll(1)
 	droll = roll(1)
 	if (force != false || (mroll+droll) >= spawnChance ){
-		child = addChild(mother, father)
+		var child = addChild(mother, father)
 		msg.reply('The mating of '+mother+':'+mroll+' and '+father+':'+droll+' spawned '+child.name)
 	} else {
 		msg.reply('The mating of '+mother+':'+mroll+' and '+father+':'+droll+' produced only good feelings')
@@ -1871,8 +1880,7 @@ function findLeastGuarded(children, population){
 	var guardChildSort = []
 	var leastGuarded = []
 	if (Object.keys(children).length == 0){
-		msg.author.send('No children to sort')
-		return
+		return 'No children to sort'
 	}
 	for (var childName in children){
 		var child = children[childName]
@@ -1920,6 +1928,31 @@ function findLeastGuarded(children, population){
 		leastGuardedName = leastGuarded[unluckyIndex].name
 	}
 	return leastGuardedName+' is the least guarded child.  guard number is '+lowGuardValue
+}
+function hyenaAttack(children, population){
+	// get the least guarded message
+	leastGuardedMessageArray = findLeastGuarded(children, population).split(" ")
+	//  this is stupid and hacky
+	leastGuardedName = leastGuardedMessageArray[0]
+	lowGuardValue = Number(leastGuardedMessageArray[10])
+	rollValue = roll(1)
+	response = 'The hyena attacks '+leastGuardedName+'!\n'
+	var child = children[leastGuardedName]
+	if (!child){
+		console.log('hyena did not find the child somehow '+leastGuardedName)
+		return response
+	}
+	console.log(leastGuardedName+' rollValue'+rollValue+ ' target'+lowGuardValue)
+	if (rollValue >= lowGuardValue){
+		guardian = child.guardian
+		if (guardian){
+			response += '\nFortunately, '+guardian+' chases off the beast'
+		}
+	} else {
+		response += '\n The poor child is devoured'
+		kill(leastGuardedName, 'hyena attack')
+	}
+	return response
 }
 function countChildrenOfParentUnderAge(children, parentName, age){
 	var count = 0
