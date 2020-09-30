@@ -438,7 +438,7 @@ function handleCommand(msg, author, actor, command, bits){
 		text+='Player commands\n'
 		text+=' !inventory <target|all>  (show inventory and character info (no arg means self))\n'
 		text+=' !children (shows the children ages and food status)\n'
-		text+=' !secrets <toggle the state of willingness to teach others to craft'
+		text+=' !secrets <toggle the state of willingness to teach others to craft\n'
 		text+=' !guard | !ignore <child>   take on child care responsibilities for the child\n'
 		text+=' !leastguarded (shows the least supervised child (ties resolved randomly))\n'
 		text+=' !foodcheck (examine the food situation for every adult and living child)\n'
@@ -1815,7 +1815,7 @@ function consumeFood(){
 	for (var i = 0; i < perishedCount; i++) {
 		corpse = perished[i]
 		console.log('removing corpse '+corpse)
-		kill(perished[i])
+		kill(perished[i], 'starvation')
 	}
 	console.log('children are eating')
 	for (childName in children){
@@ -1877,7 +1877,7 @@ function consumeFood(){
 	perishedCount = perishedChildren.length;
 	for (var i = 0; i < perishedCount; i++) {
 		corpse = perishedChildren[i]
-		kill(perishedChildren[i])
+		kill(perishedChildren[i], 'starvation')
 		console.log('removing corpse '+corpse)
 	}
 	if ((perishedChildren.length+perished.length) == 0 ){
@@ -1995,12 +1995,12 @@ function migrate(msg, destination, force, population, children){
 			// clean up the dead
 			var perishedCount = deceasedPeople.length;
 			for (var i = 0; i < perishedCount; i++) {
-				kill(deceasedPeople[i])
+				kill(deceasedPeople[i],'migration hunger')
 				response+= " "+deceasedPeople[i]
 			}
 			perishedCount = deceasedChildren.length;
 			for (var i = 0; i < perishedCount; i++) {
-				kill(deceasedChildren[i])
+				kill(deceasedChildren[i],'migration hunger')
 				response+= " "+deceasedChildren[i]
 			}
 		}
