@@ -438,6 +438,7 @@ function handleCommand(msg, author, actor, command, bits){
 		text+='Player commands\n'
 		text+=' !inventory <target|all>  (show inventory and character info (no arg means self))\n'
 		text+=' !children (shows the children ages and food status)\n'
+		text+=' !secrets <toggle the state of willingness to teach others to craft'
 		text+=' !guard | !ignore <child>   take on child care responsibilities for the child\n'
 		text+=' !leastguarded (shows the least supervised child (ties resolved randomly))\n'
 		text+=' !foodcheck (examine the food situation for every adult and living child)\n'
@@ -1263,6 +1264,20 @@ function handleCommand(msg, author, actor, command, bits){
 		msg.author.send(response)
 		return
 	}
+	if (command == 'secrets'){
+		if (player && player.canCraft){
+			if (player.noTeach){
+				delete player.noTeach
+				msg.author.send('You will no longer teach others to craft')
+			} else {
+				player.noTeach = true
+				msg.author.send('You will try to teach those willing to learn')
+			}
+		} else {
+			msg.author.send('You do not know any secrets')
+		}
+		return
+	}
 	// add a child to tribe; args are parent names
 	if (command === 'spawn'){
 		if (bits.length < 3 || bits.length > 4){
@@ -1503,17 +1518,17 @@ function handleCommand(msg, author, actor, command, bits){
 				return
 			}
 			crafters = countByType(population, 'canCraft', true)
-			noteach = coundByType(population, 'noTeach', true)
-			if (crafters < 1 && crafters > noteach){
+			noTeachers = coundByType(population, 'noTeach', true)
+			if (crafters <= noTeachers){
 				msg.author.send('No on in the tribe is able and willing to teach you crafting')
 				return
 			}
-
-			if ( roll(2) >= 10 ){
+			learnRoll = roll(2)
+			if ( learnRoll >= 10 ){
 				player.canCraft = true
-				message = actor+' learns to craft.'
+				message = actor+' learns to craft. ('+learnRoll+')'
 			} else {
-				message = actor+' observes a crafter, trying to learn.'
+				message = actor+' tries to learn to craft, but does not understand it yet. ('+learnRoll+')'
 			}
 		} 
 		if (command == 'hunt'){
@@ -2088,7 +2103,8 @@ function gather(playername, player, rollValue){
 	if (player.basket > 0){
 		var broll = roll(3)+modifier
 		message+= ' basket: ('+broll+')'
-		console.log('modified basket roll '+broll)
+		netroll = broll+modifier
+		console.log('modified basket roll '+netroll)
 		for (var i = 0; i < gatherData.length;i++){
 			if (netRoll <= gatherData[i][0]){
 				message += gatherData[i][3] +' ('+((gatherData[i][1]+gatherData[i][2])+')')
@@ -2099,7 +2115,7 @@ function gather(playername, player, rollValue){
 		}
 		// check for basket loss
 		if (roll(1) <= 2){
-			message+= ' basket broke!'
+			message+= ' basket breaks.'
 			player.basket -= 1
 		}
 	}
