@@ -390,9 +390,12 @@ function doChance(rollValue){
 			name = randomMemberName()
 			person = population[name]
 			amount = roll(2)
+			if (amount > person.food){
+				amount = person.food
+			}
 			person.food -= amount
 			if (person.food < 0) { person.food = 0}
-			message += name+ " loses "+amount+" food"
+			message += name + " loses "+amount+" food to weevils."
 			break;
 		case 8: 
 			message +=  "Favorable weather conditions allow the tribe to make “jerky,” which keeps very well. Each person may trade Food counters for Grain counters (representing the jerky), at a rate of 3 Food for 1 Grain.  Syntax: jerk <amount>"
@@ -465,6 +468,7 @@ function handleCommand(msg, author, actor, command, bits){
 		text = ''
 		text+='Player commands\n'
 		text+=' !inventory <target|all>  (show inventory and character info (no arg means self))\n'
+		text+=' !specialize <hunter|gatherer|crafter>'
 		text+=' !children (shows the children ages and food status)\n'
 		text+=' !guard | !ignore <child>   take on child care responsibilities for the child\n'
 		text+=' !leastguarded (shows the least supervised child (ties resolved randomly))\n'
@@ -483,9 +487,9 @@ function handleCommand(msg, author, actor, command, bits){
 		text+=' !assist <hunter>\n'
 		text+='-=Food Round Commands=-\n'
 		text+='-=Reproduction Round Commands=-\n'
-		text+=' !invite <target>'
-		text+=' !pass (decline a mating, or end the members invitation turn)'
-		text+=' !consent (agree to a mating invitation)'
+		text+=' !invite <target>\n'
+		text+=' !pass (decline a mating, or end the members invitation turn)\n'
+		text+=' !consent (agree to a mating invitation)\n'
 		text+=' get a reproduction partner and inform the referee of a mating attempt\n'
 
 		msg.author.send( text)
@@ -1049,7 +1053,7 @@ function handleCommand(msg, author, actor, command, bits){
 			msg.delete({timeout: 3000}); //delete command in 3sec 
 			return
 		}
-		if (child.age < 1){
+		if (child.age < 0){
 			msg.author.send('You can not watch an unborn child ')
 			msg.delete({timeout: 3000}); //delete command in 3sec 
 			return
@@ -1144,7 +1148,7 @@ function handleCommand(msg, author, actor, command, bits){
 		}
 		player.invite = target
 		//TODO msg the invitee
-		gameState.tribeChannel.send(actor+ ' invites '+bits[1]+' to reproduce')
+		gameState.tribeChannel.send(actor+ ' invites '+bits[1]+' to reproduce.  !pass or !consent')
 		return
 	}
 	if (command == 'inventory'){
@@ -1441,6 +1445,7 @@ function handleCommand(msg, author, actor, command, bits){
 			return	
 		}
 		specialize(msg, actor, bits[1], gameState.tribeChannel)
+		return
 	}
 	if (command == 'startwork' || command.startsWith('startw')){
 		if (!referees.includes(actor) && !player.chief){
@@ -1655,11 +1660,12 @@ function handleCommand(msg, author, actor, command, bits){
 				return
 			}
 			crafters = countByType(population, 'canCraft', true)
-			noteach = coundByType(population, 'noTeach', true)
-			if (crafters < 1 && crafters > noteach){
-				msg.author.send('No on in the tribe is able and willing to teach you crafting')
-				return
-			}
+			//noteach = 100
+			//coundByType(population, 'noTeach', true)
+			//if (crafters < 1 && crafters > noteach){
+			//	msg.author.send('No on in the tribe is able and willing to teach you crafting')
+			//	return
+			//}
 
 			if ( roll(2) >= 10 ){
 				player.canCraft = true
@@ -1848,7 +1854,7 @@ function addToPopulation(msg, author, bits, target,targetObject){
 	if (gender === 'm'){gender = 'male'}
 	if (gender === 'f'){gender = 'female'}
 	if ( !target || !gender || !genders.includes(gender) ){
-		msg.author.send('usage:!'+bits[0]+' [female|male] name')
+		msg.author.send('usage:'+bits[0]+' [female|male] name')
 		return
 	}
 	var person = {}
@@ -1903,6 +1909,10 @@ function findLeastGuarded(children, population){
 		}
 	}
 	guardChildSort.sort((a,b) => parseFloat(b.score) - parseFloat(a.score))
+	if (guardChildSort.length == 0){
+		console.log(' ERROR EMPTY LIST OF GUARD CHULDREN')
+		return "Bug means all kids are guarded equally"
+	}
 	lowGuardValue = guardChildSort[0].score;
 	for (var i = 0; i < guardChildSort.length; i++){
 		if (guardChildSort[i].score == lowGuardValue){
