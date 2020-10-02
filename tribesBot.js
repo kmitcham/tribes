@@ -467,30 +467,30 @@ function handleCommand(msg, author, actor, command, bits){
 	if (command === 'help'){
 		text = ''
 		text+='Player commands\n'
-		text+=' !inventory <target|all>  (show inventory and character info (no arg means self))\n'
-		text+=' !specialize <hunter|gatherer|crafter>'
+		text+=' !specialize <hunter|gatherer|crafter>(at the start of the game)\n'
 		text+=' !children (shows the children ages and food status)\n'
+		text+=' !inventory <target|all>  (show inventory and character info (no arg means self))\n'
+		text+=' !secrets <toggle the state of willingness to teach others to craft\n'
+		text+=' !status (see the current location, year, season and local game)\n'
+		text+=' !vote <target>  (your choice for chief)\n'
+		text+=' !give <amt> <food|grain|spearhead|basket> <player>\n'
+		text+=' !graveyard (list of all deceased members and children)\n'
+		text+='-=Work Round Commands=-\n'
 		text+=' !guard | !ignore <child>   take on child care responsibilities for the child\n'
 		text+=' !leastguarded (shows the least supervised child (ties resolved randomly))\n'
-		text+=' !foodcheck (examine the food situation for every adult and living child)\n'
-		text+=' !ready (list who is still available to work)\n'
-		text+=' !graveyard (list of all deceased members and children)\n'
-		text+=' !status (see the current location, year, season and local game)\n'
-		text+=' !vote <target>  (your choice for chief)'
-		text+=' !give <amt> <food|grain|spearhead|basket> <player>\n'
-		text+=' !feed <amt> <childName>\n'
-		text+='-=Work Round Commands=-\n'
 		text+=' !hunt\n'
 		text+=' !gather\n'
 		text+=' !craft <spearhead|basket>\n'
 		text+=' !train (learn crafting, if there is a willing teacher)\n'
 		text+=' !assist <hunter>\n'
+		text+=' !ready (list who is still available to work)\n'
 		text+='-=Food Round Commands=-\n'
+		text+=' !foodcheck (examine the food situation for every adult and living child)\n'
+		text+=' !feed <amt> <childName>\n'
 		text+='-=Reproduction Round Commands=-\n'
 		text+=' !invite <target>\n'
 		text+=' !pass (decline a mating, or end the members invitation turn)\n'
 		text+=' !consent (agree to a mating invitation)\n'
-		text+=' get a reproduction partner and inform the referee of a mating attempt\n'
 
 		msg.author.send( text)
 
@@ -501,8 +501,8 @@ function handleCommand(msg, author, actor, command, bits){
 			text+=' !startwork (begins the work round, enabling work attempts and rolls)\n'
 			text+=' !startfood (ends the work round; subtract food/grain; birth; child age increase)\n'
 			text+=' !startreproduction (Players verbally express intentions, use spawn.  Also when location can change)\n'
-			text+=' !chance (do another chanceroll)\n'
-			text+=' !migrate <newlocation> <force>  (without force, just checks would would suffer on the journey)\n'
+			text+=' !chance (after mating, chance is required to end the season)\n'
+			text+=' !migrate <newlocation> <force>  (without force, just checks who would perish on the journey)\n'
 			msg.author.send( text)
 		}
 		if (referees.includes(actor)){
@@ -670,24 +670,26 @@ function handleCommand(msg, author, actor, command, bits){
 		gameState.tribeChannel.send('The tribe is only open to those the chief inducts')
 	}
 	if (command == 'consent'){
-		var invitedBy = ''
+		var inviterName = ''
 		var inviter = null
 		for (personName in population){
 			person = population[personName]
 			if (person.invite == actor){
-				invitedBy = personName
+				inviterName = personName
 				inviter = person
 				break
 			}
 		}
-		if (invitedBy == '' ){
+		if (inviterName == '' ){
 			msg.author.send('No current invitations')
 			msg.delete({timeout: 3000}); //delete command in 3sec 
 			return
 		}
-		spawnFunction( actor, invitedBy, msg, population)
+		spawnFunction( actor, inviterName, msg, population)
+		if (gameState && gameState.reproductionList && gameState.reproductionList[0].startsWith(inviterName)){
+			nextMating(inviterName)
+		}
 		return
-		
 	}
 	if (command == 'debug'){
 		if (!referees.includes(actor)){
@@ -1301,26 +1303,23 @@ function handleCommand(msg, author, actor, command, bits){
 		// pass is valid a) when the actor name is top of the reproductionlist
 		// or b) when the player is invited
 		if (gameState && gameState.reproductionList && gameState.reproductionList[0].startsWith(actor)){
-			if (player.invite){
-				delete player.invite
-			}
-			gameState.reproductionList.shift()
-			gameState.tribeChannel.send(gameState.reproductionList[0]+ " may now invite people to reproduce ")
+			nextMating(actor)
 			return
 		}
-		var invitedBy = ''
+		var inviterName = ''
 		var inviter = null
 		for (personName in population){
 			person = population[personName]
 			if (person.invite == actor){
-				invitedBy = personName
+				inviterName = personName
 				inviter = person
 				break
 			}
 		}
-		if (invitedBy != ''){
-			gameState.tribeChannel.send(actor+' declines a mating invitation from '+invitedBy)
+		if (inviterName != ''){
+			gameState.tribeChannel.send(actor+' declines a mating invitation from '+inviterName)
 			delete inviter.invite
+			gameState.tribeChannel.send(inviterName+' should !invite another partner, or !pass')
 			return
 		}
 		msg.author.send('No one seems to have invited you')
@@ -1399,6 +1398,20 @@ function handleCommand(msg, author, actor, command, bits){
 		msg.author.send(response)
 		return
 	}
+	if (command == 'secrets'){
+		if (player && player.canCraft){
+			if (player.noTeach){
+				delete player.noTeach
+				msg.author.send('You will no longer teach others to craft')
+			} else {
+				player.noTeach = true
+				msg.author.send('You will try to teach those willing to learn')
+			}
+		} else {
+			msg.author.send('You do not know any secrets')
+		}
+		return
+	}
 	// add a child to tribe; args are parent names
 	if (command === 'spawn'){
 		if (!referees.includes(actor)){
@@ -1472,7 +1485,7 @@ function handleCommand(msg, author, actor, command, bits){
 		}
 		message = gameStateMessage()
 		msg.reply(message)
-		msg.reply('\nStarting the work round.  Hunt, gather, or craft')
+		msg.reply('\nStarting the work round.  Guard your children.  Hunt, gather, craft, train or assist')
 		gameState.workRound = true
 		gameState.foodRound = false
 		gameState.reproductionRound = false
@@ -1660,18 +1673,17 @@ function handleCommand(msg, author, actor, command, bits){
 				return
 			}
 			crafters = countByType(population, 'canCraft', true)
-			//noteach = 100
-			//coundByType(population, 'noTeach', true)
-			//if (crafters < 1 && crafters > noteach){
-			//	msg.author.send('No on in the tribe is able and willing to teach you crafting')
-			//	return
-			//}
-
-			if ( roll(2) >= 10 ){
+			noTeachers = coundByType(population, 'noTeach', true)
+			if (crafters <= noTeachers){
+				msg.author.send('No on in the tribe is able and willing to teach you crafting')
+				return
+			}
+			learnRoll = roll(2)
+			if ( learnRoll >= 10 ){
 				player.canCraft = true
-				message = actor+' learns to craft.'
+				message = actor+' learns to craft. ('+learnRoll+')'
 			} else {
-				message = actor+' observes a crafter, trying to learn.'
+				message = actor+' tries to learn to craft, but does not understand it yet. ('+learnRoll+')'
 			}
 		} 
 		if (command == 'hunt'){
@@ -1769,6 +1781,23 @@ function clearWorkFlags(population){
 		person.worked = false
 	}
 }
+function nextMating(currentInviterName){
+	player = personByName(currentInviterName)
+	if (!player){
+		console.log('bad attempt to call nextMating, person not found '+currentInviterName)
+	}
+	if (player.invite){
+		delete player.invite
+	}
+	gameState.reproductionList.shift()
+	if (gameState.reproductionList.length > 0){
+		gameState.tribeChannel.send(gameState.reproductionList[0]+ " should now !invite people to reproduce, or !pass ")
+		return
+	} else {
+		gameState.tribeChannel.send('Reproduction round is over.  Time for the chance roll')
+		return
+	}
+}
 function spawnFunction(mother, father, msg, population, force = false){
 	if (!population[mother] || !population[father]){
 		msg.author.send('Parents not found in tribe')
@@ -1813,8 +1842,8 @@ function spawnFunction(mother, father, msg, population, force = false){
 	if (allPregnant){
 		msg.reply('All the adult women of the tribe are pregnant')
 		delete gameState.reproductionList
-	}	
-
+	}
+	return
 }
 function specialize( msg, playerName, profession, tribeChannel){
 	playerName = msg.author.username
@@ -2051,7 +2080,7 @@ function consumeFood(){
 	for (var i = 0; i < perishedCount; i++) {
 		corpse = perished[i]
 		console.log('removing corpse '+corpse)
-		kill(perished[i])
+		kill(perished[i], 'starvation')
 	}
 	console.log('children are eating')
 	for (childName in children){
@@ -2070,11 +2099,13 @@ function consumeFood(){
 			}
 			if (child.age == 0){
 				birthRoll = roll(3)
-				response += '\n\t'+child.mother+' gives birth to a '+child.gender+'-child, '+child.name+' '
+				response += '\n\t'+child.mother+' gives birth to a '+child.gender+'-child, '+child.name
 				if (birthRoll < 5 ){
-					response += 'but the child did not survive\n'
+					response += ' but the child did not survive\n'
 					child.dead = true
 					perishedChildren.push(childName)
+				} else {
+					response+'\n'
 				}
 				person = personByName(child.mother)
 				if (!person.guarding){
@@ -2113,7 +2144,7 @@ function consumeFood(){
 	perishedCount = perishedChildren.length;
 	for (var i = 0; i < perishedCount; i++) {
 		corpse = perishedChildren[i]
-		kill(perishedChildren[i])
+		kill(perishedChildren[i], 'starvation')
 		console.log('removing corpse '+corpse)
 	}
 	if ((perishedChildren.length+perished.length) == 0 ){
@@ -2231,12 +2262,12 @@ function migrate(msg, destination, force, population, children){
 			// clean up the dead
 			var perishedCount = deceasedPeople.length;
 			for (var i = 0; i < perishedCount; i++) {
-				kill(deceasedPeople[i])
+				kill(deceasedPeople[i],'migration hunger')
 				response+= " "+deceasedPeople[i]
 			}
 			perishedCount = deceasedChildren.length;
 			for (var i = 0; i < perishedCount; i++) {
-				kill(deceasedChildren[i])
+				kill(deceasedChildren[i],'migration hunger')
 				response+= " "+deceasedChildren[i]
 			}
 		}
@@ -2339,7 +2370,8 @@ function gather(playername, player, rollValue){
 	if (player.basket > 0){
 		var broll = roll(3)+modifier
 		message+= ' basket: ('+broll+')'
-		console.log('modified basket roll '+broll)
+		netroll = broll+modifier
+		console.log('modified basket roll '+netroll)
 		for (var i = 0; i < gatherData.length;i++){
 			if (netRoll <= gatherData[i][0]){
 				message += gatherData[i][3] +' ('+((gatherData[i][1]+gatherData[i][2])+')')
@@ -2350,7 +2382,7 @@ function gather(playername, player, rollValue){
 		}
 		// check for basket loss
 		if (roll(1) <= 2){
-			message+= ' basket broke!'
+			message+= ' basket breaks.'
 			player.basket -= 1
 		}
 	}
