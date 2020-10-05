@@ -459,7 +459,6 @@ function roll(count){
 		return total
 }
 function handleCommand(msg, author, actor, command, bits){
-	player = personByName(actor)
 	//channelName = msg.channel.name
 	//msgChannelType = msg.channel.type
 	//console.log('channel '+channelName+' type'+msgChannelType)
@@ -478,11 +477,11 @@ function handleCommand(msg, author, actor, command, bits){
 		text+='-=Work Round Commands=-\n'
 		text+=' !guard | !ignore <child>   take on child care responsibilities for the child\n'
 		text+=' !leastguarded (shows the least supervised child (ties resolved randomly))\n'
-		text+=' !hunt\n'
-		text+=' !gather\n'
 		text+=' !craft <spearhead|basket>\n'
-		text+=' !train (learn crafting, if there is a willing teacher)\n'
+		text+=' !gather\n'
 		text+=' !assist <hunter>\n'
+		text+=' !hunt\n'
+		text+=' !train (learn crafting, if there is a willing teacher)\n'
 		text+=' !ready (list who is still available to work)\n'
 		text+='-=Food Round Commands=-\n'
 		text+=' !foodcheck (examine the food situation for every adult and living child)\n'
@@ -533,6 +532,7 @@ function handleCommand(msg, author, actor, command, bits){
 		msg.delete({timeout: 3000}); //delete command in 3sec 
 		return
 	}
+	player = personByName(actor)
 	if (command == 'addchild'){
 		if (!referees.includes(actor)){
 			msg.author.send(command+' requires referee priviliges')
@@ -1399,6 +1399,7 @@ function handleCommand(msg, author, actor, command, bits){
 		return
 	}
 	if (command == 'secrets'){
+		player = personByName(actor)
 		if (player && player.canCraft){
 			if (player.noTeach){
 				delete player.noTeach
@@ -1485,7 +1486,7 @@ function handleCommand(msg, author, actor, command, bits){
 		}
 		message = gameStateMessage()
 		msg.reply(message)
-		msg.reply('\nStarting the work round.  Guard your children.  Hunt, gather, craft, train or assist')
+		msg.reply('\nStarting the work round.  Guard your children.  Craft, gather, hunt, assist or train.')
 		gameState.workRound = true
 		gameState.foodRound = false
 		gameState.reproductionRound = false
@@ -1862,6 +1863,9 @@ function specialize( msg, playerName, profession, tribeChannel){
 	}
 	person.profession = profession
 	gameState.tribeChannel.send(playerName+ ' is a skilled '+profession)
+	if (person.profession == 'crafter'){
+		person.canCraft = true
+	}
 	return
 }
 function addToPopulation(msg, author, bits, target,targetObject){
