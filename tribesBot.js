@@ -463,9 +463,10 @@ function handleCommand(msg, author, actor, command, bits){
 	//msgChannelType = msg.channel.type
 	//console.log('channel '+channelName+' type'+msgChannelType)
 	// list commands
+	player = personByName(actor)
 	if (command === 'help'){
 		text = ''
-		text+='Player commands\n'
+		text+='### Player commands ###\n'
 		text+=' !specialize <hunter|gatherer|crafter>(at the start of the game)\n'
 		text+=' !children (shows the children ages and food status)\n'
 		text+=' !inventory <target|all>  (show inventory and character info (no arg means self))\n'
@@ -490,11 +491,10 @@ function handleCommand(msg, author, actor, command, bits){
 		text+=' !invite <target>\n'
 		text+=' !pass (decline a mating, or end the members invitation turn)\n'
 		text+=' !consent (agree to a mating invitation)\n'
-
 		msg.author.send( text)
 
-		if (player && player.chief){
-			text = 'Chief Commands'
+		if ((player && player.chief) || referees.includes(actor) ){
+			text = '\n### Chief Commands ###\n'
 			text+=' !induct|banish <player> add a member to the tribe\n'
 			text+=' !open|close  (toggle if people can join with "!join" or only with "!induct" by the chief\n'
 			text+=' !startwork (begins the work round, enabling work attempts and rolls)\n'
@@ -506,23 +506,16 @@ function handleCommand(msg, author, actor, command, bits){
 		}
 		if (referees.includes(actor)){
 			text = ''
-			text+='Referee Commands\n'
+			text+='\n### Referee Commands ###\n'
 			text+=' edit <target> <canCraft|nursing|isPregnant|profession|gender|partner|worked|food|grain> <value>\n' 
 			text+=' editchild <food|age|mother|father> <value>\n' 
 			text+=' award <amt> <food|grain|spearhead|basket> <player>\n'
 			text+=' kill <name> <message> kill a person or child\n'
 			text+=' list <player>  (no arg lists all players)\n '
-			text+=' induct|banish <player> add a member to the tribe\n'
 			text+=' promote|demote <player> to the ref list\n'
 			text+=' spawn <mother> <father> add a child with parents\n'
 			text+=' save the game file (automatically done at the start of every work round)\n'
 			text+=' load the saved file\n'
-			text+=' migrate <newlocation> <force>  (without force, just checks would would suffer on the journey)\n'
-			text+=' startwork (begins the work round, enabling work attempts and rolls)\n'
-			text+=' startfood (ends the work round; subtract food/grain; birth; child age increase)\n'
-			text+=' startreproduction (Players verbally express intentions, use spawn.  Also when location can change)\n'
-			text+=' startchance (Chance roll, and its effects, get processed)\n'
-			text+=' chance (do another chanceroll)\n'
 			text+=' listnames | listchildren just the names\n'
 			text+=' initgame erase the current game state and start fresh\n'
 			text+=' endgame    convert all the child to corpses, or new adults\n'
@@ -532,7 +525,6 @@ function handleCommand(msg, author, actor, command, bits){
 		msg.delete({timeout: 3000}); //delete command in 3sec 
 		return
 	}
-	player = personByName(actor)
 	if (command == 'addchild'){
 		if (!referees.includes(actor)){
 			msg.author.send(command+' requires referee priviliges')
@@ -986,7 +978,7 @@ function handleCommand(msg, author, actor, command, bits){
 			msg.delete({timeout: 3000}); //delete command in 3sec 
 			return
 		}
-		if ((type == 'spearhead' || type =='basket') && player.worked && player.profession != 'crafter'){
+		if ((type == 'spearhead' || type =='basket') && player && player.worked && player.profession != 'crafter'){
 			msg.author.send('The game suspects you used that item to work with.  Ask the referee to help trade it if you did not.')
 			msg.delete({timeout: 3000}); //delete command in 3sec 
 			return
@@ -1102,7 +1094,7 @@ function handleCommand(msg, author, actor, command, bits){
 	}
 	// add a person to the tribe
 	if (command === 'induct'){
-		if (!referees.includes(actor) && !player.chief){
+		if (!referees.includes(actor) && (player && !player.chief)){
 			msg.author.send(command+' requires referee  or chief priviliges')
 			msg.delete({timeout: 3000}); //delete command in 3sec 
 			return
