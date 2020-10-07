@@ -287,13 +287,25 @@ function personByName(name){
 	if (name.indexOf('(') != -1){
 		name = name.substring(0, name.indexOf('('))
 	}
+	var person = null
 	if (population[name] != null){
-		return population[name]
+		 person = population[name]
+	} else if (name && population[name.username] != null){
+		person = population[name.username]
+	} else if (name.indexOf('@') != -1 && population[name.substring(1)] != null){
+		person = population[name.substring(1)]
 	}
-	if (name && population[name.username] != null){
-		return population[name.username]
+	if (person != null){
+		for (var type in person) {
+			if (Object.prototype.hasOwnProperty.call( person, type)) {
+				if (person[type] && person[type].constructor === Array && person[type].length == 0){
+					console.log('deleting empty array for '+type)
+					delete person[type]
+				}
+			}
+		}
+		return person
 	}
-
 	console.log("No such person in population:"+name)
 	return null
 }
@@ -946,6 +958,9 @@ function handleCommand(msg, author, actor, command, bits){
 			}
 			gameState.tribeChannel.send(actor+' fed '+amount+' to child '+childName)
 			children[childName].food += Number(amount)
+			if (chidren[childName].food != 2){
+				gameState.tribeChannel.send(childName+' could eat more.')
+			}
 		} else {
 			msg.author.send('You do not have enough food or grain to feed the child')
 			msg.delete({timeout: 3000}); //delete command in 3sec 
@@ -1110,15 +1125,16 @@ function handleCommand(msg, author, actor, command, bits){
 		return
 	}
 	// add a person to the tribe
-	if (command === 'induct'){
+	if (command == 'induct'){
 		if (!referees.includes(actor) && (player && !player.chief)){
-			msg.author.send(command+' requires referee  or chief priviliges')
+			msg.author.send(command+' requires referee or chief priviliges')
 			msg.delete({timeout: 3000}); //delete command in 3sec 
 			return
 		}
 		if (! msg.mentions || ! msg.mentions.users || ! msg.mentions.users.first()){
 			msg.author.send(command+' requires at least one @target')
-		return
+			msg.delete({timeout: 3000}); //delete command in 3sec 
+			return
 		}
 		var target = msg.mentions.users.first().username
 		addToPopulation(msg, author, bits, target, msg.mentions.users.first())
@@ -2026,7 +2042,7 @@ function checkFood(){
 	for  (var targetname in population) {
 		person = population[targetname]
 		hunger = 4
-		if (countChildrenOfParentUnderAge(children, targetname, 4) > 1){
+		if (person.gender == 'female' && countChildrenOfParentUnderAge(children, targetname, 4) > 1){
 			hunger = 6
 		}
 		snacks = person.food + person.grain
@@ -2116,7 +2132,7 @@ function consumeFood(){
 					child.dead = true
 					perishedChildren.push(childName)
 				} else {
-					response+'\n'
+					response += '\n'
 				}
 				person = personByName(child.mother)
 				if (!person.guarding){
@@ -2162,7 +2178,7 @@ function consumeFood(){
 		console.log('removing corpse '+corpse)
 	}
 	if ((perishedChildren.length+perished.length) == 0 ){
-		response += '\nnobody starved!'
+		response += 'Nobody starved!'
 	}
 	return response
 }
@@ -2328,7 +2344,7 @@ function migrate(msg, destination, force, population, children){
 		response += '\nThe following tribe members would die on the journey to '+destination+': '+deceasedPeople
 		response += '\nThe following children would die along the way: '+deceasedChildren
 	}
-	return response
+	return response+'\n'
 }
 // blatantly lifted from https://stackoverflow.com/questions/2450954/how-to-randomize-shuffle-a-javascript-array
 function shuffle(array) {
