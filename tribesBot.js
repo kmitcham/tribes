@@ -243,11 +243,11 @@ function processMessage(msg){
 	}
 	// handle alternate channels
 	// TODO smart handling of DMs (search all tribes?)
-	if (msg.channel && gameState && gameState.name && msg.channel.name && !msg.channel.name.startsWith( gameState.name.toLowerCase())){
-		msg.author.send('this command belongs in channel '+gameState.name+'-tribe')
-		msg.delete({timeout: 3000}); //delete command in 3sec 
-		return
-	}
+	//if (msg.channel && gameState && gameState.name && msg.channel.name && !msg.channel.name.startsWith( gameState.name.toLowerCase())){
+	//	msg.author.send('this command belongs in channel '+gameState.name+'-tribe')
+	//	msg.delete({timeout: 3000}); //delete command in 3sec 
+	//	return
+	//}
 	if (command == 'join' ){
 		if ( gameState.open ){
 			addToPopulation(msg, author, bits, actor, author)
@@ -301,7 +301,7 @@ function genderList(population){
 	for (var name in population){
 		person = personByName(name)
 		tag = person.gender
-		if (person.nursing && nursing.length > 0){
+		if (person.nursing && person.nursing.length > 0){
 			tag = 'nursing '+person.nursing.length
 		}
 		if (person.isPregnant){
@@ -2325,7 +2325,7 @@ function shuffle(array) {
 /////////////////////////////////////////////////////////
 function gather(playername, player, rollValue){
 	var message = ' gathers (roll='+rollValue+')';
-	netRoll = rollValue
+	var netRoll = rollValue
 	modifier = 0
 	if (isColdSeason()){
 		message+= '(-3 season)  '
@@ -2362,27 +2362,55 @@ function gather(playername, player, rollValue){
 	netRoll = rollValue + modifier
 	console.log('gather roll:'+rollValue+' mod:'+modifier+' net:'+netRoll)
 	gatherData = locations[gameState.currentLocationName]['gather']
+	var get_message = ''
+	var getFood = 0
+	var getGrain = 0
 	for (var i = 0; i < gatherData.length; i++){
-		if (netRoll <= gatherData[i][0]){
-			player.food += gatherData[i][1]
-			player.grain += gatherData[i][2]
-			message += gatherData[i][3] +' ('+((gatherData[i][1]+gatherData[i][2])+')')
+		if (netRoll < gatherData[0][0]){
+			get_message =  gatherData[0][3] +' ('+((gatherData[0][1]+gatherData[0][2])+')')
+			getFood = gatherData[0][1]
+			getGrain = gatherData[0][2]
 			break
+		} else if (netRoll == gatherData[i][0]){
+			getFood = gatherData[i][1]
+			getGrain = gatherData[i][2]
+			get_message = gatherData[i][3] +' ('+((gatherData[i][1]+gatherData[i][2])+')')
+			break
+		} else {
+			getFood = gatherData[i][1]
+			getGrain = gatherData[i][2]
+			get_message = gatherData[i][3] +' ('+((gatherData[i][1]+gatherData[i][2])+')')
 		}
 	}
+	message += get_message
+	player.food += getFood
+	player.grain += getGrain
 	if (player.basket > 0){
 		var broll = roll(3)+modifier
 		message+= ' basket: ('+broll+')'
-		netroll = broll+modifier
-		console.log('modified basket roll '+netroll)
+		netRoll = broll+modifier
+		console.log('modified basket roll '+netRoll)
 		for (var i = 0; i < gatherData.length;i++){
-			if (netRoll <= gatherData[i][0]){
-				message += gatherData[i][3] +' ('+((gatherData[i][1]+gatherData[i][2])+')')
-				player.food += gatherData[i][1]
-				player.grain += gatherData[i][2]
+			if (netRoll < gatherData[0][0]){
+				get_message =  gatherData[0][3] +' ('+((gatherData[0][1]+gatherData[0][2])+')')
+				getFood = gatherData[0][1]
+				getGrain = gatherData[0][2]
 				break
+			} else if (netRoll == gatherData[i][0]){
+				getFood = gatherData[i][1]
+				getGrain = gatherData[i][2]
+				get_message = gatherData[i][3] +' ('+((gatherData[i][1]+gatherData[i][2])+')')
+				break
+			} else {
+				getFood = gatherData[i][1]
+				getGrain = gatherData[i][2]
+				get_message = gatherData[i][3] +' ('+((gatherData[i][1]+gatherData[i][2])+')')
 			}
-		}
+			}
+		message += get_message
+		player.food += getFood
+		player.grain += getGrain
+		
 		// check for basket loss
 		if (roll(1) <= 2){
 			message+= ' basket breaks.'
