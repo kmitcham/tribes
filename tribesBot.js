@@ -615,7 +615,11 @@ function handleCommand(msg, author, actor, command, bits){
 			msg.delete({timeout: 3000}); //delete command in 3sec 
 			return
 		}
-		if (gameState.reproductionRound){
+		if (gameState.reproductionRound && needChanceRoll){
+			if (!referees.includes(actor)){
+				msg.author.send('Only a referee can force the roll')
+				bits[1] = roll()
+			}
 			response = doChance(bits[1])
 			msg.reply(response)
 			return
