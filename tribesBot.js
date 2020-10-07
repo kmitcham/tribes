@@ -35,7 +35,10 @@ var games = {}
 
 function loadJson(fileName){
 	let rawdata = fs.readFileSync(fileName);
-	return JSON.parse(rawdata);	
+	if (!rawdata || rawdata.byteLength == 0 ){
+		return {}
+	}
+	return JSON.parse(rawdata, {});	
 }
 function loadGame(gameName){
 	if (fs.existsSync('./gameState.json')) {
@@ -82,7 +85,7 @@ function initGame(gameName){
 	gameState.workRound = true;
 	gameState.foodRound = false;
 	gameState.reproductionRound = false;
-	gameState.needChanceRoll = false
+	gameState.needChanceRoll = true
 	gameState.canJerky = false
 	return
 }
@@ -237,7 +240,7 @@ function processMessage(msg){
 	command = bits[0]
 	command = command.toLowerCase().substring(1) // strip out the leading !
 	console.log('command:'+command+' bits:'+bits+' actor:'+author.username )  
-	if (!gameState || !population){
+	if (!gameState ){
 		msg.author.send('please wait')
 		return
 	}
@@ -277,6 +280,13 @@ function personByName(name){
 		console.log('attempt to find person for null name '+name)
 		return null
 	}
+	if (population == null){
+		console.log('no people yet')
+		return
+	}
+	if (name.indexOf('(') != -1){
+		name = name.substring(0, name.indexOf('('))
+	}
 	if (population[name] != null){
 		return population[name]
 	}
@@ -295,7 +305,7 @@ function randomMemberName(){
 	var random =  Math.trunc( Math.random ( ) * nameList.length )
 	return nameList[random]
 }
-function genderList(population){
+function createReproductionList(population){
 	nameList = []
 	var tag = '?'
 	for (var name in population){
@@ -305,7 +315,7 @@ function genderList(population){
 			tag = 'nursing '+person.nursing.length
 		}
 		if (person.isPregnant){
-			tag = 'pregnant'
+			continue
 		}
 		nameList.push(name+'('+tag+')')
 	}
@@ -545,7 +555,7 @@ function handleCommand(msg, author, actor, command, bits){
 			return
 		}
 		var child = addChild(mother, father)	
-		msg.reply("The referee adds a child :"+child.name)
+		gameState.tribeChannel.send("The referee adds a child :"+child.name)
 		return
 	}
 	if (command === 'award'){
@@ -567,7 +577,7 @@ function handleCommand(msg, author, actor, command, bits){
 				msg.delete({timeout: 3000}); //delete command in 3sec 
 				return
 			}
-			msg.reply('The game awards '+targetName+' with '+amount+' '+type)
+			gameState.tribeChannel.send('The game awards '+targetName+' with '+amount+' '+type)
 			
 			if (!population[targetName][type]){
 				population[targetName][type] = Number(amount)
@@ -615,13 +625,16 @@ function handleCommand(msg, author, actor, command, bits){
 			msg.delete({timeout: 3000}); //delete command in 3sec 
 			return
 		}
-		if (gameState.reproductionRound && needChanceRoll){
-			if (!referees.includes(actor)){
+		if (gameState.reproductionRound && gameState.needChanceRoll){
+			if (!referees.includes(actor) && bits[1]){
 				msg.author.send('Only a referee can force the roll')
 				bits[1] = roll()
 			}
+			if (bits.length == 1){
+				bits.push(roll())
+			}
 			response = doChance(bits[1])
-			msg.reply(response)
+			gameState.tribeChannel.send(response)
 			return
 		} else {
 			msg.author.send(command+' happens after reproduction attempts, before migration')
@@ -873,7 +886,7 @@ function handleCommand(msg, author, actor, command, bits){
 			msg.author.send(command+' requires referee priviliges')
 			return
 		}
-		msg.reply(endGame())
+		gameState.tribeChannel.send(endGame())
 		return
 	}
   	// add food to a child
@@ -931,7 +944,7 @@ function handleCommand(msg, author, actor, command, bits){
 				population[actor].food = 0
 				population[actor]['grain'] -= (amount-fed)
 			}
-			msg.reply(actor+' fed '+amount+' to child '+childName)
+			gameState.tribeChannel.send(actor+' fed '+amount+' to child '+childName)
 			children[childName].food += Number(amount)
 		} else {
 			msg.author.send('You do not have enough food or grain to feed the child')
@@ -988,7 +1001,7 @@ function handleCommand(msg, author, actor, command, bits){
 			return
 		}
 		if (  population[actor][type] >= amount){
-			msg.reply(actor+' gave '+amount+' '+type+' to '+username)
+			gameState.tribeChannel.send(actor+' gave '+amount+' '+type+' to '+username)
 			if (!population[username][type]){
 				population[username][type] = Number(amount)
 			} else {
@@ -1062,7 +1075,7 @@ function handleCommand(msg, author, actor, command, bits){
 		} else {
 			person.guarding = [childName]
 		}
-		msg.reply(actor+' starts guarding '+childName)
+		gameState.tribeChannel.send(actor+' starts guarding '+childName)
 		return
 	}
 	if (command == 'ignore'){
@@ -1093,7 +1106,7 @@ function handleCommand(msg, author, actor, command, bits){
 		} else {
 			child.guardian = null
 		}
-		msg.reply(actor+' stops guarding '+childName)
+		gameState.tribeChannel.send(actor+' stops guarding '+childName)
 		return
 	}
 	// add a person to the tribe
@@ -1213,17 +1226,17 @@ function handleCommand(msg, author, actor, command, bits){
 			target = population[targetName]
 		}
 		if (!target){
-			msg.reply('Count not find target '+targetName)
+			msg.author.send('Count not find target '+targetName)
 			msg.delete({timeout: 3000}); //delete command in 3sec 
 			return
 		}
 		kill(targetName, bits[2])
-		msg.reply('The referee kills '+targetName)
+		gameState.tribeChannel.send('The referee kills '+targetName)
 		return
 	}
 	if (command == 'leastguarded' || command == 'leastwatched'){
 		response  = findLeastGuarded(children, population)
-		msg.reply(response )
+		gameState.tribeChannel.send(response )
 		msg.delete({timeout: 3000}); //delete command in 3sec 
 		return 
 	}
@@ -1257,13 +1270,13 @@ function handleCommand(msg, author, actor, command, bits){
 	if (command == 'listchildren'){
 		namelist = Object.keys(children)
 		response = "Tribe children: "+namelist
-		msg.reply(response)
+		msg.author.send(response)
 		return
 	}
 	if (command == 'listnames'){
 		namelist = Object.keys(population)
 		response = "Tribe members: "+shuffle(namelist)
-		msg.reply(response)
+		msg.author.send(response)
 		return
 	}
 	if (command == 'migrate' ){
@@ -1283,7 +1296,7 @@ function handleCommand(msg, author, actor, command, bits){
 		}
 		force = bits[2]
 		message = migrate(msg, destination, force, population, children)
-		msg.reply(message)
+		gameState.tribeChannel.send(message)
 		return
 	}
 	if (command == 'open'){
@@ -1359,7 +1372,7 @@ function handleCommand(msg, author, actor, command, bits){
 		return
 	}
 	if (command == 'roll'){
-		msg.reply(roll(bits[1]))
+		gameState.tribeChannel.send(roll(bits[1]))
 		return
 	}
 	// save the game state to file
@@ -1486,8 +1499,8 @@ function handleCommand(msg, author, actor, command, bits){
 			nextSeason()
 		}
 		message = gameStateMessage()
-		msg.reply(message)
-		msg.reply('\nStarting the work round.  Guard your children.  Craft, gather, hunt, assist or train.')
+		gameState.tribeChannel.send(message)
+		gameState.tribeChannel.send('\nStarting the work round.  Guard your children.  Craft, gather, hunt, assist or train.')
 		gameState.workRound = true
 		gameState.foodRound = false
 		gameState.reproductionRound = false
@@ -1513,8 +1526,8 @@ function handleCommand(msg, author, actor, command, bits){
 		clearWorkFlags(population)
 		savegameState()
 		message = gameStateMessage()
-		msg.reply(message+' \nStarting the food and trading round.  Make sure everyone has enough to eat, or they will starve')
-		msg.reply(checkFood())
+		gameState.tribeChannel.send(message+' \nStarting the food and trading round.  Make sure everyone has enough to eat, or they will starve')
+		gameState.tribeChannel.send(checkFood())
 		gameState.workRound = false
 		gameState.foodRound = true
 		gameState.reproductionRound = false
@@ -1536,20 +1549,7 @@ function handleCommand(msg, author, actor, command, bits){
 			msg.delete({timeout: 3000}); //delete command in 3sec 
 			return 
 		}
-		savegameState()
-		// actually consume food here
-		foodMessage = consumeFood()
-		gameState.needChanceRoll = true  // this magic boolean prevents starting work until we did chance roll
-		msg.reply(foodMessage+'\n')
-		msg.reply('Starting the Reproduction round; invite other tribe members to reproduce (not automated)')
-		msg.reply(gameStateMessage())
-		msg.reply('The tribe can decide to move to a new location, but the injured and children under 2 will need 2 food')
-		namelist = genderList(population)
-		msg.reply("Invitation order: "+shuffle(namelist))
-		gameState.reproductionList = nameList
-		gameState.workRound = false
-		gameState.foodRound = false
-		gameState.reproductionRound = true
+		startReproduction()
 		return
 	}
 	if (command == 'status'){
@@ -1701,11 +1701,11 @@ function handleCommand(msg, author, actor, command, bits){
 			}
 			message = hunt(actor, player, roll(3))
 		}
-		msg.reply( message )
+		gameState.tribeChannel.send( message )
 		player.worked = true
 		slackers = listReadyToWork(population)
 		if (slackers && slackers.length == 0){
-			msg.reply('-= Everyone available to work, has worked =-')
+			gameState.tribeChannel.send('-= Everyone available to work, has worked =-')
 		}
 		return	
 	}
@@ -1791,6 +1791,10 @@ function nextMating(currentInviterName){
 	if (player.invite){
 		delete player.invite
 	}
+	if (!gameState.reproductionList){
+		console.log (" no reproduction list yet. bad call to nextMating")
+		return
+	}
 	gameState.reproductionList.shift()
 	if (gameState.reproductionList.length > 0){
 		gameState.tribeChannel.send(gameState.reproductionList[0]+ " should now !invite people to reproduce, or !pass ")
@@ -1829,9 +1833,9 @@ function spawnFunction(mother, father, msg, population, force = false){
 	droll = roll(1)
 	if (force != false || (mroll+droll) >= spawnChance ){
 		var child = addChild(mother, father)
-		msg.reply('The mating of '+mother+'('+mroll+') and '+father+'('+droll+') spawned '+child.name)
+		gameState.tribeChannel.send('The mating of '+mother+'('+mroll+') and '+father+'('+droll+') spawned '+child.name)
 	} else {
-		msg.reply('The mating of '+mother+'('+mroll+') and '+father+'('+droll+') produced only good feelings')
+		gameState.tribeChannel.send('The mating of '+mother+'('+mroll+') and '+father+'('+droll+') produced only good feelings')
 	}
 	var allPregnant = true
 	for (var personName in population){
@@ -1842,7 +1846,7 @@ function spawnFunction(mother, father, msg, population, force = false){
 		}
 	}
 	if (allPregnant){
-		msg.reply('All the adult women of the tribe are pregnant')
+		gameState.tribeChannel.send('All the adult women of the tribe are pregnant')
 		delete gameState.reproductionList
 	}
 	return
@@ -1912,7 +1916,7 @@ function addToPopulation(msg, author, bits, target,targetObject){
 	if (profession){
 		specialize(msg, target, profession, gameState.tribeChannel)
 	}
-	msg.reply(response)
+	gameState.tribeChannel.send(response)
 	return
 }
 function findLeastGuarded(children, population){
@@ -1974,6 +1978,9 @@ function findLeastGuarded(children, population){
 	return leastGuardedName+' is the least guarded child.  guard number is '+lowGuardValue
 }
 function hyenaAttack(children, population){
+	if (!children || Object.keys(children).length == 0){
+		return 'No children, no hyena problem'
+	}
 	// get the least guarded message
 	leastGuardedMessageArray = findLeastGuarded(children, population).split(" ")
 	//  this is stupid and hacky
@@ -2219,6 +2226,24 @@ function unguardChild(childName, population){
 		}
 	}
 }
+function startReproduction(){
+	savegameState()
+	// actually consume food here
+	foodMessage = consumeFood()
+	gameState.needChanceRoll = true  // this magic boolean prevents starting work until we did chance roll
+	gameState.tribeChannel.send(foodMessage+'\n')
+	gameState.tribeChannel.send('Starting the Reproduction round; invite other tribe members to reproduce (not automated)')
+	gameState.tribeChannel.send(gameStateMessage())
+	gameState.tribeChannel.send('The tribe can decide to move to a new location, but the injured and children under 2 will need 2 food')
+	namelist = createReproductionList(population)
+	gameState.tribeChannel.send("Invitation order: "+shuffle(namelist))
+	gameState.reproductionList = nameList
+	gameState.tribeChannel.send(gameState.reproductionList[0]+ " should now !invite people to reproduce, or !pass ")
+	gameState.workRound = false
+	gameState.foodRound = false
+	gameState.reproductionRound = true
+	return
+}
 function migrate(msg, destination, force, population, children){
 	response = ''
 	legalLocations = Object.keys(locations)
@@ -2278,7 +2303,7 @@ function migrate(msg, destination, force, population, children){
 				response+= " "+deceasedChildren[i]
 			}
 		}
-		msg.reply('Setting the current location to '+destination)
+		gameState.tribeChannel.send('Setting the current location to '+destination)
 		gameState.currentLocationName = destination
 	} else {
 		for (personName in population){
