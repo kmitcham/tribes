@@ -301,7 +301,7 @@ function genderList(population){
 	for (var name in population){
 		person = personByName(name)
 		tag = person.gender
-		if (person.nursing){
+		if (person.nursing && nursing.length > 0){
 			tag = 'nursing '+person.nursing.length
 		}
 		if (person.isPregnant){
@@ -1292,9 +1292,14 @@ function handleCommand(msg, author, actor, command, bits){
 		gameState.tribeChannel.send('The tribe is open to all who wish to join')
 	}
 	if (command == 'pass'){
+		if (!gameState.reproductionRound){
+			// error meesssage here
+			return
+		}
 		// pass is valid a) when the actor name is top of the reproductionlist
 		// or b) when the player is invited
-		if (gameState && gameState.reproductionList && gameState.reproductionList[0].startsWith(actor)){
+		if (gameState && gameState.reproductionList && gameState.reproductionList[0]
+			&& gameState.reproductionList[0].startsWith(actor)){
 			nextMating(actor)
 			return
 		}
@@ -1665,8 +1670,8 @@ function handleCommand(msg, author, actor, command, bits){
 				msg.author.send('You can not learn crafting while guarding more than 2 children.  You are guarding '+player.guarding)
 				return
 			}
-			crafters = countByType(population, 'canCraft', true)
-			noTeachers = coundByType(population, 'noTeach', true)
+			var crafters = countByType(population, 'canCraft', true)
+			var noTeachers = countByType(population, 'noTeach', true)
 			if (crafters <= noTeachers){
 				msg.author.send('No on in the tribe is able and willing to teach you crafting')
 				return
@@ -1820,9 +1825,9 @@ function spawnFunction(mother, father, msg, population, force = false){
 	droll = roll(1)
 	if (force != false || (mroll+droll) >= spawnChance ){
 		var child = addChild(mother, father)
-		msg.reply('The mating of '+mother+':'+mroll+' and '+father+':'+droll+' spawned '+child.name)
+		msg.reply('The mating of '+mother+'('+mroll+') and '+father+'('+droll+') spawned '+child.name)
 	} else {
-		msg.reply('The mating of '+mother+':'+mroll+' and '+father+':'+droll+' produced only good feelings')
+		msg.reply('The mating of '+mother+'('+mroll+') and '+father+'('+droll+') produced only good feelings')
 	}
 	var allPregnant = true
 	for (var personName in population){
@@ -2054,7 +2059,6 @@ function consumeFood(){
 				perished.push(target)
 			}
 		}
-		//if (population[target].nursing && population[target].isPregnant != ''){
 		if (countChildrenOfParentUnderAge(children, target, 2) > 1 ){
 			// extra food issues here; mom needs 2 more food, or the child will die.
 			population[target].food -= 2
@@ -2128,6 +2132,9 @@ function consumeFood(){
 					childIndex = population[child.mother].nursing.indexOf(childName)
 					population[child.mother].nursing.splice(childIndex, 1);
 					response += child.name+' is weaned.\n'
+					if (population[child.mother].nursing && population[child.mother].nursing.length == 0){
+						delete population[child.mother].nursing 
+					}
 				}
 			}
 		}
@@ -2144,7 +2151,7 @@ function consumeFood(){
 		console.log('removing corpse '+corpse)
 	}
 	if ((perishedChildren.length+perished.length) == 0 ){
-		response += 'nobody starved!'
+		response += '\nnobody starved!'
 	}
 	return response
 }
@@ -2193,7 +2200,7 @@ function clearNursingPregnant(childName){
 
 function unsetGuardian(guarderName, children){
 	for (childName in children){
-		child = children[childName]
+		var child = children[childName]
 		if (child.guardian && child.guardian == guarderName){
 			child.guardian = ''
 		}
