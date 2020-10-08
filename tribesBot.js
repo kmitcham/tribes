@@ -67,7 +67,7 @@ function loadGame(gameName){
 
 function initGame(gameName){
 	if (!gameName){
-		gameName = 'elk'
+		gameName = ''
 	}
 	gameState.seasonCounter = 1
 	gameState.gameTrack = {}
@@ -81,6 +81,9 @@ function initGame(gameName){
 	gameState.graveyard = {}
 	tribeChannel = bot.channels.cache.find(channel => channel.name === ('tribes'))
 	gameState.tribeChannel = bot.channels.cache.find(channel => channel.name === ('tribes'))
+	if (! tribeChannel){
+		console.log('tribe channel not defined')
+	}
 	population = {}
 	children = {}
 	graveyard = {}
@@ -960,7 +963,7 @@ function handleCommand(msg, author, actor, command, bits){
 			}
 			gameState.tribeChannel.send(actor+' fed '+amount+' to child '+childName)
 			children[childName].food += Number(amount)
-			if (chidren[childName].food != 2){
+			if (children[childName].food != 2){
 				gameState.tribeChannel.send(childName+' could eat more.')
 			}
 		} else {
@@ -2542,14 +2545,14 @@ function hunt(playername, player, rollValue){
 	if (player.bonus && player.bonus >0 ){
 		player.bonus = Math.trunc(player.bonus)
 		if (player.bonus > 3){
-		  mods += 3
+			modifier += 3
 		} else {
-		  mods += player.bonus
+			modifier += player.bonus
 		}
 		message += ' (with '+player.helpers+')'
 	}
 	if (player.spearhead > 0 && rollValue >= 9){
-		mods += 3
+		modifier += 3
 		message+= '(spearhead)'
 	}
 	message += '(rolls a '+rollValue+' ) '
@@ -2578,7 +2581,7 @@ function hunt(playername, player, rollValue){
 		message += ' no luck'
 	} else {
 		// rewards section
-		netRoll = rollValue + mods
+		netRoll = rollValue + modifier
 		console.log('hunt netRoll '+netRoll)
 		if (netRoll > locationDecay[locations[gameState.currentLocationName]['game_track']]){
 			message += ' (no '+huntData[netRoll][2]+' tracks )'
@@ -2639,6 +2642,10 @@ function gatherDataFor(locationName, roll){
 bot.once('ready', ()=>{
 	console.log('bot is alive')
 	loadGame()
+	alertChannel = bot.channels.cache.find(channel => channel.name === 'tribes')
+	alertChannel.send('TribesBot is alive again')
+	//generalChannel = bot.channels.cache.find(channel => channel.name === 'general')
+	//generalChannel.send('TribesBot is spamming things again')
 	// TODO send a message to the channel here?
   })   
 bot.login(auth['token'])
