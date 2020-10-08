@@ -29,7 +29,7 @@ const childSurvivalChance =
 var gameState = Object()
 var referees = ["kevinmitcham", "@kevinmitcham"]
 //var referees = require('./referees.json')
-var  tribeChannel = bot.channels.cache.find(channel => channel.name === 'general')
+var  tribeChannel = bot.channels.cache.find(channel => channel.name === 'tribes')
 
 var games = {}
 
@@ -43,8 +43,10 @@ function loadJson(fileName){
 function loadGame(gameName){
 	if (fs.existsSync('./gameState.json')) {
 		gameState = loadJson('./gameState.json') 
-		tribeChannel = bot.channels.cache.find(channel => channel.name === (gameState.name+'-tribe'))
-		gameState.tribeChannel = bot.channels.cache.find(channel => channel.name === (gameState.name+'-tribe'))
+		//tribeChannel = bot.channels.cache.find(channel => channel.name === (gameState.name+'-tribe'))
+		//gameState.tribeChannel = bot.channels.cache.find(channel => channel.name === (gameState.name+'-tribe'))
+		tribeChannel = bot.channels.cache.find(channel => channel.name === ('tribes'))
+		gameState.tribeChannel = bot.channels.cache.find(channel => channel.name === ('tribes'))
 	} else {
 		initGame(gameName)
 	}
@@ -77,8 +79,8 @@ function initGame(gameName){
 	}
 	gameState.currentLocationName = "veldt";
 	gameState.graveyard = {}
-	tribeChannel = bot.channels.cache.find(channel => channel.name === (gameName+'-tribe'))
-	gameState.tribeChannel = bot.channels.cache.find(channel => channel.name === (gameState.name+'-tribe'))
+	tribeChannel = bot.channels.cache.find(channel => channel.name === ('tribes'))
+	gameState.tribeChannel = bot.channels.cache.find(channel => channel.name === ('tribes'))
 	population = {}
 	children = {}
 	graveyard = {}
@@ -210,7 +212,7 @@ bot.on('message', msg => {
 
 function savegameState(){
 	if (gameState){
-		fs.writeFile("gameState.json", JSON.stringify(gameState), err => { 
+		fs.writeFile("gameState.json", JSON.stringify(gameState,null,2), err => { 
 			// Checking for errors 
 			if (err) throw err;  
 		}); 
@@ -521,7 +523,7 @@ function handleCommand(msg, author, actor, command, bits){
 			text+=' !open|close  (toggle if people can join with "!join" or only with "!induct" by the chief\n'
 			text+=' !startwork (begins the work round, enabling work attempts and rolls)\n'
 			text+=' !startfood (ends the work round; subtract food/grain; birth; child age increase)\n'
-			text+=' !startreproduction (Players verbally express intentions, use spawn.  Also when location can change)\n'
+			text+=' !startreproduction (Players engage in reproduction. Also when migration happens)\n'
 			text+=' !chance (after mating, chance is required to end the season)\n'
 			text+=' !migrate <newlocation> <force>  (without force, just checks who would perish on the journey)\n'
 			msg.author.send( text)
@@ -1509,18 +1511,7 @@ function handleCommand(msg, author, actor, command, bits){
 			msg.author.send('You still need to do the !chanceroll ')
 			return
 		}
-		savegameState()
-		// advance the calendar; the if should only skip on the 0->1 transition
-		if (gameState.workRound == false){
-			nextSeason()
-		}
-		message = gameStateMessage()
-		gameState.tribeChannel.send(message)
-		gameState.tribeChannel.send('\nStarting the work round.  Guard your children.  Craft, gather, hunt, assist or train.')
-		gameState.workRound = true
-		gameState.foodRound = false
-		gameState.reproductionRound = false
-		canJerky = false
+		startWork()
 		return
 	}
 	if (command == 'startfood' || command.startsWith('startf')){
@@ -1539,14 +1530,7 @@ function handleCommand(msg, author, actor, command, bits){
 			msg.delete({timeout: 3000}); //delete command in 3sec 
 			return 
 		}
-		clearWorkFlags(population)
-		savegameState()
-		message = gameStateMessage()
-		gameState.tribeChannel.send(message+' \nStarting the food and trading round.  Make sure everyone has enough to eat, or they will starve')
-		gameState.tribeChannel.send(checkFood())
-		gameState.workRound = false
-		gameState.foodRound = true
-		gameState.reproductionRound = false
+		startFood()
 		return
 	}
 	if (command == 'startreproduction' || command.startsWith('startr')){
@@ -1722,6 +1706,7 @@ function handleCommand(msg, author, actor, command, bits){
 		slackers = listReadyToWork(population)
 		if (slackers && slackers.length == 0){
 			gameState.tribeChannel.send('-= Everyone available to work, has worked =-')
+			startFood()
 		}
 		return	
 	}
@@ -2241,6 +2226,31 @@ function unguardChild(childName, population){
 			person.guarding.splice(childIndex, 1);
 		}
 	}
+}
+function startWork(){
+	savegameState()
+	// advance the calendar; the if should only skip on the 0->1 transition
+	if (gameState.workRound == false){
+		nextSeason()
+	}
+	gameState.tribeChannel.send(gameStateMessage())
+	gameState.tribeChannel.send('\nStarting the work round.  Guard your children.  Craft, gather, hunt, assist or train.')
+	gameState.workRound = true
+	gameState.foodRound = false
+	gameState.reproductionRound = false
+	canJerky = false
+	return
+}
+function startFood(){
+	clearWorkFlags(population)
+	savegameState()
+	message = gameStateMessage()
+	gameState.tribeChannel.send(message+'\nStarting the food and trading round.  Make sure everyone has enough to eat, or they will starve')
+	gameState.tribeChannel.send(checkFood())
+	gameState.workRound = false
+	gameState.foodRound = true
+	gameState.reproductionRound = false
+	return
 }
 function startReproduction(){
 	savegameState()
