@@ -9,5 +9,8 @@
     "discord.js": "^12.2.0",
     "eslint": "^7.5.0",
     "winston": "^3.3.3"
+  },
+  "devDependencies": {
+    "jest": "^26.5.2"
   }
 }

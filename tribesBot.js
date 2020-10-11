@@ -637,7 +637,7 @@ function handleCommand(msg, author, actor, command, bits){
 		}
 	}
 	if (command == 'chance'){
-		if (!referees.includes(actor) && !player.chief){
+		if (!referees.includes(actor) && (player && !player.chief)){
 			msg.author.send(command+' requires referee  or chief priviliges')
 			msg.delete({timeout: 3000}); //delete command in 3sec 
 			return
