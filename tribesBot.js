@@ -8,6 +8,7 @@ const { ConsoleTransportOptions } = require('winston/lib/winston/transports');
 // Not sure what this is; it probably came with my example?
 const { spawn } = require('child_process');
 
+
 let rawdata = fs.readFileSync('./auth.json');
 let auth = JSON.parse(rawdata);
 
@@ -32,6 +33,18 @@ var referees = ["kevinmitcham", "@kevinmitcham"]
 var  tribeChannel = bot.channels.cache.find(channel => channel.name === 'tribes')
 
 var games = {}
+
+bot.once('ready', ()=>{
+	console.log('bot is alive')
+	loadGame()
+	alertChannel = bot.channels.cache.find(channel => channel.name === 'tribes')
+	alertChannel.send('TribesBot is alive again')
+	//generalChannel = bot.channels.cache.find(channel => channel.name === 'general')
+	//generalChannel.send('TribesBot is spamming things again')
+	// TODO send a message to the channel here?
+  })   
+bot.login(auth['token'])
+
 
 function loadJson(fileName){
 	let rawdata = fs.readFileSync(fileName);
@@ -2637,15 +2650,4 @@ function gatherDataFor(locationName, roll){
 		}
 	}
 	console.log('error looking up resourceData for '+locationName+' '+type+' '+roll)
-	
 }
-bot.once('ready', ()=>{
-	console.log('bot is alive')
-	loadGame()
-	alertChannel = bot.channels.cache.find(channel => channel.name === 'tribes')
-	alertChannel.send('TribesBot is alive again')
-	//generalChannel = bot.channels.cache.find(channel => channel.name === 'general')
-	//generalChannel.send('TribesBot is spamming things again')
-	// TODO send a message to the channel here?
-  })   
-bot.login(auth['token'])

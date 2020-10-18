@@ -4,6 +4,9 @@
   "description": "A bot to track food and grain in Tribes",
   "main": "tribesBot.js",
   "author": "Kevin.Mitcham",
+  "scripts": {
+    "test": "jest"
+  },
   "dependencies": {
     "discord.io": "^2.5.3",
     "discord.js": "^12.2.0",
