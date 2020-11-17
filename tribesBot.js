@@ -39,7 +39,7 @@ bot.once('ready', ()=>{
 	console.log('bot is alive')
 	loadGame()
 	alertChannel = bot.channels.cache.find(channel => channel.name === 'general')
-	alertChannel.send('TribesBot is alive again')
+	alertChannel.send('TribesBot is alive again. loaded '+Object.keys(allGames).length +' games')
 	//generalChannel = bot.channels.cache.find(channel => channel.name === 'general')
 	//generalChannel.send('TribesBot is spamming things again')
 	// TODO send a message to the channel here?
@@ -58,11 +58,45 @@ function loadGame(){
 	if (fs.existsSync('./allGames.json')) {
 		allGames = loadJson('./allGames.json') 
 		console.log('loaded allGames data. found '+Object.keys(allGames).length +' games')
+		if (! allGames){
+			allGames = loadJson('./allGamesBAK.json')
+		}
 	} else {
 		allGames = {}
 	}
 }
-
+function handleBackup(){
+	// if there is a game file, and it isn't empty, copy it to the backup location
+	backupCandidate = loadJson('./allGames.json') 
+	if (backupCandidate && Object.keys(backupCandidate).length > 0 ){
+		// File destination.txt will be created or overwritten by default.
+		fs.copyFile('./allGames.json', './allGamesBAK.json', (err) => {
+			if (err) throw err;
+			console.log('./allGames.json was copied to ./allGamesBAK.json');
+  		});
+	} else {
+		console.log('No backup since the source file was empty')
+	}
+}
+function savegameState(){
+	if (allGames && Object.keys(allGames).length > 0){
+		handleBackup()
+		fs.writeFile("./allGames.json", JSON.stringify(allGames,null,2), err => { 
+			// Checking for errors 
+			if (err) {
+				console.log('error with save '+err)
+				throw err;
+			}  
+		}); 
+		console.log('saved file')
+	} else {
+		console.log('tried to save empty file')
+	}
+	fs.writeFile("./referees.json", JSON.stringify(referees,null, 2), err => { 
+		// Checking for errors 
+		if (err) throw err;  
+	}); 
+}
 function initGame(gameName){
 	if (!gameName){
 		console.log('init game without a name')
@@ -92,6 +126,7 @@ function initGame(gameName){
 	gameState.needChanceRoll = true
 	gameState.canJerky = false
 	allGames[gameName] = gameState
+	savegameState()
 	return gameState
 }
 function endGame(gameState){
@@ -214,21 +249,6 @@ bot.on('message', msg => {
   processMessage(msg)
 });
 
-function savegameState(){
-	if (allGames){
-		fs.writeFile("./allGames.json", JSON.stringify(allGames,null,2), err => { 
-			// Checking for errors 
-			if (err) throw err;  
-		}); 
-	} else {
-		console.log('trying to save empty file')
-	}
-	fs.writeFile("./referees.json", JSON.stringify(referees,null, 2), err => { 
-		// Checking for errors 
-		if (err) throw err;  
-	}); 
-}
-
 function processMessage(msg){
 	author = msg.author
 	actor = author.username
@@ -344,7 +364,7 @@ function personByName(name, gameState){
 		}
 		return person
 	}
-	console.log("No such person in population:"+name)
+	console.log("tribe "+gameState.name+" has no such person in population:"+name)
 	return null
 }
 function capitalizeFirstLetter(string) {
@@ -438,7 +458,10 @@ function doChance(rollValue, gameState){
 			message +="Locusts! Each player loses two dice of stored food"
 			for (var name in population){
 				person = population[name]
-				amount = roll(2)
+				var amount = roll(2)
+				if (amount > person.food){
+					amount = person.food
+				}
 				person.food -= amount
 				message += "\n "+name+" loses "+amount
 				if (person.food < 0) { person.food = 0}
@@ -573,7 +596,7 @@ function handleCommand(msg, author, actor, command, bits, gameState){
 			text = ''
 			text+='\n### Referee Commands ###\n'
 			text+=' edit <target> <canCraft|nursing|isPregnant|profession|gender|partner|worked|food|grain> <value>\n' 
-			text+=' editchild <food|age|mother|father> <value>\n' 
+			text+=' editchild <target> <food|age|mother|father> <value>\n' 
 			text+=' award <amt> <food|grain|spearhead|basket> <player>\n'
 			text+=' kill <name> <message> kill a person or child\n'
 			text+=' list <player>  (no arg lists all players)\n '
@@ -732,6 +755,7 @@ function handleCommand(msg, author, actor, command, bits, gameState){
 		}
 		gameState.open = true
 		messageChannel('The tribe is only open to those the chief inducts', gameState)
+		return
 	}
 	if (command == 'consent'){
 		var inviterName = ''
@@ -749,7 +773,7 @@ function handleCommand(msg, author, actor, command, bits, gameState){
 			msg.delete({timeout: 3000}); //delete command in 3sec 
 			return
 		}
-		spawnFunction( actor, inviterName, msg, population)
+		spawnFunction( actor, inviterName, msg, population, gameState)
 		if (gameState && gameState.reproductionList && gameState.reproductionList[0].startsWith(inviterName)){
 			nextMating(inviterName, gameState)
 		}
@@ -840,8 +864,11 @@ function handleCommand(msg, author, actor, command, bits, gameState){
 				msg.author.send('demoted '+target.username)
 				return
 			}
+			console.log('did not find the ref in the list, although the include worked.')
+			return
 		} else{
 			msg.author.send(target.username+' is not a referee:'+referees)
+			return
 		}
 	}
 	if (command == 'edit'){
@@ -1012,7 +1039,7 @@ function handleCommand(msg, author, actor, command, bits, gameState){
 		return
 	} 
 	if (command == 'foodcheck'){
-		message = checkFood()
+		message = checkFood(gameState)
 		msg.author.send( message)
 		msg.delete({timeout: 3000}); //delete command in 3sec 
 		return
@@ -1180,12 +1207,13 @@ function handleCommand(msg, author, actor, command, bits, gameState){
 			return
 		}
 		var target = msg.mentions.users.first().username
-		addToPopulation(msg, author, bits, target, msg.mentions.users.first())
+		addToPopulation(msg, author, bits, target, msg.mentions.users.first(), gameState)
 		return
 	}
 
 	if (command == 'invite'){
-		if (gameState.reproductionRound && gameState.reproductionList && gameState.reproductionList[0].startsWith(actor)){
+		if (gameState.reproductionRound && gameState.reproductionList 
+			&& gameState.reproductionList[0] && gameState.reproductionList[0].startsWith(actor)){
 			console.log('invite is legal')
 		} else {
 			msg.author.send(command+' is not appropriate now')
@@ -1463,10 +1491,10 @@ function handleCommand(msg, author, actor, command, bits, gameState){
 		if (player && player.canCraft){
 			if (player.noTeach){
 				delete player.noTeach
-				msg.author.send('You will no longer teach others to craft')
+				msg.author.send('You will try to teach those willing to learn')
 			} else {
 				player.noTeach = true
-				msg.author.send('You will try to teach those willing to learn')
+				msg.author.send('You will no longer teach others to craft')
 			}
 		} else {
 			msg.author.send('You do not know any secrets')
@@ -1498,7 +1526,7 @@ function handleCommand(msg, author, actor, command, bits, gameState){
 			mother = bits[1]
 			father = bits[2]
 		}
-		spawnFunction(mother, father, msg, gameState.population, force)
+		spawnFunction(mother, father, msg, gameState.population, gameState, force)
 		return
 	}
 	if (command.startsWith('spec')){
@@ -1777,7 +1805,7 @@ function getNextChildName(children, childNames, nextIndex){
 	}
 	return possibleName
 }
-function addChild(mother, father,gameState){
+function addChild(mother, father, gameState){
 	var child = Object()
 	child.mother = mother
 	child.father = father
@@ -1786,11 +1814,11 @@ function addChild(mother, father,gameState){
 	child.gender = genders[ (Math.trunc( Math.random ( ) * genders.length))]
 	child.guardian = null
 	nextIndex = (gameState.populationCounter % 26 )
-	child.name = getNextChildName(children, allNames, nextIndex)
+	child.name = getNextChildName(gameState.children, allNames, nextIndex)
 	gameState.populationCounter++
 	children[child.name] = child	
 	person = personByName(mother, gameState)
-	population[child.mother].isPregnant = child.name
+	gameState.population[child.mother].isPregnant = child.name
 	return child
 }
 
@@ -1833,7 +1861,7 @@ function nextMating(currentInviterName, gameState){
 		return
 	}
 }
-function spawnFunction(mother, father, msg, population, force = false){
+function spawnFunction(mother, father, msg, population, gameState, force = false){
 	if (!population[mother] || !population[father]){
 		msg.author.send('Parents not found in tribe')
 		msg.delete({timeout: 3000}); //delete command in 3sec 
@@ -1961,6 +1989,9 @@ function findLeastGuarded(children, population){
 			// unborn children should be skipped
 			continue
 		}	
+		if (child.newAdult){
+			continue
+		}
 		if (! child.guardian || child.guardian == '' || child.guardian == null){
 			guardChildSort.push({'name':childName, 'score':7})
 		} else {
@@ -2054,12 +2085,14 @@ function countChildrenOfParentUnderAge(children, parentName, age){
 	}
 	return count
 }
-function checkFood(){
+function checkFood(gameState){
 	message = ''
 	hungryAdults = []
 	satedAdults = []
 	hungryChildren = []
 	satedChildren = []
+	children = gameState.children
+	population = gameState.population
 	for  (var targetname in population) {
 		person = population[targetname]
 		hunger = 4
@@ -2075,7 +2108,7 @@ function checkFood(){
 	}
 	for (var childName in children){
 		var child = children[childName]
-		if (child.food >= 2){
+		if (child.food >= 2 || child.newAdult ){
 			satedChildren.push(childName)
 		}else {
 			hungryChildren.push(childName)
@@ -2089,6 +2122,10 @@ function checkFood(){
 
 // consume food also ages children, and handles birth
 function consumeFood(gameState){
+	if (!gameState){
+		console.log('no game state; ERROR')
+		return
+	}
 	console.log('adults are eating')
 	response = "Food round results:\n"
 	perished = []
@@ -2210,7 +2247,7 @@ function kill(name, message, gameState){
 		message = 'unknown causes'
 	}
 	if (name in population){
-		unsetGuardian(name. gameState.children)
+		unsetGuardian(name, gameState.children)
 		person = population[name]
 		person.deathMessage = message
 		if (person.isPregnant ){
@@ -2277,6 +2314,7 @@ function startWork(gameState){
 	gameState.foodRound = false
 	gameState.reproductionRound = false
 	canJerky = false
+	savegameState()
 	return
 }
 function startFood(gameState){
@@ -2284,10 +2322,12 @@ function startFood(gameState){
 	savegameState()
 	message = gameStateMessage(gameState)
 	messageChannel(message+'\nStarting the food and trading round.  Make sure everyone has enough to eat, or they will starve', gameState)
-	messageChannel(checkFood(), gameState)
+	foodMessage = checkFood(gameState)
+	messageChannel(foodMessage, gameState)
 	gameState.workRound = false
 	gameState.foodRound = true
 	gameState.reproductionRound = false
+	savegameState()
 	return
 }
 function startReproduction(gameState){
@@ -2306,6 +2346,7 @@ function startReproduction(gameState){
 	gameState.workRound = false
 	gameState.foodRound = false
 	gameState.reproductionRound = true
+	savegameState()
 	return
 }
 function migrate(msg, destination, force, gameState){
@@ -2554,7 +2595,7 @@ function assist(playername, player, helpedPlayer){
 	} else {
 		helpedPlayer.helpers.push(playername)
 	}
-	return ' goes hunting to assist '
+	return player.name + ' goes hunting to assist '
 }
 function hunt(playername, player, rollValue, gameState){
 	player.worked = true
