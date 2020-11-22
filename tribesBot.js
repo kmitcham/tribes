@@ -8,7 +8,6 @@ const { ConsoleTransportOptions } = require('winston/lib/winston/transports');
 // Not sure what this is; it probably came with my example?
 const { spawn } = require('child_process');
 
-
 let rawdata = fs.readFileSync('./auth.json');
 let auth = JSON.parse(rawdata);
 
@@ -30,8 +29,7 @@ const childSurvivalChance =
 var gameState = Object()
 var allGames = Object()
 var referees = ["kevinmitcham", "@kevinmitcham"]
-//var referees = require('./referees.json')
-//var  tribeChannel = bot.channels.cache.find(channel => channel.name === 'tribes')
+var alertChannel;
 
 var games = {}
 
@@ -40,9 +38,6 @@ bot.once('ready', ()=>{
 	loadGame()
 	alertChannel = bot.channels.cache.find(channel => channel.name === 'general')
 	alertChannel.send('TribesBot is alive again. loaded '+Object.keys(allGames).length +' games')
-	//generalChannel = bot.channels.cache.find(channel => channel.name === 'general')
-	//generalChannel.send('TribesBot is spamming things again')
-	// TODO send a message to the channel here?
   })   
 bot.login(auth['token'])
 
@@ -52,30 +47,52 @@ function loadJson(fileName){
 	if (!rawdata || rawdata.byteLength == 0 ){
 		return {}
 	}
-	return JSON.parse(rawdata, {});	
+	var parsedData = {}
+	try {
+		parsedData = JSON.parse(rawdata, {});	
+	} catch (err){
+		console.log('error parsing gamefile:'+err)
+		throw err
+	}
+	return parsedData;
 }
 function loadGame(){
 	if (fs.existsSync('./allGames.json')) {
-		allGames = loadJson('./allGames.json') 
-		console.log('loaded allGames data. found '+Object.keys(allGames).length +' games')
-		if (! allGames){
-			allGames = loadJson('./allGamesBAK.json')
+		try {
+			allGames = loadJson('./allGames.json') 
+		} catch(err){
+			console.log('fail to load game file '+err)
+			try{
+				allGames = loadJson('./allGamesBAK.json')
+				savegameState()
+			} catch(err){
+				console.log('the backup load failed as well')
+				alertChannel.send('TribesBot lost all the game data.  Sorry.')
+			}
 		}
+		console.log('loaded allGames data. found '+Object.keys(allGames).length +' games')
 	} else {
 		allGames = {}
 	}
 }
 function handleBackup(){
 	// if there is a game file, and it isn't empty, copy it to the backup location
-	backupCandidate = loadJson('./allGames.json') 
+	var backupCandidate = {}
+	try{
+		backupCandidate = loadJson('./allGames.json') 
+	} catch(err){
+		console.log('failed to read current game file, so not using it for a backup')
+		return
+	}
 	if (backupCandidate && Object.keys(backupCandidate).length > 0 ){
 		// File destination.txt will be created or overwritten by default.
 		fs.copyFile('./allGames.json', './allGamesBAK.json', (err) => {
 			if (err) throw err;
 			console.log('./allGames.json was copied to ./allGamesBAK.json');
-  		});
+		  });
+		console.log('Updated the backup')
 	} else {
-		console.log('No backup since the source file was empty')
+		console.log('No backup since the source file had no games')
 	}
 }
 function savegameState(){
@@ -97,7 +114,51 @@ function savegameState(){
 		if (err) throw err;  
 	}); 
 }
-function initGame(gameName){
+bot.on('message', msg => {
+	if (!msg.content ){
+	  return
+	}
+	if (msg.content.substring(0,1) != '!'){
+	  return
+	}
+	if (msg.channel && msg.channel.name ){
+	  if (!msg.channel.name.toLowerCase().includes('tribe')){
+		console.log('ignore command >'+msg+'<in channel with no tribe ')
+		msg.author.send('Tribes bot only listens to "tribe" channels')
+		msg.delete({timeout: 1000}); //delete command in 3sec 
+		return
+	  }
+	}
+	processMessage(msg)
+  });
+  
+  function processMessage(msg){
+	  author = msg.author
+	  actor = author.username
+	  bits = msg.content.split(' ')
+	  command = bits[0]
+	  command = command.toLowerCase().substring(1) // strip out the leading !
+	  console.log('command:'+command+' bits:'+bits+' actor:'+author.username )  
+	  var gameState = {}
+	  if (msg.channel && msg.channel.name ){
+		gameState = allGames[msg.channel.name.toLowerCase()]
+		if (!gameState){
+			initGame(msg.channel.name.toLowerCase())
+			msg.reply('starting game with initial conditions')
+			gameState = allGames[msg.channel.name.toLowerCase()]
+		}
+	  } else {
+		  gameState = findGameStateForActor(actor)
+		  if (!gameState){
+			msg.author.send('You do not seem to be a member of a tribe')
+			return
+		}
+	  }
+	  handleCommand(msg, author, actor,  command, bits, gameState)
+	  return	
+  }
+  
+  function initGame(gameName){
 	if (!gameName){
 		console.log('init game without a name')
 		gameName = ''
@@ -114,11 +175,6 @@ function initGame(gameName){
 		gameState.gameTrack[locationName] = 0
 	}
 	gameState.currentLocationName = "veldt";
-	tribeChannel = bot.channels.cache.find(channel => channel.name === (gameName))
-	gameState.tribeChannel = bot.channels.cache.find(channel => channel.name === (gameName))
-	if (! tribeChannel){
-		console.log('tribe channel not defined:'+gameName)
-	}
 	gameState.round = "work"
 	gameState.workRound = true;
 	gameState.foodRound = false;
@@ -230,85 +286,6 @@ function inventoryMessage(person){
 		message += '\n\t\t is guarding '+person.guarding
 	}
 	return message
-}
-bot.on('message', msg => {
-  if (!msg.content ){
-	return
-  }
-  if (msg.content.substring(0,1) != '!'){
-	return
-  }
-  if (msg.channel && msg.channel.name ){
-	if (!msg.channel.name.toLowerCase().includes('tribe')){
-	  console.log('ignore command >'+msg+'<in channel with no tribe ')
-	  msg.author.send('Tribes bot only listens to "tribe" channels')
-	  msg.delete({timeout: 1000}); //delete command in 3sec 
-	  return
-	}
-  }
-  processMessage(msg)
-});
-
-function processMessage(msg){
-	author = msg.author
-	actor = author.username
-	bits = msg.content.split(' ')
-	command = bits[0]
-	command = command.toLowerCase().substring(1) // strip out the leading !
-	console.log('command:'+command+' bits:'+bits+' actor:'+author.username )  
-	var gameState = {}
-	// handle alternate channels
-	// TODO smart handling of DMs (search all tribes?)
-	// if message is from a channel
-	// 		if there a game for the channel
-	//			gameState = allGames[channelName]
-	//		else 
-	//			if the command is initg, AND the actor is a ref
-	//				start a game for the channel
-	//				gameState = allGames[channelName]
-	//			else
-	//				return 'no game yet'
-	// else 
-	//		gameState = try to find a game for the sender
-
-	if (msg.channel && msg.channel.name ){
-		gameState = allGames[msg.channel.name.toLowerCase()]
-		if (! gameState){
-			if (command.startsWith('initg')){
-				if (!referees.includes(actor)){
-					msg.author.send(command+' requires referee priviliges')
-					msg.delete({timeout: 3000}); //delete command in 3sec 
-					return
-				}
-				initGame(msg.channel.name.toLowerCase())
-				msg.reply('starting game with initial conditions')
-				gameState = allGames[msg.channel.name.toLowerCase()]
-				msg.reply(gameStateMessage(gameState))
-				return
-			} 
-			msg.author.send('There is no current tribes game for this channel')
-			msg.delete({timeout: 3000}); //delete command in 3sec 
-			return
-		}
-		if (command == 'join' ){
-			if ( gameState.open ){
-				addToPopulation(msg, author, bits, actor, author, gameState)
-				return
-			} else {
-				msg.author.send('You need to be inducted by the chief to join this tribe')
-				msg.delete({timeout: 3000}); //delete command in 3sec 
-				return
-			}
-		}	
-	} else {
-		gameState = findGameStateForActor(actor)
-	}
-	if (!gameState){
-		msg.author.send('You do not seem to be a member of a tribe')
-		return
-	}
-	handleCommand(msg, author, actor,  command, bits, gameState)
-	return	
 }
 
 function getUserFromMention(mention) {
@@ -469,7 +446,7 @@ function doChance(rollValue, gameState){
 			break;
 		case 10 : 
 			//message += "A hyena is stalking the tribe’s children! See 'Child In Danger!' to determine what happens."
-			message += hyenaAttack(children, population)
+			message += hyenaAttack(children, gameState)
 			break;
 		case 9 : 
 			name = randomMemberName(population)
@@ -488,7 +465,7 @@ function doChance(rollValue, gameState){
 			break;
 		case 7: 
 			message +=  "FIRE! Move the Hunting Track token down to 20 (no game!) The tribe must move to another area immediately (Section 9). "
-			if ( isColdSeason(gameState) && (gameState.currentLocationName == 'Marsh' || gameState.currentLocationName == 'Hills')){
+			if ( isColdSeason(gameState) && (gameState.currentLocationName == 'marsh' || gameState.currentLocationName == 'hills')){
 				message = 'Fire in the cold season in the Hills or Marsh is a re-roll'
 			} else {
 				gameState.gameTrack[gameState.currentLocationName] = 20
@@ -544,10 +521,6 @@ function roll(count){
 		return total
 }
 function handleCommand(msg, author, actor, command, bits, gameState){
-	//channelName = msg.channel.name
-	//msgChannelType = msg.channel.type
-	//console.log('channel '+channelName+' type'+msgChannelType)
-	// list commands
 	player = personByName(actor, gameState)
 	population = gameState.population
 	children = gameState.children
@@ -1210,7 +1183,18 @@ function handleCommand(msg, author, actor, command, bits, gameState){
 		addToPopulation(msg, author, bits, target, msg.mentions.users.first(), gameState)
 		return
 	}
-
+	if (command.startsWith('initg')){
+		if (!referees.includes(actor)){
+			msg.author.send(command+' requires referee priviliges')
+			msg.delete({timeout: 3000}); //delete command in 3sec 
+			return
+		}
+		gameState = initGame(msg.channel.name.toLowerCase())
+		msg.reply('setting game with initial conditions')
+		allGames[msg.channel.name.toLowerCase()] = gameState
+		msg.reply(gameStateMessage(gameState))
+		return
+	} 
 	if (command == 'invite'){
 		if (gameState.reproductionRound && gameState.reproductionList 
 			&& gameState.reproductionList[0] && gameState.reproductionList[0].startsWith(actor)){
@@ -1285,26 +1269,22 @@ function handleCommand(msg, author, actor, command, bits, gameState){
 		msg.reply(response)
 		return
 	}
+	if (command == 'join' ){
+		if ( gameState.open ){
+			addToPopulation(msg, author, bits, actor, author, gameState)
+			return
+		} else {
+			msg.author.send('You need to be inducted by the chief to join this tribe')
+			msg.delete({timeout: 3000}); //delete command in 3sec 
+			return
+		}
+	}	
 	if (command == 'kill'){
 		if (!referees.includes(actor)){
 			msg.author.send(command+' requires referee priviliges')
 			return
 		}
-		targetName = bits[1]
-		target = children[targetName]
-		if (!target){
-			target = population[targetName]
-		}
-		if (!target && msg.mentions.users && msg.mentions.users.first()) {
-			targetName = msg.mentions.users.first().username
-			target = population[targetName]
-		}
-		if (!target){
-			msg.author.send('Count not find target '+targetName)
-			msg.delete({timeout: 3000}); //delete command in 3sec 
-			return
-		}
-		kill(targetName, bits[2], gameState)
+		kill(bits[1], bits[2], gameState)
 		messageChannel('The referee kills '+targetName, gameState)
 		return
 	}
@@ -1351,6 +1331,16 @@ function handleCommand(msg, author, actor, command, bits, gameState){
 		namelist = Object.keys(population)
 		response = "Tribe members: "+shuffle(namelist)
 		msg.author.send(response)
+		return
+	}
+	if (command == 'load'){
+		if (!referees.includes(actor) && !player.chief){
+			msg.author.send(command+' requires referee or chief priviliges')
+			msg.delete({timeout: 3000}); //delete command in 3sec 
+			return
+		}
+		loadGame()
+		messageChannel('Game was reverted to the save file; some changes may be lost.', gameState)
 		return
 	}
 	if (command == 'migrate' ){
@@ -1546,7 +1536,7 @@ function handleCommand(msg, author, actor, command, bits, gameState){
 			msg.delete({timeout: 3000}); //delete command in 3sec 
 			return	
 		}
-		specialize(msg, actor, bits[1], gameState.tribeChannel, gameState)
+		specialize(msg, actor, bits[1], gameState)
 		return
 	}
 	if (command == 'startwork' || command.startsWith('startw')){
@@ -1701,7 +1691,16 @@ function handleCommand(msg, author, actor, command, bits, gameState){
 				msg.delete({timeout: 3000}); //delete command in 3sec 
 				return	
 			}
-			message = craft( author.username, player, type, roll(1))
+			var craftRoll = roll(1)
+			if (referees.includes(actor) && bits.length >= 3){
+				craftRoll = bits[2]
+				if (craftRoll < 1 || 6 < craftRoll){
+					msg.author.send('Roll must be 1-6')
+					msg.delete({timeout: 1000}); //delete command in 3sec 
+					return
+				}
+			}
+			message = craft( author.username, player, type, craftRoll)
 		} 
 		if (command == 'assist'){
 			var target = ''
@@ -1755,7 +1754,16 @@ function handleCommand(msg, author, actor, command, bits, gameState){
 				msg.delete({timeout: 3000}); //delete command in 3sec 
 				return
 			}
-			message = hunt(actor, player, roll(3), gameState)
+			var huntRoll = roll(3)
+			if (referees.includes(actor) && bits.length >= 2){
+				huntRoll = bits[1]
+				if (huntRoll < 3 || 18 < huntRoll){
+					msg.author.send('Roll must be 3-18')
+					msg.delete({timeout: 1000}); //delete command in 3sec 
+					return
+				}
+			}
+			message = hunt(actor, player, huntRoll, gameState)
 		}
 		messageChannel( message , gameState)
 		player.worked = true
@@ -1908,7 +1916,7 @@ function spawnFunction(mother, father, msg, population, gameState, force = false
 	}
 	return
 }
-function specialize( msg, playerName, profession, tribeChannel, gameState){
+function specialize( msg, playerName, profession, gameState){
 	playerName = msg.author.username
 	profession = bits[1]
 	if (profession === 'h'){profession = 'hunter'}
@@ -1971,7 +1979,7 @@ function addToPopulation(msg, author, bits, target,targetObject,gameState){
 	}
 	gameState.population[target] = person
 	if (profession){
-		specialize(msg, target, profession, gameState.tribeChannel)
+		specialize(msg, target, profession, gameState)
 	}
 	messageChannel(response, gameState)
 	return
@@ -1997,7 +2005,7 @@ function findLeastGuarded(children, population){
 		} else {
 			personName = child.guardian
 			person = population[personName]
-			if (!person){
+			if (!person || !person.guarding || (person.guarding).length == 0){
 				console.log(childName+' has a bogus guardian:'+personName)
 				child.guardian = null
 				guardChildSort.push({'name':childName, 'score':7, 'age':child.age})
@@ -2035,7 +2043,9 @@ function findLeastGuarded(children, population){
 		unluckyIndex = Math.trunc( Math.random ( ) * maxIndex)
 		leastGuardedName = leastGuarded[unluckyIndex].name
 	}
-	return leastGuardedName+' is the least guarded child.  guard number is '+lowGuardValue
+	// name                  is least watched. Number of kids sharing attention:'
+	return leastGuardedName+' is least watched. Number of kids sharing attention is '+lowGuardValue
+	//return leastGuardedName+' is the least guarded child.  Guard number is '+lowGuardValue
 }
 function messageChannel(message, gameState){
 	channel = bot.channels.cache.find(channel => channel.name === gameState.name)
@@ -2045,13 +2055,14 @@ function messageChannel(message, gameState){
 		console.log('no channel found for '+gameState.name)
 	}
 }
-function hyenaAttack(children, population){
+function hyenaAttack(children, gameState){
+	population = gameState.population
 	if (!children || Object.keys(children).length == 0){
 		return 'No children, no hyena problem'
 	}
 	// get the least guarded message
 	leastGuardedMessageArray = findLeastGuarded(children, population).split(" ")
-	//  this is stupid and hacky
+	//  this is stupid and hacky; take the name from the start of the message, and the value from the last bit
 	leastGuardedName = leastGuardedMessageArray[0]
 	lowGuardValue = Number(leastGuardedMessageArray[10])
 	rollValue = roll(1)
@@ -2061,14 +2072,17 @@ function hyenaAttack(children, population){
 		console.log('hyena did not find the child somehow '+leastGuardedName)
 		return response
 	}
-	console.log(leastGuardedName+' rollValue'+rollValue+ ' target'+lowGuardValue)
-	if (rollValue >= lowGuardValue){
-		guardian = child.guardian
+	console.log(leastGuardedName+' rollValue '+rollValue+ ' target '+lowGuardValue)
+	guardian = child.guardian
+	if (rollValue > lowGuardValue){
 		if (guardian){
 			response += '\nFortunately, '+guardian+' chases off the beast'
 		}
 	} else {
 		response += '\n The poor child is devoured'
+		if (guardian){
+			response += '\n'+guardian+' watches in horror.'
+		}
 		kill(leastGuardedName, 'hyena attack', gameState)
 	}
 	return response
@@ -2243,12 +2257,14 @@ function consumeFood(gameState){
 }
 function kill(name, message, gameState){
 	population = gameState.population
+	children = gameState.children
+	childName = capitalizeFirstLetter(name)
 	if (! message || message == ''){
 		message = 'unknown causes'
 	}
-	if (name in population){
-		unsetGuardian(name, gameState.children)
-		person = population[name]
+	person = personByName(name, gameState)
+	if (person){
+		unsetGuardian(person.name, gameState.children)
 		person.deathMessage = message
 		if (person.isPregnant ){
 			kill(person.isPregnant, 'mother-died', gameState)
@@ -2256,15 +2272,15 @@ function kill(name, message, gameState){
 		if (person.nursing){
 			person.nursing.forEach(childName=>kill(childName, 'no-milk'))
 		}
-		gameState.graveyard[name] = person
-		delete population[name]
-	} else if (name in children){
-		unguardChild(name, population)
-		clearNursingPregnant(name, gameState)
-		var child = children[name]
+		gameState.graveyard[person.name] = person
+		delete population[person.name]
+	} else if (childName in children){
+		unguardChild(childName, population)
+		clearNursingPregnant(childName, gameState.population)
+		var child = children[childName]
 		child.deathMessage = message
-		gameState.graveyard[name] = child
-		delete children[name]
+		gameState.graveyard[childName] = child
+		delete children[childName]
 	} else {
 		console.log('Tried to kill '+name+' but could not find them')
 	}
@@ -2277,6 +2293,9 @@ function clearNursingPregnant(childName, population){
 			childIndex = person.nursing.indexOf(childName)
 			person.nursing.splice(childIndex, 1);
 			console.log(personName+' is no longer nursing '+childName)
+			if ((person.nursing).length == 0){
+				delete person.nursing
+			}
 		}
 		if (person.isPregnant && person.isPregnant == childName){
 			person.isPregnant = ''
@@ -2460,7 +2479,7 @@ function shuffle(array) {
 /////  WORK SECTION   
 /////////////////////////////////////////////////////////
 function gather(playername, player, rollValue,gameState){
-	var message = ' gathers (roll='+rollValue+')';
+	var message = playername+' gathers (roll='+rollValue+')';
 	var netRoll = rollValue
 	modifier = 0
 	if (isColdSeason(gameState)){
@@ -2487,9 +2506,11 @@ function gather(playername, player, rollValue,gameState){
 		}
 	}
 	if (player.strength){
-		if (player.strength.toLowerCase() == 'strong'){
+		if (player.strength.toLowerCase() == 'strong'.valueOf()){
+			message +='(strong)'
 			modifier += 1
-		} else if (player.strength.toLowerCase() == 'weak') {
+		} else if (player.strength.toLowerCase() == 'weak'.valueOf()) {
+			message += '(weak)'
 			modifier -= 1
 		} else {
 			console.log(playername+' has an invalid strength value '+player.strength)
@@ -2595,29 +2616,31 @@ function assist(playername, player, helpedPlayer){
 	} else {
 		helpedPlayer.helpers.push(playername)
 	}
-	return player.name + ' goes hunting to assist '
+	return player.name + ' will assist '+helpedPlayer.name+' if they hunt'
 }
 function hunt(playername, player, rollValue, gameState){
 	player.worked = true
 	mods = 0
-	message = ' goes hunting. '
+	message = playername+' goes hunting. '
 	console.log(player+' hunt '+rollValue)
-	var modifier = 0
+	var modifier = Number(0)
 	if ( player.profession != 'hunter'){
 		message+=('(-3 skill) ')
 		modifier -= 3
 	}
 	if (player.strength){
-		if (player.strength.toLowerCase() == 'strong'){
+		if (player.strength.toLowerCase() == 'strong'.valueOf() ){
+			message+=('(strong)')
 			modifier += 1
-		} else if (player.strength.toLowerCase() == 'weak') {
+		} else if (player.strength.toLowerCase() == 'weak'.valueOf()) {
+			message+=('(weak)')
 			modifier -= 1
 		} else {
 			console.log(playername+' has an invalid strength value '+player.strength)
 		}
 	}
 	if (isColdSeason(gameState)){
-		message+= '(-1 season) '
+		message+= '(!season) '
 		modifier -= 1
 	}
 	if (player.bonus && player.bonus >0 ){
@@ -2645,7 +2668,7 @@ function hunt(playername, player, rollValue, gameState){
 		} else if (rollValue ==3 ){
 			message += 'Crippling injury!'
 			player.isInjured = true
-			if (player.strength = 'strong'){
+			if (player.strength == 'strong'.valueOf()){
 				delete player.strength
 			} else {
 				player.strength = 'weak'
@@ -2659,16 +2682,18 @@ function hunt(playername, player, rollValue, gameState){
 		message += ' no luck'
 	} else {
 		// rewards section
-		netRoll = rollValue + modifier
+		netRoll = Number(rollValue) + modifier
 		console.log('hunt netRoll '+netRoll)
-		if (netRoll > locationDecay[locations[gameState.currentLocationName]['game_track']]){
-			message += ' (no '+huntData[netRoll][2]+' tracks )'
-			netRoll = locationDecay[locations[gameState.currentLocationName]['game_track']]
+		gameTrack = gameState.gameTrack[gameState.currentLocationName]
+		hunt_cap = locationDecay[gameTrack]
+		huntData = locations[gameState.currentLocationName]['hunt']
+		if (netRoll > hunt_cap){
+			message += ' (game track limited)'
+			netRoll = hunt_cap
 		}
 		if (netRoll > 18){
 			netRoll = 18
 		}
-		huntData = locations[gameState.currentLocationName]['hunt']
 		for (var i = 0; i < huntData.length; i++){
 			if (netRoll <= huntData[i][0]){
 				message += huntData[i][2] + ' +'+huntData[i][1]+' food'
