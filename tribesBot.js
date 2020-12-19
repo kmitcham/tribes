@@ -71,6 +71,14 @@ function loadGame(){
 			}
 		}
 		console.log('loaded allGames data. found '+Object.keys(allGames).length +' games')
+		for (gameName in allGames){
+			gameState = allGames[gameName]
+			if (gameState && gameName != gameState.name){
+				alertChannel.send(gameName+' had a name mismatch; fixing it from '+gameState.name)
+				console.log(gameName+' had a name mismatch; fixing it from '+gameState.name)
+				gameState.name = gameName
+			}
+		}
 	} else {
 		allGames = {}
 	}
@@ -95,21 +103,62 @@ function handleBackup(){
 		console.log('No backup since the source file had no games')
 	}
 }
-function savegameState(){
-	if (allGames && Object.keys(allGames).length > 0){
-		handleBackup()
-		fs.writeFile("./allGames.json", JSON.stringify(allGames,null,2), err => { 
+function redundantSave(fileName, jsonData){
+	jsonString = JSON.stringify(jsonData,null,2), err => { 
+		// Checking for errors 
+		if (err) {
+			console.log('error with save '+err)
+			throw err;
+		}  
+	}
+	try {
+		fs.writeFileSync(fileName, jsonString, (err) => {
+			if (err) throw err;
+			console.log(
+				"saved!");
+		   });
+		checkedData = loadJson(fileName);
+		checkedString = JSON.stringify(checkedData,null,2), err => { 
 			// Checking for errors 
 			if (err) {
 				console.log('error with save '+err)
 				throw err;
 			}  
-		}); 
-		console.log('saved file')
+		}
+		if ( checkedString === jsonString ){
+			console.log('checked data match')
+		} else {
+			console.log('checked data did not match')
+			redundantSave(fileName, jsonData)
+		}
+	} catch (err){
+		console.log('save failed. '+err)
+		console.log('redundant save unlinking file and trying again')
+		redundantSave(fileName, jsonData)
+	}
+}
+async function savegameState(){
+	for (gameName in allGames){
+		gameState = allGames[gameName]
+		if (gameState && gameName != gameState.name){
+			console.log(gameName+' had a name mismatch; fixing it from '+gameState.name)
+			gameState.name = gameName
+		}
+	}
+	if (allGames && Object.keys(allGames).length > 0){
+		handleBackup()
+		redundantSave("./allGames.json", allGames)
+		try {
+			checkGame = loadJson('./allGames.json') 
+		} catch(err){
+			console.log('Failed to load saved file.')
+		}
+		console.log('saved file with games:'+Object.keys(allGames))
+
 	} else {
 		console.log('tried to save empty file')
 	}
-	fs.writeFile("./referees.json", JSON.stringify(referees,null, 2), err => { 
+	fs.writeFileSync("./referees.json", JSON.stringify(referees,null, 2), err => { 
 		// Checking for errors 
 		if (err) throw err;  
 	}); 
@@ -129,7 +178,12 @@ bot.on('message', msg => {
 		return
 	  }
 	}
-	processMessage(msg)
+	try {
+		processMessage(msg)
+	} catch (err){
+		alertChannel.send('Bot wanted to fall over:')
+		alertChannel.send(err)
+	}
   });
   
   function processMessage(msg){
@@ -181,6 +235,7 @@ bot.on('message', msg => {
 	gameState.reproductionRound = false;
 	gameState.needChanceRoll = true
 	gameState.canJerky = false
+	console.log('Adding game '+gameName+' to the list of games')
 	allGames[gameName] = gameState
 	savegameState()
 	return gameState
@@ -467,6 +522,7 @@ function doChance(rollValue, gameState){
 			message +=  "FIRE! Move the Hunting Track token down to 20 (no game!) The tribe must move to another area immediately (Section 9). "
 			if ( isColdSeason(gameState) && (gameState.currentLocationName == 'marsh' || gameState.currentLocationName == 'hills')){
 				message = 'Fire in the cold season in the Hills or Marsh is a re-roll'
+				return message
 			} else {
 				gameState.gameTrack[gameState.currentLocationName] = 20
 			}
@@ -520,7 +576,7 @@ function roll(count){
 		}
 		return total
 }
-function handleCommand(msg, author, actor, command, bits, gameState){
+async function handleCommand(msg, author, actor, command, bits, gameState){
 	player = personByName(actor, gameState)
 	population = gameState.population
 	children = gameState.children
@@ -560,7 +616,8 @@ function handleCommand(msg, author, actor, command, bits, gameState){
 			text+=' !open|close  (toggle if people can join with "!join" or only with "!induct" by the chief\n'
 			text+=' !startwork (begins the work round, enabling work attempts and rolls)\n'
 			text+=' !startfood (ends the work round; subtract food/grain; birth; child age increase)\n'
-			text+=' !startreproduction (Players engage in reproduction. Also when migration happens)\n'
+			text+=' !startreproduction (Start the reproduction round. Also when migration happens)\n'
+			text+=' !skip <person>   end a players reproduction turn, giving the next player a chance\n'
 			text+=' !chance (after mating, chance is required to end the season)\n'
 			text+=' !migrate <newlocation> <force>  (without force, just checks who would perish on the journey)\n'
 			msg.author.send( text)
@@ -1097,9 +1154,14 @@ function handleCommand(msg, author, actor, command, bits, gameState){
 	if (command == 'guard' || command == 'watch'){
 		if (bits.length != 2){
 			msg.author.send('guard <childName>')
+			msg.delete({timeout: 3000}); //delete command in 3sec 
 			return		
 		}
-		person = population[actor]
+		person = personByName(actor, gameState)
+		if (!person){
+			msg.author.send('you are not a person')
+			return
+		}
 		if (person.guarding && person.guarding.length > 4){
 			msg.author.send('You are already guarding enough children: '+person.guarding)
 			msg.delete({timeout: 3000}); //delete command in 3sec 
@@ -1264,7 +1326,7 @@ function handleCommand(msg, author, actor, command, bits, gameState){
 		}
 		var output = Math.trunc(amount/3)
 		response = actor +' converts '+amount+' food into '+output+' grain'
-		person.food -= amount
+		person.food -= (output*3)
 		person.grain += output
 		msg.reply(response)
 		return
@@ -1491,6 +1553,33 @@ function handleCommand(msg, author, actor, command, bits, gameState){
 		}
 		return
 	}
+	if (command == 'skip'){
+		if (!referees.includes(actor) && !player.chief){
+			msg.author.send(command+' requires referee or chief priviliges')
+			msg.delete({timeout: 3000}); //delete command in 3sec 
+			return
+		}
+		target = bits[1]
+		if (msg.mentions.users.first()){
+			target = msg.mentions.users.first().username
+		}
+		if (!target){
+			msg.author.send('usage: skip <current reproducer>')
+			msg.delete({timeout: 3000}); //delete command in 3sec 
+			return
+		}
+		if (gameState.reproductionRound && gameState.reproductionList 
+			&& gameState.reproductionList[0] && gameState.reproductionList[0].startsWith(target)){
+			console.log('legal target to skip')
+		} else {
+			msg.author.send('it is not '+target+' turn to invite')
+			msg.delete({timeout: 3000}); //delete command in 3sec 
+			return
+		}
+		messageChannel('The chief cancels this chance to reproduce', gameState)
+		nextMating(actor, gameState)
+		return
+	}
 	// add a child to tribe; args are parent names
 	if (command === 'spawn'){
 		if (!referees.includes(actor)){
@@ -1539,7 +1628,8 @@ function handleCommand(msg, author, actor, command, bits, gameState){
 		specialize(msg, actor, bits[1], gameState)
 		return
 	}
-	if (command == 'startwork' || command.startsWith('startw')){
+	if (command == 'startwork' || command.startsWith('startw') || command.startsWith('work')
+		|| (command.startsWith('start') && bits[1] && bits[1].startsWith('w'))){
 		if (!referees.includes(actor) && !player.chief){
 			msg.author.send(command+' requires referee  or chief priviliges')
 			msg.delete({timeout: 3000}); //delete command in 3sec 
@@ -1560,7 +1650,8 @@ function handleCommand(msg, author, actor, command, bits, gameState){
 		startWork(gameState)
 		return
 	}
-	if (command == 'startfood' || command.startsWith('startf')){
+	if (command == 'startfood' || command.startsWith('startf')  
+		|| (command.startsWith('start') && bits[1] && bits[1].startsWith('f'))){
 		if (!referees.includes(actor) && !player.chief){
 			msg.author.send(command+' requires referee  or chief priviliges')
 			msg.delete({timeout: 3000}); //delete command in 3sec 
@@ -1579,7 +1670,8 @@ function handleCommand(msg, author, actor, command, bits, gameState){
 		startFood(gameState)
 		return
 	}
-	if (command == 'startreproduction' || command.startsWith('startr')){
+	if (command == 'startreproduction' || command.startsWith('startr') || command.startsWith('repro')
+		|| (command.startsWith('start') && bits[1] && bits[1].startsWith('r'))){
 		if (!referees.includes(actor) && !player.chief){
 			msg.author.send(command+' requires referee  or chief priviliges')
 			msg.delete({timeout: 3000}); //delete command in 3sec 
