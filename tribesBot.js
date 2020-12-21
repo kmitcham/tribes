@@ -340,6 +340,9 @@ function inventoryMessage(person){
 	if (person.guarding){
 		message += '\n\t\t is guarding '+person.guarding
 	}
+	if (person.chief){
+		message += '\n\t\t is Chief'
+	}
 	return message
 }
 
@@ -586,14 +589,15 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		text+='### Player commands ###\n'
 		text+=' !specialize <hunter|gatherer|crafter>(at the start of the game)\n'
 		text+=' !children (shows the children ages and food status)\n'
-		text+=' !inventory <target|all>  (show inventory and character info (no arg means self))\n'
-		text+=' !secrets <toggle the state of willingness to teach others to craft\n'
+		text+=' !inventory <target|all>  (show inventory and character info. No arg means self)\n'
+		text+=' !secrets (toggle the state of willingness to teach others to craft)\n'
+		text+=' !scout <location> (examine the envionment, default is current location)\n'
 		text+=' !status (see the current location, year, season and local game)\n'
 		text+=' !vote <target>  (your choice for chief)\n'
 		text+=' !give <amt> <food|grain|spearhead|basket> <player>\n'
 		text+=' !graveyard (list of all deceased members and children)\n'
 		text+='-=Work Round Commands=-\n'
-		text+=' !guard | !ignore <child>   take on child care responsibilities for the child\n'
+		text+=' !guard | !ignore <child>   (take on child care responsibilities for the child)\n'
 		text+=' !leastguarded (shows the least supervised child (ties resolved randomly))\n'
 		text+=' !craft <spearhead|basket>\n'
 		text+=' !gather\n'
@@ -605,6 +609,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		text+=' !foodcheck (examine the food situation for every adult and living child)\n'
 		text+=' !feed <amt> <childName>\n'
 		text+='-=Reproduction Round Commands=-\n'
+		text+=' !romance  (show the order of reproduction invitations)'
 		text+=' !invite <target>\n'
 		text+=' !pass (decline a mating, or end the members invitation turn)\n'
 		text+=' !consent (agree to a mating invitation)\n'
@@ -612,12 +617,13 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 
 		if ((player && player.chief) || referees.includes(actor) ){
 			text = '\n### Chief Commands ###\n'
-			text+=' !induct|banish <player> add a member to the tribe\n'
+			text+=' !induct|banish <player> (add|remove a tribe member)\n'
 			text+=' !open|close  (toggle if people can join with "!join" or only with "!induct" by the chief\n'
+			text+=' !save (Saves the game. Automatically done at the start of every work round)\n'
 			text+=' !startwork (begins the work round, enabling work attempts and rolls)\n'
 			text+=' !startfood (ends the work round; subtract food/grain; birth; child age increase)\n'
 			text+=' !startreproduction (Start the reproduction round. Also when migration happens)\n'
-			text+=' !skip <person>   end a players reproduction turn, giving the next player a chance\n'
+			text+=' !skip <person>   (end a players reproduction turn, giving the next player a chance)\n'
 			text+=' !chance (after mating, chance is required to end the season)\n'
 			text+=' !migrate <newlocation> <force>  (without force, just checks who would perish on the journey)\n'
 			msg.author.send( text)
@@ -628,15 +634,14 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			text+=' edit <target> <canCraft|nursing|isPregnant|profession|gender|partner|worked|food|grain> <value>\n' 
 			text+=' editchild <target> <food|age|mother|father> <value>\n' 
 			text+=' award <amt> <food|grain|spearhead|basket> <player>\n'
-			text+=' kill <name> <message> kill a person or child\n'
+			text+=' kill <name> <message> (kill a person or child)\n'
 			text+=' list <player>  (no arg lists all players)\n '
-			text+=' promote|demote <player> to the ref list\n'
+			text+=' promote|demote <player> (add player to the ref list)\n'
 			text+=' spawn <mother> <father> add a child with parents\n'
-			text+=' save the game file (automatically done at the start of every work round)\n'
 			text+=' load the saved file\n'
 			text+=' listnames | listchildren just the names\n'
 			text+=' initgame erase the current game state and start fresh\n'
-			text+=' endgame    convert all the child to corpses, or new adults\n'
+			text+=' endgame   convert all the child to corpses, or new adults\n'
 			text+=' scorechildren   count number of children by parent'
 			msg.author.send( text)
 		}
@@ -1352,7 +1357,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 	}
 	if (command == 'leastguarded' || command == 'leastwatched'){
 		response  = findLeastGuarded(children, gameState.population)
-		messageChannel(response, gameState )
+		msg.author.send(response )
 		msg.delete({timeout: 3000}); //delete command in 3sec 
 		return 
 	}
@@ -1436,6 +1441,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 	}
 	if (command == 'pass'){
 		if (!gameState.reproductionRound){
+			msg.author.send('Mating happens during the reproduction round')
 			// error meesssage here
 			return
 		}
@@ -1497,13 +1503,23 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		msg.reply(message)
 		return
 	}
+	if (command == 'romance'){
+		if (gameState.reproductionRound && gameState.reproductionList ){
+			msg.author.send("The mating invitation order is "+gameState.reproductionList)
+		} else {
+			msg.author.send("Only valid during reproduction round")
+			return
+		}
+		msg.delete({timeout: 1000}); //delete command in 1sec 
+		return
+	}
 	if (command == 'roll'){
 		messageChannel(roll(bits[1]), gameState)
 		return
 	}
 	// save the game state to file
 	if (command == 'save'){
-		if (referees.includes(actor)){
+		if (referees.includes(actor) || player.chief){
 			savegameState()
 			msg.author.send('game state saved')
 		}
@@ -1515,14 +1531,17 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 	}
 	if (command == 'scout'){
 		locationName = gameState.currentLocationName
+		if (bits[1]){
+			locationName = bits[1]
+		}
 		msg.delete({timeout: 1000}); //delete command in 1sec 
 		if (bits[1]){
 			locationName = bits[1]
 		}
-		response = 'The resources are:\n'
+		response = 'The '+locationName+' resources are:\n'
 		locationData = locations[locationName]
 		if (!locationData){
-			msg.author.send('Nothing known about '+locationName)
+			msg.author.send('Valid locations are: '+Object.keys(locations))
 			return
 		}
 		response += '\tGather:\n'
@@ -1530,7 +1549,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			entry = locationData['gather'][index]
 			response += '\t\t'+entry[3]+'('+(Number(entry[1])+Number(entry[2]))+')\n'
 		}
-		response += '\tHunt:\n'
+		response += '\tHunt:  Game Track:'+gameState.gameTrack[locationName]+'\n'
 		for (var index in locationData['hunt']){
 			entry = locationData['hunt'][index]
 			response += '\t\t'+entry[2]+'('+entry[1]+')\n'
@@ -1694,9 +1713,9 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		message = gameStateMessage(gameState)
 		if (gameState.workRound ) {message += '  (work round)'}
 		if (gameState.foodRound ) {message += '  (food round)'}
-		if (gameState.reproductionRound ) {message += '  (reproduction round)'}
+		if (gameState.reproductionRound ) {message += '  (reproduction invitation order:'+gameState.reproductionList+')'}
 		msg.author.send(message)
-		msg.delete({timeout: 3000}); //delete command in 3sec 
+		msg.delete({timeout: 1000}); //delete command in 1sec 
 		return
 	}
 	if (command == 'vote'){
@@ -1861,7 +1880,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		player.worked = true
 		slackers = listReadyToWork(population)
 		if (slackers && slackers.length == 0){
-			messageChannel('-= Everyone available to work, has worked =-', gameState)
+			messageChannel('-= All available workers have worked =-', gameState)
 			startFood(gameState)
 		}
 		return	
@@ -1955,6 +1974,7 @@ function nextMating(currentInviterName, gameState){
 	gameState.reproductionList.shift()
 	if (gameState.reproductionList.length > 0){
 		messageChannel(gameState.reproductionList[0]+ " should now !invite people to reproduce, or !pass ", gameState)
+		messageChannel("The romance list is: "+gameState.reproductionList, gameState)
 		return
 	} else {
 		messageChannel('Reproduction round is over.  Time for the chance roll', gameState)
@@ -1991,6 +2011,13 @@ function spawnFunction(mother, father, msg, population, gameState, force = false
 	if (force != false || (mroll+droll) >= spawnChance ){
 		var child = addChild(mother, father, gameState)
 		messageChannel('The mating of '+mother+'('+mroll+') and '+father+'('+droll+') spawned '+child.name, gameState)
+		if (gameState.reproductionList){
+			var hasNotMated = gameState.reproductionList.includes(mother)
+			if (hasNotMated){
+				console.log("attempting to remove pregnant woman from the reproduction list")
+				gameState.reproductionList.delete(gameState.reproductionList.indexOf(mother))l
+			}
+		}
 	} else {
 		messageChannel('The mating of '+mother+'('+mroll+') and '+father+'('+droll+') produced only good feelings', gameState)
 	}
@@ -2011,9 +2038,9 @@ function spawnFunction(mother, father, msg, population, gameState, force = false
 function specialize( msg, playerName, profession, gameState){
 	playerName = msg.author.username
 	profession = bits[1]
-	if (profession === 'h'){profession = 'hunter'}
-	if (profession === 'c'){profession = 'crafter'}
-	if (profession === 'g'){profession = 'gatherer'}
+	if (profession.startsWith('h')){profession = 'hunter'}
+	if (profession.startsWith('c')){profession = 'crafter'}
+	if (profession.startsWith('g')){profession = 'gatherer'}
 	if ( !profession || !professions.includes(profession)){
 		msg.author.send('usage:!'+bits[0]+' [hunter|gatherer|crafter] ')
 		return
