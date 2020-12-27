@@ -18,7 +18,7 @@ const genders = ['male','female']
 const locations = require('./locations.json');
 const allNames = require('./names.json');
 
-const locationDecay = [20,20,20,17,17,
+const locationDecay = [30,30,30,17,17,
 					15,15,14,14,13,
 					13,12,12,11,11,
 					10,10,9,9,8]
@@ -174,8 +174,6 @@ bot.on('message', msg => {
 	  if (!msg.channel.name.toLowerCase().includes('tribe')){
 		console.log('ignore command >'+msg+'<in channel with no tribe ')
 		msg.author.send('Tribes bot only listens to "tribe" channels')
-		msg.delete({timeout: 1000}); //delete command in 3sec 
-		return
 	  }
 	}
 	try {
@@ -226,7 +224,7 @@ bot.on('message', msg => {
 	gameState.graveyard = {}
 	gameState.children = {}
 	for (locationName in locations){
-		gameState.gameTrack[locationName] = 0
+		gameState.gameTrack[locationName] = 1
 	}
 	gameState.currentLocationName = "veldt";
 	gameState.round = "work"
@@ -311,8 +309,8 @@ function nextSeason(gameState){
 			modifier = locations[locationName]['game_track_recover']
 			oldTrack = gameState.gameTrack[locationName]
 			gameState.gameTrack[locationName]  -= modifier
-			if (gameState.gameTrack[locationName]< 0){
-				gameState.gameTrack[locationName] = 0
+			if (gameState.gameTrack[locationName]< 1){
+				gameState.gameTrack[locationName] = 1
 			}
 			console.log(locationName+' game_track moves from '+oldTrack+' to '+gameState.gameTrack[locationName])
 		}
@@ -336,6 +334,9 @@ function inventoryMessage(person){
 	}
 	if (person.isInjured && person.isInjured != 'false' ){
 		message += '\n\t\t is injured and unable to work'
+	}	
+	if (person.isSick && person.isSick != 'false' ){
+		message += '\n\t\t is sick and unable to work'
 	}
 	if (person.guarding){
 		message += '\n\t\t is guarding '+person.guarding
@@ -534,18 +535,23 @@ function doChance(rollValue, gameState){
 			name = randomMemberName(population)
 			person = population[name]
 			person.isInjured = 'true'
+			// TODO clear the guarding array of the injured person
 			message +=  name + " injured – miss next turn."
 			break;
 		case 5: 
 			name = randomMemberName(population)
 			person = population[name]
-			person.isInjured = 'true'
-			message +=  name + " got sick – lost 2 food and miss next turn."
+			person.isSick = 'true'
+			message +=  name + " got sick – lost 2 food and miss next turn. "
 			if (person.food <= 2){
-				message += '( but they only had '+person.food+' so they need help or will die)'
+				message += '( but they only had '+person.food+' so the ref might kill them if no help is given)'
 			}
 			person.food -= 2
 			if (person.food < 0) { person.food = 0}
+			if (person.guarding && person.guarding.length > 0){
+				message += " They can no longer guard "+person.guarding
+				delete person.guarding
+			}
 			break;
 		case 4: 
 		case 3: 
@@ -722,7 +728,6 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		targetName = target.username
 		if (target ){
 			if (population[targetName]){
-				unsetGuardian(targetName,children)
 				delete population[target.username]
 				msg.reply(target.username+' is banished from the tribe')
 				return
@@ -769,8 +774,8 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 				response += '('+childName+':'+child.gender
 				response += ' age:'+((child.age)/2)+ ' needs '+(2-child.food)+' food'
 				response += ' parents:'+child.mother+'+'+child.father
-				if (child.guardian && child.guardian != ''){
-					response += ' guardian:'+child.guardian
+				if (child.age >= 0 ){
+					response += ' guardValue:'+ findGuardValueForChild(childName, population, children)
 				}
 				if (child.newAdult){
 					response += ' Full grown!'
@@ -948,7 +953,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		}
 	}
 	if (command == 'editchild'){
-		childProperties = ['mother','father','age','food','guardian','name']
+		childProperties = ['mother','father','age','food','name']
 		if (!referees.includes(actor)){
 			msg.author.send(command+' requires referee priviliges')
 			msg.delete({timeout: 3000}); //delete command in 3sec 
@@ -973,7 +978,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			msg.delete({timeout: 3000}); //delete command in 3sec 
 			return
 		}
-		if (attribute == 'mother'|| attribute == 'father' || attribute == 'guardian'){
+		if (attribute == 'mother'|| attribute == 'father'){
 			parent = population[value]
 			if (!parent){
 				msg.author.send('Could not find tribemember '+value)
@@ -1172,6 +1177,11 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			msg.delete({timeout: 3000}); //delete command in 3sec 
 			return
 		}
+		if (person.isSick && person.isSick != false){
+			msg.author.send('You are too sick to watch children')
+			msg.delete({timeout: 3000}); //delete command in 3sec 
+			return
+		}
 		if (person.worked == true|| gameState.workRound == false){
 			msg.author.send('You can not change guard status after having worked, or outside the work round')
 			msg.delete({timeout: 3000}); //delete command in 3sec 
@@ -1194,7 +1204,6 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			msg.delete({timeout: 3000}); //delete command in 3sec 
 			return
 		}
-		child.guardian = actor
 		if (person.guarding){
 			person.guarding.push(childName)
 		} else {
@@ -1212,6 +1221,10 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		person = population[actor]
 		childName = capitalizeFirstLetter(bits[1])
 		child = children[childName]
+		if (!child ){
+			msg.author.send('Could not find child: '+childName)
+			return
+		} 
 		if (!person.guarding || person.guarding.indexOf(childName) == -1 ){
 			msg.author.send('You are not guarding '+childName)
 			msg.delete({timeout: 3000}); //delete command in 3sec 
@@ -1225,11 +1238,6 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		childIndex = person.guarding.indexOf(childName)
 		if (childIndex > -1) {
 			person.guarding.splice(childIndex, 1);
-		}
-		if (!child ){
-			msg.author.send('Could not find child: '+childName)
-		} else {
-			child.guardian = null
 		}
 		messageChannel(actor+' stops guarding '+childName, gameState)
 		return
@@ -1263,9 +1271,10 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		return
 	} 
 	if (command == 'invite'){
+		inviteMessage = ''
 		if (gameState.reproductionRound && gameState.reproductionList 
 			&& gameState.reproductionList[0] && gameState.reproductionList[0].startsWith(actor)){
-			console.log('invite is legal')
+			console.log('invite is a legal source')
 		} else {
 			msg.author.send(command+' is not appropriate now')
 			msg.delete({timeout: 3000}); //delete command in 3sec 
@@ -1276,14 +1285,19 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			msg.delete({timeout: 3000}); //delete command in 3sec 
 			return
 		}
+		if (player.invite != none){
+			inviteMessage("The invitation to "+player.invite+" is cancelled.  ")
+		}
 		if (msg.mentions && msg.mentions.users && msg.mentions.users.first()){
 			target = msg.mentions.users.first().username
 		} else {
 			target = bits[1]
 		}
 		player.invite = target
+
+		inviteMessage += actor+ ' invites '+bits[1]+' to reproduce.  !pass or !consent'
 		//TODO msg the invitee
-		messageChannel(actor+ ' invites '+bits[1]+' to reproduce.  !pass or !consent', gameState)
+		messageChannel(inviteMessage, gameState)
 		return
 	}
 	if (command == 'inventory'){
@@ -1771,6 +1785,11 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			msg.delete({timeout: 3000}); //delete command in 3sec 
 			return
 		}
+		if (player.isSick && player.isSick != 'false'){
+			msg.author.send('you can not work while you are sick')
+			msg.delete({timeout: 3000}); //delete command in 3sec 
+			return
+		}
 		if (player.worked == true){
 			msg.author.send('You cannot work (again) this round')
 			msg.delete({timeout: 3000}); //delete command in 3sec 
@@ -1784,6 +1803,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 				return
 			}
 			message = gather( author.username, player, roll(3),gameState)
+			player.activity = 'gather'
 		} 
 		if (command == 'craft'){
 			type = bits[1]
@@ -1812,6 +1832,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 				}
 			}
 			message = craft( author.username, player, type, craftRoll)
+			player.activity = 'craft'
 		} 
 		if (command == 'assist'){
 			var target = ''
@@ -1829,6 +1850,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			}
 			message = assist(author.username, player, assistedPlayer)
 			message += target 
+			player.activity = 'assist'
 		} 
 		if (command == 'train'){
 			if (player.canCraft){
@@ -1853,6 +1875,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			} else {
 				message = actor+' tries to learn to craft, but does not understand it yet. ('+learnRoll+')'
 			}
+			player.activity = 'training'
 		} 
 		if (command == 'hunt'){
 			if (player.guarding && player.guarding.length > 0){
@@ -1875,6 +1898,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 				}
 			}
 			message = hunt(actor, player, huntRoll, gameState)
+			player.activity = 'hunt'
 		}
 		messageChannel( message , gameState)
 		player.worked = true
@@ -1895,7 +1919,8 @@ function listReadyToWork(tribe){
 	for (name in tribe){
 		person = tribe[name]
 		// edit can leave isinjured as the string 'false'
-		if (person.worked || (person.isInjured && person.isInjured != 'false')){
+		if (person.worked || (person.isInjured && person.isInjured != 'false')
+			||(person.isSick && person.isSick != 'false')){
 			// do nothing
 		} else {
 			unworked.push(name)
@@ -1931,7 +1956,6 @@ function addChild(mother, father, gameState){
 	child.age = -2
 	child.food = 0
 	child.gender = genders[ (Math.trunc( Math.random ( ) * genders.length))]
-	child.guardian = null
 	nextIndex = (gameState.populationCounter % 26 )
 	child.name = getNextChildName(gameState.children, allNames, nextIndex)
 	gameState.populationCounter++
@@ -1954,7 +1978,11 @@ function clearWorkFlags(population){
 		}
 		if (person.isInjured && person.isInjured != 'false' && person.worked == false){
 			// did not work means rested
-			person.isInjured = false
+			delete person.isInjured
+		}
+		if (person.isSick && person.isSick != 'false' && person.worked == false){
+			// did not work means rested
+			delete person.isSick
 		}
 		person.worked = false
 	}
@@ -2014,8 +2042,10 @@ function spawnFunction(mother, father, msg, population, gameState, force = false
 		if (gameState.reproductionList){
 			var hasNotMated = gameState.reproductionList.includes(mother)
 			if (hasNotMated){
-				console.log("attempting to remove pregnant woman from the reproduction list")
-				gameState.reproductionList.delete(gameState.reproductionList.indexOf(mother))l
+				console.log("attempting to remove pregnant woman "+mother+" from the reproduction list")
+				gameState.reproductionList.delete(gameState.reproductionList.indexOf(mother))
+			} else {
+				console.log('did not find '+mother+' in the reproduction list')
 			}
 		}
 	} else {
@@ -2103,6 +2133,34 @@ function addToPopulation(msg, author, bits, target,targetObject,gameState){
 	messageChannel(response, gameState)
 	return
 }
+function countAdultChildren(motherName, children){
+	var adultChildren = Number(0);
+	for (childName in children){
+		var child = children[childName]
+		if (child.mother == motherName && child.age > 24 ){
+			adultChildren += 1
+		}
+	}
+	return adultChildren
+}
+function findGuardValueForChild(childName, population, children){
+	var guardValue = Number(0);
+	var logMessage = 'guard value for :'+childName
+	for (var personName in population){
+		var person = population[personName]
+		if (person.guarding && person.guarding.includes(childName)){
+			var watchValue = 1/person.guarding.length
+			if (person.gender == 'female'){
+				watchValue = (1+countAdultChildren(personName, children))/person.guarding.length
+				logMessage += '\n\t\t'+personName+' has help from adult children '
+			}
+			logMessage += '\n\t'+personName+' adds '+watchValue
+			guardValue = guardValue + watchValue
+		}
+	}
+	//console.log( logMessage+'\n\t\t TOTAL: '+guardValue)	
+	return guardValue
+}
 function findLeastGuarded(children, population){
 	// guard score = 7 if unguarded; otherwise is the length of the guarders 'guarding' array
 	var guardChildSort = []
@@ -2112,28 +2170,17 @@ function findLeastGuarded(children, population){
 	}
 	for (var childName in children){
 		var child = children[childName]
-		if (child.age < 1 ){
-			// unborn children should be skipped
+		if (child.age < 0 ){
+			// unborn children should be skipped; 0 is born
 			continue
 		}	
 		if (child.newAdult){
 			continue
 		}
-		if (! child.guardian || child.guardian == '' || child.guardian == null){
-			guardChildSort.push({'name':childName, 'score':7})
-		} else {
-			personName = child.guardian
-			person = population[personName]
-			if (!person || !person.guarding || (person.guarding).length == 0){
-				console.log(childName+' has a bogus guardian:'+personName)
-				child.guardian = null
-				guardChildSort.push({'name':childName, 'score':7, 'age':child.age})
-			} else {
-				guardChildSort.push({'name':childName, 'score': (person.guarding).length, 'age':child.age})
-			}
-		}
+		guardValue = findGuardValueForChild(childName, population, children)
+		guardChildSort.push({'name':childName, 'score':guardValue,  'age':child.age})
 	}
-	guardChildSort.sort((a,b) => parseFloat(b.score) - parseFloat(a.score))
+	guardChildSort.sort((a,b) => parseFloat(a.score) - parseFloat(b.score))
 	if (guardChildSort.length == 0){
 		console.log(' ERROR EMPTY LIST OF GUARD CHULDREN')
 		return "Bug means all kids are guarded equally"
@@ -2162,9 +2209,7 @@ function findLeastGuarded(children, population){
 		unluckyIndex = Math.trunc( Math.random ( ) * maxIndex)
 		leastGuardedName = leastGuarded[unluckyIndex].name
 	}
-	// name                  is least watched. Number of kids sharing attention:'
-	return leastGuardedName+' is least watched. Number of kids sharing attention is '+lowGuardValue
-	//return leastGuardedName+' is the least guarded child.  Guard number is '+lowGuardValue
+	return leastGuardedName+' is least watched. Watch score = '+lowGuardValue
 }
 function messageChannel(message, gameState){
 	channel = bot.channels.cache.find(channel => channel.name === gameState.name)
@@ -2184,24 +2229,30 @@ function hyenaAttack(children, gameState){
 	//  this is stupid and hacky; take the name from the start of the message, and the value from the last bit
 	leastGuardedName = leastGuardedMessageArray[0]
 	lowGuardValue = Number(leastGuardedMessageArray[10])
-	rollValue = roll(1)
-	response = 'The hyena attacks '+leastGuardedName+'!\n'
+	response = 'The hyena attacks ('+rollValue+') '+leastGuardedName+'!\n'
 	var child = children[leastGuardedName]
 	if (!child){
 		console.log('hyena did not find the child somehow '+leastGuardedName)
 		return response
 	}
-	console.log(leastGuardedName+' rollValue '+rollValue+ ' target '+lowGuardValue)
-	guardian = child.guardian
-	if (rollValue > lowGuardValue){
-		if (guardian){
-			response += '\nFortunately, '+guardian+' chases off the beast'
+	var blocked = false;
+	for (personName in population){
+		person = population[personName]
+		if (person && person.guarding && person.guarding.includes(leastGuardedName)){
+			guardLength = person.guarding.length()
+			var rollValue = roll(1)
+			if (rollValue <= guardLength){
+				// TODO a variety of cute tragic messages here
+				response += '  The hyena runs past '+personName+'!'
+			} else {
+				response += '  '+personName+' scares the hyena off.'
+				blocked = true;
+				break
+			}
 		}
-	} else {
-		response += '\n The poor child is devoured'
-		if (guardian){
-			response += '\n'+guardian+' watches in horror.'
-		}
+	}
+	if (!blocked){
+		response+= ' The hyena devours the child.'
 		kill(leastGuardedName, 'hyena attack', gameState)
 	}
 	return response
@@ -2337,6 +2388,7 @@ function consumeFood(gameState){
 					twin = addChild(child.mother, child.father, gameState);
 					reponse += child.mother+' gives birth to a twin! Meet '+twin.name+'\n'
 					person.guarding.push(twin.name)
+					twin.age = 0
 				}
 				if (population[child.mother] && population[child.mother].isPregnant){
 					delete population[child.mother].isPregnant
@@ -2383,7 +2435,6 @@ function kill(name, message, gameState){
 	}
 	person = personByName(name, gameState)
 	if (person){
-		unsetGuardian(person.name, gameState.children)
 		person.deathMessage = message
 		if (person.isPregnant ){
 			kill(person.isPregnant, 'mother-died', gameState)
@@ -2423,14 +2474,7 @@ function clearNursingPregnant(childName, population){
 	}
 }
 
-function unsetGuardian(guarderName, children){
-	for (childName in children){
-		var child = children[childName]
-		if (child.guardian && child.guardian == guarderName){
-			child.guardian = ''
-		}
-	}
-}
+
 function unguardChild(childName, population){
 	for (personName in population){
 		person = population[personName]
@@ -2620,8 +2664,8 @@ function gather(playername, player, rollValue,gameState){
 			modifier-= 4
 		}
 		if (guardCount > 4){
-			console.log(' gather with more than 4 kids should not happen')
-			return ' fails to get anything, too many kids in the way'
+			console.log(playername+' gather with more than 4 kids should not happen')
+			return ' is guarding too many children to gather.'
 		}
 	}
 	if (player.strength){
@@ -2783,6 +2827,8 @@ function hunt(playername, player, rollValue, gameState){
 			if (player.profession != 'hunter'){
 				message += 'Injury!'
 				player.isInjured = true
+			} else {
+				message += 'Skillfully avoids injury, but captures no game.'
 			}
 		} else if (rollValue ==3 ){
 			message += 'Crippling injury!'
@@ -2809,6 +2855,7 @@ function hunt(playername, player, rollValue, gameState){
 		if (netRoll > hunt_cap){
 			message += ' (game track limited)'
 			netRoll = hunt_cap
+			console.log('hunt with netRoll '+netRoll+' capped at '+hunt_cap+' since the gameTrack was '+gameTrack)
 		}
 		if (netRoll > 18){
 			netRoll = 18
