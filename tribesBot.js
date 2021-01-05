@@ -173,7 +173,7 @@ bot.on('message', msg => {
 	if (msg.channel && msg.channel.name ){
 	  if (!msg.channel.name.toLowerCase().includes('tribe')){
 		console.log('ignore command >'+msg+'<in channel with no tribe ')
-		msg.author.send('Tribes bot only listens to "tribe" channels')
+		return
 	  }
 	}
 	try {
@@ -729,7 +729,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		if (target ){
 			if (population[targetName]){
 				delete population[target.username]
-				msg.reply(target.username+' is banished from the tribe')
+				messageChannel(target.username+' is banished from the tribe',gameState)
 				return
 			}
 		} else {
@@ -771,14 +771,19 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			if (child.dead){
 				response += '('+childName+' is dead)'
 			} else {
-				response += '('+childName+':'+child.gender
-				response += ' age:'+((child.age)/2)+ ' needs '+(2-child.food)+' food'
-				response += ' parents:'+child.mother+'+'+child.father
-				if (child.age >= 0 ){
-					response += ' guardValue:'+ findGuardValueForChild(childName, population, children)
-				}
 				if (child.newAdult){
 					response += ' Full grown!'
+				}
+				response += '('+childName+':'+child.gender
+				response += ' age:'+((child.age)/2)
+				if (child.newAdult){
+					response += ' self-feeding'
+				} else {
+					response += ' needs '+(2-child.food)+' food'
+				} 
+				response += ' parents:'+child.mother+'+'+child.father
+				if (child.age >= 0  && child.age < 24 ){
+					response += ' guardValue:'+ findGuardValueForChild(childName, population, children)
 				}
 				response += ')\n'
 			}
@@ -856,7 +861,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			response += '\n'+locationName+' food:'+totals[locationName][GATHER]+' grain:'+totals[locationName][GRAIN]
 					+ ' sf:'+totals[locationName][GATHER_STRONG] +' sg:'+totals[locationName][GRAIN_STRONG]
 		}
-		msg.reply(response)
+		messageChannel(response,gameState)
 		totals = {
 			'veldt':[0,0,0,0,0],
 			'hills':[0,0,0,0,0],
@@ -1219,6 +1224,16 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			return		
 		}
 		person = population[actor]
+		if (person.worked == true){
+			msg.author.send('You can not change guard status after having worked.')
+			msg.delete({timeout: 1000}); //delete command in 1 sec 
+			return
+		}
+		if (gameState.workRound == false){
+			msg.author.send('You can not change guard status  outside the work round')
+			msg.delete({timeout: 1000}); //delete command in 1 sec 
+			return
+		}
 		childName = capitalizeFirstLetter(bits[1])
 		child = children[childName]
 		if (!child ){
@@ -1285,8 +1300,8 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			msg.delete({timeout: 3000}); //delete command in 3sec 
 			return
 		}
-		if (player.invite != none){
-			inviteMessage("The invitation to "+player.invite+" is cancelled.  ")
+		if (player.invite){
+			inviteMessage = "The invitation to "+player.invite+" is cancelled.  "
 		}
 		if (msg.mentions && msg.mentions.users && msg.mentions.users.first()){
 			target = msg.mentions.users.first().username
@@ -1347,7 +1362,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		response = actor +' converts '+amount+' food into '+output+' grain'
 		person.food -= (output*3)
 		person.grain += output
-		msg.reply(response)
+		messageChannel(response, gameState);
 		return
 	}
 	if (command == 'join' ){
@@ -1514,7 +1529,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 	}
 	if (command == 'ready'){
 		message = "People available to work: "+listReadyToWork(population)
-		msg.reply(message)
+		messageChannel(message,gameState)
 		return
 	}
 	if (command == 'romance'){
@@ -1796,6 +1811,10 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			return			
 		}
 		//// begin work; fail and return, or generate a success message
+		if (command == 'idle'){
+			player.activity = 'idle'
+			message = player.playerName +' does nothing for a whole season.'
+		}
 		if (command == 'gather'){
 			if (player.guarding && player.guarding.length > 5){
 				msg.author.send('You can not gather while guarding more than 5 children.  You are guarding '+player.guarding)
@@ -1849,7 +1868,6 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 				return	
 			}
 			message = assist(author.username, player, assistedPlayer)
-			message += target 
 			player.activity = 'assist'
 		} 
 		if (command == 'train'){
@@ -1916,14 +1934,14 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 }
 function listReadyToWork(tribe){
 	var unworked = []
-	for (name in tribe){
-		person = tribe[name]
+	for (playerName in tribe){
+		person = tribe[playerName]
 		// edit can leave isinjured as the string 'false'
 		if (person.worked || (person.isInjured && person.isInjured != 'false')
 			||(person.isSick && person.isSick != 'false')){
 			// do nothing
 		} else {
-			unworked.push(name)
+			unworked.push(playerName)
 		}
 	}
 	return unworked
@@ -1979,10 +1997,12 @@ function clearWorkFlags(population){
 		if (person.isInjured && person.isInjured != 'false' && person.worked == false){
 			// did not work means rested
 			delete person.isInjured
+			person.activity = 'recovery'
 		}
 		if (person.isSick && person.isSick != 'false' && person.worked == false){
 			// did not work means rested
 			delete person.isSick
+			person.activity = 'recovery'
 		}
 		person.worked = false
 	}
@@ -2068,9 +2088,30 @@ function spawnFunction(mother, father, msg, population, gameState, force = false
 function specialize( msg, playerName, profession, gameState){
 	playerName = msg.author.username
 	profession = bits[1]
-	if (profession.startsWith('h')){profession = 'hunter'}
-	if (profession.startsWith('c')){profession = 'crafter'}
-	if (profession.startsWith('g')){profession = 'gatherer'}
+	helpMessage = "Welcome new hunter.  \n"
+	helpMessage+= "To hunt, do !hunt and the bot rolls 3d6.  Higher numbers are bigger animals, and very low numbers are bad - you could get injured. \n"
+	helpMessage+= "You cannot guard children while hunting. \n"
+	helpMessage+= "Before you set out, you might consider waiting for a crafter to make you a spearhead which gives you a bonus to your roll. \n"
+	helpMessage+= "You can also `!gather`, but at a penalty. If your tribe has someone who knows how to craft, you can try to learn that skill with `!train`";
+
+	if (profession.startsWith('h')){
+		profession = 'hunter'
+		// use default helpMessage
+	}
+	if (profession.startsWith('c')){
+		profession = 'crafter';
+		helpMessage = "Welcome new crafter.  To craft, do `!craft basket` or `!craft spearpoint`, and the game will roll 1d6; you only fail on a 1. \n"
+		helpMessage+= "You can guard up to two children while crafting. \n"
+		helpMessage+= "You can also `!gather`  or `!hunt`, but at a penalty. \n"
+		helpMessage+= "By default, you will train others in crafting if they take a season to train.  To toggle this setting, use `!secrets`.";
+	}
+	if (profession.startsWith('g')){
+		profession = 'gatherer';
+		helpMessage = "Welcome new gatherer.  To gather, do `!gather`, and the bot rolls 3d6.  Higher numbers generally produce more food. \n"
+		helpMessage+= "You can guard 2 children without penalty; watching 3 or 4 gives an increasing penalty; 5 is too many to gather with. \n"
+		helpMessage+= "Before you set out, you might consider waiting for a crafter to make you a spearhead which gives you an additional gather attempt. \n"
+		helpMessage+= "You can also `!hunt`, but at a penalty. If your tribe has someone who knows how to craft, you can try to learn that skill with `!train`";
+	}
 	if ( !profession || !professions.includes(profession)){
 		msg.author.send('usage:!'+bits[0]+' [hunter|gatherer|crafter] ')
 		return
@@ -2085,6 +2126,7 @@ function specialize( msg, playerName, profession, gameState){
 	if (person.profession == 'crafter'){
 		person.canCraft = true
 	}
+	msg.author.send(helpMessage);
 	return
 }
 function addToPopulation(msg, author, bits, target,targetObject,gameState){
@@ -2137,7 +2179,7 @@ function countAdultChildren(motherName, children){
 	var adultChildren = Number(0);
 	for (childName in children){
 		var child = children[childName]
-		if (child.mother == motherName && child.age > 24 ){
+		if (child.mother == motherName && child.age >= 24 ){
 			adultChildren += 1
 		}
 	}
@@ -2151,8 +2193,15 @@ function findGuardValueForChild(childName, population, children){
 		if (person.guarding && person.guarding.includes(childName)){
 			var watchValue = 1/person.guarding.length
 			if (person.gender == 'female'){
-				watchValue = (1+countAdultChildren(personName, children))/person.guarding.length
-				logMessage += '\n\t\t'+personName+' has help from adult children '
+				babySitters = countAdultChildren(personName, children);
+				if (babySitters > 0){
+					logMessage += '\n\t\t'+personName+' has help from adult children '
+					var effectiveCount = person.guarding.length - babySitters
+					if (effectiveCount < 1){
+						effectiveCount = 1
+					}
+					watchValue = (1)/effectiveCount
+				}
 			}
 			logMessage += '\n\t'+personName+' adds '+watchValue
 			guardValue = guardValue + watchValue
@@ -2436,6 +2485,7 @@ function kill(name, message, gameState){
 	person = personByName(name, gameState)
 	if (person){
 		person.deathMessage = message
+		person.deathSeason = gameState.seasonCounter
 		if (person.isPregnant ){
 			kill(person.isPregnant, 'mother-died', gameState)
 		}
@@ -2449,6 +2499,7 @@ function kill(name, message, gameState){
 		clearNursingPregnant(childName, gameState.population)
 		var child = children[childName]
 		child.deathMessage = message
+		child.deathSeason = gameState.seasonCounter
 		gameState.graveyard[childName] = child
 		delete children[childName]
 	} else {
