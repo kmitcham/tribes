@@ -3,7 +3,11 @@
   "version": "0.0.1",
   "description": "A bot to track food and grain in Tribes",
   "main": "tribesBot.js",
-  "author": "Kevin.Mitcham",
+  "author": {
+    "name": "Kevin Mitcham",
+    "email": "kmitcham@gnail.com",
+    "url": "https://kevinmitcham.com"
+  },
   "scripts": {
     "test": "jest"
   },

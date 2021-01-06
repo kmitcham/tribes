@@ -713,6 +713,51 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		}
 		return
 	}
+	if (command == 'babysit'){
+		if (bits.length != 2){
+			msg.author.send(command+' usage: babysit <adult child> target child')
+			msg.delete({timeout: 3000}); //delete command in 3sec 
+			return
+		}
+		babysitterName = bits[0];
+		targetChildName = bits[1];
+		babysitter = children[babysitterName]
+		targetChild = children[targetChildName]
+		response = "";
+		if (!babysitter){
+			msg.author.send(command+' could not find '+babysitterName)
+			msg.delete({timeout: 1000}); //delete command
+			return
+		}		
+		if (!targetChild){
+			msg.author.send(command+' could not find '+targetChild)
+			msg.delete({timeout: 1000}); //delete command 
+			return
+		}
+		if (babysitter.mother != actor){
+			msg.author.send('You are not the mother of '+babysitterName)
+			msg.delete({timeout: 1000}); //delete command
+			return
+		}
+		if (babysitter.newAdult){
+			if (targetChild.newAdult){
+				msg.author.send(targetChildName+' does not need watching');
+				msg.delete({timeout: 1000}); //delete command in 3sec 
+				return
+			}
+			if (babysitter.babysitting){
+				response += babysitterName+" stops watching "+babysitter.babysitting+".  ";
+			}
+			babysitter.babysitting = targetChildName;
+			response += babysitterName + " starts watching "+targetChildName;
+		} else {
+			msg.author.send(babysitterName+' is not old enough to watch children')
+			msg.delete({timeout: 1000}); //delete command in 3sec 
+			return
+		}
+		messageChannel(response, gameState)
+		return;
+	}
 	// remove member from the tribe
 	if (command === 'banish'){
 		if (!referees.includes(actor) && !player.chief){
@@ -2175,6 +2220,14 @@ function addToPopulation(msg, author, bits, target,targetObject,gameState){
 	messageChannel(response, gameState)
 	return
 }
+function messageChannel(message, gameState){
+	channel = bot.channels.cache.find(channel => channel.name === gameState.name)
+	if (channel){
+		channel.send(message)
+	} else {
+		console.log('no channel found for '+gameState.name)
+	}
+}
 function countAdultChildren(motherName, children){
 	var adultChildren = Number(0);
 	for (childName in children){
@@ -2192,25 +2245,23 @@ function findGuardValueForChild(childName, population, children){
 		var person = population[personName]
 		if (person.guarding && person.guarding.includes(childName)){
 			var watchValue = 1/person.guarding.length
-			if (person.gender == 'female'){
-				babySitters = countAdultChildren(personName, children);
-				if (babySitters > 0){
-					logMessage += '\n\t\t'+personName+' has help from adult children '
-					var effectiveCount = person.guarding.length - babySitters
-					if (effectiveCount < 1){
-						effectiveCount = 1
-					}
-					watchValue = (1)/effectiveCount
-				}
-			}
-			logMessage += '\n\t'+personName+' adds '+watchValue
+			logMessage += '\t'+personName+' adds '+watchValue
 			guardValue = guardValue + watchValue
 		}
-	}
-	//console.log( logMessage+'\n\t\t TOTAL: '+guardValue)	
-	return guardValue
+    }
+    // check for babysitters
+    for (var name in children){
+        var child = children[name];
+        if (child.newAdult && child.babysitting == childName){
+            guardValue = guardValue + 1;
+            logMessage += '\t '+name+' adds '+1
+        }
+    }
+    console.log( logMessage+'\t\t TOTAL: '+guardValue)	
+    return guardValue
 }
 function findLeastGuarded(children, population){
+	// guard score = 7 if unguarded; otherwise is the length of the guarders 'guarding' array
 	// guard score = 7 if unguarded; otherwise is the length of the guarders 'guarding' array
 	var guardChildSort = []
 	var leastGuarded = []
@@ -2258,53 +2309,7 @@ function findLeastGuarded(children, population){
 		unluckyIndex = Math.trunc( Math.random ( ) * maxIndex)
 		leastGuardedName = leastGuarded[unluckyIndex].name
 	}
-	return leastGuardedName+' is least watched. Watch score = '+lowGuardValue
-}
-function messageChannel(message, gameState){
-	channel = bot.channels.cache.find(channel => channel.name === gameState.name)
-	if (channel){
-		channel.send(message)
-	} else {
-		console.log('no channel found for '+gameState.name)
-	}
-}
-function hyenaAttack(children, gameState){
-	population = gameState.population
-	if (!children || Object.keys(children).length == 0){
-		return 'No children, no hyena problem'
-	}
-	// get the least guarded message
-	leastGuardedMessageArray = findLeastGuarded(children, population).split(" ")
-	//  this is stupid and hacky; take the name from the start of the message, and the value from the last bit
-	leastGuardedName = leastGuardedMessageArray[0]
-	lowGuardValue = Number(leastGuardedMessageArray[10])
-	response = 'The hyena attacks ('+rollValue+') '+leastGuardedName+'!\n'
-	var child = children[leastGuardedName]
-	if (!child){
-		console.log('hyena did not find the child somehow '+leastGuardedName)
-		return response
-	}
-	var blocked = false;
-	for (personName in population){
-		person = population[personName]
-		if (person && person.guarding && person.guarding.includes(leastGuardedName)){
-			guardLength = person.guarding.length()
-			var rollValue = roll(1)
-			if (rollValue <= guardLength){
-				// TODO a variety of cute tragic messages here
-				response += '  The hyena runs past '+personName+'!'
-			} else {
-				response += '  '+personName+' scares the hyena off.'
-				blocked = true;
-				break
-			}
-		}
-	}
-	if (!blocked){
-		response+= ' The hyena devours the child.'
-		kill(leastGuardedName, 'hyena attack', gameState)
-	}
-	return response
+	return leastGuardedName+' is least watched.'
 }
 function countChildrenOfParentUnderAge(children, parentName, age){
 	var count = 0
@@ -2833,6 +2838,19 @@ function assist(playername, player, helpedPlayer){
 	return player.name + ' will assist '+helpedPlayer.name+' if they hunt'
 }
 function hunt(playername, player, rollValue, gameState){
+	//TODO: rewrite this to do seperate checks for injury( rollValue+strong, assistants)
+	//  and success (if rollValue >9, add spearpoint)
+	//1) Do a roll.  Remember the 'natural' result
+	// 2) Modify the roll for strength
+	// 3) Check for injury.  If injury, apply injury, then skip to 7
+	// 4) Modify the roll for non-hunter, weakness, season
+	// 5) Modify the roll for assistants, and assistant's spearheads, with a maximum of +3 
+	// 5) if 'natural' >= 9, add the hunter's spearhead and remember that it was 'used'
+	// 6) if the modified roll >= 9, give the appropriate food
+	// 7) Check for damage to any assistant's spearheads
+	// 8) if the hunters spearhead was 'used', check for damage to it.(edited)
+	// [1:33 PM]
+	// @webbnh, yes, strong is applied before checking for injury, but weakness, season, non-hunter, etc are not.
 	player.worked = true
 	mods = 0
 	message = playername+' goes hunting. '
