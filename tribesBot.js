@@ -2887,10 +2887,6 @@ function hunt(playername, player, rollValue, gameState){
 		}
 		message += ' (with '+player.helpers+')'
 	}
-	if (player.spearhead > 0 && rollValue >= 9){
-		modifier += 3
-		message+= '(spearhead)'
-	}
 	message += '(rolls a '+rollValue+' ) '
 	if (rollValue < 7){
 		console.log('hunt under 7')
@@ -2919,6 +2915,10 @@ function hunt(playername, player, rollValue, gameState){
 		message += ' no luck'
 	} else {
 		// rewards section
+		if (player.spearhead > 0 && rollValue >= 9){
+			modifier += 3
+			message+= '(spearhead)'
+		}
 		netRoll = Number(rollValue) + modifier
 		console.log('hunt netRoll '+netRoll)
 		gameTrack = gameState.gameTrack[gameState.currentLocationName]
