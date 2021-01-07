@@ -595,6 +595,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		text+='### Player commands ###\n'
 		text+=' !specialize <hunter|gatherer|crafter>(at the start of the game)\n'
 		text+=' !children (shows the children ages and food status)\n'
+		text+=' !babysit <adult child> <target child> (a mother can ask her adult child to watch a child)\n'
 		text+=' !inventory <target|all>  (show inventory and character info. No arg means self)\n'
 		text+=' !secrets (toggle the state of willingness to teach others to craft)\n'
 		text+=' !scout <location> (examine the envionment, default is current location)\n'
@@ -714,13 +715,13 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		return
 	}
 	if (command == 'babysit'){
-		if (bits.length != 2){
-			msg.author.send(command+' usage: babysit <adult child> target child')
-			msg.delete({timeout: 3000}); //delete command in 3sec 
+		if (bits.length != 3){
+			msg.author.send(command+' usage: babysit <adult child> <target child>')
+			msg.delete({timeout: 1000}); //delete command 
 			return
 		}
-		babysitterName = bits[0];
-		targetChildName = bits[1];
+		babysitterName = capitalizeFirstLetter(bits[1]);
+		targetChildName = capitalizeFirstLetter(bits[2]);
 		babysitter = children[babysitterName]
 		targetChild = children[targetChildName]
 		response = "";
@@ -2372,6 +2373,7 @@ function consumeFood(gameState){
 
 	for  (var target in population) {
 		var hunger = 4
+		console.log(target+' f:'+population[target].food+' g:'+population[target].grain)
 		population[target].food = population[target].food - hunger
 		if (population[target].food < 0 ){
 			// food is negative, so just add it to grain here
@@ -2383,8 +2385,9 @@ function consumeFood(gameState){
 				perished.push(target)
 			}
 		}
-		if (countChildrenOfParentUnderAge(children, target, 2) > 1 ){
+		if (population[target].gender == 'female' && countChildrenOfParentUnderAge(children, target, 2) > 1 ){
 			// extra food issues here; mom needs 2 more food, or the child will die.
+			console.log(target+' needs extra food due to underage children. ')
 			population[target].food -= 2
 			if (population[target].food < 0 ){
 				// food is negative, so just add it to grain here
