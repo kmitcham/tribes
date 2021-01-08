@@ -1,9 +1,23 @@
-
+const locations = require('./locations.json');
+// in the ideal world, these are imports
+function roll(count){
+    if (!count){
+        count = 3
+    }
+    total = 0
+    for (var i = 0; i < count; i++){
+        var roll = Math.trunc( Math.random ( ) * 6)+1
+        total += roll
+    }
+    if (total == 0){
+        console.log(' BAD roll zero')
+    }
+    return total
+}
 const locationDecay = [30,30,30,17,17,
     15,15,14,14,13,
     13,12,12,11,11,
     10,10,9,9,8]
-const locations = require('./locations.json');
 
 //TODO: rewrite this to do seperate checks for injury( rollValue+strong, assistants)
 	//  and success (if rollValue >9, add spearpoint)
@@ -56,7 +70,6 @@ module.exports.hunt = (playername, player, rollValue, gameState) =>{
         message+= '(spearhead)'
     }
     netRoll = rollValue+modifier
-    console.log('hunt netRoll '+netRoll)
     gameTrack = gameState.gameTrack[gameState.currentLocationName]
     hunt_cap = locationDecay[gameTrack]
     huntData = locations[gameState.currentLocationName]['hunt']
@@ -94,7 +107,6 @@ module.exports.hunt = (playername, player, rollValue, gameState) =>{
     }
     var oldTrack = gameState.gameTrack[gameState.currentLocationName]
     gameState.gameTrack[gameState.currentLocationName] += huntercount
-    console.log('Game Track for '+gameState.currentLocationName+' advanced from '+oldTrack+' to '+gameState.gameTrack[gameState.currentLocationName])
     // clear the stuff for group hunting
     if (player.bonus){
         delete player.bonus
