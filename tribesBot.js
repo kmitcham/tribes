@@ -341,6 +341,9 @@ function inventoryMessage(person){
 	if (person.guarding){
 		message += '\n\t\t is guarding '+person.guarding
 	}
+	if (person.strength){
+		message += '\n\t\t is '+person.strength
+	}
 	if (person.chief){
 		message += '\n\t\t is Chief'
 	}
@@ -820,8 +823,11 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 				if (child.newAdult){
 					response += ' Full grown!'
 				}
+				if (child.babysitting){
+					response += ' watching:'+child.babysitting+' '
+				}
 				response += '('+childName+':'+child.gender
-				response += ' age:'+((child.age)/2)
+				response += ' years:'+((child.age)/2)
 				if (child.newAdult){
 					response += ' self-feeding'
 				} else {
@@ -1388,7 +1394,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		msg.author.send(response)
 		return
 	}	
-	if (command == 'jerk' || command.startsWith('jerk') ){
+	if (command.startsWith('jerk') ){
 		msg.delete({timeout: 3000}); //delete command in 3sec 
 		if (! gameState.canJerky){
 			msg.author.send(' conditions are not right to make jerky')
@@ -1403,6 +1409,10 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		if (person.food < amount ){
 			msg.author.send('You do not have that much food')
 			return	
+		}
+		if (ammount %3  != 0 ){
+			msg.author.send('Must jerk food in multiples of three to avoid waste.')
+			return
 		}
 		var output = Math.trunc(amount/3)
 		response = actor +' converts '+amount+' food into '+output+' grain'
@@ -2206,7 +2216,7 @@ function addToPopulation(msg, author, bits, target,targetObject,gameState){
 	person.handle = targetObject
 	person.name = target
 	var strRoll = roll(1)
-	response = 'added '+target+' to the tribe. '
+	response = 'added '+target+' '+gender+' to the tribe. '
 	if (strRoll == 1){
 		person.strength = 'weak'
 		response+= target +' is weak.'
@@ -2227,6 +2237,7 @@ function messageChannel(message, gameState){
 		channel.send(message)
 	} else {
 		console.log('no channel found for '+gameState.name)
+		message.author.send('ERROR: failed to find channel to tell it this: '+message);
 	}
 }
 function countAdultChildren(motherName, children){
@@ -2385,7 +2396,7 @@ function consumeFood(gameState){
 				perished.push(target)
 			}
 		}
-		if (population[target].gender == 'female' && countChildrenOfParentUnderAge(children, target, 2) > 1 ){
+		if (population[target].gender == 'female' && countChildrenOfParentUnderAge(children, target, 4) > 1 ){
 			// extra food issues here; mom needs 2 more food, or the child will die.
 			console.log(target+' needs extra food due to underage children. ')
 			population[target].food -= 2
