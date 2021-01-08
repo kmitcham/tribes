@@ -820,22 +820,19 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			if (child.dead){
 				response += '('+childName+' is dead)'
 			} else {
-				if (child.newAdult){
-					response += ' Full grown!'
-				}
-				if (child.babysitting){
-					response += ' watching:'+child.babysitting+' '
-				}
 				response += '('+childName+':'+child.gender
 				response += ' years:'+((child.age)/2)
 				if (child.newAdult){
-					response += ' self-feeding'
+					response += ' Full grown!'
 				} else {
 					response += ' needs '+(2-child.food)+' food'
 				} 
 				response += ' parents:'+child.mother+'+'+child.father
 				if (child.age >= 0  && child.age < 24 ){
 					response += ' guardValue:'+ findGuardValueForChild(childName, population, children)
+				}
+				if (child.babysitting){
+					response += ' watching:'+child.babysitting+' '
 				}
 				response += ')\n'
 			}
@@ -2851,6 +2848,7 @@ function assist(playername, player, helpedPlayer){
 	}
 	return player.name + ' will assist '+helpedPlayer.name+' if they hunt'
 }
+
 function hunt(playername, player, rollValue, gameState){
 	//TODO: rewrite this to do seperate checks for injury( rollValue+strong, assistants)
 	//  and success (if rollValue >9, add spearpoint)
