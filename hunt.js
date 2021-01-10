@@ -41,41 +41,41 @@ module.exports.hunt = (playername, player, rollValue, gameState) =>{
 	strMod = 0
 	if (player.strength && player.strength.toLowerCase() == 'strong'.valueOf()){
         strMod = 1
-        message+=(' strong ')
+        message+=(' +strong ')
 	} 
-    var modifier = strMod
+    var modifier = Number(strMod)
     if (player.strength && player.strength.toLowerCase() == 'weak'.valueOf()){
         modifier -= 1
-        message+=' weak '
+        message+=' -weak '
     }
     if (gameState.seasonCounter%2 == 0){
-		message+= '(season) '
+		message+= '-season '
 		modifier -= 1
     }
     if (player.profession != 'hunter'){
-        message+= '(skill) '
+        message+= '-skill '
 		modifier -= 3
     }
     if (player.bonus && player.bonus >0 ){
 		player.bonus = Math.trunc(player.bonus)
 		if (player.bonus > 3){
 			modifier += 3
-		} else {
+		} else {    
 			modifier += player.bonus
 		}
 		message += ' (with '+player.helpers+')'
     }
     if (player.spearhead > 0 && rollValue >= 9){
         modifier += 3
-        message+= '(spearhead)'
+        message+= '+spearhead '
     }
-    netRoll = rollValue+modifier
+    netRoll = Number(rollValue)+modifier
     gameTrack = gameState.gameTrack[gameState.currentLocationName]
     hunt_cap = locationDecay[gameTrack]
     huntData = locations[gameState.currentLocationName]['hunt']
     if (netRoll > hunt_cap){
         netRoll = hunt_cap
-        message += ' (game track limited)'
+        message += ' -game track '
         console.log('hunt with netRoll '+netRoll+' capped at '+hunt_cap+' since the gameTrack was '+gameTrack)
     }
     if (netRoll > 18){

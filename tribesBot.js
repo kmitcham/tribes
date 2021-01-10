@@ -1,4 +1,7 @@
 var Discord = require('discord.js');
+
+const huntlib = require("./hunt.js");
+
 var bot = new Discord.Client()
 var logger = require('winston');
 const { ExceptionHandler, child } = require('winston');
@@ -1443,6 +1446,38 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		msg.delete({timeout: 3000}); //delete command in 3sec 
 		return 
 	}
+	if (command.startsWith('law')){
+		var response = ('The laws are:\n ')
+		laws = gameState.laws
+		for (number in laws){
+			response += '\t'+number+'\t'+laws[number]
+		}
+		msg.author.send(response)
+		msg.delete({timeout: 1000}); //delete command
+		return
+	}
+	if (command == 'legislate'){
+		if (!referees.includes(actor) && !player.chief){
+			msg.author.send(command+' requires referee or chief priviliges')
+			msg.delete({timeout: 1000}); //delete command
+			return
+		}
+		command = bits.shift()
+		number = Number(bits.shift())
+		law = ''+bits.join(' ')
+		if (Number(number)){
+			if (! gameState.laws){
+				gameState.laws = {}
+			}
+			gameState.laws[number] = law;
+		} else {
+			msg.author.send('syntax: !legislate <number> <everything else is the law>')
+			msg.delete({timeout: 1000}); //delete command
+			return
+		}
+		messageChannel("Your chief creates a new law: "+law, gameState)
+		return
+	}
 	// how much stuff does the target have?  if used by ref with no args, list whole population
 	if (command == 'list' || command == 'self'){
 		msg.delete({timeout: 1000}); //delete command in 1sec 
@@ -1874,7 +1909,16 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 				msg.delete({timeout: 3000}); //delete command in 3sec 
 				return
 			}
-			message = gather( author.username, player, roll(3),gameState)
+			var gatherRoll = roll(3)
+			if (referees.includes(actor) && bits.length >= 2){
+				gatherRoll = bits[1]
+				if (gatherRoll < 3 || 18 < gatherRoll){
+					msg.author.send('Roll must be 3-18')
+					msg.delete({timeout: 1000}); //delete command
+					return
+				}
+			}
+			message = gather( author.username, player, gatherRoll, gameState)
 			player.activity = 'gather'
 		} 
 		if (command == 'craft'){
@@ -1968,7 +2012,8 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 					return
 				}
 			}
-			message = hunt(actor, player, huntRoll, gameState)
+			//message = hunt(actor, player, huntRoll, gameState)
+			message = huntlib.hunt(actor, player, huntRoll, gameState);
 			player.activity = 'hunt'
 		}
 		messageChannel( message , gameState)
