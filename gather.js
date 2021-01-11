@@ -30,7 +30,7 @@ module.exports.gather = (playername, player, rollValue,gameState) => {
 		modifier -= 3
 	}
 	if (player.guarding){
-		guardCount = player.guarding.length
+        guardCount = player.guarding.length
 		if (guardCount == 3){
 			message+= '(-2 kids) '
 			modifier-= 2
@@ -40,7 +40,6 @@ module.exports.gather = (playername, player, rollValue,gameState) => {
 			modifier-= 4
 		}
 		if (guardCount > 4){
-			console.log(playername+' gather with more than 4 kids should not happen')
 			return ' is guarding too many children to gather.'
 		}
 	}
