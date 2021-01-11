@@ -265,7 +265,7 @@ function endGame(gameState){
 	response += 'Count of adults is:'+adultCount
 	return response
 }
-function scoreChildren(children){
+function scoreChildren(children, gameState){
 	var parentScores = {}
 	for (childName in children){
 		var child = children[childName]
@@ -282,7 +282,8 @@ function scoreChildren(children){
 	}
 	message = 'Child scores:\n'
 	for (parentName in parentScores){
-		message+= '\t'+parentName+': '+parentScores[parentName]
+		player = personByName(parentName, gameState)
+		message+= '\t'+parentName+'('+player.gender.substring(0, 1)+'): '+parentScores[parentName]
 	}
 	return message
 }
@@ -381,7 +382,7 @@ function personByName(name, gameState){
 		return null
 	}
 	if (!gameState || gameState.population == null){
-		console.log('no people yet')
+		console.log('no people yet, or gameState is otherwise null')
 		return
 	}
 	if (name.indexOf('(') != -1){
@@ -1645,7 +1646,8 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		return
 	}	
 	if (command == 'scorechildren'){
-		msg.author.send(scoreChildren(children))
+		msg.author.send(scoreChildren(children, gameState))
+		msg.delete({timeout: 3000});
 		return
 	}
 	if (command == 'scout'){
@@ -1661,6 +1663,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		locationData = locations[locationName]
 		if (!locationData){
 			msg.author.send('Valid locations are: '+Object.keys(locations))
+			msg.delete({timeout: 3000});
 			return
 		}
 		response += '\tGather:\n'
@@ -1674,6 +1677,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			response += '\t\t'+entry[2]+'('+entry[1]+')\n'
 		}
 		msg.author.send(response)
+		msg.delete({timeout: 3000});
 		return
 	}
 	if (command == 'secrets'){
