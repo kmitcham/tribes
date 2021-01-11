@@ -147,7 +147,7 @@ test('spear conversion', () =>{
     }
     var playername = "Hunter1"
     var player = gameState["population"][playername]
-    output = lib.hunt(playername, player, 9, gameState)
+    output = lib.hunt(playername, player, '9', gameState)
     expect(output).toMatch('small fish');
     expect(output).toMatch('+spearhead');
     expect(gameState["population"][playername]['food']).toBe(12)

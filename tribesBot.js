@@ -604,6 +604,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		text+=' !babysit <adult child> <target child> (a mother can ask her adult child to watch a child)\n'
 		text+=' !inventory <target|all>  (show inventory and character info. No arg means self)\n'
 		text+=' !secrets (toggle the state of willingness to teach others to craft)\n'
+		text+=' !laws (see the current list of laws)\n'
 		text+=' !scout <location> (examine the envionment, default is current location)\n'
 		text+=' !status (see the current location, year, season and local game)\n'
 		text+=' !vote <target>  (your choice for chief)\n'
@@ -639,6 +640,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			text+=' !skip <person>   (end a players reproduction turn, giving the next player a chance)\n'
 			text+=' !chance (after mating, chance is required to end the season)\n'
 			text+=' !migrate <newlocation> <force>  (without force, just checks who would perish on the journey)\n'
+			text+=' !legislate <law number> <law text> (record a rule for the tribe, or replace the rule of the specified number)\n'
 			msg.author.send( text)
 		}
 		if (referees.includes(actor)){
@@ -651,7 +653,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			text+=' list <player>  (no arg lists all players)\n '
 			text+=' promote|demote <player> (add player to the ref list)\n'
 			text+=' spawn <mother> <father> add a child with parents\n'
-			text+=' load the saved file\n'
+			text+=' load the saved file, replacing the current state\n'
 			text+=' listnames | listchildren just the names\n'
 			text+=' initgame erase the current game state and start fresh\n'
 			text+=' endgame   convert all the child to corpses, or new adults\n'
@@ -2474,9 +2476,7 @@ function consumeFood(gameState){
 					delete population[child.mother].isPregnant
 				}
 				perishedChildren.push(childName)
-			} else {
-				child.age += 1
-			}
+			} 
 			if (child.age == 0){
 				birthRoll = roll(3)
 				response += '\n\t'+child.mother+' gives birth to a '+child.gender+'-child, '+child.name
@@ -2519,7 +2519,8 @@ function consumeFood(gameState){
 				}
 			}
 		}
-		if (child.age >= 24 && ! child.newAdult){
+		child.age += 1
+		if (child.age >= 24 && ! child.newAdult && ! child.dead){
 			child.newAdult = true
 			response += child.name+' has reached adulthood!\n'
 		}
