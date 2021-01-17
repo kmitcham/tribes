@@ -1,6 +1,10 @@
 var Discord = require('discord.js');
 
 const huntlib = require("./hunt.js");
+const gatherlib = require("./gather.js");
+const feedlib = require("./feed.js");
+const guardlib = require("./guardCode.js");
+const util = require("./util.js");
 
 var bot = new Discord.Client()
 var logger = require('winston');
@@ -39,8 +43,10 @@ var games = {}
 bot.once('ready', ()=>{
 	console.log('bot is alive')
 	loadGame()
+	var d = new Date();
+	var n = d.toISOString();
 	alertChannel = bot.channels.cache.find(channel => channel.name === 'general')
-	alertChannel.send('TribesBot is alive again. loaded '+Object.keys(allGames).length +' games')
+	alertChannel.send('TribesBot is alive again. loaded '+Object.keys(allGames).length +' games '+n)
   })   
 bot.login(auth['token'])
 
@@ -80,6 +86,14 @@ function loadGame(){
 				alertChannel.send(gameName+' had a name mismatch; fixing it from '+gameState.name)
 				console.log(gameName+' had a name mismatch; fixing it from '+gameState.name)
 				gameState.name = gameName
+			}
+			var d = new Date();
+			var n = d.toISOString();
+			if (gameState){
+				messageChannel(' Game reloaded at '+n,gameState)
+				if (gameState.lastSaved){
+					messageChannel('All changes since '+gameState.lastSaved+' are lost.' , gameState);
+				}
 			}
 		}
 	} else {
@@ -141,8 +155,11 @@ function redundantSave(fileName, jsonData){
 	}
 }
 async function savegameState(){
+	var d = new Date();
+	var saveTime = d.toISOString();
 	for (gameName in allGames){
 		gameState = allGames[gameName]
+		gameState.lastSaved = saveTime
 		if (gameState && gameName != gameState.name){
 			console.log(gameName+' had a name mismatch; fixing it from '+gameState.name)
 			gameState.name = gameName
@@ -205,7 +222,7 @@ bot.on('message', msg => {
 	  } else {
 		  gameState = findGameStateForActor(actor)
 		  if (!gameState){
-			msg.author.send('You do not seem to be a member of a tribe')
+			console.log(author+" had no game state found")
 			return
 		}
 	  }
@@ -249,7 +266,7 @@ function endGame(gameState){
 	for (childName in children){
 		var child = children[childName]
 		if (!child.newAdult){
-			if (roll(3) <= childSurvivalChance[child.age]){
+			if (util.roll(3) <= childSurvivalChance[child.age]){
 				child.newAdult = true
 				response += '\t'+childName+' grows up\n'
 			} else {
@@ -448,13 +465,19 @@ function doChance(rollValue, gameState){
 	chanceRoll = Number(rollValue)
 	if (!rollValue || rollValue < 3 || rollValue > 18 ){
 		console.log(' invalid chance roll'+rollValue)
-		chanceRoll = roll(3)
+		chanceRoll = util.roll(3)
 	}
 	message = 'Chance '+chanceRoll+': '
 	switch 	(chanceRoll){
 		case 18: case 17: case 16:
 			name = randomMemberName(population)
 			person = population[name]
+			safety = 0;
+			while (person.strength == 'strong' && safety < population.length) {
+				name = randomMemberName(population);
+				person = population[name];
+				safety = safety + 1;
+			}
 			message +=  name +" grows stronger.";
 			if (person.strength && person.strength == 'weak'){
 				delete person.strength
@@ -501,7 +524,7 @@ function doChance(rollValue, gameState){
 			message +="Locusts! Each player loses two dice of stored food"
 			for (var name in population){
 				person = population[name]
-				var amount = roll(2)
+				var amount = util.roll(2)
 				if (amount > person.food){
 					amount = person.food
 				}
@@ -517,7 +540,7 @@ function doChance(rollValue, gameState){
 		case 9 : 
 			name = randomMemberName(population)
 			person = population[name]
-			amount = roll(2)
+			amount = util.roll(2)
 			if (amount > person.food){
 				amount = person.food
 			}
@@ -578,7 +601,7 @@ function doChance(rollValue, gameState){
 	gameState.needChanceRoll = false
 	return message
 }
-function roll(count){
+function rollOld(count){
 		if (!count){
 			count = 3
 		}
@@ -801,10 +824,10 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		if (gameState.reproductionRound && gameState.needChanceRoll){
 			if (!referees.includes(actor) && bits[1]){
 				msg.author.send('Only a referee can force the roll')
-				bits[1] = roll()
+				bits[1] = util.roll()
 			}
 			if (bits.length == 1){
-				bits.push(roll())
+				bits.push(util.roll())
 			}
 			response = doChance(bits[1], gameState)
 			messageChannel(response, gameState)
@@ -835,7 +858,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 				} 
 				response += ' parents:'+child.mother+'+'+child.father
 				if (child.age >= 0  && child.age < 24 ){
-					response += ' guardValue:'+ findGuardValueForChild(childName, population, children)
+					response += ' guardValue:'+ guardlib.findGuardValueForChild(childName, population, children)
 				}
 				if (child.babysitting){
 					response += ' watching:'+child.babysitting+' '
@@ -925,7 +948,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		}
 		MAX = 6000
 		for (var i = 0; i < MAX; i++){
-			val = roll(3)
+			val = util.roll(3)
 			for (locationName in totals){
 				locationData = locations[locationName]
 				data = gatherDataFor(locationName, val)
@@ -1073,69 +1096,29 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 	}
   	// add food to a child
 	if (command === 'feed'){
-		if (bits.length != 3 || isNaN(bits[1])){
-			msg.author.send('feed syntax is feed <amount>  <childname>')
-			msg.delete({timeout: 3000}); //delete command in 3sec 
+		if (bits.length < 3 || isNaN(bits[1]) || bits[1] <= 0 ){
+			msg.author.send('feed syntax is feed <amount>  <childname> [<other child names>]')
+			msg.delete({timeout: 1000}); //delete command in 3sec 
 			return
 		}
-		childName = capitalizeFirstLetter(bits[2])
-		amount = Number(bits[1])
-		if ( ! (childName in children)){
-			msg.author.send('feed syntax is feed <amount> <childname>')
-			msg.delete({timeout: 3000}); //delete command in 3sec 
-			return
-		}
-		if (amount < 0 &&  !referees.includes(actor) ){
-			msg.author.send('Only the referee can reduce amounts')
-			msg.delete({timeout: 3000}); //delete command in 3sec 
-			return
-		}
-		if (!population[actor] && !referees.includes(actor)  ){
-			// this makes sure the author is in the tribe
-			msg.delete({timeout: 3000}); //delete command in 3sec 
-			msg.author.send("Children do not take food from strangers")
-			return
-		}		
-		if (!children[childName]) {
-			msg.author.send('no such child as '+childName)
-			msg.delete({timeout: 3000}); //delete command in 3sec 
-			return
-		}
-		child = children[childName]
-		if (  Number(child.food) >= 2 ){
-			msg.author.send(childName+' has enough food already')
-			msg.delete({timeout: 3000}); //delete command in 3sec 
-			return
-		}
-		if ( (child.food + amount) > 2 ){
-			msg.author.send(childName+' does not need that much food')
-			msg.delete({timeout: 3000}); //delete command in 3sec 
-			return
-		}
-		if ( child.newAdult && child.newAdult == true){
-			msg.author.send(childName+' is all grown up and does not need food')
-			msg.delete({timeout: 3000}); //delete command in 3sec 
-			return
-		}
-		var fed = 0
-		if ( ( population[actor]['food']+population[actor]['grain'] ) >= amount){
-			if (population[actor]['food'] >= amount){
-				population[actor].food -= Number(amount)
-			} else {
-				fed -= population[actor].food
-				population[actor].food = 0
-				population[actor]['grain'] -= (amount-fed)
-			}
-			messageChannel(actor+' fed '+amount+' to child '+childName, gameState)
-			children[childName].food += Number(amount)
-			if (children[childName].food != 2){
-				messageChannel(childName+' could eat more.', gameState)
-			}
-		} else {
-			msg.author.send('You do not have enough food or grain to feed the child')
-			msg.delete({timeout: 3000}); //delete command in 3sec 
-			return
-		}
+		command = bits.shift()
+		amount = bits.shift()
+		childList = bits
+        if (amount < 0 &&  !referees.includes(actor) ){
+            msg.author.send('Only the referee can reduce amounts')
+            msg.delete({timeout: 1000}); //delete command in 3sec 
+            return
+        }
+        if (!player ){
+            // this makes sure the author is in the tribe
+            msg.delete({timeout: 1000}); //delete command in 3sec 
+            msg.author.send("Children do not take food from strangers")
+            return
+		}	
+
+		//module.exports.feed = ( msg, player, amount, childList,  gameState) =>{
+		message = feedlib.feed(msg, player, amount, childList, gameState)
+		messageChannel(message, gameState);
 		return
 	} 
 	if (command == 'foodcheck'){
@@ -1147,7 +1130,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 	if (command === 'give'){
 		if (bits.length < 3){
 			msg.author.send('Give syntax is give  <amount> <food|grain|spearhead|basket> <recipient>')
-			msg.delete({timeout: 3000}); //delete command in 3sec 
+			msg.delete({timeout: 1000}); //delete command in 3sec 
 			return
 		}
 		var username = ''
@@ -1159,7 +1142,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		}
 		if (!username){
 			msg.author.send('Give syntax is give  <amount> <food|grain|spearhead|basket> <recipient>')
-			msg.delete({timeout: 3000}); //delete command in 3sec 
+			msg.delete({timeout: 1000}); //delete command in 3sec 
 			return
 		}
 		amount = bits[1]
@@ -1167,22 +1150,22 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 
 		if (isNaN(amount) || ! types.includes(type)){
 			msg.author.send('Give syntax is give  <amount> <food|grain|spearhead|basket> <recipient>')
-			msg.delete({timeout: 3000}); //delete command in 3sec 
+			msg.delete({timeout: 1000}); //delete command in 3sec 
 			return
 		}
 		if (amount <= 0  ){
 			msg.author.send('Can not give negative amounts')
-			msg.delete({timeout: 3000}); //delete command in 3sec 
+			msg.delete({timeout: 1000}); //delete command in 3sec 
 			return
 		}			
 		if (!population[username] ) {
 			msg.author.send(username+' is not a member of the tribe')
-			msg.delete({timeout: 3000}); //delete command in 3sec 
+			msg.delete({timeout: 1000}); //delete command in 3sec 
 			return
 		}
 		if ((type == 'spearhead' || type =='basket') && player && player.worked && player.profession != 'crafter'){
 			msg.author.send('The game suspects you used that item to work with.  Ask the referee to help trade it if you did not.')
-			msg.delete({timeout: 3000}); //delete command in 3sec 
+			msg.delete({timeout: 1000}); //delete command in 3sec 
 			return
 		}
 		if (  population[actor][type] >= amount){
@@ -1194,8 +1177,8 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			}         
 			population[actor][type] -= Number(amount)
 		} else {
-			msg.author.send('You do not have that much '+type+': '+ population[actor][type])
-			msg.delete({timeout: 3000}); //delete command in 3sec 
+			msg.author.send('You do not have that many '+type+': '+ population[actor][type])
+			msg.delete({timeout: 1000}); //delete command in 3sec 
 		}
 		return
 	}
@@ -1213,7 +1196,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			response += '\n '+name+' died of '+person.deathMessage
 			if (person.mother){
 				response += ' parents:'+person.mother +'-'+person.father
-				response += ' age:'+person.age
+				response += ' age:'+person.age/2
 			} else {
 				response += ' profession:'+person.profession
 			}
@@ -1444,16 +1427,16 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		return
 	}
 	if (command == 'leastguarded' || command == 'leastwatched'){
-		response  = findLeastGuarded(children, gameState.population)
+		response  = guardlib.findLeastGuarded(children, gameState.population)
 		msg.author.send(response )
 		msg.delete({timeout: 3000}); //delete command in 3sec 
 		return 
 	}
 	if (command.startsWith('law')){
-		var response = ('The laws are:\n ')
+		var response = ('The laws are:')
 		laws = gameState.laws
 		for (number in laws){
-			response += '\t'+number+'\t'+laws[number]
+			response += '\n\t'+number+'\t'+laws[number]
 		}
 		msg.author.send(response)
 		msg.delete({timeout: 1000}); //delete command
@@ -1530,7 +1513,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		messageChannel('Game was reverted to the save file; some changes may be lost.', gameState)
 		return
 	}
-	if (command == 'migrate' ){
+	if (command == 'migrate'  && bits.length == 3){
 		if (!referees.includes(actor) && !player.chief){
 			msg.author.send(command+' requires referee or chief priviliges')
 			msg.delete({timeout: 3000}); //delete command in 3sec 
@@ -1538,7 +1521,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		}
 		destination = bits[1]
 		if (!destination){
-			msg.author.send(command+' requires a destination (and optional force)')
+			msg.author.send(command+' requires a destination (and force for chief to make it happen)')
 			return
 		}
 		if (!gameState.reproductionRound){
@@ -1619,7 +1602,15 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		return 	
 	}
 	if (command == 'ready'){
-		message = "People available to work: "+listReadyToWork(population)
+		message = 'Nobody seems ready for much of anything right now.'
+		if (gameState.workRound){
+			message = "People available to work: "+listReadyToWork(population)
+		}
+		if (gameState.reproductionRound){
+			if (gameState.reproductionRound && gameState.reproductionList ){
+				message = "The mating invitation order is "+gameState.reproductionList;
+			} 
+		}
 		messageChannel(message,gameState)
 		return
 	}
@@ -1634,7 +1625,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		return
 	}
 	if (command == 'roll'){
-		messageChannel(roll(bits[1]), gameState)
+		messageChannel(util.roll(bits[1]), gameState)
 		return
 	}
 	// save the game state to file
@@ -1915,7 +1906,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 				msg.delete({timeout: 3000}); //delete command in 3sec 
 				return
 			}
-			var gatherRoll = roll(3)
+			var gatherRoll = util.roll(3)
 			if (referees.includes(actor) && bits.length >= 2){
 				gatherRoll = bits[1]
 				if (gatherRoll < 3 || 18 < gatherRoll){
@@ -1924,7 +1915,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 					return
 				}
 			}
-			message = gather( author.username, player, gatherRoll, gameState)
+			message = gatherlib.gather( author.username, player, gatherRoll, gameState)
 			player.activity = 'gather'
 		} 
 		if (command == 'craft'){
@@ -1944,7 +1935,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 				msg.delete({timeout: 3000}); //delete command in 3sec 
 				return	
 			}
-			var craftRoll = roll(1)
+			var craftRoll = util.roll(1)
 			if (referees.includes(actor) && bits.length >= 3){
 				craftRoll = bits[2]
 				if (craftRoll < 1 || 6 < craftRoll){
@@ -1989,7 +1980,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 				msg.author.send('No on in the tribe is able and willing to teach you crafting')
 				return
 			}
-			learnRoll = roll(2)
+			learnRoll = util.roll(2)
 			if ( learnRoll >= 10 ){
 				player.canCraft = true
 				message = actor+' learns to craft. ('+learnRoll+')'
@@ -2009,7 +2000,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 				msg.delete({timeout: 3000}); //delete command in 3sec 
 				return
 			}
-			var huntRoll = roll(3)
+			var huntRoll = util.roll(3)
 			if (referees.includes(actor) && bits.length >= 2){
 				huntRoll = bits[1]
 				if (huntRoll < 3 || 18 < huntRoll){
@@ -2158,8 +2149,8 @@ function spawnFunction(mother, father, msg, population, gameState, force = false
 	if (population[mother].nursing && population[mother].nursing.length > 0){
 		spawnChance = 10
 	}
-	mroll = roll(1)
-	droll = roll(1)
+	mroll = util.roll(1)
+	droll = util.roll(1)
 	if (force != false || (mroll+droll) >= spawnChance ){
 		var child = addChild(mother, father, gameState)
 		messageChannel('The mating of '+mother+'('+mroll+') and '+father+'('+droll+') spawned '+child.name, gameState)
@@ -2263,7 +2254,7 @@ function addToPopulation(msg, author, bits, target,targetObject,gameState){
 	person.spearhead = 0
 	person.handle = targetObject
 	person.name = target
-	var strRoll = roll(1)
+	var strRoll = util.roll(1)
 	response = 'added '+target+' '+gender+' to the tribe. '
 	if (strRoll == 1){
 		person.strength = 'weak'
@@ -2322,7 +2313,6 @@ function findGuardValueForChild(childName, population, children){
 }
 function findLeastGuarded(children, population){
 	// guard score = 7 if unguarded; otherwise is the length of the guarders 'guarding' array
-	// guard score = 7 if unguarded; otherwise is the length of the guarders 'guarding' array
 	var guardChildSort = []
 	var leastGuarded = []
 	if (Object.keys(children).length == 0){
@@ -2337,7 +2327,7 @@ function findLeastGuarded(children, population){
 		if (child.newAdult){
 			continue
 		}
-		guardValue = findGuardValueForChild(childName, population, children)
+		guardValue = guardlib.findGuardValueForChild(childName, population, children)
 		guardChildSort.push({'name':childName, 'score':guardValue,  'age':child.age})
 	}
 	guardChildSort.sort((a,b) => parseFloat(a.score) - parseFloat(b.score))
@@ -2444,7 +2434,7 @@ function consumeFood(gameState){
 				perished.push(target)
 			}
 		}
-		if (population[target].gender == 'female' && countChildrenOfParentUnderAge(children, target, 4) > 1 ){
+		if (population[target].gender == 'female' && countChildrenOfParentUnderAge(children, target, 4 ) > 1 ){
 			// extra food issues here; mom needs 2 more food, or the child will die.
 			console.log(target+' needs extra food due to underage children. ')
 			population[target].food -= 2
@@ -2471,8 +2461,10 @@ function consumeFood(gameState){
 	console.log('children are eating')
 	for (childName in children){
 		var child = children[childName]
+		child.age += 1
 		if (child.age < 24 && ! child.dead){
 			child.food -= 2
+
 			if (child.food < 0){
 				response += " child:"+childName+"("+child.mother+"+"+child.father+") has starved to death.\n"
 				child.dead = true
@@ -2482,7 +2474,7 @@ function consumeFood(gameState){
 				perishedChildren.push(childName)
 			} 
 			if (child.age == 0){
-				birthRoll = roll(3)
+				birthRoll = util.roll(3)
 				response += '\n\t'+child.mother+' gives birth to a '+child.gender+'-child, '+child.name
 				if (birthRoll < 5 ){
 					response += ' but the child did not survive\n'
@@ -2491,6 +2483,7 @@ function consumeFood(gameState){
 				} else {
 					response += '\n'
 				}
+				//Mothers start guarding their newborns
 				person = personByName(child.mother, gameState)
 				if (!person.guarding){
 					person.guarding = [child.name]
@@ -2512,7 +2505,7 @@ function consumeFood(gameState){
 					population[child.mother].nursing.push( child.name)
 				}
 			}
-			if (child.age == 4){ // 2 years in SEASONS
+			if (child.age >= 4){ // 2 years in SEASONS
 				if (population[child.mother] &&  population[child.mother].nursing.indexOf(childName) > -1 ){
 					childIndex = population[child.mother].nursing.indexOf(childName)
 					population[child.mother].nursing.splice(childIndex, 1);
@@ -2523,10 +2516,21 @@ function consumeFood(gameState){
 				}
 			}
 		}
-		child.age += 1
-		if (child.age >= 24 && ! child.newAdult && ! child.dead){
+		if (child.age >= 24 && ! child.newAdult && !child.dead){
 			child.newAdult = true
 			response += child.name+' has reached adulthood!\n'
+			// clear all guardians
+			for  (var name in population) {
+				player = population[name]
+				if (player.guarding && player.guarding.includes(child.name)){
+					const index = array.indexOf(child.name);
+					if (index > -1) {
+						player.guarding.splice(index, 1);
+						response += name+' stops watching the new adult.'
+					}
+				}
+
+			}
 		}
 	}
 	// clean up the dead
@@ -2758,107 +2762,8 @@ function shuffle(array) {
 //////////////////////////////////////////////////////////
 /////  WORK SECTION   
 /////////////////////////////////////////////////////////
-function gather(playername, player, rollValue,gameState){
-	var message = playername+' gathers (roll='+rollValue+')';
-	var netRoll = rollValue
-	modifier = 0
-	if (isColdSeason(gameState)){
-		message+= '(-3 season)  '
-		modifier -= 3
-	}
-	if ( player.profession != 'gatherer'){
-		message+=('(-3 skill) ')
-		modifier -= 3
-	}
-	if (player.guarding){
-		guardCount = player.guarding.length
-		if (guardCount == 3){
-			message+= '(-2 kids) '
-			modifier-= 2
-		}
-		if (guardCount == 4){
-			message+= '(-4 kids) '
-			modifier-= 4
-		}
-		if (guardCount > 4){
-			console.log(playername+' gather with more than 4 kids should not happen')
-			return ' is guarding too many children to gather.'
-		}
-	}
-	if (player.strength){
-		if (player.strength.toLowerCase() == 'strong'.valueOf()){
-			message +='(strong)'
-			modifier += 1
-		} else if (player.strength.toLowerCase() == 'weak'.valueOf()) {
-			message += '(weak)'
-			modifier -= 1
-		} else {
-			console.log(playername+' has an invalid strength value '+player.strength)
-		}
-	}
-	netRoll = rollValue + modifier
-	console.log('gather roll:'+rollValue+' mod:'+modifier+' net:'+netRoll)
-	gatherData = locations[gameState.currentLocationName]['gather']
-	var get_message = ''
-	var getFood = 0
-	var getGrain = 0
-	for (var i = 0; i < gatherData.length; i++){
-		if (netRoll < gatherData[0][0]){
-			get_message =  gatherData[0][3] +' ('+((gatherData[0][1]+gatherData[0][2])+')')
-			getFood = gatherData[0][1]
-			getGrain = gatherData[0][2]
-			break
-		} else if (netRoll == gatherData[i][0]){
-			getFood = gatherData[i][1]
-			getGrain = gatherData[i][2]
-			get_message = gatherData[i][3] +' ('+((gatherData[i][1]+gatherData[i][2])+')')
-			break
-		} else {
-			getFood = gatherData[i][1]
-			getGrain = gatherData[i][2]
-			get_message = gatherData[i][3] +' ('+((gatherData[i][1]+gatherData[i][2])+')')
-		}
-	}
-	message += get_message
-	player.food += getFood
-	player.grain += getGrain
-	if (player.basket > 0){
-		var broll = roll(3)+modifier
-		message+= ' basket: ('+broll+')'
-		netRoll = broll+modifier
-		console.log('modified basket roll '+netRoll)
-		for (var i = 0; i < gatherData.length;i++){
-			if (netRoll < gatherData[0][0]){
-				get_message =  gatherData[0][3] +' ('+((gatherData[0][1]+gatherData[0][2])+')')
-				getFood = gatherData[0][1]
-				getGrain = gatherData[0][2]
-				break
-			} else if (netRoll == gatherData[i][0]){
-				getFood = gatherData[i][1]
-				getGrain = gatherData[i][2]
-				get_message = gatherData[i][3] +' ('+((gatherData[i][1]+gatherData[i][2])+')')
-				break
-			} else {
-				getFood = gatherData[i][1]
-				getGrain = gatherData[i][2]
-				get_message = gatherData[i][3] +' ('+((gatherData[i][1]+gatherData[i][2])+')')
-			}
-			}
-		message += get_message
-		player.food += getFood
-		player.grain += getGrain
-		
-		// check for basket loss
-		if (roll(1) <= 2){
-			message+= ' basket breaks.'
-			player.basket -= 1
-		}
-	}
-	player.worked = true
-	return message
-}
 function craft(playername, player, type, rollValue){
-	console.log('craft type'+type+' roll '+rollValue)
+	console.log('craft type '+type+' roll '+rollValue)
 	player.worked = true
 	if (type.startsWith('spear')){
 		type = 'spearhead'
@@ -2897,129 +2802,6 @@ function assist(playername, player, helpedPlayer){
 		helpedPlayer.helpers.push(playername)
 	}
 	return player.name + ' will assist '+helpedPlayer.name+' if they hunt'
-}
-
-function hunt(playername, player, rollValue, gameState){
-	//TODO: rewrite this to do seperate checks for injury( rollValue+strong, assistants)
-	//  and success (if rollValue >9, add spearpoint)
-	//1) Do a roll.  Remember the 'natural' result
-	// 2) Modify the roll for strength
-	// 3) Check for injury.  If injury, apply injury, then skip to 7
-	// 4) Modify the roll for non-hunter, weakness, season
-	// 5) Modify the roll for assistants, and assistant's spearheads, with a maximum of +3 
-	// 5) if 'natural' >= 9, add the hunter's spearhead and remember that it was 'used'
-	// 6) if the modified roll >= 9, give the appropriate food
-	// 7) Check for damage to any assistant's spearheads
-	// 8) if the hunters spearhead was 'used', check for damage to it.(edited)
-	// [1:33 PM]
-	// @webbnh, yes, strong is applied before checking for injury, but weakness, season, non-hunter, etc are not.
-	player.worked = true
-	mods = 0
-	message = playername+' goes hunting. '
-	console.log(player+' hunt '+rollValue)
-	var modifier = Number(0)
-	if ( player.profession != 'hunter'){
-		message+=('(-3 skill) ')
-		modifier -= 3
-	}
-	if (player.strength){
-		if (player.strength.toLowerCase() == 'strong'.valueOf() ){
-			message+=('(strong)')
-			modifier += 1
-		} else if (player.strength.toLowerCase() == 'weak'.valueOf()) {
-			message+=('(weak)')
-			modifier -= 1
-		} else {
-			console.log(playername+' has an invalid strength value '+player.strength)
-		}
-	}
-	if (isColdSeason(gameState)){
-		message+= '(!season) '
-		modifier -= 1
-	}
-	if (player.bonus && player.bonus >0 ){
-		player.bonus = Math.trunc(player.bonus)
-		if (player.bonus > 3){
-			modifier += 3
-		} else {
-			modifier += player.bonus
-		}
-		message += ' (with '+player.helpers+')'
-	}
-	message += '(rolls a '+rollValue+' ) '
-	if (rollValue < 7){
-		console.log('hunt under 7')
-		// injury section
-		if (rollValue == 6){
-			if (player.profession != 'hunter'){
-				message += 'Injury!'
-				player.isInjured = true
-			} else {
-				message += 'Skillfully avoids injury, but captures no game.'
-			}
-		} else if (rollValue ==3 ){
-			message += 'Crippling injury!'
-			player.isInjured = true
-			if (player.strength == 'strong'.valueOf()){
-				delete player.strength
-			} else {
-				player.strength = 'weak'
-			}
-		} else {
-		// TODO: make this also possibly inure the helpers
-			message += 'Injury!'
-			player.isInjured = true
-		}
-	} else if (rollValue == 7 || rollValue == 8){
-		message += ' no luck'
-	} else {
-		// rewards section
-		if (player.spearhead > 0 && rollValue >= 9){
-			modifier += 3
-			message+= '(spearhead)'
-		}
-		netRoll = Number(rollValue) + modifier
-		console.log('hunt netRoll '+netRoll)
-		gameTrack = gameState.gameTrack[gameState.currentLocationName]
-		hunt_cap = locationDecay[gameTrack]
-		huntData = locations[gameState.currentLocationName]['hunt']
-		if (netRoll > hunt_cap){
-			message += ' (game track limited)'
-			netRoll = hunt_cap
-			console.log('hunt with netRoll '+netRoll+' capped at '+hunt_cap+' since the gameTrack was '+gameTrack)
-		}
-		if (netRoll > 18){
-			netRoll = 18
-		}
-		for (var i = 0; i < huntData.length; i++){
-			if (netRoll <= huntData[i][0]){
-				message += huntData[i][2] + ' +'+huntData[i][1]+' food'
-				player.food += huntData[i][1]
-				break
-			}
-		}
-	}
-	// update the game track
-	var huntercount = 1
-	if (player.helpers ){
-		huntercount += Math.min(player.helpers.length,3)
-	}
-	// check for spearhead loss
-	if (player.spearhead > 0 && roll(1) <= 2){
-		player.spearhead -= 1
-		message += '(the spearhead broke)'
-	}
-	var oldTrack = gameState.gameTrack[gameState.currentLocationName]
-	gameState.gameTrack[gameState.currentLocationName] += huntercount
-	console.log('Game Track for '+gameState.currentLocationName+' advanced from '+oldTrack+' to '+gameState.gameTrack[gameState.currentLocationName])
-	// clear the stuff for group hunting
-	if (player.bonus && player.bonus != 0){
-		player.bonus = 0
-	}
-	if (player.helpers){
-		player.helpers = []
-	}
-	return message
 }
 function gatherDataFor(locationName, roll){
 	resourceData = locations[locationName]['gather']
