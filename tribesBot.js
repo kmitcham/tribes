@@ -5,6 +5,7 @@ const gatherlib = require("./gather.js");
 const feedlib = require("./feed.js");
 const guardlib = require("./guardCode.js");
 const util = require("./util.js");
+const savelib = require("./save.js");
 
 var bot = new Discord.Client()
 var logger = require('winston');
@@ -42,147 +43,13 @@ var games = {}
 
 bot.once('ready', ()=>{
 	console.log('bot is alive')
-	loadGame()
 	var d = new Date();
 	var n = d.toISOString();
 	alertChannel = bot.channels.cache.find(channel => channel.name === 'general')
-	alertChannel.send('TribesBot is alive again. loaded '+Object.keys(allGames).length +' games '+n)
+	alertChannel.send('TribesBot is alive again. '+n)
   })   
 bot.login(auth['token'])
 
-
-function loadJson(fileName){
-	let rawdata = fs.readFileSync(fileName);
-	if (!rawdata || rawdata.byteLength == 0 ){
-		return {}
-	}
-	var parsedData = {}
-	try {
-		parsedData = JSON.parse(rawdata, {});	
-	} catch (err){
-		console.log('error parsing gamefile:'+err)
-		throw err
-	}
-	return parsedData;
-}
-function loadGame(){
-	if (fs.existsSync('./allGames.json')) {
-		try {
-			allGames = loadJson('./allGames.json') 
-		} catch(err){
-			console.log('fail to load game file '+err)
-			try{
-				allGames = loadJson('./allGamesBAK.json')
-				savegameState()
-			} catch(err){
-				console.log('the backup load failed as well')
-				alertChannel.send('TribesBot lost all the game data.  Sorry.')
-			}
-		}
-		console.log('loaded allGames data. found '+Object.keys(allGames).length +' games')
-		for (gameName in allGames){
-			gameState = allGames[gameName]
-			if (gameState && gameName != gameState.name){
-				alertChannel.send(gameName+' had a name mismatch; fixing it from '+gameState.name)
-				console.log(gameName+' had a name mismatch; fixing it from '+gameState.name)
-				gameState.name = gameName
-			}
-			var d = new Date();
-			var n = d.toISOString();
-			if (gameState){
-				messageChannel(' Game reloaded at '+n,gameState)
-				if (gameState.lastSaved){
-					messageChannel('All changes since '+gameState.lastSaved+' are lost.' , gameState);
-				}
-			}
-		}
-	} else {
-		allGames = {}
-	}
-}
-function handleBackup(){
-	// if there is a game file, and it isn't empty, copy it to the backup location
-	var backupCandidate = {}
-	try{
-		backupCandidate = loadJson('./allGames.json') 
-	} catch(err){
-		console.log('failed to read current game file, so not using it for a backup')
-		return
-	}
-	if (backupCandidate && Object.keys(backupCandidate).length > 0 ){
-		// File destination.txt will be created or overwritten by default.
-		fs.copyFile('./allGames.json', './allGamesBAK.json', (err) => {
-			if (err) throw err;
-			console.log('./allGames.json was copied to ./allGamesBAK.json');
-		  });
-		console.log('Updated the backup')
-	} else {
-		console.log('No backup since the source file had no games')
-	}
-}
-function redundantSave(fileName, jsonData){
-	jsonString = JSON.stringify(jsonData,null,2), err => { 
-		// Checking for errors 
-		if (err) {
-			console.log('error with save '+err)
-			throw err;
-		}  
-	}
-	try {
-		fs.writeFileSync(fileName, jsonString, (err) => {
-			if (err) throw err;
-			console.log(
-				"saved!");
-		   });
-		checkedData = loadJson(fileName);
-		checkedString = JSON.stringify(checkedData,null,2), err => { 
-			// Checking for errors 
-			if (err) {
-				console.log('error with save '+err)
-				throw err;
-			}  
-		}
-		if ( checkedString === jsonString ){
-			console.log('checked data match')
-		} else {
-			console.log('checked data did not match')
-			redundantSave(fileName, jsonData)
-		}
-	} catch (err){
-		console.log('save failed. '+err)
-		console.log('redundant save unlinking file and trying again')
-		redundantSave(fileName, jsonData)
-	}
-}
-async function savegameState(){
-	var d = new Date();
-	var saveTime = d.toISOString();
-	for (gameName in allGames){
-		gameState = allGames[gameName]
-		gameState.lastSaved = saveTime
-		if (gameState && gameName != gameState.name){
-			console.log(gameName+' had a name mismatch; fixing it from '+gameState.name)
-			gameState.name = gameName
-		}
-	}
-	if (allGames && Object.keys(allGames).length > 0){
-		handleBackup()
-		redundantSave("./allGames.json", allGames)
-		try {
-			checkGame = loadJson('./allGames.json') 
-		} catch(err){
-			console.log('Failed to load saved file.')
-		}
-		console.log('saved file with games:'+Object.keys(allGames))
-
-	} else {
-		console.log('tried to save empty file')
-	}
-	fs.writeFileSync("./referees.json", JSON.stringify(referees,null, 2), err => { 
-		// Checking for errors 
-		if (err) throw err;  
-	}); 
-}
 bot.on('message', msg => {
 	if (!msg.content ){
 	  return
@@ -214,6 +81,10 @@ bot.on('message', msg => {
 	  var gameState = {}
 	  if (msg.channel && msg.channel.name ){
 		gameState = allGames[msg.channel.name.toLowerCase()]
+		if (!gameState){
+			gameState = savelib.loadTribe(msg.channel.name.toLowerCase());
+			console.log("loading game "+msg.channel.name.toLowerCase()+" from file");
+		}
 		if (!gameState){
 			initGame(msg.channel.name.toLowerCase())
 			msg.reply('starting game with initial conditions')
@@ -255,7 +126,7 @@ bot.on('message', msg => {
 	gameState.canJerky = false
 	console.log('Adding game '+gameName+' to the list of games')
 	allGames[gameName] = gameState
-	savegameState()
+	savelib.saveTribe(gameName);
 	return gameState
 }
 function endGame(gameState){
@@ -1509,9 +1380,23 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			msg.delete({timeout: 3000}); //delete command in 3sec 
 			return
 		}
-		loadGame()
-		messageChannel('Game was reverted to the save file; some changes may be lost.', gameState)
-		return
+		loadedValue = savelib.loadTribe(gameState.name);
+		// very redudimentary validity check
+		if (loadedValue && loadedValue.population && loadedValue.population){
+			allGames[gameState.name] = loadedValue;
+			gameState = allGames[gameState.name] ;
+			if (gameState){
+				var d = new Date();
+				var n = d.toISOString();
+				messageChannel(' Game reloaded at '+n,gameState)
+				if (gameState.lastSaved){
+					messageChannel('All changes since '+gameState.lastSaved+' are lost.' , gameState);
+				}
+			}
+		} else {
+			messageChannel('Failed to load game from saved file.  This may be a problem.')
+		}
+		return;
 	}
 	if (command == 'migrate'  && bits.length == 3){
 		if (!referees.includes(actor) && !player.chief){
@@ -1631,7 +1516,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 	// save the game state to file
 	if (command == 'save'){
 		if (referees.includes(actor) || player.chief){
-			savegameState()
+			savelib.saveTribe(gameState);
 			msg.author.send('game state saved')
 		}
 		return
@@ -2472,6 +2357,7 @@ function consumeFood(gameState){
 					delete population[child.mother].isPregnant
 				}
 				perishedChildren.push(childName)
+				continue;
 			} 
 			if (child.age == 0){
 				birthRoll = util.roll(3)
@@ -2480,6 +2366,7 @@ function consumeFood(gameState){
 					response += ' but the child did not survive\n'
 					child.dead = true
 					perishedChildren.push(childName)
+					continue;
 				} else {
 					response += '\n'
 				}
@@ -2490,7 +2377,6 @@ function consumeFood(gameState){
 				} else {
 					person.guarding.push(child.name)
 				}
-				
 				if (birthRoll == 17){
 					twin = addChild(child.mother, child.father, gameState);
 					reponse += child.mother+' gives birth to a twin! Meet '+twin.name+'\n'
@@ -2506,7 +2392,8 @@ function consumeFood(gameState){
 				}
 			}
 			if (child.age >= 4){ // 2 years in SEASONS
-				if (population[child.mother] &&  population[child.mother].nursing.indexOf(childName) > -1 ){
+				if (population[child.mother] && population[child.mother].nursing 
+						&&  population[child.mother].nursing.indexOf(childName) > -1 ){
 					childIndex = population[child.mother].nursing.indexOf(childName)
 					population[child.mother].nursing.splice(childIndex, 1);
 					response += child.name+' is weaned.\n'
@@ -2538,7 +2425,7 @@ function consumeFood(gameState){
 	for (var i = 0; i < perishedCount; i++) {
 		corpse = perishedChildren[i]
 		kill(perishedChildren[i], 'starvation', gameState)
-		console.log('removing corpse '+corpse)
+		console.log('removing child corpse '+corpse)
 	}
 	if ((perishedChildren.length+perished.length) == 0 ){
 		response += 'Nobody starved!'
@@ -2546,6 +2433,7 @@ function consumeFood(gameState){
 	return response
 }
 function kill(name, message, gameState){
+	console.log("Killing "+name+" due to "+message+" at "+gameState.seasonCounter);
 	population = gameState.population
 	children = gameState.children
 	childName = capitalizeFirstLetter(name)
@@ -2606,7 +2494,6 @@ function unguardChild(childName, population){
 	}
 }
 function startWork(gameState){
-	savegameState()
 	// advance the calendar; the if should only skip on the 0->1 transition
 	if (gameState.workRound == false){
 		nextSeason(gameState)
@@ -2617,12 +2504,11 @@ function startWork(gameState){
 	gameState.foodRound = false
 	gameState.reproductionRound = false
 	canJerky = false
-	savegameState()
+	savelib.saveTribe(gameState.name);
 	return
 }
 function startFood(gameState){
 	clearWorkFlags(population)
-	savegameState()
 	message = gameStateMessage(gameState)
 	messageChannel(message+'\nStarting the food and trading round.  Make sure everyone has enough to eat, or they will starve', gameState)
 	foodMessage = checkFood(gameState)
@@ -2630,11 +2516,10 @@ function startFood(gameState){
 	gameState.workRound = false
 	gameState.foodRound = true
 	gameState.reproductionRound = false
-	savegameState()
+	savelib.saveTribe(gameState.name);
 	return
 }
 function startReproduction(gameState){
-	savegameState()
 	// actually consume food here
 	foodMessage = consumeFood(gameState)
 	gameState.needChanceRoll = true  // this magic boolean prevents starting work until we did chance roll
@@ -2649,7 +2534,7 @@ function startReproduction(gameState){
 	gameState.workRound = false
 	gameState.foodRound = false
 	gameState.reproductionRound = true
-	savegameState()
+	savelib.saveTribe(gameState.name);
 	return
 }
 function migrate(msg, destination, force, gameState){
