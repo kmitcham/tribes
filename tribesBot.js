@@ -4,8 +4,9 @@ const huntlib = require("./hunt.js");
 const gatherlib = require("./gather.js");
 const feedlib = require("./feed.js");
 const guardlib = require("./guardCode.js");
-const util = require("./util.js");
+const utillib = require("./util.js");
 const savelib = require("./save.js");
+const helplib = require("./help.js");
 
 var bot = new Discord.Client()
 var logger = require('winston');
@@ -83,6 +84,7 @@ bot.on('message', msg => {
 		gameState = allGames[msg.channel.name.toLowerCase()]
 		if (!gameState){
 			gameState = savelib.loadTribe(msg.channel.name.toLowerCase());
+			allGames[gameState.name] = gameState;
 			console.log("loading game "+msg.channel.name.toLowerCase()+" from file");
 		}
 		if (!gameState){
@@ -137,7 +139,7 @@ function endGame(gameState){
 	for (childName in children){
 		var child = children[childName]
 		if (!child.newAdult){
-			if (util.roll(3) <= childSurvivalChance[child.age]){
+			if (utillib.roll(3) <= childSurvivalChance[child.age]){
 				child.newAdult = true
 				response += '\t'+childName+' grows up\n'
 			} else {
@@ -176,27 +178,8 @@ function scoreChildren(children, gameState){
 	return message
 }
 
-function isColdSeason(gameState){
-	return (gameState.seasonCounter%2 == 0);
-}
-function getYear(gameState){
-	return gameState.seasonCounter/2;
-}
-function gameStateMessage(gameState){
-	message = "Year "+(gameState.seasonCounter/2)+', '
-	season = 'warm season.'
-	if (isColdSeason(gameState)){
-		season = 'cold season.'
-	}
-	var numAdults = (Object.keys(gameState.population)).length
-	var numKids = (Object.keys(gameState.children)).length
-
-	message+=season+'The '+gameState.name+' tribe has '+numAdults+' adults and '+numKids+' children'
-	message+= ' The '+gameState.currentLocationName+' game track is at '+ gameState.gameTrack[gameState.currentLocationName]
-	return message
-}
 function nextSeason(gameState){
-	if (isColdSeason(gameState)){
+	if (utillib.isColdSeason(gameState)){
 		for (locationName in locations){
 			modifier = locations[locationName]['game_track_recover']
 			oldTrack = gameState.gameTrack[locationName]
@@ -298,14 +281,7 @@ function personByName(name, gameState){
 	console.log("tribe "+gameState.name+" has no such person in population:"+name)
 	return null
 }
-function capitalizeFirstLetter(string) {
-	return string.charAt(0).toUpperCase() + string.slice(1);
-}
-function randomMemberName(population){
-	nameList = Object.keys(population)
-	var random =  Math.trunc( Math.random ( ) * nameList.length )
-	return nameList[random]
-}
+
 function createReproductionList(gameState){
 	population = gameState.population
 	nameList = []
@@ -336,16 +312,16 @@ function doChance(rollValue, gameState){
 	chanceRoll = Number(rollValue)
 	if (!rollValue || rollValue < 3 || rollValue > 18 ){
 		console.log(' invalid chance roll'+rollValue)
-		chanceRoll = util.roll(3)
+		chanceRoll = utillib.roll(3)
 	}
 	message = 'Chance '+chanceRoll+': '
 	switch 	(chanceRoll){
 		case 18: case 17: case 16:
-			name = randomMemberName(population)
+			name = utillib.randomMemberName(population)
 			person = population[name]
 			safety = 0;
-			while (person.strength == 'strong' && safety < population.length) {
-				name = randomMemberName(population);
+			while (person.strength == 'strong' && safety < population.keys().length) {
+				name = utillib.randomMemberName(population);
 				person = population[name];
 				safety = safety + 1;
 			}
@@ -364,13 +340,13 @@ function doChance(rollValue, gameState){
 			}
 			break;
 		case 14 : 
-			name = randomMemberName(population)
+			name = utillib.randomMemberName(population)
 			person= population[name]
 			person.food = 0
 			message +="Rats! All "+name+"'s food, except for grain, spoils and is lost. Others’ stored food is not affected. If there are 8 or more players, this happens to two people"
 			break;
 		case 13 : 
-			name = randomMemberName(population)
+			name = utillib.randomMemberName(population)
 			person= population[name]
 			person.spearhead  += 1
 			message += name +" finds a spearhead"
@@ -395,7 +371,7 @@ function doChance(rollValue, gameState){
 			message +="Locusts! Each player loses two dice of stored food"
 			for (var name in population){
 				person = population[name]
-				var amount = util.roll(2)
+				var amount = utillib.roll(2)
 				if (amount > person.food){
 					amount = person.food
 				}
@@ -406,12 +382,12 @@ function doChance(rollValue, gameState){
 			break;
 		case 10 : 
 			//message += "A hyena is stalking the tribe’s children! See 'Child In Danger!' to determine what happens."
-			message += hyenaAttack(children, gameState)
+			message += guardlib.hyenaAttack(children, gameState)
 			break;
 		case 9 : 
-			name = randomMemberName(population)
+			name = utillib.randomMemberName(population)
 			person = population[name]
-			amount = util.roll(2)
+			amount = utillib.roll(2)
 			if (amount > person.food){
 				amount = person.food
 			}
@@ -425,7 +401,7 @@ function doChance(rollValue, gameState){
 			break;
 		case 7: 
 			message +=  "FIRE! Move the Hunting Track token down to 20 (no game!) The tribe must move to another area immediately (Section 9). "
-			if ( isColdSeason(gameState) && (gameState.currentLocationName == 'marsh' || gameState.currentLocationName == 'hills')){
+			if ( utillib.isColdSeason(gameState) && (gameState.currentLocationName == 'marsh' || gameState.currentLocationName == 'hills')){
 				message = 'Fire in the cold season in the Hills or Marsh is a re-roll'
 				return message
 			} else {
@@ -433,14 +409,14 @@ function doChance(rollValue, gameState){
 			}
 			break;
 		case 6: 
-			name = randomMemberName(population)
+			name = utillib.randomMemberName(population)
 			person = population[name]
 			person.isInjured = 'true'
 			// TODO clear the guarding array of the injured person
 			message +=  name + " injured – miss next turn."
 			break;
 		case 5: 
-			name = randomMemberName(population)
+			name = utillib.randomMemberName(population)
 			person = population[name]
 			person.isSick = 'true'
 			message +=  name + " got sick – lost 2 food and miss next turn. "
@@ -456,7 +432,7 @@ function doChance(rollValue, gameState){
 			break;
 		case 4: 
 		case 3: 
-			name = randomMemberName(population)
+			name = utillib.randomMemberName(population)
 			person = population[name]
 			message +=  name +" gets a severe injury: miss next turn and become Average (if Strong) or Weak (if Average)."
 			person.isInjured = 'true'
@@ -472,90 +448,21 @@ function doChance(rollValue, gameState){
 	gameState.needChanceRoll = false
 	return message
 }
-function rollOld(count){
-		if (!count){
-			count = 3
-		}
-		total = 0
-		for (var i = 0; i < count; i++){
-			var roll = Math.trunc( Math.random ( ) * 6)+1
-			total += roll
-		}
-		if (total == 0){
-			console.log(' BAD roll zero')
-		}
-		return total
-}
+
 async function handleCommand(msg, author, actor, command, bits, gameState){
 	player = personByName(actor, gameState)
 	population = gameState.population
 	children = gameState.children
 	graveyard = gameState.graveyard
 	if (command === 'help'){
-		text = ''
-		text+='### Player commands ###\n'
-		text+=' !specialize <hunter|gatherer|crafter>(at the start of the game)\n'
-		text+=' !children (shows the children ages and food status)\n'
-		text+=' !babysit <adult child> <target child> (a mother can ask her adult child to watch a child)\n'
-		text+=' !inventory <target|all>  (show inventory and character info. No arg means self)\n'
-		text+=' !secrets (toggle the state of willingness to teach others to craft)\n'
-		text+=' !laws (see the current list of laws)\n'
-		text+=' !scout <location> (examine the envionment, default is current location)\n'
-		text+=' !status (see the current location, year, season and local game)\n'
-		text+=' !vote <target>  (your choice for chief)\n'
-		text+=' !give <amt> <food|grain|spearhead|basket> <player>\n'
-		text+=' !graveyard (list of all deceased members and children)\n'
-		text+='-=Work Round Commands=-\n'
-		text+=' !guard | !ignore <child>   (take on child care responsibilities for the child)\n'
-		text+=' !leastguarded (shows the least supervised child (ties resolved randomly))\n'
-		text+=' !craft <spearhead|basket>\n'
-		text+=' !gather\n'
-		text+=' !assist <hunter>\n'
-		text+=' !hunt\n'
-		text+=' !train (learn crafting, if there is a willing teacher)\n'
-		text+=' !ready (list who is still available to work)\n'
-		text+='-=Food Round Commands=-\n'
-		text+=' !foodcheck (examine the food situation for every adult and living child)\n'
-		text+=' !feed <amt> <childName>\n'
-		text+='-=Reproduction Round Commands=-\n'
-		text+=' !romance  (show the order of reproduction invitations)'
-		text+=' !invite <target>\n'
-		text+=' !pass (decline a mating, or end the members invitation turn)\n'
-		text+=' !consent (agree to a mating invitation)\n'
-		msg.author.send( text)
-
+		msg.author.send( helplib.playerHelp());
 		if ((player && player.chief) || referees.includes(actor) ){
-			text = '\n### Chief Commands ###\n'
-			text+=' !induct|banish <player> (add|remove a tribe member)\n'
-			text+=' !open|close  (toggle if people can join with "!join" or only with "!induct" by the chief\n'
-			text+=' !save (Saves the game. Automatically done at the start of every work round)\n'
-			text+=' !startwork (begins the work round, enabling work attempts and rolls)\n'
-			text+=' !startfood (ends the work round; subtract food/grain; birth; child age increase)\n'
-			text+=' !startreproduction (Start the reproduction round. Also when migration happens)\n'
-			text+=' !skip <person>   (end a players reproduction turn, giving the next player a chance)\n'
-			text+=' !chance (after mating, chance is required to end the season)\n'
-			text+=' !migrate <newlocation> <force>  (without force, just checks who would perish on the journey)\n'
-			text+=' !legislate <law number> <law text> (record a rule for the tribe, or replace the rule of the specified number)\n'
-			msg.author.send( text)
+			msg.author.send( helplib.chiefHelp());
 		}
 		if (referees.includes(actor)){
-			text = ''
-			text+='\n### Referee Commands ###\n'
-			text+=' edit <target> <canCraft|nursing|isPregnant|profession|gender|partner|worked|food|grain> <value>\n' 
-			text+=' editchild <target> <food|age|mother|father> <value>\n' 
-			text+=' award <amt> <food|grain|spearhead|basket> <player>\n'
-			text+=' kill <name> <message> (kill a person or child)\n'
-			text+=' list <player>  (no arg lists all players)\n '
-			text+=' promote|demote <player> (add player to the ref list)\n'
-			text+=' spawn <mother> <father> add a child with parents\n'
-			text+=' load the saved file, replacing the current state\n'
-			text+=' listnames | listchildren just the names\n'
-			text+=' initgame erase the current game state and start fresh\n'
-			text+=' endgame   convert all the child to corpses, or new adults\n'
-			text+=' scorechildren   count number of children by parent'
-			msg.author.send( text)
+			msg.author.send( helplib.refHelp());
 		}
-		msg.delete({timeout: 3000}); //delete command in 3sec 
+		msg.delete({timeout: 1000}); //delete command in 3sec 
 		return
 	}
 	if (command == 'addchild'){
@@ -623,8 +530,8 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			msg.delete({timeout: 1000}); //delete command 
 			return
 		}
-		babysitterName = capitalizeFirstLetter(bits[1]);
-		targetChildName = capitalizeFirstLetter(bits[2]);
+		babysitterName = utillib.capitalizeFirstLetter(bits[1]);
+		targetChildName = utillib.capitalizeFirstLetter(bits[2]);
 		babysitter = children[babysitterName]
 		targetChild = children[targetChildName]
 		response = "";
@@ -695,10 +602,10 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		if (gameState.reproductionRound && gameState.needChanceRoll){
 			if (!referees.includes(actor) && bits[1]){
 				msg.author.send('Only a referee can force the roll')
-				bits[1] = util.roll()
+				bits[1] = utillib.roll()
 			}
 			if (bits.length == 1){
-				bits.push(util.roll())
+				bits.push(utillib.roll())
 			}
 			response = doChance(bits[1], gameState)
 			messageChannel(response, gameState)
@@ -819,7 +726,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		}
 		MAX = 6000
 		for (var i = 0; i < MAX; i++){
-			val = util.roll(3)
+			val = utillib.roll(3)
 			for (locationName in totals){
 				locationData = locations[locationName]
 				data = gatherDataFor(locationName, val)
@@ -918,7 +825,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			msg.delete({timeout: 3000}); //delete command in 3sec 
 			return		
 		}
-		childName = capitalizeFirstLetter(bits[1])
+		childName = utillib.capitalizeFirstLetter(bits[1])
 		attribute = bits[2]
 		value = bits[3]
 		child = children[childName]
@@ -1101,7 +1008,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			msg.delete({timeout: 3000}); //delete command in 3sec 
 			return
 		}
-		childName = capitalizeFirstLetter(bits[1])
+		childName = utillib.capitalizeFirstLetter(bits[1])
 		child = children[childName]
 		if (!child ){
 			msg.author.send('Could not find child: '+childName)
@@ -1143,7 +1050,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			msg.delete({timeout: 1000}); //delete command in 1 sec 
 			return
 		}
-		childName = capitalizeFirstLetter(bits[1])
+		childName = utillib.capitalizeFirstLetter(bits[1])
 		child = children[childName]
 		if (!child ){
 			msg.author.send('Could not find child: '+childName)
@@ -1191,7 +1098,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		gameState = initGame(msg.channel.name.toLowerCase())
 		msg.reply('setting game with initial conditions')
 		allGames[msg.channel.name.toLowerCase()] = gameState
-		msg.reply(gameStateMessage(gameState))
+		msg.reply(utillib.gameStateMessage(gameState))
 		return
 	} 
 	if (command == 'invite'){
@@ -1395,6 +1302,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			}
 		} else {
 			messageChannel('Failed to load game from saved file.  This may be a problem.')
+			alertChannel('Failed to load game for '+gameState.name);
 		}
 		return;
 	}
@@ -1510,7 +1418,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		return
 	}
 	if (command == 'roll'){
-		messageChannel(util.roll(bits[1]), gameState)
+		messageChannel(utillib.roll(bits[1]), gameState)
 		return
 	}
 	// save the game state to file
@@ -1666,6 +1574,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			return
 		}
 		startWork(gameState)
+		allGames[gameState.name] = gameState;
 		return
 	}
 	if (command == 'startfood' || command.startsWith('startf')  
@@ -1686,6 +1595,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			return 
 		}
 		startFood(gameState)
+		allGames[gameState.name] = gameState;
 		return
 	}
 	if (command == 'startreproduction' || command.startsWith('startr') || command.startsWith('repro')
@@ -1706,10 +1616,11 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			return 
 		}
 		startReproduction(gameState)
+		allGames[gameState.name] = gameState;
 		return
 	}
 	if (command == 'status'){
-		message = gameStateMessage(gameState)
+		message = utillib.gameStateMessage(gameState)
 		if (gameState.workRound ) {message += '  (work round)'}
 		if (gameState.foodRound ) {message += '  (food round)'}
 		if (gameState.reproductionRound ) {message += '  (reproduction invitation order:'+gameState.reproductionList+')'}
@@ -1791,7 +1702,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 				msg.delete({timeout: 3000}); //delete command in 3sec 
 				return
 			}
-			var gatherRoll = util.roll(3)
+			var gatherRoll = utillib.roll(3)
 			if (referees.includes(actor) && bits.length >= 2){
 				gatherRoll = bits[1]
 				if (gatherRoll < 3 || 18 < gatherRoll){
@@ -1820,7 +1731,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 				msg.delete({timeout: 3000}); //delete command in 3sec 
 				return	
 			}
-			var craftRoll = util.roll(1)
+			var craftRoll = utillib.roll(1)
 			if (referees.includes(actor) && bits.length >= 3){
 				craftRoll = bits[2]
 				if (craftRoll < 1 || 6 < craftRoll){
@@ -1865,7 +1776,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 				msg.author.send('No on in the tribe is able and willing to teach you crafting')
 				return
 			}
-			learnRoll = util.roll(2)
+			learnRoll = utillib.roll(2)
 			if ( learnRoll >= 10 ){
 				player.canCraft = true
 				message = actor+' learns to craft. ('+learnRoll+')'
@@ -1885,7 +1796,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 				msg.delete({timeout: 3000}); //delete command in 3sec 
 				return
 			}
-			var huntRoll = util.roll(3)
+			var huntRoll = utillib.roll(3)
 			if (referees.includes(actor) && bits.length >= 2){
 				huntRoll = bits[1]
 				if (huntRoll < 3 || 18 < huntRoll){
@@ -2034,8 +1945,8 @@ function spawnFunction(mother, father, msg, population, gameState, force = false
 	if (population[mother].nursing && population[mother].nursing.length > 0){
 		spawnChance = 10
 	}
-	mroll = util.roll(1)
-	droll = util.roll(1)
+	mroll = utillib.roll(1)
+	droll = utillib.roll(1)
 	if (force != false || (mroll+droll) >= spawnChance ){
 		var child = addChild(mother, father, gameState)
 		messageChannel('The mating of '+mother+'('+mroll+') and '+father+'('+droll+') spawned '+child.name, gameState)
@@ -2139,7 +2050,7 @@ function addToPopulation(msg, author, bits, target,targetObject,gameState){
 	person.spearhead = 0
 	person.handle = targetObject
 	person.name = target
-	var strRoll = util.roll(1)
+	var strRoll = utillib.roll(1)
 	response = 'added '+target+' '+gender+' to the tribe. '
 	if (strRoll == 1){
 		person.strength = 'weak'
@@ -2292,17 +2203,8 @@ function checkFood(gameState){
 	message += '\nHungry children: '+hungryChildren
 	return message
 }
-
-// consume food also ages children, and handles birth
-function consumeFood(gameState){
-	if (!gameState){
-		console.log('no game state; ERROR')
-		return
-	}
-	console.log('adults are eating')
-	response = "Food round results:\n"
+function consumeFoodPlayers(gameState){
 	perished = []
-	perishedChildren = []
 	population = gameState.population
 
 	for  (var target in population) {
@@ -2343,13 +2245,25 @@ function consumeFood(gameState){
 		console.log('removing corpse '+corpse)
 		kill(perished[i], 'starvation', gameState)
 	}
+	if ((perished.length) == 0 ){
+		response += 'No adults starved! \n'
+	}
+	return response;
+}
+function consumeFoodChildren(gameState){
+	response = '';
+	perishedChildren = []
+	population = gameState.population
+
 	console.log('children are eating')
 	for (childName in children){
 		var child = children[childName]
+		if (child.dead){
+			continue;
+		}
 		child.age += 1
-		if (child.age < 24 && ! child.dead){
+		if (child.age < 24 ){
 			child.food -= 2
-
 			if (child.food < 0){
 				response += " child:"+childName+"("+child.mother+"+"+child.father+") has starved to death.\n"
 				child.dead = true
@@ -2359,8 +2273,8 @@ function consumeFood(gameState){
 				perishedChildren.push(childName)
 				continue;
 			} 
-			if (child.age == 0){
-				birthRoll = util.roll(3)
+			if (child.age == 0 ){
+				birthRoll = utillib.roll(3)
 				response += '\n\t'+child.mother+' gives birth to a '+child.gender+'-child, '+child.name
 				if (birthRoll < 5 ){
 					response += ' but the child did not survive\n'
@@ -2383,27 +2297,35 @@ function consumeFood(gameState){
 					person.guarding.push(twin.name)
 					twin.age = 0
 				}
-				if (population[child.mother] && population[child.mother].isPregnant){
+			}
+			// Sometimes we get bugs where pregnancy doesn't clear; this will fix it eventually
+			if (child.age >= 0){
+				if (population[child.mother] && population[child.mother].isPregnant
+					&& population[child.mother].isPregnant == childName ){
 					delete population[child.mother].isPregnant
-					if (! population[child.mother].nursing){
-						population[child.mother].nursing = []
-					}
+				}
+			}
+			if (child.age > 0 && child.age <  4){
+				if (! population[child.mother].nursing){
+					population[child.mother].nursing = []
+				}
+				if (population[child.mother].nursing.indexOf(childName) == -1){
 					population[child.mother].nursing.push( child.name)
 				}
 			}
-			if (child.age >= 4){ // 2 years in SEASONS
-				if (population[child.mother] && population[child.mother].nursing 
-						&&  population[child.mother].nursing.indexOf(childName) > -1 ){
-					childIndex = population[child.mother].nursing.indexOf(childName)
-					population[child.mother].nursing.splice(childIndex, 1);
-					response += child.name+' is weaned.\n'
-					if (population[child.mother].nursing && population[child.mother].nursing.length == 0){
-						delete population[child.mother].nursing 
-					}
+			if (child.age >= 4 // 2 years in SEASONS
+					&& population[child.mother] && population[child.mother].nursing 
+					&&  population[child.mother].nursing.indexOf(childName) > -1 ){
+				childIndex = population[child.mother].nursing.indexOf(childName)
+				population[child.mother].nursing.splice(childIndex, 1);
+				response += child.name+' is weaned.\n'
+				if (population[child.mother].nursing && population[child.mother].nursing.length == 0){
+					delete population[child.mother].nursing 
 				}
+				
 			}
 		}
-		if (child.age >= 24 && ! child.newAdult && !child.dead){
+		if (child.age >= 24 && ! child.newAdult ){
 			child.newAdult = true
 			response += child.name+' has reached adulthood!\n'
 			// clear all guardians
@@ -2427,16 +2349,30 @@ function consumeFood(gameState){
 		kill(perishedChildren[i], 'starvation', gameState)
 		console.log('removing child corpse '+corpse)
 	}
-	if ((perishedChildren.length+perished.length) == 0 ){
-		response += 'Nobody starved!'
+	if ((perishedChildren.length) == 0 ){
+		response += 'No children starved!'
 	}
+	return response;
+}
+// consume food also ages children, and handles birth
+function consumeFood(gameState){
+	if (!gameState){
+		console.log('no game state; ERROR')
+		return
+	}
+	console.log('adults are eating')
+	response = "Food round results:\n"
+
+	response += consumeFoodPlayers(gameState);
+	response += consumeFoodChildren(gameState);
 	return response
 }
+
 function kill(name, message, gameState){
 	console.log("Killing "+name+" due to "+message+" at "+gameState.seasonCounter);
 	population = gameState.population
 	children = gameState.children
-	childName = capitalizeFirstLetter(name)
+	childName = utillib.capitalizeFirstLetter(name)
 	if (! message || message == ''){
 		message = 'unknown causes'
 	}
@@ -2494,38 +2430,43 @@ function unguardChild(childName, population){
 	}
 }
 function startWork(gameState){
+	savelib.archiveTribe(gameState);
 	// advance the calendar; the if should only skip on the 0->1 transition
 	if (gameState.workRound == false){
 		nextSeason(gameState)
 	}
-	messageChannel(gameStateMessage(gameState), gameState)
+	messageChannel(utillib.gameStateMessage(gameState), gameState)
 	messageChannel('\nStarting the work round.  Guard your children.  Craft, gather, hunt, assist or train.', gameState)
 	gameState.workRound = true
 	gameState.foodRound = false
 	gameState.reproductionRound = false
 	canJerky = false
-	savelib.saveTribe(gameState.name);
+	savelib.saveTribe(gameState);
+	allGames[gameState.name] = gameState;
 	return
 }
 function startFood(gameState){
+	savelib.archiveTribe(gameState);
 	clearWorkFlags(population)
-	message = gameStateMessage(gameState)
+	message = utillib.gameStateMessage(gameState)
 	messageChannel(message+'\nStarting the food and trading round.  Make sure everyone has enough to eat, or they will starve', gameState)
 	foodMessage = checkFood(gameState)
 	messageChannel(foodMessage, gameState)
 	gameState.workRound = false
 	gameState.foodRound = true
 	gameState.reproductionRound = false
-	savelib.saveTribe(gameState.name);
+	savelib.saveTribe(gameState);
+	allGames[gameState.name] = gameState;
 	return
 }
 function startReproduction(gameState){
 	// actually consume food here
+	savelib.archiveTribe(gameState);
 	foodMessage = consumeFood(gameState)
 	gameState.needChanceRoll = true  // this magic boolean prevents starting work until we did chance roll
 	messageChannel(foodMessage+'\n', gameState)
 	messageChannel('Starting the Reproduction round; invite other tribe members to reproduce (not automated)', gameState)
-	messageChannel(gameStateMessage(gameState), gameState)
+	messageChannel(utillib.gameStateMessage(gameState), gameState)
 	messageChannel('The tribe can decide to move to a new location, but the injured and children under 2 will need 2 food', gameState)
 	namelist = createReproductionList(gameState)
 	messageChannel("Invitation order: "+shuffle(namelist), gameState)
@@ -2534,7 +2475,8 @@ function startReproduction(gameState){
 	gameState.workRound = false
 	gameState.foodRound = false
 	gameState.reproductionRound = true
-	savelib.saveTribe(gameState.name);
+	savelib.saveTribe(gameState);
+	allGames[gameState.name] = gameState;
 	return
 }
 function migrate(msg, destination, force, gameState){
