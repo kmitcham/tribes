@@ -62,7 +62,7 @@ test('good roll', () =>{
     expect(gameState["population"][playername]['grain']).toBe(6)
 }); 
 
-test('basket', () =>{
+test('basket adds food', () =>{
     var gameState = {
           "seasonCounter": 1,
           "gameTrack": {
@@ -90,7 +90,8 @@ test('basket', () =>{
     output = lib.gather(playername, player, 3, gameState)
     expect(output).toMatch('clams');
     expect(output).toMatch('basket');
-    expect(gameState["population"][playername]['food']).toBeGreaterThan(4)
+    combo = gameState["population"][playername]['food'] + gameState["population"][playername]['grain'] 
+    expect(combo).toBeGreaterThan(4)
 });
 
 test('no skill roll', () =>{
