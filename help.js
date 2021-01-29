@@ -20,6 +20,7 @@ function playerHelp(){
 		text+=' !assist <hunter>\n'
 		text+=' !hunt\n'
 		text+=' !train (learn crafting, if there is a willing teacher)\n'
+		text+=' !idle (do nothing) \n'
 		text+=' !ready (list who is still available to work)\n'
 		text+='-=Food Round Commands=-\n'
 		text+=' !foodcheck (examine the food situation for every adult and living child)\n'

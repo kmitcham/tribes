@@ -8,7 +8,7 @@ module.exports.demand = (playerName,demandText, gameState) => {
     return response;
 }
 
-function getGameFactions(gameState) {
+const getGameFactions= (gameState) =>{
     var proList =[]
     var conList= [] 
     var abstainList =[];  
@@ -80,7 +80,7 @@ function factionHasCrafter(faction){
     return false;
 }
 
-function getFactionResult(gameState){
+const getFactionResult = (gameState) =>{
     response = ''
     gameFactions = getGameFactions(gameState)
     var forScore =0

@@ -88,13 +88,9 @@ module.exports.hunt = (playername, player, rollValue, gameState) =>{
 	} else if (netRoll <= 8){
         message += "  No game."
     } else {
-        for (var i = 0; i < huntData.length; i++){
-            if (netRoll <= huntData[i][0]){
-                message += huntData[i][2] + ' +'+huntData[i][1]+' food'
-                player.food += huntData[i][1]
-                break
-            }
-        }
+        huntRow = huntDataFor(huntData, netRoll);
+        message += huntRow[2] + ' +'+huntRow[1]+' food'
+        player.food += huntRow[1]
     }
     // update the game track
     var huntercount = 1
@@ -117,3 +113,13 @@ module.exports.hunt = (playername, player, rollValue, gameState) =>{
     }
     return message
 }
+
+const huntDataFor= (huntData, netRoll) =>{
+    for (var i = 0; i < huntData.length; i++){
+        if (netRoll <= huntData[i][0]){
+            return huntData[i]
+        }
+    }
+    return huntData[huntData.length-1]
+}
+module.exports.huntDataFor = huntDataFor;

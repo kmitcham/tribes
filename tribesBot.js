@@ -697,11 +697,12 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		GRAIN = 2
 		GRAIN_STRONG = 3
 		HUNT = 4
+		SPEAR = 5
 		var totals = {
-			'veldt':[0,0,0,0,0],
-			'hills':[0,0,0,0,0],
-			'marsh':[0,0,0,0,0],
-			'forest':[0,0,0,0,0]
+			'veldt':[0,0,0,0,0,0,0],
+			'hills':[0,0,0,0,0,0,0],
+			'marsh':[0,0,0,0,0,0,0],
+			'forest':[0,0,0,0,0,0,0]
 		}
 		for (var i =1; i <= 6; i++){
 			for (var j =1; j <= 6; j++){
@@ -712,24 +713,33 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 						data = gatherDataFor(locationName, droll)
 						totals[locationName][GATHER]+= data[1]
 						totals[locationName][GRAIN]+= data[2]
+						totals[locationName][HUNT]+= huntlib.huntDataFor(locationData['hunt'], droll)[1]
+						sval = droll
+						if (droll >= 9){	sval = droll+3 }
+						totals[locationName][SPEAR]+= huntlib.huntDataFor(locationData['hunt'], sval)[1]
 						dataStrong = gatherDataFor(locationName, droll+1)
 						totals[locationName][GATHER_STRONG]+= dataStrong[1]
 						totals[locationName][GRAIN_STRONG]+= dataStrong[2]
+						
 					}
 				}
 			}
 		}
-		response = '216 Gather totals:'
+		response = '216 totals:'
 		for (locationName in totals){
-			response += '\n'+locationName+' food:'+totals[locationName][GATHER]+' grain:'+totals[locationName][GRAIN]
-					+ ' sf:'+totals[locationName][GATHER_STRONG] +' sg:'+totals[locationName][GRAIN_STRONG]
+			response += '\n'+locationName+' food:'+totals[locationName][GATHER]
+				+ ' grain:'+totals[locationName][GRAIN]
+				+ ' sf:'+totals[locationName][GATHER_STRONG] 
+				+ ' sg:'+totals[locationName][GRAIN_STRONG] 
+				+ ' hunt:'+totals[locationName][HUNT]
+				+ ' spear:'+totals[locationName][SPEAR]
 		}
 		messageChannel(response,gameState)
 		totals = {
-			'veldt':[0,0,0,0,0],
-			'hills':[0,0,0,0,0],
-			'marsh':[0,0,0,0,0],
-			'forest':[0,0,0,0,0]
+			'veldt':[0,0,0,0,0,0],
+			'hills':[0,0,0,0,0,0],
+			'marsh':[0,0,0,0,0,0],
+			'forest':[0,0,0,0,0,0]
 		}
 		MAX = 6000
 		for (var i = 0; i < MAX; i++){
@@ -739,17 +749,24 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 				data = gatherDataFor(locationName, val)
 				totals[locationName][GATHER]+= data[1]
 				totals[locationName][GRAIN]+= data[2]
+				totals[locationName][HUNT]+= huntlib.huntDataFor(locationData['hunt'], val)[1]
+				sval = val
+				if (val >= 9){	sval = val+3 }
+				foo = huntlib.huntDataFor(locationData['hunt'], sval)
+				totals[locationName][SPEAR]+= foo[1]
 				dataStrong = gatherDataFor(locationName, val+1)
 				totals[locationName][GATHER_STRONG]+= dataStrong[1]
 				totals[locationName][GRAIN_STRONG]+= dataStrong[2]
 			}
 		}
-		response = '10x Random Gather avg:'
+		response = MAX+'x Random avg:'
 		for (locationName in totals){
 			response += '\n'+locationName+' food:'+Math.round(10*totals[locationName][GATHER]/MAX)
 									    +' grain:'+Math.round(10*totals[locationName][GRAIN]/MAX)
 										+ ' sf:'  +Math.round(10*totals[locationName][GATHER_STRONG]/MAX)
 										 +' sg:'  +Math.round(10*totals[locationName][GRAIN_STRONG]/MAX)
+										 +  ' hunt:'+Math.round(10* totals[locationName][HUNT]/MAX)
+										 +  ' spear:'+Math.round(10* totals[locationName][SPEAR]/MAX)
 		}
 		msg.reply(response)
 		return
@@ -1898,6 +1915,14 @@ function addChild(mother, father, gameState){
 	nextIndex = (gameState.populationCounter % 26 )
 	child.name = getNextChildName(gameState.children, allNames, nextIndex)
 	gameState.populationCounter++
+	if (gameState.reproductionList){
+		const indexOfPreggers = gameState.reproductionList.indexOf(mother);
+		if (index > -1) {
+			gameState.reproductionList.splice(indexOfPreggers, 1);
+			console.log('attempting to remove pregnant woman from reproduction list')
+		}
+
+	}
 	children[child.name] = child	
 	person = personByName(mother, gameState)
 	gameState.population[child.mother].isPregnant = child.name
@@ -2393,9 +2418,11 @@ function consumeFood(gameState){
 	}
 	console.log('adults are eating')
 	response = "Food round results:\n"
-
+	console.log('food response is '+response)
 	response += consumeFoodPlayers(gameState);
+	console.log('food response is '+response)
 	response += consumeFoodChildren(gameState);
+	console.log('food response is '+response)
 	return response
 }
 
