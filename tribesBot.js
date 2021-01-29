@@ -60,7 +60,7 @@ bot.on('message', msg => {
 	}
 	if (msg.channel && msg.channel.name ){
 	  if (!msg.channel.name.toLowerCase().includes('tribe')){
-		console.log('ignore command >'+msg+'<in channel with no tribe ')
+		console.log('ignore command >'+msg.content+'<in channel with no tribe ')
 		return
 	  }
 	}
@@ -949,12 +949,17 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			cleanUpMessage(msg);; 
 			return
 		}
-		if ((type == 'spearhead' || type =='basket') && player && player.activity 
-			&& ( player.activity == 'hunt' || player.activity == 'gather' || player.activity == 'assist')){
+		if (type == 'spearhead' && player && player.activity 
+			&& ( player.activity == 'hunt' || player.activity == 'assist')){
 			msg.author.send('The game suspects you used that item to work with.  Ask the referee to help trade it if you did not.')
 			cleanUpMessage(msg);; 
 			return
 		}
+		if ( type =='basket' && player && player.activity && player.activity == 'gather'){
+		msg.author.send('The game suspects you used that item to work with.  Ask the referee to help trade it if you did not.')
+		cleanUpMessage(msg);; 
+		return
+	}
 		if (  population[actor][type] >= amount){
 			messageChannel(actor+' gave '+amount+' '+type+' to '+username, gameState)
 			if (!population[username][type]){
@@ -1115,7 +1120,6 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		inviteMessage = ''
 		if (gameState.reproductionRound && gameState.reproductionList 
 			&& gameState.reproductionList[0] && gameState.reproductionList[0].startsWith(actor)){
-			console.log('invite is a legal source')
 		} else {
 			msg.author.send(command+' is not appropriate now')
 			cleanUpMessage(msg);; 
@@ -1901,7 +1905,6 @@ function addChild(mother, father, gameState){
 }
 
 function clearWorkFlags(population){
-	console.log('clearing work flags')
 	// for every person
 	// if injured and !worked, injured = false
 	// worked = false
@@ -1929,8 +1932,8 @@ function nextMating(currentInviterName, gameState){
 	if (!player){
 		console.log('bad attempt to call nextMating, person not found '+currentInviterName)
 	}
-	if (player.invite){
-		delete player.invite
+	for (var targetname in gameState['population']){
+		delete gameState['population'][targetname].invite
 	}
 	if (!gameState.reproductionList){
 		console.log (" no reproduction list yet. bad call to nextMating")
@@ -2234,7 +2237,7 @@ function checkFood(gameState){
 function consumeFoodPlayers(gameState){
 	perished = []
 	population = gameState.population
-
+	var response = '';
 	for  (var target in population) {
 		var hunger = 4
 		console.log(target+' f:'+population[target].food+' g:'+population[target].grain)
