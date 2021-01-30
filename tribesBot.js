@@ -181,6 +181,7 @@ function scoreChildren(children, gameState){
 }
 function cleanUpMessage(msg){
 	if (msg.channel && msg.channel.name ){
+		console.log(' cleaning up message in channel '+msg.channel.name )
 		msg.delete({timeout: 1000}); 
 	}
 }
@@ -1477,10 +1478,6 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		if (bits[1]){
 			locationName = bits[1]
 		}
-		cleanUpMessage(msg);; 
-		if (bits[1]){
-			locationName = bits[1]
-		}
 		response = 'The '+locationName+' resources are:\n'
 		locationData = locations[locationName]
 		if (!locationData){
@@ -1914,18 +1911,17 @@ function addChild(mother, father, gameState){
 	child.gender = genders[ (Math.trunc( Math.random ( ) * genders.length))]
 	nextIndex = (gameState.populationCounter % 26 )
 	child.name = getNextChildName(gameState.children, allNames, nextIndex)
-	gameState.populationCounter++
-	if (gameState.reproductionList){
-		const indexOfPreggers = gameState.reproductionList.indexOf(mother);
-		if (index > -1) {
-			gameState.reproductionList.splice(indexOfPreggers, 1);
-			console.log('attempting to remove pregnant woman from reproduction list')
-		}
-
-	}
 	children[child.name] = child	
 	person = personByName(mother, gameState)
 	gameState.population[child.mother].isPregnant = child.name
+	if (gameState.reproductionList){
+		const indexOfPreggers = gameState.reproductionList.indexOf(mother);
+		if (indexOfPreggers > -1) {
+			gameState.reproductionList.splice(indexOfPreggers, 1);
+			console.log('attempting to remove pregnant woman from reproduction list')
+		}
+	}
+	gameState.populationCounter++
 	return child
 }
 
@@ -2661,7 +2657,7 @@ function craft(playername, player, type, rollValue){
 	} else if (rollValue > 2 && type == 'spearhead') {		
 			player.spearhead += 1
 	} else {
-		return playername+ ' fails at crafting a '+type
+		return playername+ ' fails('+rollValue+') at crafting a '+type
 	}
 	return playername+' crafts a '+type
 }
