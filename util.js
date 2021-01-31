@@ -47,3 +47,40 @@ function randomMemberName(population){
 	return nameList[random]
 }
 module.exports.randomMemberName = randomMemberName;
+
+function personByName(name, gameState){
+	if (name == null){
+		console.log('attempt to find person for null name '+name)
+		return null
+	}
+	if (!gameState || gameState.population == null){
+		console.log('no people yet, or gameState is otherwise null')
+		return
+	}
+	if (name.indexOf('(') != -1){
+		name = name.substring(0, name.indexOf('('))
+	}
+	var person = null
+	if (gameState.population[name] != null){
+		 person = gameState.population[name]
+	} else if (name && gameState.population[name.username] != null){
+		person = gameState.population[name.username]
+	} else if (name.indexOf('@') != -1 && population[name.substring(1)] != null){
+		person = gameState.population[name.substring(1)]
+	}
+	if (person != null){
+		for (var type in person) {
+			if (Object.prototype.hasOwnProperty.call( person, type)) {
+				if (person[type] && person[type].constructor === Array && person[type].length == 0){
+					console.log('deleting empty array for '+type)
+					delete person[type]
+				}
+			}
+		}
+		return person
+	}
+	console.log("tribe "+gameState.name+" has no such person in population:"+name)
+	return null
+}
+
+module.exports.personByName = personByName;

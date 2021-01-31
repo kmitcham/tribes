@@ -87,7 +87,7 @@ const getFactionResult = (gameState) =>{
     var conScore =0
 
     if (!gameFactions['for'] || gameFactions['for'].length == 0){
-        response = 'Nobody still cares about '+demand
+        response = 'Nobody still cares about '+demand+'.  The conflict has been resolved.'
         console.log('nobody wants the demand anymore')
         delete gameState['demand']
         for (playerName in gameState['population']){
@@ -96,7 +96,7 @@ const getFactionResult = (gameState) =>{
         return response
     }
     if (gameFactions["undeclared"] && gameFactions['undeclared'].length > 0){
-        response = "Not everyone has chosen for, against, or abstain yet.  Waiting on:\n"
+        response = "Not everyone has picked a side: for, against, or abstain.  Waiting on:\n"
         for (person of gameFactions["undeclared"]){
             response += person.name+", "
         }
@@ -104,6 +104,7 @@ const getFactionResult = (gameState) =>{
     }
     forScore = getFactionBaseScore(gameFactions["for"])
     conScore = getFactionBaseScore(gameFactions["against"])
+    absScore = getFactionBaseScore(gameFactions["abstain"])
 
     forCraft = factionHasCrafter(gameFactions["for"])
     conCraft = factionHasCrafter(gameFactions["against"])
@@ -117,8 +118,7 @@ const getFactionResult = (gameState) =>{
     if (forScore >= (2*conScore)){
         response = 'The Demand faction has overwhelming support.  The demand to '+gameState.demand+' should be done immediately.'
     } else if (conScore >= (2*forScore)){
-        response = 'The oppostion faction has overwhelming support. The demand to '+gameState.demand+' should be ignored.'
-
+        response = 'The Oppostion faction has overwhelming support. The demand to '+gameState.demand+' should be ignored.'
     } else {
         gameState.violence = gameState.demand
         response = "Tribal society breaks down as VIOLENCE is required to settle the issue. of "+gameState.demand
@@ -141,9 +141,8 @@ const resolveAttack = ( attacker, defender, roll, gameState) =>{
     if (attacker.stength == 'weak' ){ bonus -= 1 }
     if (attacker.isInjured ){ bonus -= 1  }
     if (attacker.isSick ){ bonus -= 2  }
-    if (defender.fight == 'run' || defender.fight == 'defend'){        bonus -= 2    }
+    if (defender.fight == 'run' || defender.fight == 'defend'){ bonus -= 2  }
     if (defender.isPregnant ){ bonus -= 2 }
-
     netRoll = roll + bonus;
     if (netRoll >= 8){
         defender.hits = Number(defender.hits)+1
@@ -157,6 +156,8 @@ const resolveAttack = ( attacker, defender, roll, gameState) =>{
         response += defender.name+' is crippled, and becomes Weak!'
     }
     if (defender.hits == 3){
-        
+        response += ' is killed!'
+        // need to wire up kill here
     }
+    return response;
 }

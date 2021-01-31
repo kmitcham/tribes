@@ -74,6 +74,15 @@ module.exports.findLeastGuarded = (children, population) =>{
 	return leastGuardedName+' is least watched. Watch score = '+lowGuardValue
 }
 
+module.exports.unguardChild = (childName, population) =>{
+	for (personName in population){
+		person = population[personName]
+		if (person.guarding && person.guarding.indexOf(childName) != -1){
+			childIndex = person.guarding.indexOf(childName)
+			person.guarding.splice(childIndex, 1);
+		}
+	}
+}
 
 module.exports.hyenaAttack= (children, gameState) => {
 	population = gameState.population
