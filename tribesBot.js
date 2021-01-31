@@ -7,6 +7,7 @@ const guardlib = require("./guardCode.js");
 const utillib = require("./util.js");
 const savelib = require("./save.js");
 const helplib = require("./help.js");
+const violencelib = require("./violence.js");
 
 var bot = new Discord.Client()
 var logger = require('winston');
@@ -772,6 +773,28 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		msg.reply(response)
 		return
 	}
+	if (command == 'demand'){
+		if (!player){
+			msg.author.send(targetName+'Only tribe members can make demands')
+			cleanUpMessage(msg);; 
+			return
+		}
+		if (bits.length <= 2){
+			msg.author.send('Syntax: !demand <text of your demand here>')
+			cleanUpMessage(msg);; 
+			return
+		}
+		if (gameState.demand || gameState.violence){
+			msg.author.send('There is already a demand to be dealt with.')
+			cleanUpMessage(msg);; 
+			return
+		}
+		bits.shift()
+		demand = bits.join(' ')
+		response = violencelib.demand(player.name, demand, gameState)
+		messageChannel(response, gameState);
+		return
+	}
 	if (command === 'demote'){
 		if (!referees.includes(actor)){
 			msg.author.send(command+' requires referee priviliges')
@@ -895,6 +918,23 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			return
 		}
 		messageChannel(endGame(gameState), gameState)
+		return
+	}
+	if (command == 'faction'){
+		if (bits.length != 2){
+			msg.author.send('faction syntax is !faction <for|against|neutral>')
+			cleanUpMessage(msg);; 
+			return
+		}
+		side = bits[1]
+		if (side != 'for' && side != 'against' && side != 'neutral'){
+			msg.author.send('faction syntax is !faction <for|against|neutral>')
+			cleanUpMessage(msg);; 
+			return
+		}
+		player.faction = side;
+		response = violencelib.getFactionResult(gameState)
+		messageChannel(response, gameState);
 		return
 	}
   	// add food to a child

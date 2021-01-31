@@ -1,4 +1,4 @@
-module.exports.demand = (playerName,demandText, gameState) => {
+module.exports.demand = (playerName, demandText, gameState) => {
     // fail if already has a demand in place
     // fail if player not in tribe
     response = playerName+' DEMANDS: '+demandText
@@ -131,3 +131,32 @@ const getFactionResult = (gameState) =>{
 
 }
 module.exports.getFactionResult = getFactionResult
+
+const resolveAttack = ( attacker, defender, roll, gameState) =>{
+    var bonus = 0;
+    response = attacker.name +' attacks!  '
+    if (attacker.spear > 0){ bonus += 2  }
+    if (attacker.profession == 'hunter'){ bonus += 1  }
+    if (attacker.strength == 'strong'){ bonus += 1  }
+    if (attacker.stength == 'weak' ){ bonus -= 1 }
+    if (attacker.isInjured ){ bonus -= 1  }
+    if (attacker.isSick ){ bonus -= 2  }
+    if (defender.fight == 'run' || defender.fight == 'defend'){        bonus -= 2    }
+    if (defender.isPregnant ){ bonus -= 2 }
+
+    netRoll = roll + bonus;
+    if (netRoll >= 8){
+        defender.hits = Number(defender.hits)+1
+    }
+    if (defender.hits == 1){
+        defender.isInjured = true
+        response += defender.name+' is injured!'
+    }
+    if (defender.hits == 2){
+        defender.strength = 'weak'
+        response += defender.name+' is crippled, and becomes Weak!'
+    }
+    if (defender.hits == 3){
+        
+    }
+}
