@@ -1430,11 +1430,14 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		message = 'Nobody seems ready for much of anything right now.'
 		if (gameState.workRound){
 			message = "People available to work: "+listReadyToWork(population)
-		}
-		if (gameState.reproductionRound){
-			if (gameState.reproductionRound && gameState.reproductionList ){
-				message = "The mating invitation order is "+gameState.reproductionList;
-			} 
+		}	
+		if (gameState.reproductionRound && gameState.reproductionList ){
+			message = "The mating invitation order is "+gameState.reproductionList
+			for (personName in population){
+				if (population[personName].invite){
+					message += '\n'+personName+' is awaiting a response from '+population[personName].invite;
+				}
+			}
 		}
 		messageChannel(message,gameState)
 		cleanUpMessage(msg);
