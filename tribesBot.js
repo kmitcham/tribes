@@ -391,6 +391,13 @@ function doChance(rollValue, gameState){
 		case 10 : 
 			//message += "A hyena is stalking the tribe’s children! See 'Child In Danger!' to determine what happens."
 			message += guardlib.hyenaAttack(children, gameState)
+			// ugly hack until kill is a lib,
+			// TODO move the kill to the guardlib
+			if (message.indexOf('devoured') > 0 ){
+				msgArray = message.split(' ')
+				target = msgArray[3]
+				kill(target, 'hyena attack', gameState)
+			}
 			break;
 		case 9 : 
 			name = utillib.randomMemberName(population)

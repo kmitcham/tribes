@@ -2,27 +2,31 @@
 module.exports.findGuardValueForChild = (childName, population, children) =>{
 	var guardValue = Number(0);
 	var logMessage = 'guard value for :'+childName
+	var child = children[childName]
+	child.guardians = {}
 	for (var personName in population){
 		var person = population[personName]
 		if (person.guarding && person.guarding.includes(childName)){
 			var watchValue = 1/person.guarding.length
 			logMessage += '\t'+personName+' adds '+watchValue
 			guardValue = guardValue + watchValue
+			child.guardians[personName] = person.guarding.length
 		}
     }
     // check for babysitters
     for (var name in children){
-        child = children[name];
-        if (child.newAdult && child.babysitting == childName){
+		babysitter = children[name];
+        if (babysitter.newAdult && babysitter.babysitting == childName){
             guardValue = guardValue + 1;
-            logMessage += '\t '+name+' adds '+1
+			logMessage += '\t '+name+' adds '+1
+			child.guardians[name] = 1
         }
     }
-    //console.log( logMessage+'\t\t TOTAL: '+guardValue)	
+	//console.log( logMessage+'\t\t TOTAL: '+guardValue)	
     return guardValue
 }
 
-module.exports.findLeastGuarded = (children, population) =>{
+function findLeastGuarded (children, population){
 	// guard score = 7 if unguarded; otherwise is the length of the guarders 'guarding' array
 	// guard score = 7 if unguarded; otherwise is the length of the guarders 'guarding' array
 	var guardChildSort = []
@@ -73,7 +77,7 @@ module.exports.findLeastGuarded = (children, population) =>{
 	}
 	return leastGuardedName+' is least watched. Watch score = '+lowGuardValue
 }
-
+module.exports.findLeastGuarded = findLeastGuarded
 
 module.exports.hyenaAttack= (children, gameState) => {
 	population = gameState.population
@@ -85,25 +89,23 @@ module.exports.hyenaAttack= (children, gameState) => {
 	//  this is stupid and hacky; take the name from the start of the message, and the value from the last bit
 	leastGuardedName = leastGuardedMessageArray[0]
 	lowGuardValue = Number(leastGuardedMessageArray[10])
-	rollValue = roll(1)
-	response = 'The hyena attacks '+leastGuardedName+'!\n'
+	response = 'A hyena attacks '+leastGuardedName+' \n' // exclamation point breaks simple string splitting elsewhere
 	var child = children[leastGuardedName]
 	if (!child){
 		console.log('hyena did not find the child somehow '+leastGuardedName)
 		return response
 	}
-	console.log(leastGuardedName+' rollValue '+rollValue+ ' target '+lowGuardValue)
-	guardian = child.guardian
-	if (rollValue > lowGuardValue){
-		if (guardian){
-			response += '\nFortunately, '+guardian+' chases off the beast'
+	for (guardName in Object.keys(child.guardians)){
+		rollValue = roll(1)
+		target = child.guardians[guardName]
+		console.log(guardName+' rollValue '+rollValue+ ' target '+target)
+		if (rollValue > target){
+			response += '\n\tFortunately, '+guardName+' chases off the beast.'
+			return response
+		} else {
+			response += '\n\tThe hyena slips past '+guardName
 		}
-	} else {
-		response += '\n The poor child is devoured'
-		if (guardian){
-			response += '\n'+guardian+' watches in horror.'
-		}
-		kill(leastGuardedName, 'hyena attack', gameState)
 	}
+	response += '\n\tThe poor child is devoured!'
 	return response
 }
