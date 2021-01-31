@@ -1954,6 +1954,9 @@ function nextMating(currentInviterName, gameState){
 		console.log('bad attempt to call nextMating, person not found '+currentInviterName)
 	}
 	for (var targetname in gameState['population']){
+		if (gameState['population'][targetname].invite){
+			console.log("deleting invite from "+targetname+" to "+gameState['population'][targetname].invite)
+		}
 		delete gameState['population'][targetname].invite
 	}
 	if (!gameState.reproductionList){
