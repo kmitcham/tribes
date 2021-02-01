@@ -328,7 +328,7 @@ function doChance(rollValue, gameState){
 			name = utillib.randomMemberName(population)
 			person = population[name]
 			safety = 0;
-			while (person.strength == 'strong' && safety < population.keys().length) {
+			while (person.strength == 'strong' && safety < Object.keys(population).length) {
 				name = utillib.randomMemberName(population);
 				person = population[name];
 				safety = safety + 1;
@@ -1022,8 +1022,8 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		return
 	}
 	if (command == 'guard' || command == 'watch'){
-		if (bits.length != 2){
-			msg.author.send('guard <childName>')
+		if (bits.length < 2){
+			msg.author.send('guard <childName> [<more childNames>]')
 			cleanUpMessage(msg);; 
 			return		
 		}
@@ -1047,34 +1047,36 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			cleanUpMessage(msg);; 
 			return
 		}
-		childName = utillib.capitalizeFirstLetter(bits[1])
-		child = children[childName]
-		if (!child ){
-			msg.author.send('Could not find child: '+childName)
-			cleanUpMessage(msg);; 
-			return
+		bits.shift();
+		cName = bits.shift()
+		while (cName){
+			childName = utillib.capitalizeFirstLetter(cName)
+			child = children[childName]
+			if (!child ){
+				msg.author.send('Could not find child: '+childName)
+				continue
+			}
+			if (person.guarding && person.guarding.indexOf(childName) != -1 ){
+				msg.author.send('You are already guarding '+childName)
+				continue
+			}
+			if (child.age < 0){
+				msg.author.send('You can not watch an unborn child ')
+				continue;
+			}
+			if (person.guarding){
+				person.guarding.push(childName)
+			} else {
+				person.guarding = [childName]
+			}
+			messageChannel(actor+' starts guarding '+childName, gameState)
+			cName = bits.shift()
 		}
-		if (person.guarding && person.guarding.indexOf(childName) != -1 ){
-			msg.author.send('You are already guarding '+childName)
-			cleanUpMessage(msg);; 
-			return
-		}
-		if (child.age < 0){
-			msg.author.send('You can not watch an unborn child ')
-			cleanUpMessage(msg);; 
-			return
-		}
-		if (person.guarding){
-			person.guarding.push(childName)
-		} else {
-			person.guarding = [childName]
-		}
-		messageChannel(actor+' starts guarding '+childName, gameState)
 		return
 	}
 	if (command == 'ignore'){
-		if (bits.length != 2){
-			msg.author.send('ignore <childName>')
+		if (bits.length < 2){
+			msg.author.send('ignore <childName> [otherNames]')
 			cleanUpMessage(msg);; 
 			return		
 		}
@@ -1085,18 +1087,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			return
 		}
 		if (gameState.workRound == false){
-			msg.author.send('You can not change guard status  outside the work round')
-			cleanUpMessage(msg);; 
-			return
-		}
-		childName = utillib.capitalizeFirstLetter(bits[1])
-		child = children[childName]
-		if (!child ){
-			msg.author.send('Could not find child: '+childName)
-			return
-		} 
-		if (!person.guarding || person.guarding.indexOf(childName) == -1 ){
-			msg.author.send('You are not guarding '+childName)
+			msg.author.send('You can not change guard status outside the work round')
 			cleanUpMessage(msg);; 
 			return
 		}
@@ -1105,11 +1096,26 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			cleanUpMessage(msg);; 
 			return
 		}
-		childIndex = person.guarding.indexOf(childName)
-		if (childIndex > -1) {
-			person.guarding.splice(childIndex, 1);
+		bits.shift()
+		foo = bits.shift()
+		while (foo) {
+			childName = utillib.capitalizeFirstLetter(foo)
+			child = children[childName];
+			if (!child ){
+				msg.author.send('Could not find child: '+childName)
+				continue
+			} 
+			if (!person.guarding || person.guarding.indexOf(childName) == -1 ){
+				msg.author.send('You are not guarding '+childName)
+				continue
+			}
+			childIndex = person.guarding.indexOf(childName)
+			if (childIndex > -1) {
+				person.guarding.splice(childIndex, 1);
+			}
+			messageChannel(actor+' stops guarding '+childName, gameState)
+			foo = bits.shift()
 		}
-		messageChannel(actor+' stops guarding '+childName, gameState)
 		return
 	}
 	// add a person to the tribe
