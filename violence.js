@@ -1,3 +1,6 @@
+const killlib = require("./kill.js");
+const util = require("./util.js");
+
 module.exports.demand = (playerName, demandText, gameState) => {
     // fail if already has a demand in place
     // fail if player not in tribe
@@ -11,7 +14,7 @@ module.exports.demand = (playerName, demandText, gameState) => {
 const getGameFactions= (gameState) =>{
     var proList =[]
     var conList= [] 
-    var abstainList =[];  
+    var neutralList =[];  
     var undeclaredList =[];  
     population = gameState["population"]
     for (playerName in population){
@@ -19,13 +22,13 @@ const getGameFactions= (gameState) =>{
         if (! player['faction'] ){
             undeclaredList.push(player);
         } else if (player['faction'] == 'neutral'){
-            abstainList.push(player)        
+            neutralList.push(player)        
         } else if (player['faction'] == 'for'){
             proList.push(player)
         } else  if (player['faction'] == 'against'){
             conList.push(player)
         } else {
-            console.log(player['name']+' has illegal faction value '+player['faction']+' (adding  to abstain)')
+            console.log(player['name']+' has illegal faction value '+player['faction']+' setting to null')
             delete player['faction']
             undeclaredList.push(player);
         }
@@ -33,7 +36,7 @@ const getGameFactions= (gameState) =>{
     return {
         for: proList,
         against: conList,
-        abstain: abstainList,
+        neutral: neutralList,
         undeclared: undeclaredList
     }
 }
@@ -95,55 +98,74 @@ const getFactionResult = (gameState) =>{
         }
         return response
     }
-    if (gameFactions["undeclared"] && gameFactions['undeclared'].length > 0){
-        response = "Not everyone has picked a side: for, against, or abstain.  Waiting on:\n"
-        for (person of gameFactions["undeclared"]){
-            response += person.name+", "
-        }
-        return response
-    }
     forScore = getFactionBaseScore(gameFactions["for"])
     conScore = getFactionBaseScore(gameFactions["against"])
-    absScore = getFactionBaseScore(gameFactions["abstain"])
+    neuScore = getFactionBaseScore(gameFactions["neutral"])
+    undScore = getFactionResult(gameFactions["undeclared"])
 
     forCraft = factionHasCrafter(gameFactions["for"])
     conCraft = factionHasCrafter(gameFactions["against"])
-    absCraft = factionHasCrafter(gameFactions["abstain"])
-    if (forCraft && !conCraft && !absCraft ){
-        forScore += 2;
-    }
-    if (!forCraft && conCraft && !absCraft ){
-        conScore += 2;
-    }
-    if (forScore >= (2*conScore)){
+    neuCraft = factionHasCrafter(gameFactions["neutral"])    
+    if (forCraft && !conCraft && !neuCraft ){        forScore += 2;    }
+    if (!forCraft && conCraft && !neuCraft ){        conScore += 2;    }
+    // if there are not enough undeclared people to swing the vote, we can end it immediately.
+    if (forScore >= 2*(conScore + undScore)){
         response = 'The Demand faction has overwhelming support.  The demand to '+gameState.demand+' should be done immediately.'
-    } else if (conScore >= (2*forScore)){
+        for (playerName in gameState['population']){
+            delete gameState['population'][playerName]['faction']
+        }
+    } else if (conScore >= 2*(forScore+undScore)){
         response = 'The Oppostion faction has overwhelming support. The demand to '+gameState.demand+' should be ignored.'
+        for (playerName in gameState['population']){
+            delete gameState['population'][playerName]['faction']
+        }
+    } else if (gameFactions["undeclared"] && gameFactions['undeclared'].length > 0){
+        response = "Not everyone has picked a side: for, against, or nuetral.  Waiting on:\n"
+        for (person of gameFactions["undeclared"]){
+            response += person.name+", "
+        }
     } else {
-        gameState.violence = gameState.demand
-        response = "Tribal society breaks down as VIOLENCE is required to settle the issue. of "+gameState.demand
-    }
-    delete gameState['demand']
-    for (playerName in gameState['population']){
-        delete gameState['population'][playerName]['faction']
+        if (forScore >= (2*conScore)){
+            response = 'The Demand faction has overwhelming support.  The demand to '+gameState.demand+' should be done immediately.'
+        } else if (conScore >= (2*forScore)){
+            response = 'The Oppostion faction has overwhelming support. The demand to '+gameState.demand+' should be ignored.'
+        } else {
+            gameState.violence = gameState.demand
+            response = "Tribal society breaks down as VIOLENCE is required to settle the issue of "+gameState.demand
+        }
+        delete gameState['demand']
+        for (playerName in gameState['population']){
+            delete gameState['population'][playerName]['faction']
+        }
     }
     return response
-
 }
 module.exports.getFactionResult = getFactionResult
 
-const resolveAttack = ( attacker, defender, roll, gameState) =>{
+const computeBonus = (attacker, defender) => {
     var bonus = 0;
     response = attacker.name +' attacks!  '
-    if (attacker.spear > 0){ bonus += 2  }
+    if (attacker.spearhead > 0){ bonus += 2  }
     if (attacker.profession == 'hunter'){ bonus += 1  }
-    if (attacker.strength == 'strong'){ bonus += 1  }
-    if (attacker.stength == 'weak' ){ bonus -= 1 }
+    if (attacker.strength == 'strong'){ bonus += 1 }
+    if (attacker.strength == 'weak' ){ bonus -= 1 }
     if (attacker.isInjured ){ bonus -= 1  }
     if (attacker.isSick ){ bonus -= 2  }
-    if (defender.fight == 'run' || defender.fight == 'defend'){ bonus -= 2  }
+    if (defender.strategy == 'run' || defender.strategy == 'defend'){ bonus -= 2  }
     if (defender.isPregnant ){ bonus -= 2 }
+    if (defender.escaped ){bonus -= 100 }
+    return bonus
+}
+
+module.exports.computeBonus = computeBonus
+const resolveSingleAttack = ( attacker, defender, roll, gameState) =>{
+    bonus = computeBonus(attacker, defender);
     netRoll = roll + bonus;
+    if (defender.isInjured){
+        defender.hits = Number(1)
+    } else {
+        defender.hits = Number(0)
+    }
     if (netRoll >= 8){
         defender.hits = Number(defender.hits)+1
     }
@@ -158,6 +180,56 @@ const resolveAttack = ( attacker, defender, roll, gameState) =>{
     if (defender.hits == 3){
         response += ' is killed!'
         // need to wire up kill here
+        killlib.kill(defender, 'killed by '+attacker.name+' over '+gameState.violence, gameState)
     }
     return response;
 }
+module.exports.resolveSingleAttack = resolveSingleAttack;
+
+const resolveViolence = (gameState) =>{
+    attackers = []
+    undecided = []
+    runners = []
+    response = ''
+    population = gameState["population"]
+    for (playerName in population){
+        player = population[playerName]
+        if (!player.strategy && ! player.escaped ){
+            undecided.push(playerName)
+        } else if (player.strategy == 'attack'){
+            attackers.push(playerName)
+        } else if (player.strategy == 'run'){
+            runners.push(playerName)
+        }
+    }
+    if (undecided.length > 0){
+        response = 'Some players still need to chose between !attack <name>, !run, or !defend\n'
+        response += undecided.join(',')
+        return
+    }
+    if (attackers.length == 0){
+        response = 'The violence has ended.  Nobody is still willing to fight about '+gameState.violence
+        delete gameState.violence
+        for (playerName in population){
+            player = population[playerName]
+            delete player.strategy
+            delete player.escaped
+            delete player.attack_target
+            delete player.hits
+        }
+        return
+    }
+    for (attackerName in attackers){
+        attacker = population[attackerName]
+        targetName = attacker.attack_target
+        target = population[targetName] // this could screw up 
+        roll = util.roll(2)
+        response += resolveSingleAttack(attacker, defender, roll, gameState)
+    }
+    for (playerName in runners){
+        runner = population[playerName]
+        runner.escaped = true;
+        delete runner.strategy 
+    }
+}
+module.exports.resolveViolence = resolveViolence
