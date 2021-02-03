@@ -1049,29 +1049,28 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		}
 		bits.shift();
 		cName = bits.shift()
-		while (cName){
+		safety = 1;
+		while (cName && (safety < 10 )){
 			childName = utillib.capitalizeFirstLetter(cName)
 			child = children[childName]
 			if (!child ){
 				msg.author.send('Could not find child: '+childName)
-				continue
-			}
-			if (person.guarding && person.guarding.indexOf(childName) != -1 ){
+			}else if (person.guarding && person.guarding.indexOf(childName) != -1 ){
 				msg.author.send('You are already guarding '+childName)
-				continue
-			}
-			if (child.age < 0){
+			} else if (child.age < 0){
 				msg.author.send('You can not watch an unborn child ')
-				continue;
-			}
-			if (person.guarding){
-				person.guarding.push(childName)
 			} else {
-				person.guarding = [childName]
+				if (person.guarding){
+					person.guarding.push(childName)
+				} else {
+					person.guarding = [childName]
+				}
+				messageChannel(actor+' starts guarding '+childName, gameState)
 			}
-			messageChannel(actor+' starts guarding '+childName, gameState)
 			cName = bits.shift()
-		}
+			console.log(' cname is >'+cName+'< '+safety)
+			safety += 1
+	}
 		return
 	}
 	if (command == 'ignore'){
@@ -1103,17 +1102,15 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			child = children[childName];
 			if (!child ){
 				msg.author.send('Could not find child: '+childName)
-				continue
-			} 
-			if (!person.guarding || person.guarding.indexOf(childName) == -1 ){
+			} else if (!person.guarding || person.guarding.indexOf(childName) == -1 ){
 				msg.author.send('You are not guarding '+childName)
-				continue
+			} else {
+				childIndex = person.guarding.indexOf(childName)
+				if (childIndex > -1) {
+					person.guarding.splice(childIndex, 1);
+				}
+				messageChannel(actor+' stops guarding '+childName, gameState)
 			}
-			childIndex = person.guarding.indexOf(childName)
-			if (childIndex > -1) {
-				person.guarding.splice(childIndex, 1);
-			}
-			messageChannel(actor+' stops guarding '+childName, gameState)
 			foo = bits.shift()
 		}
 		return
@@ -1503,12 +1500,15 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		response += '\tGather:\n'
 		for (var index in locationData['gather']){
 			entry = locationData['gather'][index]
-			response += '\t\t'+entry[3]+'('+(Number(entry[1])+Number(entry[2]))+')\n'
+			response += '\t\t'+entry[3]+'('+(Number(entry[1])+Number(entry[2]))+') roll '+entry[0]+'\n'
 		}
 		response += '\tHunt:  Game Track:'+gameState.gameTrack[locationName]+'\n'
 		for (var index in locationData['hunt']){
 			entry = locationData['hunt'][index]
 			response += '\t\t'+entry[2]+'('+entry[1]+')\n'
+			if (entry[0] <= gameState.gameTrack[locationName] ){
+				break;
+			}
 		}
 		msg.author.send(response)
 		cleanUpMessage(msg);;
@@ -2304,8 +2304,8 @@ function consumeFoodChildren(gameState){
 					delete population[child.mother].isPregnant
 				}
 			}
-			if (4 > child.age && child.age >=  0 ){
-				if (! population[child.mother].nursing){
+			if (4 > child.age && child.age >=  0 && population[child.mother] ){
+				if ( ! population[child.mother].nursing){
 					population[child.mother].nursing = []
 				}
 				if (population[child.mother].nursing.indexOf(childName) == -1){
@@ -2435,6 +2435,11 @@ function startWork(gameState){
 	// advance the calendar; the if should only skip on the 0->1 transition
 	if (gameState.workRound == false){
 		nextSeason(gameState)
+	}
+	// clear out old activities
+	for (personName in population){
+		person = population[personName]
+		delete person.activity
 	}
 	messageChannel(utillib.gameStateMessage(gameState), gameState)
 	messageChannel('\nStarting the work round.  Guard your children.  Craft, gather, hunt, assist or train.', gameState)
