@@ -7,6 +7,7 @@ const guardlib = require("./guardCode.js");
 const utillib = require("./util.js");
 const savelib = require("./save.js");
 const helplib = require("./help.js");
+const reproLib = require("./reproduction.js");
 
 var bot = new Discord.Client()
 var logger = require('winston');
@@ -435,7 +436,7 @@ function doChance(rollValue, gameState){
 			person = population[name]
 			person.isSick = 'true'
 			message +=  name + " got sick – lost 2 food and miss next turn. "
-			if (person.food <= 2){
+			if (person.food < 2){
 				message += '( but they only had '+person.food+' so the ref might kill them if no help is given)'
 			}
 			person.food -= 2
@@ -1983,13 +1984,16 @@ function nextMating(currentInviterName, gameState){
 	gameState.reproductionList.shift()
 	if (gameState.reproductionList.length > 0){
 		messageChannel(gameState.reproductionList[0]+ " should now !invite people to reproduce, or !pass ", gameState)
-		messageChannel("The romance list is: "+gameState.reproductionList, gameState)
+		eligibleMates = reproLib.eligibleMates(gameState.reproductionList[0], gameState.population)
+		messageChannel("Valid targets to invite: "+reproLib.eligibleMates)
+		messageChannel("People who have not yet invited: "+gameState.reproductionList, gameState)
 		return
 	} else {
 		messageChannel('Reproduction round is over.  Time for the chance roll', gameState)
 		return
 	}
 }
+
 function spawnFunction(mother, father, msg, population, gameState, force = false){
 	if (!population[mother] || !population[father]){
 		msg.author.send('Parents not found in tribe')
