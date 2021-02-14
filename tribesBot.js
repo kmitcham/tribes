@@ -1473,6 +1473,37 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		messageChannel(utillib.roll(bits[1]), gameState)
 		return
 	}
+	if (command === 'sacrifice'){
+		syntaxMessage = 'Sacrifice syntax is sacrifice  <amount> <food|grain|spearhead|basket>'
+		if (bits.length < 3){
+			msg.author.send(syntaxMessage)
+			cleanUpMessage(msg);; 
+			return
+		}
+		var username = ''
+		amount = bits[1]
+		type = bits[2]
+
+		if (isNaN(amount) || ! types.includes(type)){
+			msg.author.send(syntaxMessage)
+			cleanUpMessage(msg);; 
+			return
+		}
+		if (amount <= 0  ){
+			msg.author.send('Can not sacrifice negative amounts')
+			cleanUpMessage(msg);; 
+			return
+		}			
+		if (  population[actor][type] >= amount){
+			messageChannel(actor+' sacrifices '+amount+' '+type, gameState)
+			population[actor][type] -= Number(amount)
+		} else {
+			msg.author.send('You do not have that many '+type+': '+ population[actor][type])
+			cleanUpMessage(msg);; 
+		}
+		savelib.saveTribe(gameState);
+		return
+	}
 	// save the game state to file
 	if (command == 'save'){
 		if (referees.includes(actor) || player.chief){
