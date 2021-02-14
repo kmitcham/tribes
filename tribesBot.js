@@ -9,6 +9,7 @@ const killlib = require("./kill.js");
 const savelib = require("./save.js");
 const helplib = require("./help.js");
 const violencelib = require("./violence.js");
+const reproLib = require("./reproduction.js");
 
 var bot = new Discord.Client()
 var logger = require('winston');
@@ -69,8 +70,9 @@ bot.on('message', msg => {
 	try {
 		processMessage(msg)
 	} catch (err){
+		alertChannel = bot.channels.cache.find(channel => channel.name === 'general')
 		alertChannel.send('Bot wanted to fall over:')
-		alertChannel.send(err)
+		alertChannel.send(' the error was:'+err.message)
 	}
   });
   
@@ -86,13 +88,13 @@ bot.on('message', msg => {
 		gameState = allGames[msg.channel.name.toLowerCase()]
 		if (!gameState){
 			gameState = savelib.loadTribe(msg.channel.name.toLowerCase());
+			if (!gameState){
+				initGame(msg.channel.name.toLowerCase())
+				msg.reply('starting game with initial conditions')
+				gameState = allGames[msg.channel.name.toLowerCase()]
+			}			
 			allGames[gameState.name] = gameState;
 			console.log("loading game "+msg.channel.name.toLowerCase()+" from file");
-		}
-		if (!gameState){
-			initGame(msg.channel.name.toLowerCase())
-			msg.reply('starting game with initial conditions')
-			gameState = allGames[msg.channel.name.toLowerCase()]
 		}
 	  } else {
 		  gameState = findGameStateForActor(actor)
@@ -330,8 +332,8 @@ function doChance(rollValue, gameState){
 			name = util.randomMemberName(population)
 			person = population[name]
 			safety = 0;
-			while (person.strength == 'strong' && safety < population.keys().length) {
-				name = util.randomMemberName(population);
+			while (person.strength == 'strong' && safety < Object.keys(population).length) {
+				name = utillib.randomMemberName(population);
 				person = population[name];
 				safety = safety + 1;
 			}
@@ -391,8 +393,14 @@ function doChance(rollValue, gameState){
 			}
 			break;
 		case 10 : 
-			//message += "A hyena is stalking the tribe’s children! See 'Child In Danger!' to determine what happens."
 			message += guardlib.hyenaAttack(children, gameState)
+			// ugly hack until kill is a lib,
+			// TODO move the kill to the guardlib
+			if (message.indexOf('devoured') > 0 ){
+				msgArray = message.split(' ')
+				target = msgArray[5]  // chance 10: A hyena attacks TARGET
+				kill(target, 'hyena attack', gameState)
+			}
 			break;
 		case 9 : 
 			name = util.randomMemberName(population)
@@ -430,7 +438,7 @@ function doChance(rollValue, gameState){
 			person = population[name]
 			person.isSick = 'true'
 			message +=  name + " got sick – lost 2 food and miss next turn. "
-			if (person.food <= 2){
+			if (person.food < 2){
 				message += '( but they only had '+person.food+' so the ref might kill them if no help is given)'
 			}
 			person.food -= 2
@@ -1057,8 +1065,8 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		return
 	}
 	if (command == 'guard' || command == 'watch'){
-		if (bits.length != 2){
-			msg.author.send('guard <childName>')
+		if (bits.length < 2){
+			msg.author.send('guard <childName> [<more childNames>]')
 			cleanUpMessage(msg);; 
 			return		
 		}
@@ -1082,34 +1090,35 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			cleanUpMessage(msg);; 
 			return
 		}
-		childName = util.capitalizeFirstLetter(bits[1])
-		child = children[childName]
-		if (!child ){
-			msg.author.send('Could not find child: '+childName)
-			cleanUpMessage(msg);; 
-			return
+		bits.shift();
+		cName = bits.shift()
+		safety = 1;
+		while (cName && (safety < 10 )){
+			childName = utillib.capitalizeFirstLetter(cName)
+			child = children[childName]
+			if (!child ){
+				msg.author.send('Could not find child: '+childName)
+			}else if (person.guarding && person.guarding.indexOf(childName) != -1 ){
+				msg.author.send('You are already guarding '+childName)
+			} else if (child.age < 0){
+				msg.author.send('You can not watch an unborn child ')
+			} else {
+				if (person.guarding){
+					person.guarding.push(childName)
+				} else {
+					person.guarding = [childName]
+				}
+				messageChannel(actor+' starts guarding '+childName, gameState)
+			}
+			cName = bits.shift()
+			console.log(' cname is >'+cName+'< '+safety)
+			safety += 1
 		}
-		if (person.guarding && person.guarding.indexOf(childName) != -1 ){
-			msg.author.send('You are already guarding '+childName)
-			cleanUpMessage(msg);; 
-			return
-		}
-		if (child.age < 0){
-			msg.author.send('You can not watch an unborn child ')
-			cleanUpMessage(msg);; 
-			return
-		}
-		if (person.guarding){
-			person.guarding.push(childName)
-		} else {
-			person.guarding = [childName]
-		}
-		messageChannel(actor+' starts guarding '+childName, gameState)
 		return
 	}
 	if (command == 'ignore'){
-		if (bits.length != 2){
-			msg.author.send('ignore <childName>')
+		if (bits.length < 2){
+			msg.author.send('ignore <childName> [otherNames]')
 			cleanUpMessage(msg);; 
 			return		
 		}
@@ -1120,31 +1129,28 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			return
 		}
 		if (gameState.workRound == false){
-			msg.author.send('You can not change guard status  outside the work round')
+			msg.author.send('You can not change guard status outside the work round')
 			cleanUpMessage(msg);; 
 			return
 		}
-		childName = util.capitalizeFirstLetter(bits[1])
-		child = children[childName]
-		if (!child ){
-			msg.author.send('Could not find child: '+childName)
-			return
-		} 
-		if (!person.guarding || person.guarding.indexOf(childName) == -1 ){
-			msg.author.send('You are not guarding '+childName)
-			cleanUpMessage(msg);; 
-			return
+		bits.shift()
+		foo = bits.shift()
+		while (foo) {
+			childName = utillib.capitalizeFirstLetter(foo)
+			child = children[childName];
+			if (!child ){
+				msg.author.send('Could not find child: '+childName)
+			} else if (!person.guarding || person.guarding.indexOf(childName) == -1 ){
+				msg.author.send('You are not guarding '+childName)
+			} else {
+				childIndex = person.guarding.indexOf(childName)
+				if (childIndex > -1) {
+					person.guarding.splice(childIndex, 1);
+				}
+				messageChannel(actor+' stops guarding '+childName, gameState)
+			}
+			foo = bits.shift()
 		}
-		if (person.worked == true){
-			msg.author.send('Can not change guard status after having worked')
-			cleanUpMessage(msg);; 
-			return
-		}
-		childIndex = person.guarding.indexOf(childName)
-		if (childIndex > -1) {
-			person.guarding.splice(childIndex, 1);
-		}
-		messageChannel(actor+' stops guarding '+childName, gameState)
 		return
 	}
 	// add a person to the tribe
@@ -1247,7 +1253,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			msg.author.send('You do not have that much food')
 			return	
 		}
-		if (ammount %3  != 0 ){
+		if (amount %3  != 0 ){
 			msg.author.send('Must jerk food in multiples of three to avoid waste.')
 			return
 		}
@@ -1471,11 +1477,14 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		message = 'Nobody seems ready for much of anything right now.'
 		if (gameState.workRound){
 			message = "People available to work: "+listReadyToWork(population)
-		}
-		if (gameState.reproductionRound){
-			if (gameState.reproductionRound && gameState.reproductionList ){
-				message = "The mating invitation order is "+gameState.reproductionList;
-			} 
+		}	
+		if (gameState.reproductionRound && gameState.reproductionList ){
+			message = "The mating invitation order is "+gameState.reproductionList
+			for (personName in population){
+				if (population[personName].invite){
+					message += '\n'+personName+' is awaiting a response from '+population[personName].invite;
+				}
+			}
 		}
 		messageChannel(message,gameState)
 		cleanUpMessage(msg);
@@ -1498,6 +1507,37 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 	}
 	if (command == 'roll'){
 		messageChannel(util.roll(bits[1]), gameState)
+		return
+	}
+	if (command === 'sacrifice'){
+		syntaxMessage = 'Sacrifice syntax is sacrifice  <amount> <food|grain|spearhead|basket>'
+		if (bits.length < 3){
+			msg.author.send(syntaxMessage)
+			cleanUpMessage(msg);; 
+			return
+		}
+		var username = ''
+		amount = bits[1]
+		type = bits[2]
+
+		if (isNaN(amount) || ! types.includes(type)){
+			msg.author.send(syntaxMessage)
+			cleanUpMessage(msg);; 
+			return
+		}
+		if (amount <= 0  ){
+			msg.author.send('Can not sacrifice negative amounts')
+			cleanUpMessage(msg);; 
+			return
+		}			
+		if (  population[actor][type] >= amount){
+			messageChannel(actor+' sacrifices '+amount+' '+type, gameState)
+			population[actor][type] -= Number(amount)
+		} else {
+			msg.author.send('You do not have that many '+type+': '+ population[actor][type])
+			cleanUpMessage(msg);; 
+		}
+		savelib.saveTribe(gameState);
 		return
 	}
 	// save the game state to file
@@ -1529,12 +1569,16 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		response += '\tGather:\n'
 		for (var index in locationData['gather']){
 			entry = locationData['gather'][index]
-			response += '\t\t'+entry[3]+'('+(Number(entry[1])+Number(entry[2]))+')\n'
+			response += '\t\t'+entry[3]+'('+(Number(entry[1])+Number(entry[2]))+') roll '+entry[0]+'\n'
 		}
 		response += '\tHunt:  Game Track:'+gameState.gameTrack[locationName]+'\n'
 		for (var index in locationData['hunt']){
 			entry = locationData['hunt'][index]
 			response += '\t\t'+entry[2]+'('+entry[1]+')\n'
+			if (entry[0] <= gameState.gameTrack[locationName] ){
+				response += '\t\t (game track capped)\n'
+				break;
+			}
 		}
 		msg.author.send(response)
 		cleanUpMessage(msg);;
@@ -1863,9 +1907,9 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			learnRoll = util.roll(2)
 			if ( learnRoll >= 10 ){
 				player.canCraft = true
-				message = actor+' learns to craft. ('+learnRoll+')'
+				message = actor+' learns to craft. ['+learnRoll+']'
 			} else {
-				message = actor+' tries to learn to craft, but does not understand it yet. ('+learnRoll+')'
+				message = actor+' tries to learn to craft, but does not understand it yet. ['+learnRoll+']'
 			}
 			player.activity = 'training'
 		} 
@@ -1995,6 +2039,9 @@ function nextMating(currentInviterName, gameState){
 		console.log('bad attempt to call nextMating, person not found '+currentInviterName)
 	}
 	for (var targetname in gameState['population']){
+		if (gameState['population'][targetname].invite){
+			console.log("deleting invite from "+targetname+" to "+gameState['population'][targetname].invite)
+		}
 		delete gameState['population'][targetname].invite
 	}
 	if (!gameState.reproductionList){
@@ -2004,13 +2051,16 @@ function nextMating(currentInviterName, gameState){
 	gameState.reproductionList.shift()
 	if (gameState.reproductionList.length > 0){
 		messageChannel(gameState.reproductionList[0]+ " should now !invite people to reproduce, or !pass ", gameState)
-		messageChannel("The romance list is: "+gameState.reproductionList, gameState)
+		eligibleMates = reproLib.eligibleMates(gameState.reproductionList[0], gameState.population)
+		messageChannel("Valid targets to invite: "+reproLib.eligibleMates)
+		messageChannel("People who have not yet invited: "+gameState.reproductionList, gameState)
 		return
 	} else {
 		messageChannel('Reproduction round is over.  Time for the chance roll', gameState)
 		return
 	}
 }
+
 function spawnFunction(mother, father, msg, population, gameState, force = false){
 	if (!population[mother] || !population[father]){
 		msg.author.send('Parents not found in tribe')
@@ -2040,7 +2090,7 @@ function spawnFunction(mother, father, msg, population, gameState, force = false
 	droll = util.roll(1)
 	if (force != false || (mroll+droll) >= spawnChance ){
 		var child = addChild(mother, father, gameState)
-		messageChannel('The mating of '+mother+'('+mroll+') and '+father+'('+droll+') spawned '+child.name, gameState)
+		messageChannel('The mating of '+mother+'['+mroll+'] and '+father+'['+droll+'] spawned '+child.name, gameState)
 		if (gameState.reproductionList){
 			var hasNotMated = gameState.reproductionList.includes(mother)
 			if (hasNotMated){
@@ -2051,7 +2101,7 @@ function spawnFunction(mother, father, msg, population, gameState, force = false
 			}
 		}
 	} else {
-		messageChannel('The mating of '+mother+'('+mroll+') and '+father+'('+droll+') produced only good feelings', gameState)
+		messageChannel('The mating of '+mother+'['+mroll+'] and '+father+'['+droll+'] produced only good feelings', gameState)
 	}
 	var allPregnant = true
 	for (var personName in population){
@@ -2083,7 +2133,7 @@ function specialize( msg, playerName, profession, gameState){
 	}
 	if (profession.startsWith('c')){
 		profession = 'crafter';
-		helpMessage = "Welcome new crafter.  To craft, do `!craft basket` or `!craft spearpoint`, and the game will roll 1d6; you only fail on a 1. \n"
+		helpMessage = "Welcome new crafter.  To craft, do `!craft basket` or `!craft spearhead`.  There is a 1/6 (basket) or 1/3 (spearhead) chance of failing.. \n"
 		helpMessage+= "You can guard up to two children while crafting. \n"
 		helpMessage+= "You can also `!gather`  or `!hunt`, but at a penalty. \n"
 		helpMessage+= "By default, you will train others in crafting if they take a season to train.  To toggle this setting, use `!secrets`.";
@@ -2178,78 +2228,7 @@ function countAdultChildren(motherName, children){
 	}
 	return adultChildren
 }
-function findGuardValueForChild(childName, population, children){
-	var guardValue = Number(0);
-	var logMessage = 'guard value for :'+childName
-	for (var personName in population){
-		var person = population[personName]
-		if (person.guarding && person.guarding.includes(childName)){
-			var watchValue = 1/person.guarding.length
-			logMessage += '\t'+personName+' adds '+watchValue
-			guardValue = guardValue + watchValue
-		}
-    }
-    // check for babysitters
-    for (var name in children){
-        var child = children[name];
-        if (child.newAdult && child.babysitting == childName){
-            guardValue = guardValue + 1;
-            logMessage += '\t '+name+' adds '+1
-        }
-    }
-    console.log( logMessage+'\t\t TOTAL: '+guardValue)	
-    return guardValue
-}
-function findLeastGuarded(children, population){
-	// guard score = 7 if unguarded; otherwise is the length of the guarders 'guarding' array
-	var guardChildSort = []
-	var leastGuarded = []
-	if (Object.keys(children).length == 0){
-		return 'No children to sort'
-	}
-	for (var childName in children){
-		var child = children[childName]
-		if (child.age < 0 ){
-			// unborn children should be skipped; 0 is born
-			continue
-		}	
-		if (child.newAdult){
-			continue
-		}
-		guardValue = guardlib.findGuardValueForChild(childName, population, children)
-		guardChildSort.push({'name':childName, 'score':guardValue,  'age':child.age})
-	}
-	guardChildSort.sort((a,b) => parseFloat(a.score) - parseFloat(b.score))
-	if (guardChildSort.length == 0){
-		console.log(' ERROR EMPTY LIST OF GUARD CHULDREN')
-		return "Bug means all kids are guarded equally"
-	}
-	lowGuardValue = guardChildSort[0].score;
-	for (var i = 0; i < guardChildSort.length; i++){
-		if (guardChildSort[i].score == lowGuardValue){
-			leastGuarded.push(guardChildSort[i])
-		} else {
-			// we are out of the tie, so ignore the rest
-			break
-		}
-	}
-	if (leastGuarded.length == 1){
-		leastGuardedName = leastGuarded[0].name
-	} else {
-		// sort the least guarded by age
-		leastGuarded.sort((a,b)=> parseFloat(a.age)-parseFloat(b.age))
-		startAge = leastGuarded[0].age
-		maxIndex = 0
-		for (var j =1; j < leastGuarded.length; j++){
-			if (leastGuarded[j].age > startAge)
-			break;
-			maxIndex = j
-		}
-		unluckyIndex = Math.trunc( Math.random ( ) * maxIndex)
-		leastGuardedName = leastGuarded[unluckyIndex].name
-	}
-	return leastGuardedName+' is least watched.'
-}
+
 function countChildrenOfParentUnderAge(children, parentName, age){
 	var count = 0
 	for (var childName in children){
@@ -2398,8 +2377,8 @@ function consumeFoodChildren(gameState){
 					delete population[child.mother].isPregnant
 				}
 			}
-			if (4 > child.age && child.age >=  0 ){
-				if (! population[child.mother].nursing){
+			if (4 > child.age && child.age >=  0 && population[child.mother] ){
+				if ( ! population[child.mother].nursing){
 					population[child.mother].nursing = []
 				}
 				if (population[child.mother].nursing.indexOf(childName) == -1){
@@ -2425,7 +2404,7 @@ function consumeFoodChildren(gameState){
 			for  (var name in population) {
 				player = population[name]
 				if (player.guarding && player.guarding.includes(child.name)){
-					const index = array.indexOf(child.name);
+					const index = player.guarding.indexOf(child.name);
 					if (index > -1) {
 						player.guarding.splice(index, 1);
 						response += name+' stops watching the new adult.'
@@ -2463,16 +2442,19 @@ function consumeFood(gameState){
 	return response
 }
 
-
-
 function startWork(gameState){
 	savelib.archiveTribe(gameState);
 	// advance the calendar; the if should only skip on the 0->1 transition
 	if (gameState.workRound == false){
 		nextSeason(gameState)
 	}
-	messageChannel(util.gameStateMessage(gameState), gameState)
-	messageChannel('\nStarting the work round.  Guard your children.  Craft, gather, hunt, assist or train.', gameState)
+	// clear out old activities
+	for (personName in population){
+		person = population[personName]
+		delete person.activity
+	}
+	messageChannel(utillib.gameStateMessage(gameState), gameState)
+	messageChannel('\nStarting the work round.  Guard (or ignore) your children, then craft, gather, hunt, assist or train.', gameState)
 	gameState.workRound = true
 	gameState.foodRound = false
 	gameState.reproductionRound = false
@@ -2639,9 +2621,9 @@ function craft(playername, player, type, rollValue){
 	} else if (rollValue > 2 && type == 'spearhead') {		
 			player.spearhead += 1
 	} else {
-		return playername+ ' fails('+rollValue+') at crafting a '+type
+		return playername+ ' fails['+rollValue+'] at crafting a '+type
 	}
-	return playername+' crafts a '+type
+	return playername+' crafts['+rollValue+'] a '+type
 }
 function assist(playername, player, helpedPlayer){
 	player.worked = true

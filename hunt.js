@@ -37,7 +37,7 @@ const locationDecay = [30, // arrays count from 0 so add extra item
 module.exports.hunt = (playername, player, rollValue, gameState) =>{
 	player.worked = true
 	mods = 0
-	message = playername+' goes hunting. (roll:'+rollValue+')'
+	message = playername+' goes hunting. ['+rollValue+']'
 	// injury check
 	strMod = 0
 	if (player.strength && player.strength.toLowerCase() == 'strong'.valueOf()){

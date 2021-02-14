@@ -18,7 +18,7 @@ function roll(count){
 //module.exports.hunt = (playername, player, rollValue, gameState) =>{
 //    function gather(playername, player, rollValue,gameState){
 module.exports.gather = (playername, player, rollValue,gameState) => {
-    var message = playername+' gathers (roll='+rollValue+')';
+    var message = playername+' gathers ['+rollValue+']';
 	var netRoll = rollValue
 	modifier = 0
     if (gameState.seasonCounter%2 == 0){
@@ -82,7 +82,7 @@ module.exports.gather = (playername, player, rollValue,gameState) => {
 	player.grain += getGrain
 	if (player.basket > 0){
 		var broll = roll(3)+modifier
-		message+= ' basket: ('+broll+')'
+		message+= ' basket: ['+broll+']'
 		netRoll = broll+modifier
 		console.log('modified basket roll '+netRoll)
 		for (var i = 0; i < gatherData.length;i++){
