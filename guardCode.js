@@ -1,3 +1,5 @@
+const utillib = require("./util.js");
+
 
 module.exports.findGuardValueForChild = (childName, population, children) =>{
 	var guardValue = Number(0);
@@ -82,6 +84,7 @@ module.exports.findLeastGuarded = findLeastGuarded
 module.exports.hyenaAttack= (children, gameState) => {
 	population = gameState.population
 	if (!children || Object.keys(children).length == 0){
+		// this needs to check if children are born
 		return 'No children, no hyena problem '
 	}
 	// get the least guarded message
@@ -93,13 +96,14 @@ module.exports.hyenaAttack= (children, gameState) => {
 	var child = children[leastGuardedName]
 	if (!child){
 		console.log('hyena did not find the child somehow '+leastGuardedName)
-		return response
+		return response+ " but a bug saved the child."
 	}
-	for (guardName in Object.keys(child.guardians)){
-		rollValue = roll(1)
-		target = child.guardians[guardName]
-		console.log(guardName+' rollValue '+rollValue+ ' target '+target)
-		if (rollValue > target){
+	guardians = child.guardians
+	for (guardName in guardians){
+		rollValue = utillib.roll(1)
+		watchValue = guardians[ guardName ]		
+		console.log(guardName+' rollValue '+rollValue+ ' watchValue '+watchValue)
+		if (rollValue > watchValue){
 			response += '\n\tFortunately, '+guardName+' chases off the beast.'
 			return response
 		} else {
@@ -109,3 +113,13 @@ module.exports.hyenaAttack= (children, gameState) => {
 	response += '\n\tThe poor child is devoured!'
 	return response
 }
+function asJson(data){
+	foo = JSON.stringify(data,null,2), err => { 
+		  // Checking for errors 
+		  if (err) {
+			  console.log('error with jsonification of '+fileName+' '+err)
+			  throw err;
+		  }  
+	}
+	return foo;
+  }

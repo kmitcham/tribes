@@ -123,7 +123,7 @@ test('babysitter', () =>{
   expect(Object.keys(children["c1"].guardians).length).toBe(3);
 });
 
-test('compiles', () =>{
+test('devours unwatched child', () =>{
   var gameState = {
     "population": {
       "p1":{
@@ -183,3 +183,54 @@ test('compiles', () =>{
   devoured = response.indexOf("devoured")
   expect(devoured).toBeGreaterThan(0)
 });
+
+// test case: only unborn children
+// test case: many guards on a child (no mock rolls yet, though)
+test('multi-watch checks each guard', () =>{
+  var gameState = {
+    "population": {
+      "p1":{
+        "name": "p1",
+        "worked": false,
+        "isInjured": false,
+        "guarding": [        "c1" ,"cx","cxx","cxxx","cxxxx","cy"       ],
+        "nursing": [          "Ilima"        ]
+    },
+      "p2":{
+          "name": "p2",
+          "worked": false,
+          "isInjured": false,
+          "guarding": ["c1"]
+      }
+     },
+     children : {
+      "c1": {
+          "mother": "p1",
+          "father": "p2",
+          "age": 3,
+          "name": "c1",
+        },
+        "sitter": {
+          "mother": "p1",
+          "father": "p2",
+          "newAdult":true,
+          "age": 15,
+          "babysitting":"c1",
+          "name": "sitter",
+        }
+      },
+    "round": "reproduction"
+}
+  var children = gameState["children"]
+  var population = gameState["population"]
+  response = lib.hyenaAttack(children, gameState)
+  console.log('base response '+response)
+  expect(lib.findGuardValueForChild("c1", population, children)).toBeLessThan(3);
+  expect(children["c1"].guardians).toBeTruthy();
+  expect(Object.keys(children["c1"].guardians).length).toBe(3);
+  expect(response.indexOf('p1')).toBeGreaterThan(0)
+  if (response.indexOf('slips') > 0){
+    expect(response.indexOf('p2')).toBeGreaterThan(0)
+  }
+});
+

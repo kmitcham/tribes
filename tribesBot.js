@@ -67,8 +67,9 @@ bot.on('message', msg => {
 	try {
 		processMessage(msg)
 	} catch (err){
+		alertChannel = bot.channels.cache.find(channel => channel.name === 'general')
 		alertChannel.send('Bot wanted to fall over:')
-		alertChannel.send(err)
+		alertChannel.send(' the error was:'+err.message)
 	}
   });
   
@@ -84,13 +85,13 @@ bot.on('message', msg => {
 		gameState = allGames[msg.channel.name.toLowerCase()]
 		if (!gameState){
 			gameState = savelib.loadTribe(msg.channel.name.toLowerCase());
+			if (!gameState){
+				initGame(msg.channel.name.toLowerCase())
+				msg.reply('starting game with initial conditions')
+				gameState = allGames[msg.channel.name.toLowerCase()]
+			}			
 			allGames[gameState.name] = gameState;
 			console.log("loading game "+msg.channel.name.toLowerCase()+" from file");
-		}
-		if (!gameState){
-			initGame(msg.channel.name.toLowerCase())
-			msg.reply('starting game with initial conditions')
-			gameState = allGames[msg.channel.name.toLowerCase()]
 		}
 	  } else {
 		  gameState = findGameStateForActor(actor)
@@ -1070,7 +1071,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			cName = bits.shift()
 			console.log(' cname is >'+cName+'< '+safety)
 			safety += 1
-	}
+		}
 		return
 	}
 	if (command == 'ignore'){
@@ -1215,7 +1216,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			msg.author.send('You do not have that much food')
 			return	
 		}
-		if (ammount %3  != 0 ){
+		if (amount %3  != 0 ){
 			msg.author.send('Must jerk food in multiples of three to avoid waste.')
 			return
 		}
@@ -1507,6 +1508,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			entry = locationData['hunt'][index]
 			response += '\t\t'+entry[2]+'('+entry[1]+')\n'
 			if (entry[0] <= gameState.gameTrack[locationName] ){
+				response += '\t\t (game track capped)\n'
 				break;
 			}
 		}
@@ -1837,9 +1839,9 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			learnRoll = utillib.roll(2)
 			if ( learnRoll >= 10 ){
 				player.canCraft = true
-				message = actor+' learns to craft. ('+learnRoll+')'
+				message = actor+' learns to craft. ['+learnRoll+']'
 			} else {
-				message = actor+' tries to learn to craft, but does not understand it yet. ('+learnRoll+')'
+				message = actor+' tries to learn to craft, but does not understand it yet. ['+learnRoll+']'
 			}
 			player.activity = 'training'
 		} 
@@ -2017,7 +2019,7 @@ function spawnFunction(mother, father, msg, population, gameState, force = false
 	droll = utillib.roll(1)
 	if (force != false || (mroll+droll) >= spawnChance ){
 		var child = addChild(mother, father, gameState)
-		messageChannel('The mating of '+mother+'('+mroll+') and '+father+'('+droll+') spawned '+child.name, gameState)
+		messageChannel('The mating of '+mother+'['+mroll+'] and '+father+'['+droll+'] spawned '+child.name, gameState)
 		if (gameState.reproductionList){
 			var hasNotMated = gameState.reproductionList.includes(mother)
 			if (hasNotMated){
@@ -2028,7 +2030,7 @@ function spawnFunction(mother, father, msg, population, gameState, force = false
 			}
 		}
 	} else {
-		messageChannel('The mating of '+mother+'('+mroll+') and '+father+'('+droll+') produced only good feelings', gameState)
+		messageChannel('The mating of '+mother+'['+mroll+'] and '+father+'['+droll+'] produced only good feelings', gameState)
 	}
 	var allPregnant = true
 	for (var personName in population){
@@ -2060,7 +2062,7 @@ function specialize( msg, playerName, profession, gameState){
 	}
 	if (profession.startsWith('c')){
 		profession = 'crafter';
-		helpMessage = "Welcome new crafter.  To craft, do `!craft basket` or `!craft spearpoint`, and the game will roll 1d6; you only fail on a 1. \n"
+		helpMessage = "Welcome new crafter.  To craft, do `!craft basket` or `!craft spearhead`.  There is a 1/6 (basket) or 1/3 (spearhead) chance of failing.. \n"
 		helpMessage+= "You can guard up to two children while crafting. \n"
 		helpMessage+= "You can also `!gather`  or `!hunt`, but at a penalty. \n"
 		helpMessage+= "By default, you will train others in crafting if they take a season to train.  To toggle this setting, use `!secrets`.";
@@ -2331,7 +2333,7 @@ function consumeFoodChildren(gameState){
 			for  (var name in population) {
 				player = population[name]
 				if (player.guarding && player.guarding.includes(child.name)){
-					const index = array.indexOf(child.name);
+					const index = player.guarding.indexOf(child.name);
 					if (index > -1) {
 						player.guarding.splice(index, 1);
 						response += name+' stops watching the new adult.'
@@ -2442,7 +2444,7 @@ function startWork(gameState){
 		delete person.activity
 	}
 	messageChannel(utillib.gameStateMessage(gameState), gameState)
-	messageChannel('\nStarting the work round.  Guard your children.  Craft, gather, hunt, assist or train.', gameState)
+	messageChannel('\nStarting the work round.  Guard (or ignore) your children, then craft, gather, hunt, assist or train.', gameState)
 	gameState.workRound = true
 	gameState.foodRound = false
 	gameState.reproductionRound = false
@@ -2609,9 +2611,9 @@ function craft(playername, player, type, rollValue){
 	} else if (rollValue > 2 && type == 'spearhead') {		
 			player.spearhead += 1
 	} else {
-		return playername+ ' fails('+rollValue+') at crafting a '+type
+		return playername+ ' fails['+rollValue+'] at crafting a '+type
 	}
-	return playername+' crafts a '+type
+	return playername+' crafts['+rollValue+'] a '+type
 }
 function assist(playername, player, helpedPlayer){
 	player.worked = true
