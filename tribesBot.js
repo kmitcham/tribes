@@ -141,11 +141,13 @@ function endGame(gameState){
 	for (childName in children){
 		var child = children[childName]
 		if (!child.newAdult){
-			if (utillib.roll(3) <= childSurvivalChance[child.age]){
+			roll = utillib.roll(3)
+			stats = '['+child.age+'yrs, '+roll+' vs '+childSurvivalChance[child.age]+']'
+			if ( roll <= childSurvivalChance[child.age]){
 				child.newAdult = true
-				response += '\t'+childName+' grows up\n'
+				response += '\t'+childName+' grows up '+stats+'\n'
 			} else {
-				response += '\t'+childName+' dies young\n'
+				response += '\t'+childName+' dies young '+stats+'\n'
 				kill(childName, 'endgame scoring', gameState)
 			}
 		}
@@ -975,13 +977,13 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			cleanUpMessage(msg);; 
 			return
 		}
-		if (type == 'spearhead' && player && player.activity 
+		if (type == 'spearhead' && player && player.activity && gameState.workRound
 			&& ( player.activity == 'hunt' || player.activity == 'assist')){
 			msg.author.send('The game suspects you used that item to work with.  Ask the referee to help trade it if you did not.')
 			cleanUpMessage(msg);; 
 			return
 		}
-		if ( type =='basket' && player && player.activity && player.activity == 'gather'){
+		if ( type =='basket' && player && player.activity && player.activity == 'gather' && gameState.workRound ){
 		msg.author.send('The game suspects you used that item to work with.  Ask the referee to help trade it if you did not.')
 		cleanUpMessage(msg);; 
 		return
@@ -1475,7 +1477,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 	}
 	if (command === 'sacrifice'){
 		syntaxMessage = 'Sacrifice syntax is sacrifice  <amount> <food|grain|spearhead|basket>'
-		if (bits.length < 3){
+		if (bits.length < 3 ){
 			msg.author.send(syntaxMessage)
 			cleanUpMessage(msg);; 
 			return
@@ -1493,9 +1495,29 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			msg.author.send('Can not sacrifice negative amounts')
 			cleanUpMessage(msg);; 
 			return
-		}			
+		}
+		if (! population[actor] || ! population[actor][type]  ){
+			msg.author.send('You have no goods in this tribe.')
+			cleanUpMessage(msg);; 
+			return
+		}	
 		if (  population[actor][type] >= amount){
-			messageChannel(actor+' sacrifices '+amount+' '+type, gameState)
+			ritualResults = [
+				 'You feel a vague sense of unease.'
+				,'A hawk flies directly overhead.'
+				,'There is the distant sound of thunder'
+				,'The campfire flickers brightly.'
+				,'You feel a vague sense of unease.'
+				,'The sun goes behind a cloud.'
+				,'The night goes very still and quiet when the ritual is complete.'
+				,'An owl hoots three times.'
+				,'In the distance, a wolf howls.'
+				,'You remember the way your mother held you as a child.'
+				,'You feel protected.'
+			]
+			random = utillib.roll(2);
+			rndMsg = ritualResults[random-2]+'\n';
+			messageChannel(actor+' deliberately destroys '+amount+' '+type+' as part of a ritual.\n'+rndMsg, gameState)
 			population[actor][type] -= Number(amount)
 		} else {
 			msg.author.send('You do not have that many '+type+': '+ population[actor][type])
@@ -2016,7 +2038,7 @@ function nextMating(currentInviterName, gameState){
 	if (gameState.reproductionList.length > 0){
 		messageChannel(gameState.reproductionList[0]+ " should now !invite people to reproduce, or !pass ", gameState)
 		eligibleMates = reproLib.eligibleMates(gameState.reproductionList[0], gameState.population)
-		messageChannel("Valid targets to invite: "+reproLib.eligibleMates)
+		messageChannel("Valid targets to invite: "+reproLib.eligibleMates(), gameState)
 		messageChannel("People who have not yet invited: "+gameState.reproductionList, gameState)
 		return
 	} else {

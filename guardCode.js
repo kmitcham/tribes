@@ -92,7 +92,7 @@ module.exports.hyenaAttack= (children, gameState) => {
 	//  this is stupid and hacky; take the name from the start of the message, and the value from the last bit
 	leastGuardedName = leastGuardedMessageArray[0]
 	lowGuardValue = Number(leastGuardedMessageArray[10])
-	response = 'A hyena attacks '+leastGuardedName+' \n' // exclamation point breaks simple string splitting elsewhere
+	response = 'A hyena attacks '+leastGuardedName // exclamation point breaks simple string splitting elsewhere
 	var child = children[leastGuardedName]
 	if (!child){
 		console.log('hyena did not find the child somehow '+leastGuardedName)
@@ -104,10 +104,10 @@ module.exports.hyenaAttack= (children, gameState) => {
 		watchValue = guardians[ guardName ]		
 		console.log(guardName+' rollValue '+rollValue+ ' watchValue '+watchValue)
 		if (rollValue > watchValue){
-			response += '\n\tFortunately, '+guardName+' chases off the beast.'
+			response += '\n\tFortunately, '+guardName+'['+rollValue+ '] chases off the beast.'
 			return response
 		} else {
-			response += '\n\tThe hyena slips past '+guardName
+			response += '\n\tThe hyena slips past '+guardName+'['+rollValue+ ']'
 		}
 	}
 	response += '\n\tThe poor child is devoured!'

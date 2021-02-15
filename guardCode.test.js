@@ -179,7 +179,7 @@ test('devours unwatched child', () =>{
   expect(lib.findGuardValueForChild("unwatched", population, children)).toBe(0);
   msgArray = response.split(' ')
   target = msgArray[3]
-  expect(target).toBe("unwatched")
+  expect(target.indexOf("unwatched")).toBeGreaterThan(-1)
   devoured = response.indexOf("devoured")
   expect(devoured).toBeGreaterThan(0)
 });
