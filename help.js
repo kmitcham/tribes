@@ -2,7 +2,7 @@ function playerHelp(){
     	text = ''
 		text+='### Player commands ###\n'
 		text+=' !babysit <adult child> <target child> (a mother can ask her adult child to watch a child)\n'
-		text+=' !children (shows the children ages and food status)\n'
+		text+=' !children [parent name] (shows the children ages and food status, optionally filtered to descendants)\n'
 		text+=' !give <amt> <food|grain|spearhead|basket> <player>\n'
 		text+=' !graveyard (list of all deceased members and children)\n'
 		text+=' !inventory <target|all>  (show inventory and character info. No arg means self)\n'

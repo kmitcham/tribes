@@ -637,14 +637,40 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 	if (command == 'children'){
 		response = ''
 		childNames = Object.keys(children)
-		response = 'There are '+childNames.length+' children \n'
+		response = 'There are '+childNames.length+' children in total. \n'
 		mine = 0 
-		var arrayLength = childNames.length;
+		var notPrintedNewAdultHeader = true;
+		var notStartedMiddleChildren = true;
+		var notStartedYoungChildren = true;
+		var notStartedUnborn = true;
+		if (bits[1]){
+			response += 'The descendants of '+bits[1]+' are:\n'
+		}
 		for (childName in children) {
 			child = children[childName]
+			if (bits[1] && !(child.mother == bits[1] || child.father == bits[1])){
+				continue
+			}
 			if (child.dead){
-				response += '('+childName+' is dead)'
+				//response += '('+childName+' is dead)\n';
+				// skip the dead
 			} else {
+				if (child.age >= 24 && notPrintedNewAdultHeader){
+					response += '-----> New Adults <-----\n'
+					notPrintedNewAdultHeader = false;
+				}
+				if (child.age < 24 && notStartedMiddleChildren){
+					response += '-----> Children <-----\n'
+					notStartedMiddleChildren = false;
+				}		
+				if (child.age < 4 && notStartedYoungChildren){
+					response += '-----> Young Children <-----\n'
+					notStartedYoungChildren = false;
+				}		//notStartedUnborn
+				if (child.age < 0 && notStartedUnborn){
+					response += '-----> Unborn <-----\n'
+					notStartedUnborn = false;
+				}		
 				response += '('+childName+':'+child.gender
 				response += ' years:'+((child.age)/2)
 				if (child.newAdult){

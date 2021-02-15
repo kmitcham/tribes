@@ -26,7 +26,7 @@ function eligibleMates(name, population, debug=false){
         if (debug) {console.log("possible match!")}
 		potentialMatches.push(matchName)
     }
-    console.log('matched ='+potentialMatches)
+    if (debug) {console.log('matched ='+potentialMatches)}
 	if (potentialMatches.length > 0){
 		response = potentialMatches.join(', ')
 	} else {
