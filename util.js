@@ -47,3 +47,8 @@ function randomMemberName(population){
 	return nameList[random]
 }
 module.exports.randomMemberName = randomMemberName;
+
+function round(number){
+	return Math.round(10*number)/10;
+}
+module.exports.round = round;

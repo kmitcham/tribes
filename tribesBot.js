@@ -643,12 +643,20 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		var notStartedMiddleChildren = true;
 		var notStartedYoungChildren = true;
 		var notStartedUnborn = true;
+		var filterName = 'NoOneHasThisNameEver';
 		if (bits[1]){
-			response += 'The descendants of '+bits[1]+' are:\n'
+			player = getUserFromMention(bits[1])
+			if (! player){
+				msg.author.send("No such player "+bits[1]);
+				cleanUpMessage(msg);
+				return
+			}
+			filterName = player.username
+			response += 'The descendants of '+filterName+' are:\n'
 		}
 		for (childName in children) {
 			child = children[childName]
-			if (bits[1] && !(child.mother == bits[1] || child.father == bits[1])){
+			if (filterName != 'NoOneHasThisNameEver' && !(child.mother == filterName || child.father == filterName) ) {
 				continue
 			}
 			if (child.dead){
@@ -680,7 +688,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 				} 
 				response += ' parents:'+child.mother+'+'+child.father
 				if (child.age >= 0  && child.age < 24 ){
-					response += ' guardValue:'+ guardlib.findGuardValueForChild(childName, population, children)
+					response += ' guardValue:'+ utillib.round(guardlib.findGuardValueForChild(childName, population, children))
 				}
 				if (child.babysitting){
 					response += ' watching:'+child.babysitting+' '
@@ -2063,8 +2071,8 @@ function nextMating(currentInviterName, gameState){
 	gameState.reproductionList.shift()
 	if (gameState.reproductionList.length > 0){
 		messageChannel(gameState.reproductionList[0]+ " should now !invite people to reproduce, or !pass ", gameState)
-		eligibleMates = reproLib.eligibleMates(gameState.reproductionList[0], gameState.population)
-		messageChannel("Valid targets to invite: "+reproLib.eligibleMates(), gameState)
+		eligibleMatesMessage = reproLib.eligibleMates(gameState.reproductionList[0], gameState.population)
+		messageChannel("Valid targets to invite: "+eligibleMatesMessage, gameState)
 		messageChannel("People who have not yet invited: "+gameState.reproductionList, gameState)
 		return
 	} else {
