@@ -1402,16 +1402,22 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		return 	
 	}
 	if (command == 'ready'){
-		message = 'Nobody seems ready for much of anything right now.'
+		var message = 'Nobody seems ready for much of anything right now.'
 		if (gameState.workRound){
 			message = "People available to work: "+listReadyToWork(population)
 		}	
 		if (gameState.reproductionRound && gameState.reproductionList ){
-			message = "The mating invitation order is "+gameState.reproductionList
+			message = "The mating invitation order is "+gameState.reproductionList.join(", ")+"\n"
+			var cleanName = gameState.reproductionList[0]
+			if (cleanName.indexOf('(') > 0){
+				startParen = cleanName.indexOf('(')
+				cleanName = cleanName.substring(0, startParen)
+			}
+			message += "Available partners: "+reproLib.eligibleMates(cleanName, gameState.population)
 			for (personName in population){
 				if (population[personName].invite){
 					message += '\n'+personName+' is awaiting a response from '+population[personName].invite;
-				}
+				} 
 			}
 		}
 		messageChannel(message,gameState)
@@ -1999,9 +2005,14 @@ function nextMating(currentInviterName, gameState){
 	gameState.reproductionList.shift()
 	if (gameState.reproductionList.length > 0){
 		messageChannel(gameState.reproductionList[0]+ " should now !invite people to reproduce, or !pass ", gameState)
-		eligibleMatesMessage = reproLib.eligibleMates(gameState.reproductionList[0], gameState.population)
-		messageChannel("Valid targets to invite: "+eligibleMatesMessage, gameState)
-		messageChannel("People who have not yet invited: "+gameState.reproductionList, gameState)
+		var cleanName = gameState.reproductionList[0]
+		if (cleanName.indexOf('(') > 0){
+			startParen = cleanName.indexOf('(')
+			cleanName = cleanName.substring(0, startParen)
+		}
+		eligibleMatesMessage = reproLib.eligibleMates(cleanName, gameState.population)
+		messageChannel("Available partners to invite: "+eligibleMatesMessage, gameState)
+		messageChannel("People who have not yet invited: "+gameState.reproductionList.join(', '), gameState)
 		return
 	} else {
 		messageChannel('Reproduction round is over.  Time for the chance roll', gameState)

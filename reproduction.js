@@ -2,13 +2,7 @@
 
 
 function eligibleMates(name, population, debug=false){
-	var cleanName = name
-	if (name.indexOf('(') > 0){
-		startParen = name.indexOf('(')
-		cleanName = name.substring(0, startParen)
-		console.log('name '+name+' clean >'+cleanName+'<')
-	}
-	matcher = population[cleanName]
+	matcher = population[name]
 	var potentialMatches = []
     var response = ""
 	if (!matcher){
@@ -37,7 +31,8 @@ function eligibleMates(name, population, debug=false){
 		response = potentialMatches.join(', ')
 	} else {
 		response = "No eligible partners-"+name+" should pass."
-    }
+	}
+	if (debug) {console.log("response:"+response)}
     return response
 }
 module.exports.eligibleMates = eligibleMates;
