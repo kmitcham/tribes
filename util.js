@@ -3,7 +3,6 @@ function isColdSeason(gameState){
 	return (gameState.seasonCounter%2 == 0);
 }
 
-
 function roll(count){
 		if (!count){
 			count = 3
@@ -17,6 +16,50 @@ function roll(count){
 }
 function getYear(gameState){
 	return gameState.seasonCounter/2;
+}
+
+function personByName(name, gameState){
+	if (name == null){
+		console.log('attempt to find person for null name '+name)
+		return null
+	}
+	if (!gameState || gameState.population == null){
+		console.log('no people yet, or gameState is otherwise null')
+		return
+	}
+	if (name.indexOf('(') != -1){
+		name = name.substring(0, name.indexOf('('))
+		console.log('paren name was '+name)
+	}
+	var person = null
+	var population = gameState.population;
+	if (population[name] != null){
+		 person = population[name]
+	} else if (name && population[name.username] != null){
+		person = population[name.username]
+	} else if (name.indexOf('@') != -1 && population[name.substring(1)] != null){
+		person = population[name.substring(1)]
+	} else {
+		for (match in population){
+			if (match.toLowerCase() == name.toLowerCase()){
+				person = population[match]
+				break;
+			}
+		}
+	}
+	if (person != null){
+		for (var type in person) {
+			if (Object.prototype.hasOwnProperty.call( person, type)) {
+				if (person[type] && person[type].constructor === Array && person[type].length == 0){
+					console.log('deleting empty array for '+type)
+					delete person[type]
+				}
+			}
+		}
+		return person
+	}
+	console.log("tribe "+gameState.name+" has no such person in population:"+name)
+	return null
 }
 
 module.exports.gameStateMessage= (gameState) =>{
@@ -36,6 +79,7 @@ module.exports.gameStateMessage= (gameState) =>{
 function capitalizeFirstLetter(string) {
 	return string.charAt(0).toUpperCase() + string.slice(1);
 }
+module.exports.personByName = personByName;
 module.exports.roll = roll;
 module.exports.isColdSeason = isColdSeason;
 module.exports.getYear = getYear;
@@ -84,3 +128,7 @@ function personByName(name, gameState){
 }
 
 module.exports.personByName = personByName;
+function round(number){
+	return Math.round(10*number)/10;
+}
+module.exports.round = round;

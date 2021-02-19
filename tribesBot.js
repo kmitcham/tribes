@@ -10,6 +10,7 @@ const savelib = require("./save.js");
 const helplib = require("./help.js");
 const violencelib = require("./violence.js");
 const reproLib = require("./reproduction.js");
+var childlib = require("./children.js");
 
 var bot = new Discord.Client()
 var logger = require('winston');
@@ -145,7 +146,7 @@ function endGame(gameState){
 		if (!child.newAdult){
 			if (util.roll(3) <= childSurvivalChance[child.age]){
 				child.newAdult = true
-				response += '\t'+childName+' grows up\n'
+				response += '\t'+childName+' grows up '+stats+'\n'
 			} else {
 				response += '\t'+childName+' dies young\n'
 				killlib.kill(childName, 'endgame scoring', gameState)
@@ -251,46 +252,12 @@ function getUserFromMention(mention) {
 function findGameStateForActor(actor){
 	for (var gameName in allGames){
 		gameState = allGames[gameName]
-		if (gameState && util.personByName(actor, gameState)){
+		if (gameState && utillib.personByName(actor, gameState)){
 			console.log('found game '+gameName+' for '+actor)
 			return gameState
 		}
 	}
 	console.log('Found no game for '+actor)
-	return null
-}
-function util.personByName(name, gameState){
-	if (name == null){
-		console.log('attempt to find person for null name '+name)
-		return null
-	}
-	if (!gameState || gameState.population == null){
-		console.log('no people yet, or gameState is otherwise null')
-		return
-	}
-	if (name.indexOf('(') != -1){
-		name = name.substring(0, name.indexOf('('))
-	}
-	var person = null
-	if (gameState.population[name] != null){
-		 person = gameState.population[name]
-	} else if (name && gameState.population[name.username] != null){
-		person = gameState.population[name.username]
-	} else if (name.indexOf('@') != -1 && population[name.substring(1)] != null){
-		person = gameState.population[name.substring(1)]
-	}
-	if (person != null){
-		for (var type in person) {
-			if (Object.prototype.hasOwnProperty.call( person, type)) {
-				if (person[type] && person[type].constructor === Array && person[type].length == 0){
-					console.log('deleting empty array for '+type)
-					delete person[type]
-				}
-			}
-		}
-		return person
-	}
-	console.log("tribe "+gameState.name+" has no such person in population:"+name)
 	return null
 }
 
@@ -469,6 +436,7 @@ function doChance(rollValue, gameState){
 
 async function handleCommand(msg, author, actor, command, bits, gameState){
 	player = util.personByName(actor, gameState)
+
 	population = gameState.population
 	children = gameState.children
 	graveyard = gameState.graveyard
@@ -600,8 +568,11 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		}
 		var target = msg.mentions.users.first()
 		targetName = target.username
+		
 		if (target ){
 			if (population[targetName]){
+				person = utillib.personByName(targetName, gameState)
+				gameState.banished[targetName] = person;
 				delete population[target.username]
 				messageChannel(target.username+' is banished from the tribe',gameState)
 				return
@@ -636,32 +607,25 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 	// list the children
 	if (command == 'children'){
 		response = ''
-		childNames = Object.keys(children)
-		response = 'There are '+childNames.length+' children \n'
-		mine = 0 
-		var arrayLength = childNames.length;
-		for (childName in children) {
-			child = children[childName]
-			if (child.dead){
-				response += '('+childName+' is dead)'
+		if (bits[1]){
+			var filterName = ''
+			user = getUserFromMention(bits[1])
+			if (user ){
+				filterName = user.username
 			} else {
-				response += '('+childName+':'+child.gender
-				response += ' years:'+((child.age)/2)
-				if (child.newAdult){
-					response += ' Full grown!'
-				} else {
-					response += ' needs '+(2-child.food)+' food'
-				} 
-				response += ' parents:'+child.mother+'+'+child.father
-				if (child.age >= 0  && child.age < 24 ){
-					response += ' guardValue:'+ guardlib.findGuardValueForChild(childName, population, children)
-				}
-				if (child.babysitting){
-					response += ' watching:'+child.babysitting+' '
-				}
-				response += ')\n'
+				person = utillib.personByName(bits[1], gameState)
+				if (person){filterName = person.name}
 			}
-		} 
+			if (!filterName ){
+				response = 'Could not find '+bits[1]
+			} else {
+				response += 'The descendants of '+filterName+' are:\n'
+				response = childlib.showChildren(children, filterName)
+			}
+		} else {
+			response = childlib.showChildren(children)
+		}
+		
 		msg.author.send(response)
 		cleanUpMessage(msg);; 
 		return
@@ -853,6 +817,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		value = bits[3]
 		console.log('edit '+targetName+' '+key+' '+value )
 		person = util.personByName(targetName, gameState)
+
 		if (person){
 			person[key] = value
 			message = targetName+ ' now has values: '
@@ -1016,13 +981,13 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			cleanUpMessage(msg);; 
 			return
 		}
-		if (type == 'spearhead' && player && player.activity 
+		if (type == 'spearhead' && player && player.activity && gameState.workRound
 			&& ( player.activity == 'hunt' || player.activity == 'assist')){
 			msg.author.send('The game suspects you used that item to work with.  Ask the referee to help trade it if you did not.')
 			cleanUpMessage(msg);; 
 			return
 		}
-		if ( type =='basket' && player && player.activity && player.activity == 'gather'){
+		if ( type =='basket' && player && player.activity && player.activity == 'gather' && gameState.workRound ){
 		msg.author.send('The game suspects you used that item to work with.  Ask the referee to help trade it if you did not.')
 		cleanUpMessage(msg);; 
 		return
@@ -1071,6 +1036,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			return		
 		}
 		person = util.personByName(actor, gameState)
+
 		if (!person){
 			msg.author.send('you are not a person')
 			return
@@ -1100,8 +1066,6 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 				msg.author.send('Could not find child: '+childName)
 			}else if (person.guarding && person.guarding.indexOf(childName) != -1 ){
 				msg.author.send('You are already guarding '+childName)
-			} else if (child.age < 0){
-				msg.author.send('You can not watch an unborn child ')
 			} else {
 				if (person.guarding){
 					person.guarding.push(childName)
@@ -1211,15 +1175,15 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		return
 	}
 	if (command == 'inventory'){
-		var targetName = bits[1]
+		var targetName = '';
+		if (bits[1]){
+			targetName = bits[1]
+		}
 		if (msg.mentions.users.first()){
 			targetName = msg.mentions.users.first().username
 		}
-		if (!targetName){
-			targetName = actor
-		}
 		response = 'error'
-		if (targetName == 'all'){
+		if (!targetName || targetName == 'all' ){
 			response = 'Whole Tribe Inventory:'
 			for (var personName in gameState.population){
 				person = util.personByName(personName, gameState)
@@ -1227,6 +1191,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			}
 		}else {
 			person = util.personByName(targetName, gameState)
+
 			if (!person || person == null){
 				msg.author.send(target+' does not seem to be a person')
 				return
@@ -1474,16 +1439,22 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		return 	
 	}
 	if (command == 'ready'){
-		message = 'Nobody seems ready for much of anything right now.'
+		var message = 'Nobody seems ready for much of anything right now.'
 		if (gameState.workRound){
 			message = "People available to work: "+listReadyToWork(population)
 		}	
 		if (gameState.reproductionRound && gameState.reproductionList ){
-			message = "The mating invitation order is "+gameState.reproductionList
+			message = "The mating invitation order is "+gameState.reproductionList.join(", ")+"\n"
+			var cleanName = gameState.reproductionList[0]
+			if (cleanName.indexOf('(') > 0){
+				startParen = cleanName.indexOf('(')
+				cleanName = cleanName.substring(0, startParen)
+			}
+			message += "Available partners: "+reproLib.eligibleMates(cleanName, gameState.population)
 			for (personName in population){
 				if (population[personName].invite){
 					message += '\n'+personName+' is awaiting a response from '+population[personName].invite;
-				}
+				} 
 			}
 		}
 		messageChannel(message,gameState)
@@ -1511,7 +1482,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 	}
 	if (command === 'sacrifice'){
 		syntaxMessage = 'Sacrifice syntax is sacrifice  <amount> <food|grain|spearhead|basket>'
-		if (bits.length < 3){
+		if (bits.length < 3 ){
 			msg.author.send(syntaxMessage)
 			cleanUpMessage(msg);; 
 			return
@@ -1529,9 +1500,29 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			msg.author.send('Can not sacrifice negative amounts')
 			cleanUpMessage(msg);; 
 			return
-		}			
+		}
+		if (! population[actor] || ! population[actor][type]  ){
+			msg.author.send('You have no goods in this tribe.')
+			cleanUpMessage(msg);; 
+			return
+		}	
 		if (  population[actor][type] >= amount){
-			messageChannel(actor+' sacrifices '+amount+' '+type, gameState)
+			ritualResults = [
+				 'You feel a vague sense of unease.'
+				,'A hawk flies directly overhead.'
+				,'There is the distant sound of thunder'
+				,'The campfire flickers brightly.'
+				,'You feel a vague sense of unease.'
+				,'The sun goes behind a cloud.'
+				,'The night goes very still and quiet when the ritual is complete.'
+				,'An owl hoots three times.'
+				,'In the distance, a wolf howls.'
+				,'You remember the way your mother held you as a child.'
+				,'You feel protected.'
+			]
+			random = utillib.roll(2);
+			rndMsg = ritualResults[random-2]+'\n';
+			messageChannel(actor+' deliberately destroys '+amount+' '+type+' as part of a ritual.\n'+rndMsg, gameState)
 			population[actor][type] -= Number(amount)
 		} else {
 			msg.author.send('You do not have that many '+type+': '+ population[actor][type])
@@ -2051,9 +2042,14 @@ function nextMating(currentInviterName, gameState){
 	gameState.reproductionList.shift()
 	if (gameState.reproductionList.length > 0){
 		messageChannel(gameState.reproductionList[0]+ " should now !invite people to reproduce, or !pass ", gameState)
-		eligibleMates = reproLib.eligibleMates(gameState.reproductionList[0], gameState.population)
-		messageChannel("Valid targets to invite: "+reproLib.eligibleMates)
-		messageChannel("People who have not yet invited: "+gameState.reproductionList, gameState)
+		var cleanName = gameState.reproductionList[0]
+		if (cleanName.indexOf('(') > 0){
+			startParen = cleanName.indexOf('(')
+			cleanName = cleanName.substring(0, startParen)
+		}
+		eligibleMatesMessage = reproLib.eligibleMates(cleanName, gameState.population)
+		messageChannel("Available partners to invite: "+eligibleMatesMessage, gameState)
+		messageChannel("People who have not yet invited: "+gameState.reproductionList.join(', '), gameState)
 		return
 	} else {
 		messageChannel('Reproduction round is over.  Time for the chance roll', gameState)
@@ -2351,7 +2347,8 @@ function consumeFoodChildren(gameState){
 				if (birthRoll < 5 ){
 					response += ' but the child did not survive\n'
 					child.dead = true
-					perishedChildren.push(childName)
+					kill(child.name, 'birth complications', gameState)
+					console.log('removing stillborn '+child.name)
 					continue;
 				} else {
 					response += '\n'

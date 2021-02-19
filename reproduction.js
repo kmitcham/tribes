@@ -3,10 +3,10 @@
 
 function eligibleMates(name, population, debug=false){
 	matcher = population[name]
-    var potentialMatches = []
+	var potentialMatches = []
     var response = ""
 	if (!matcher){
-		return "could not find "+name+" in the tribe"
+		return "could not find "+cleanName+" in the tribe"
 	}
 	for (var matchName in population){
         if (debug) {console.log("checking "+matchName)}
@@ -26,12 +26,13 @@ function eligibleMates(name, population, debug=false){
         if (debug) {console.log("possible match!")}
 		potentialMatches.push(matchName)
     }
-    console.log('matched ='+potentialMatches)
+    if (debug) {console.log('matched ='+potentialMatches)}
 	if (potentialMatches.length > 0){
 		response = potentialMatches.join(', ')
 	} else {
 		response = "No eligible partners-"+name+" should pass."
-    }
+	}
+	if (debug) {console.log("response:"+response)}
     return response
 }
 module.exports.eligibleMates = eligibleMates;
