@@ -1,3 +1,4 @@
+const violencelib = require("./violence.js");
 
 function isColdSeason(gameState){
 	return (gameState.seasonCounter%2 == 0);
@@ -62,17 +63,41 @@ function personByName(name, gameState){
 	return null
 }
 
+module.exports.findGameStateForActor = (actor) => {
+	for (var gameName in allGames){
+		gameState = allGames[gameName]
+		if (gameState && util.personByName(actor, gameState)){
+			console.log('found game '+gameName+' for '+actor)
+			return gameState
+		}
+		console.log('Did not find '+actor+' in game '+gameState.name)
+	}
+	console.log('Found no game for '+actor)
+	return null
+}
+
 module.exports.gameStateMessage= (gameState) =>{
-	message = "Year "+(gameState.seasonCounter/2)+', '
+	var numAdults = (Object.keys(gameState.population)).length
+	var numKids = (Object.keys(gameState.children)).length
+	var message = "Year "+(gameState.seasonCounter/2)+', '
 	season = 'warm season.'
 	if (isColdSeason(gameState)){
 		season = 'cold season.'
 	}
-	var numAdults = (Object.keys(gameState.population)).length
-	var numKids = (Object.keys(gameState.children)).length
-
-	message+=season+'The '+gameState.name+' tribe has '+numAdults+' adults and '+numKids+' children'
-	message+= ' The '+gameState.currentLocationName+' game track is at '+ gameState.gameTrack[gameState.currentLocationName]
+	message+= season+'\n';
+	message+= 'The '+gameState.name+' tribe has '+numAdults+' adults and '+numKids+' children\n'
+	message+= 'The '+gameState.currentLocationName+' game track is at '+ gameState.gameTrack[gameState.currentLocationName]+'\n'
+	if (gameState.demand){ 
+		message+= '\nThe DEMAND is:'+gameState.demand+'\n'
+		message+= violencelib.getFactionResult(gameState)
+	}
+	if (gameState.violence){ 
+		message+= '\nVIOLENCE has erupted over this demand: '+gameState.violence+'\n'
+		message+= violencelib.resolveViolence(gameState)+'\n';
+	}
+	if (gameState.workRound ) {message += '  (work round)'}
+	if (gameState.foodRound ) {message += '  (food round)'}
+	if (gameState.reproductionRound ) {message += '  (reproduction invitation order:'+gameState.reproductionList+')'}
 	return message
 }
 
@@ -92,43 +117,21 @@ function randomMemberName(population){
 }
 module.exports.randomMemberName = randomMemberName;
 
-function personByName(name, gameState){
-	if (name == null){
-		console.log('attempt to find person for null name '+name)
-		return null
-	}
-	if (!gameState || gameState.population == null){
-		console.log('no people yet, or gameState is otherwise null')
-		return
-	}
-	if (name.indexOf('(') != -1){
-		name = name.substring(0, name.indexOf('('))
-	}
-	var person = null
-	if (gameState.population[name] != null){
-		 person = gameState.population[name]
-	} else if (name && gameState.population[name.username] != null){
-		person = gameState.population[name.username]
-	} else if (name.indexOf('@') != -1 && population[name.substring(1)] != null){
-		person = gameState.population[name.substring(1)]
-	}
-	if (person != null){
-		for (var type in person) {
-			if (Object.prototype.hasOwnProperty.call( person, type)) {
-				if (person[type] && person[type].constructor === Array && person[type].length == 0){
-					console.log('deleting empty array for '+type)
-					delete person[type]
-				}
-			}
-		}
-		return person
-	}
-	console.log("tribe "+gameState.name+" has no such person in population:"+name)
-	return null
-}
-
-module.exports.personByName = personByName;
 function round(number){
 	return Math.round(10*number)/10;
 }
 module.exports.round = round;
+
+function messageChannel(message, gameState, bot){
+	if (!bot){
+		return;
+	}
+	channel = bot.channels.cache.find(channel => channel.name === gameState.name)
+	if (channel){
+		channel.send(message)
+	} else {
+		console.log('no channel found for '+gameState.name)
+		message.author.send('ERROR: failed to find channel to tell it this: '+message);
+	}
+}
+module.exports.messageChannel = messageChannel;

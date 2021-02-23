@@ -1,7 +1,7 @@
 const utillib = require("./util.js");
 const guardlib = require("./guardCode.js");
 
-module.exports.showChildren =  (children, filterName="" ) =>{
+module.exports.showChildren =  (children, population, filterName="" ) =>{
 		response = ''
 		childNames = Object.keys(children)
 		response = 'There are '+childNames.length+' children in total. \n'

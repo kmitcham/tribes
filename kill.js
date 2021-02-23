@@ -3,13 +3,14 @@ const guardlib = require("./guardCode.js");
 
 
 module.exports.kill = (name, message, gameState) =>{
-	console.log("Killing "+name+" due to "+message+" at "+gameState.seasonCounter);
+	console.log("Killing "+name+" due to "+message+" at seasonCount "+gameState.seasonCounter);
 	population = gameState.population
 	children = gameState.children
 	childName = utillib.capitalizeFirstLetter(name)
 	if (! message || message == ''){
 		message = 'unknown causes'
 	}
+	if ("graveyard" in gameState){} else { gameState.graveyard = {} }
 	person = utillib.personByName(name, gameState)
 	if (person){
 		person.deathMessage = message

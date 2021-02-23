@@ -1,18 +1,22 @@
-function playerHelp(){
+function playerHelpBasic(){
     	text = ''
-		text+='### Player commands ###\n'
+		text+='-=General Commands=-\n'
 		text+=' !babysit <adult child> <target child> (a mother can ask her adult child to watch a child)\n'
 		text+=' !children [parent name] (shows the children ages and food status, optionally filtered to descendants)\n'
 		text+=' !give <amt> <food|grain|spearhead|basket> <player>\n'
 		text+=' !graveyard (list of all deceased members and children)\n'
 		text+=' !inventory <target|all>  (show inventory and character info. No arg means self)\n'
 		text+=' !laws (see the current list of laws)\n'
-		text+=' !sacrifice <amount> <type>  (place an item beyond use for religious or other reasons'
+		text+=' !sacrifice <amount> <type>  (place an item beyond use for religious or other reasons)\n'
 		text+=' !scout <location> (examine the envionment, default is current location)\n'
 		text+=' !secrets (toggle the state of willingness to teach others to craft)\n'
 		text+=' !specialize <hunter|gatherer|crafter>(at the start of the game)\n'
 		text+=' !status (see the current location, year, season and local game)\n'
 		text+=' !vote <target>  (your choice for chief)\n'
+		return text;
+}
+function playerHelpRounds(){
+	text = ''
 		text+='-=Work Round Commands=-\n'
 		text+=' !guard | !ignore <child> [<more childNames>] (take on child care responsibilities for the child)\n'
 		text+=' !leastguarded (shows the least supervised child (ties resolved randomly))\n'
@@ -31,6 +35,16 @@ function playerHelp(){
 		text+=' !invite <target>\n'
 		text+=' !consent (agree to a mating invitation)\n'
 		text+=' !pass (decline a mating, or end the members invitation turn)\n'
+		return text;
+}
+function playerHelpConflict(){
+	text = '';
+		text+=' -=Conflict Commands=-\n'
+		text+=' !demand <text of your demand>  (You want this to happen, and you are willing to kill or die about it)\n'
+		text+=' !faction <for|against|neutral> (Where you stand on the current DEMAND before the tribe; you must choose for the game to continue)\n'
+		text+=' !attack <target> (attempt to harm another member of the tribe during violence)\n'
+		text+=' !defend (stand your ground against attacks during violence)\n'
+		text+=' !run (flee the violence, conceding to the opposition during violence)\n'
         return text;
 }
 
@@ -68,7 +82,9 @@ function refHelp(){
     return text;
 }
 
-module.exports.playerHelp = playerHelp;
+module.exports.playerHelpBasic = playerHelpBasic;
+module.exports.playerHelpRounds = playerHelpRounds;
+module.exports.playerHelpConflict = playerHelpConflict;
 
 module.exports.chiefHelp = chiefHelp;
 
