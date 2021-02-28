@@ -260,8 +260,10 @@ const resolveViolence = (gameState) =>{
         attacker = population[attackerName]
         targetName = attacker.attack_target
         if (defenderTargets[targetName]){
+            console.log(' defenderTargets adds '+attackerName)
             defenderTargets[targetName].push(attackerName)
         } else {
+            console.log(' defenderTargets initialized with '+attackerName)
             defenderTargets[targetName] = [attackerName]
         }
     }
@@ -270,6 +272,7 @@ const resolveViolence = (gameState) =>{
         attackers = defenderTargets[defenderName]
         var randomIndex =  Math.trunc( Math.random ( ) * attackers.length )
         targetName = attackers[randomIndex]
+        console.log('defender first strike vs '+attackerName)
         attacker = util.personByName(defenderName, gameState);
         if (attacker.strategy == "defend"){
             defender = util.personByName(targetName, gameState);
@@ -279,8 +282,13 @@ const resolveViolence = (gameState) =>{
     }
     for (attackerName of attackers){
         attacker = util.personByName(attackerName, gameState);
+        if (!attacker){
+            // Defender first strike wins
+            continue
+        }
         targetName = attacker.attack_target
         defender = util.personByName(targetName, gameState);
+        console.log(attackerName+' attacks '+targetName)
         roll = util.roll(2)
         response += resolveSingleAttack(attacker, defender, roll, gameState)
     }
@@ -292,6 +300,13 @@ const resolveViolence = (gameState) =>{
             response += playerName+' runs away from the fighting.\n'
             delete runner.strategy 
         }
+    }
+    // reset the strategies
+    for (playerName in population){
+        player = population[playerName]
+        delete player.strategy
+        delete player.attack_target
+        response += '\nA round of combat has ended.  Everyone who has not escaped needs to choose a strategy'
     }
     util.messageChannel(response, gameState)
     return response

@@ -75,11 +75,11 @@ bot.on('message', msg => {
 		alertChannel.send('Bot wanted to fall over:')
 		alertChannel.send(' the error was:'+err.message)
 		console.log('error:'+err.message)
-		console.log('error:'+err.stack())
+		console.log('error:'+err.stack)
 	}
   });
   
-  function processMessage(msg){
+function processMessage(msg){
 	  author = msg.author
 	  actor = author.username
 	  bits = msg.content.split(' ')
@@ -100,7 +100,7 @@ bot.on('message', msg => {
 			console.log("loading game "+msg.channel.name.toLowerCase()+" from file");
 		}
 	  } else {
-		  gameState = util.findGameStateForActor(actor)
+		  gameState = findGameStateForActor(actor)
 		  if (!gameState){
 			console.log(author+" had no game state found")
 			return
@@ -110,7 +110,7 @@ bot.on('message', msg => {
 	  return	
   }
   
-  function initGame(gameName){
+function initGame(gameName){
 	if (!gameName){
 		console.log('init game without a name')
 		gameName = ''
@@ -182,7 +182,11 @@ function scoreChildren(children, gameState){
 	message = 'Child scores:\n'
 	for (parentName in parentScores){
 		player = util.personByName(parentName, gameState)
-		message+= '\t'+parentName+'('+player.gender.substring(0, 1)+'): '+parentScores[parentName]
+		if (player){
+			message+= '\t'+parentName+'('+player.gender.substring(0, 1)+'): '+parentScores[parentName]
+		} else {
+			console.log('Cound not find parent '+[parentName]+'with score '+parentScores[parentName])
+		}
 	}
 	return message
 }
@@ -1423,6 +1427,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			return
 		}
 		loadedValue = savelib.loadTribe(gameState.name);
+		gameState.bot = bot;
 		// very redudimentary validity check
 		if (loadedValue && loadedValue.population && loadedValue.population){
 			allGames[gameState.name] = loadedValue;
@@ -2741,4 +2746,16 @@ function gatherDataFor(locationName, roll){
 		}
 	}
 	console.log('error looking up resourceData for '+locationName+' '+type+' '+roll)
+}
+function findGameStateForActor(actor){
+	for (var gameName in allGames){
+		gameState = allGames[gameName]
+		if (gameState && util.personByName(actor, gameState)){
+			console.log('found game '+gameName+' for '+actor)
+			return gameState
+		}
+		console.log('Did not find '+actor+' in game '+gameState.name)
+	}
+	console.log('Found no game for '+actor)
+	return null
 }

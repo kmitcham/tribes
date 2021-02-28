@@ -1,5 +1,8 @@
 const violencelib = require("./violence.js");
 
+
+var bot;
+
 function isColdSeason(gameState){
 	return (gameState.seasonCounter%2 == 0);
 }
@@ -63,18 +66,7 @@ function personByName(name, gameState){
 	return null
 }
 
-module.exports.findGameStateForActor = (actor) => {
-	for (var gameName in allGames){
-		gameState = allGames[gameName]
-		if (gameState && util.personByName(actor, gameState)){
-			console.log('found game '+gameName+' for '+actor)
-			return gameState
-		}
-		console.log('Did not find '+actor+' in game '+gameState.name)
-	}
-	console.log('Found no game for '+actor)
-	return null
-}
+
 
 module.exports.gameStateMessage= (gameState) =>{
 	var numAdults = (Object.keys(gameState.population)).length
@@ -122,16 +114,27 @@ function round(number){
 }
 module.exports.round = round;
 
-function messageChannel(message, gameState, bot){
-	if (!bot){
-		return;
+function removeSpecialChars(strVal){ 
+	return strVal.replace(/[^a-zA-Z0-9_]+/g,'');
+}
+module.exports.removeSpecialChars = removeSpecialChars;
+
+function messageChannel(message, gameState, argBot){
+	if (!argBot){
+		var Discord = require('discord.js');
+		var localBot = new Discord.Client()
+		argBot = localBot
+		if (!argBot){
+			console.log('no bot, no message to the channel')
+			return;
+		}
 	}
-	channel = bot.channels.cache.find(channel => channel.name === gameState.name)
+	bot = argBot
+	channel = argBot.channels.cache.find(channel => channel.name === gameState.name)
 	if (channel){
 		channel.send(message)
 	} else {
 		console.log('no channel found for '+gameState.name)
-		message.author.send('ERROR: failed to find channel to tell it this: '+message);
 	}
 }
 module.exports.messageChannel = messageChannel;
