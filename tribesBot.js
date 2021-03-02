@@ -50,7 +50,7 @@ bot.once('ready', ()=>{
 	console.log('bot is alive')
 	var d = new Date();
 	var n = d.toISOString();
-	alertChannel = bot.channels.cache.find(channel => channel.name === 'general')
+	alertChannel = bot.channels.cache.find(channel => channel.name === 'bug-reports')
 	alertChannel.send('TribesBot is alive again. '+n)
   })   
 bot.login(auth['token'])
@@ -71,7 +71,7 @@ bot.on('message', msg => {
 	try {
 		processMessage(msg)
 	} catch (err){
-		alertChannel = bot.channels.cache.find(channel => channel.name === 'general')
+		alertChannel = bot.channels.cache.find(channel => channel.name === 'bug-reports')
 		alertChannel.send('Bot wanted to fall over:')
 		alertChannel.send(' the error was:'+err.message)
 		console.log('error:'+err.message)
@@ -81,11 +81,11 @@ bot.on('message', msg => {
   
 function processMessage(msg){
 	  author = msg.author
-	  actor = author.username
+	  actor = util.removeSpecialChars(author.username)
 	  bits = msg.content.split(' ')
 	  command = bits[0]
 	  command = command.toLowerCase().substring(1) // strip out the leading !
-	  console.log('command:'+command+' bits:'+bits+' actor:'+author.username )  
+	  console.log('command:'+command+' bits:'+bits+' actor:'+actor )  
 	  var gameState = {}
 	  if (msg.channel && msg.channel.name ){
 		gameState = allGames[msg.channel.name.toLowerCase()]
@@ -457,8 +457,8 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		var mother = 'unknown'
 		var father = 'unknown'
 		if (bits.length == 3 && msg.mentions.users.first() && msg.mentions.users.last() ){
-			mother = getUserFromMention(bits[1]).username
-			father = getUserFromMention(bits[2]).username
+			mother = util.removeSpecialChars(getUserFromMention(bits[1]).username)
+			father = util.removeSpecialChars(getUserFromMention(bits[2]).username)
 		} else {
 			mother = bits[1]
 			father = bits[2]
@@ -487,8 +487,8 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		var targetPlayer;
 		// check for @mentions
 		if (msg.mentions.users.first()){
-			username= msg.mentions.users.first().username
-			targetPlayer = util.personByName(username, gameState)
+			cleanName= util.removeSpecialChars(msg.mentions.users.first().username)
+			targetPlayer = util.personByName(cleanName, gameState)
  		} else {
 			targetPlayer = util.personByName(bits[1], gameState)
 		}
@@ -551,7 +551,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		if (referees.includes(actor)){
 			var targetName = bits[3]
 			if (msg.mentions.users && msg.mentions.users.first() ){
-				targetName = msg.mentions.users.first().username
+				targetName = util.removeSpecialChars(msg.mentions.users.first().username)
 			}
 			amount = bits[1]
 			type = bits[2]
@@ -644,15 +644,15 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			return
 		}
 		var target = msg.mentions.users.first()
-		targetName = target.username
+		targetName = util.removeSpecialChars(target.username)
 		
 		if (target ){
 			if (population[targetName]){
 				person = util.personByName(targetName, gameState)
 				gameState.banished[targetName] = person;
 				// removing the player from the banish list is a pain.
-				delete population[target.username]
-				util.messageChannel(target.username+' is banished from the tribe',gameState, bot)
+				delete population[targetName]
+				util.messageChannel(targetName+' is banished from the tribe',gameState, bot)
 				const name = person.name
 				if (gameState.banished){
 					gameState.banished[name] = person
@@ -695,7 +695,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			var filterName = ''
 			user = getUserFromMention(bits[1])
 			if (user ){
-				filterName = user.username
+				filterName = util.removeSpecialChars(user.username)
 			} else {
 				person = util.personByName(bits[1], gameState)
 				if (person){filterName = person.name}
@@ -863,18 +863,19 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			return
 		}
 		var target = msg.mentions.users.first()
-		if (referees.includes(target.username)){
-			const index = referees.indexOf(target.username);
+		var targetName = util.removeSpecialChars(target.username)
+		if (referees.includes(targetName)){
+			const index = referees.indexOf(targetName);
 			if (index > -1) {
 				referees.splice(index, 1);
-				console.log('demoted '+target.username)
-				msg.author.send('demoted '+target.username)
+				console.log('demoted '+targetName)
+				msg.author.send('demoted '+targetName)
 				return
 			}
 			console.log('did not find the ref in the list, although the include worked.')
 			return
 		} else{
-			msg.author.send(target.username+' is not a referee:'+referees)
+			msg.author.send(targetName+' is not a referee:'+referees)
 			return
 		}
 	}
@@ -891,7 +892,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		}
 		var targetName = bits[1]
 		if (msg.mentions.users && msg.mentions.users.first() ){
-			targetName = msg.mentions.users.first().username
+			targetName = util.removeSpecialChars(msg.mentions.users.first().username)
 		}
 		key = bits[2]
 		if (!member_properties.includes(key)){
@@ -1051,7 +1052,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			username = bits[3]
 		} 
 		if (msg.mentions.users.first()){
-			username= msg.mentions.users.first().username
+			username= util.removeSpecialChars(msg.mentions.users.first().username)
 		}
 		if (!username){
 			msg.author.send('Give syntax is give  <amount> <food|grain|spearhead|basket> <recipient>')
@@ -1224,7 +1225,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			cleanUpMessage(msg);; 
 			return
 		}
-		var target = msg.mentions.users.first().username
+		var target = util.removeSpecialChars(msg.mentions.users.first().username)
 		addToPopulation(msg, author, bits, target, msg.mentions.users.first(), gameState)
 		return
 	}
@@ -1258,7 +1259,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			inviteMessage = "The invitation to "+player.invite+" is cancelled.  "
 		}
 		if (msg.mentions && msg.mentions.users && msg.mentions.users.first()){
-			target = msg.mentions.users.first().username
+			target = util.removeSpecialChars(msg.mentions.users.first().username)
 		} else {
 			target = bits[1]
 		}
@@ -1275,7 +1276,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			targetName = bits[1]
 		}
 		if (msg.mentions.users.first()){
-			targetName = msg.mentions.users.first().username
+			targetName = util.removeSpecialChars(msg.mentions.users.first().username)
 		}
 		response = 'error'
 		if (!targetName || targetName == 'all' ){
@@ -1519,14 +1520,13 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			return
 		}
 		var target = msg.mentions.users.first()		
-		console.log('promote:'+target.username+' by '+actor)
-		// disble ref checking for now
-		//if (target && referees.includes(actor)){
+		var safeName = util.removeSpecialChars(target.username)
+		console.log('promote:'+safeName+' by '+actor)
 		if (target){
-			if (referees.includes(target.username)){
+			if (referees.includes(safeName)){
 				msg.author.send(target.username+' is already a referee')
 			} else {
-				referees.push(target.username)
+				referees.push(safeName)
 				msg.author.send('referee list:'+referees)
 			}
 		} else {
@@ -1695,7 +1695,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		}
 		target = bits[1]
 		if (msg.mentions.users.first()){
-			target = msg.mentions.users.first().username
+			target = util.removeSpecialChars(msg.mentions.users.first().username)
 		}
 		if (!target){
 			msg.author.send('usage: skip <current reproducer>')
@@ -1733,8 +1733,8 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			force = bits[3]
 		}
 		if (msg.mentions.users.first() && msg.mentions.users.last() ){
-			mother = msg.mentions.users.first().username
-			father = msg.mentions.users.last().username
+			mother = util.removeSpecialChars(msg.mentions.users.first().username)
+			father = util.removeSpecialChars(msg.mentions.users.last().username)
 		} else {
 			mother = bits[1]
 			father = bits[2]
@@ -1836,7 +1836,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 	if (command == 'vote'){
 		targetName = bits[1]
 		if (msg.mentions.users.first()){
-			targetName = msg.mentions.users.first().username
+			targetName = util.removeSpecialChars(msg.mentions.users.first().username)
 		}
 		targetPerson = util.personByName(targetName, gameState)
 		if (!targetPerson){
@@ -1923,7 +1923,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 					return
 				}
 			}
-			message = gatherlib.gather( author.username, player, gatherRoll, gameState)
+			message = gatherlib.gather( actor, player, gatherRoll, gameState)
 			player.activity = 'gather'
 		} 
 		if (command == 'craft'){
@@ -1952,7 +1952,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 					return
 				}
 			}
-			message = craft( author.username, player, type, craftRoll)
+			message = craft( actor, player, type, craftRoll)
 			player.activity = 'craft'
 		} 
 		if (command == 'assist'){
@@ -1961,7 +1961,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 				target = bits[1]
 			} 
 			if (msg.mentions.users.first()){
-				target= msg.mentions.users.first().username
+				target= util.removeSpecialChars(msg.mentions.users.first().username)
 			}
 			assistedPlayer = util.personByName(target, gameState)
 			if (!assistedPlayer){
@@ -1969,7 +1969,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 				cleanUpMessage(msg);; 
 				return	
 			}
-			message = assist(author.username, player, assistedPlayer)
+			message = assist(actor, player, assistedPlayer)
 			player.activity = 'assist'
 		} 
 		if (command == 'train'){

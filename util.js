@@ -1,6 +1,4 @@
 const violencelib = require("./violence.js");
-
-
 var bot;
 
 function isColdSeason(gameState){
@@ -40,12 +38,13 @@ function personByName(name, gameState){
 	if (population[name] != null){
 		 person = population[name]
 	} else if (name && population[name.username] != null){
-		person = population[name.username]
+		person = population[removeSpecialChars(name.username)]
 	} else if (name.indexOf('@') != -1 && population[name.substring(1)] != null){
 		person = population[name.substring(1)]
 	} else {
 		for (match in population){
-			if (match.toLowerCase() == name.toLowerCase()){
+			if (match.toLowerCase() == name.toLowerCase()
+			|| population[match].handle.username == name ){
 				person = population[match]
 				break;
 			}
@@ -121,15 +120,9 @@ module.exports.removeSpecialChars = removeSpecialChars;
 
 function messageChannel(message, gameState, argBot){
 	if (!argBot){
-		var Discord = require('discord.js');
-		var localBot = new Discord.Client()
-		argBot = localBot
-		if (!argBot){
-			console.log('no bot, no message to the channel')
-			return;
-		}
+		console.log('no bot, no message to the channel')
+		return
 	}
-	bot = argBot
 	channel = argBot.channels.cache.find(channel => channel.name === gameState.name)
 	if (channel){
 		channel.send(message)
