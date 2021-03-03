@@ -145,12 +145,15 @@ function endGame(gameState){
 	population = gameState.population
 	for (childName in children){
 		var child = children[childName]
+		console.log('end game scoring for '+childName+' '+child.newAdult+' '+child.age)
 		if (!child.newAdult){
-			if (util.roll(3) <= childSurvivalChance[child.age]){
+			var roll = util.roll(3)
+			response += '\t'+childName+' ['+roll+' vs '+childSurvivalChance[child.age]+'] '
+			if (roll <= childSurvivalChance[child.age]){
 				child.newAdult = true
-				response += '\t'+childName+' grows up '+stats+'\n'
+				response += 'grows up\n'
 			} else {
-				response += '\t'+childName+' dies young\n'
+				response += 'dies young\n'
 				killlib.kill(childName, 'endgame scoring', gameState)
 			}
 		}
