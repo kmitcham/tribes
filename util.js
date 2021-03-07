@@ -80,11 +80,9 @@ module.exports.gameStateMessage= (gameState) =>{
 	message+= 'The '+gameState.currentLocationName+' game track is at '+ gameState.gameTrack[gameState.currentLocationName]+'\n'
 	if (gameState.demand){ 
 		message+= '\nThe DEMAND is:'+gameState.demand+'\n'
-		message+= violencelib.getFactionResult(gameState)
 	}
 	if (gameState.violence){ 
 		message+= '\nVIOLENCE has erupted over this demand: '+gameState.violence+'\n'
-		message+= violencelib.resolveViolence(gameState)+'\n';
 	}
 	if (gameState.workRound ) {message += '  (work round)'}
 	if (gameState.foodRound ) {message += '  (food round)'}

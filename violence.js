@@ -83,7 +83,7 @@ function factionHasCrafter(faction){
     return false;
 }
 
-const getFactionResult = (gameState) =>{
+const getFactionResult = (gameState, bot) =>{
     response = ''
     gameFactions = getGameFactions(gameState)
     demand = gameState['demand']
@@ -143,7 +143,7 @@ const getFactionResult = (gameState) =>{
             delete gameState['population'][playerName]['faction']
         }
     }
-    util.messageChannel(response, gameState)
+    util.messageChannel(response, gameState, bot)
     return response
 }
 module.exports.getFactionResult = getFactionResult
@@ -222,7 +222,7 @@ const resolveSingleAttack = ( attacker, defender, roll, gameState) =>{
 }
 module.exports.resolveSingleAttack = resolveSingleAttack;
 
-const resolveViolence = (gameState) =>{
+const resolveViolence = (gameState, bot) =>{
     attackers = []
     undecided = []
     runners = []
@@ -308,7 +308,7 @@ const resolveViolence = (gameState) =>{
         delete player.attack_target
         response += '\nA round of combat has ended.  Everyone who has not escaped needs to choose a strategy'
     }
-    util.messageChannel(response, gameState)
+    util.messageChannel(response, gameState, bot)
     return response
 }
 module.exports.resolveViolence = resolveViolence
