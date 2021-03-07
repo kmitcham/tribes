@@ -509,7 +509,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		player.attack_target = targetPlayer.name
 		player.strategy = 'attack'
 		cleanUpMessage(msg);
-		violencelib.resolveViolence(gameState)
+		violencelib.resolveViolence(gameState, bot)
 		return
 	}
 	if (command == 'defend'){
@@ -528,7 +528,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		player.strategy = 'defend'
 		delete player.attack_target 
 		cleanUpMessage(msg);
-		violencelib.resolveViolence(gameState)
+		violencelib.resolveViolence(gameState, bot)
 		return
 	}
 	if (command == 'run'){
@@ -547,7 +547,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		player.strategy = 'run'
 		delete player.attack_target 
 		cleanUpMessage(msg);
-		violencelib.resolveViolence(gameState)
+		violencelib.resolveViolence(gameState, bot)
 		return
 	}
 	if (command === 'award'){
@@ -1007,7 +1007,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		}
 		//TODO the case when there is no current demand
 		player.faction = side;
-		violencelib.getFactionResult(gameState)
+		violencelib.getFactionResult(gameState,bot)
 		return
 	}
   	// add food to a child
@@ -2539,12 +2539,12 @@ function startWork(gameState){
 		person = population[personName]
 		delete person.activity
 	}
-	util.messageChannel(util.gameStateMessage(gameState), gameState, bot)
-	util.messageChannel('\nStarting the work round.  Guard (or ignore) your children, then craft, gather, hunt, assist or train.', gameState, bot)
 	gameState.workRound = true
 	gameState.foodRound = false
 	gameState.reproductionRound = false
 	canJerky = false
+	util.messageChannel(util.gameStateMessage(gameState), gameState, bot)
+	util.messageChannel('\nStarting the work round.  Guard (or ignore) your children, then craft, gather, hunt, assist or train.', gameState, bot)
 	savelib.saveTribe(gameState);
 	allGames[gameState.name] = gameState;
 	return
@@ -2552,13 +2552,13 @@ function startWork(gameState){
 function startFood(gameState){
 	savelib.archiveTribe(gameState);
 	clearWorkFlags(population)
+	gameState.workRound = false
+	gameState.foodRound = true
+	gameState.reproductionRound = false
 	message = util.gameStateMessage(gameState)
 	util.messageChannel(message+'\nStarting the food and trading round.  Make sure everyone has enough to eat, or they will starve', gameState, bot)
 	foodMessage = checkFood(gameState)
 	util.messageChannel(foodMessage, gameState, bot)
-	gameState.workRound = false
-	gameState.foodRound = true
-	gameState.reproductionRound = false
 	savelib.saveTribe(gameState);
 	allGames[gameState.name] = gameState;
 	return
@@ -2568,6 +2568,9 @@ function startReproduction(gameState){
 	savelib.archiveTribe(gameState);
 	foodMessage = consumeFood(gameState)
 	gameState.needChanceRoll = true  // this magic boolean prevents starting work until we did chance roll
+	gameState.workRound = false
+	gameState.foodRound = false
+	gameState.reproductionRound = true
 	util.messageChannel(foodMessage+'\n', gameState, bot)
 	util.messageChannel('Starting the Reproduction round; invite other tribe members to reproduce (not automated)', gameState, bot)
 	util.messageChannel('The tribe can decide to move to a new location, but the injured and children under 2 will need 2 food', gameState, bot)
@@ -2575,9 +2578,6 @@ function startReproduction(gameState){
 	util.messageChannel("Invitation order: "+shuffle(namelist), gameState, bot)
 	gameState.reproductionList = nameList
 	util.messageChannel(gameState.reproductionList[0]+ " should now !invite people to reproduce, or !pass ", gameState, bot)
-	gameState.workRound = false
-	gameState.foodRound = false
-	gameState.reproductionRound = true
 	savelib.saveTribe(gameState);
 	allGames[gameState.name] = gameState;
 	return
