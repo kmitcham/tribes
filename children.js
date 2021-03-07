@@ -1,7 +1,8 @@
 const utillib = require("./util.js");
 const guardlib = require("./guardCode.js");
+const { child } = require("winston");
 
-module.exports.showChildren =  (children, population, filterName="" ) =>{
+module.exports.showChildren =  (children, population, filterName="", hideFathers=false ) =>{
 		response = ''
 		childNames = Object.keys(children)
 		response = 'There are '+childNames.length+' children in total. \n'
@@ -17,6 +18,15 @@ module.exports.showChildren =  (children, population, filterName="" ) =>{
 			child = children[childName]
 			if (filterName && !(child.mother == filterName || child.father == filterName) ) {
 				continue
+			}
+			if (filtername){
+				if (filterName == child.mother){
+					// do nothing
+				} else if (filterName == child.father && !hideFathers){
+					// also do nothing
+				} else {
+					continue;
+				}
 			}
 			if (child.dead){
 				//response += '('+childName+' is dead)\n';
@@ -42,7 +52,10 @@ module.exports.showChildren =  (children, population, filterName="" ) =>{
 				} else {
 					response += ' needs '+(2-child.food)+' food'
 				} 
-				response += ' parents:'+child.mother+'+'+child.father
+				response += ' parents:'+child.mother
+				if (!hideFathers){
+					response += '+'+child.father
+				}
 				if (child.age < 24 ){
 					response += ' guardValue:'+ utillib.round(guardlib.findGuardValueForChild(childName, population, children))
 				}

@@ -707,10 +707,10 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 				response = 'Could not find '+bits[1]
 			} else {
 				response += 'The descendants of '+filterName+' are:\n'
-				response = childlib.showChildren(children, population, filterName)
+				response = childlib.showChildren(children, population, filterName, gameState.secretMating)
 			}
 		} else {
-			response = childlib.showChildren(children, population)
+			response = childlib.showChildren(children, population, "", gameState.secretMating)
 		}
 		
 		msg.author.send(response)
@@ -2183,6 +2183,7 @@ function spawnFunction(mother, father, msg, population, gameState, force = false
 	droll = util.roll(1)
 	if (force != false || (mroll+droll) >= spawnChance ){
 		var child = addChild(mother, father, gameState)
+		// check secretMating
 		util.messageChannel('The mating of '+mother+'['+mroll+'] and '+father+'['+droll+'] spawned '+child.name, gameState, bot)
 		if (gameState.reproductionList){
 			var hasNotMated = gameState.reproductionList.includes(mother)
@@ -2194,6 +2195,7 @@ function spawnFunction(mother, father, msg, population, gameState, force = false
 			}
 		}
 	} else {
+		// check secretMating
 		util.messageChannel('The mating of '+mother+'['+mroll+'] and '+father+'['+droll+'] produced only good feelings', gameState, bot)
 	}
 	var allPregnant = true
@@ -2205,6 +2207,7 @@ function spawnFunction(mother, father, msg, population, gameState, force = false
 		}
 	}
 	if (allPregnant ){
+		// ignore this if secretMating
 		util.messageChannel('No more reproductive pairings are available.', gameState, bot)
 		delete gameState.reproductionList
 	}
