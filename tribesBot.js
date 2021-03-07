@@ -2235,7 +2235,7 @@ function specialize( msg, playerName, profession, gameState){
 		profession = 'gatherer';
 		helpMessage = "Welcome new gatherer.  To gather, do `!gather`, and the bot rolls 3d6.  Higher numbers generally produce more food. \n"
 		helpMessage+= "You can guard 2 children without penalty; watching 3 or 4 gives an increasing penalty; 5 is too many to gather with. \n"
-		helpMessage+= "Before you set out, you might consider waiting for a crafter to make you a spearhead which gives you an additional gather attempt. \n"
+		helpMessage+= "Before you set out, you might consider waiting for a crafter to make you a basket which gives you an additional gather attempt. \n"
 		helpMessage+= "You can also `!hunt`, but at a penalty. If your tribe has someone who knows how to craft, you can try to learn that skill with `!train`";
 	}
 	if ( !profession || !professions.includes(profession)){
