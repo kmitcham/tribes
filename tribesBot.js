@@ -638,7 +638,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			cleanUpMessage(msg);; 
 			return
 		}
-		if (! msg.mentions || ! msg.mentions.users){
+		if (!msg || !msg.mentions || !msg.mentions.users || !msg.mentions.users.first()){
 			msg.author.send(command+' requires at least one @target')
 			return
 		}
