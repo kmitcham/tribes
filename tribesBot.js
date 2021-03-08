@@ -2085,6 +2085,7 @@ function addChild(mother, father, gameState){
 	nextIndex = (gameState.conceptionCounter % 26 )
 	child.name = getNextChildName(gameState.children, allNames, nextIndex)
 	children[child.name] = child	
+	console.log('added child '+child.name)
 	person = util.personByName(mother, gameState)
 	gameState.population[child.mother].isPregnant = child.name
 	if (gameState.reproductionList){
@@ -2454,7 +2455,7 @@ function consumeFoodChildren(gameState){
 				}
 				if (birthRoll == 17){
 					twin = addChild(child.mother, child.father, gameState);
-					reponse += child.mother+' gives birth to a twin! Meet '+twin.name+'\n'
+					response += child.mother+' gives birth to a twin! Meet '+twin.name+'\n'
 					person.guarding.push(twin.name)
 					twin.age = 0
 				}

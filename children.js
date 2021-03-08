@@ -15,11 +15,11 @@ module.exports.showChildren =  (children, population, filterName="", hideFathers
 			response += 'The descendants of '+filterName+' are:\n'
 		}
 		for (childName in children) {
-			child = children[childName]
-			if (filterName && !(child.mother == filterName || child.father == filterName) ) {
+			var child = children[childName]
+			if ( filterName && !(child.mother == filterName || child.father == filterName) ) {
 				continue
 			}
-			if (filtername){
+			if (filterName){
 				if (filterName == child.mother){
 					// do nothing
 				} else if (filterName == child.father && !hideFathers){
