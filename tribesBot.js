@@ -1163,7 +1163,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			child = children[childName]
 			if (!child ){
 				msg.author.send('Could not find child: '+childName)
-			}else if (person.guarding && person.guarding.indexOf(childName) != -1 ){
+			} else if (person.guarding && person.guarding.indexOf(childName) != -1 ){
 				msg.author.send('You are already guarding '+childName)
 			} else {
 				if (person.guarding){
@@ -1542,7 +1542,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		if (gameState.workRound){
 			message = "People available to work: "+listReadyToWork(population)
 		}	
-		if (gameState.reproductionRound && gameState.reproductionList ){
+		if (gameState.reproductionRound && gameState.reproductionList && gameState.reproductionList[0] ){
 			message = "The mating invitation order is "+gameState.reproductionList.join(", ")+"\n"
 			var cleanName = gameState.reproductionList[0]
 			if (cleanName.indexOf('(') > 0){
@@ -2450,12 +2450,12 @@ function consumeFoodChildren(gameState){
 				person = util.personByName(child.mother, gameState)
 				if (!person.guarding){
 					person.guarding = [child.name]
-				} else {
+				} else if (person.guarding.indexOf(child.name == -1)){
 					person.guarding.push(child.name)
 				}
 				if (birthRoll == 17){
 					twin = addChild(child.mother, child.father, gameState);
-					response += child.mother+' gives birth to a twin! Meet '+twin.name+'\n'
+					response += child.mother+' gives birth to a twin! Meet '+twin.name+', a healthy young '+twin.gender+'-child.\n'
 					person.guarding.push(twin.name)
 					twin.age = 0
 				}

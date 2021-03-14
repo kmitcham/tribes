@@ -14,7 +14,15 @@ module.exports.showChildren =  (children, population, filterName="", hideFathers
 		if (filterName){
 			response += 'The descendants of '+filterName+' are:\n'
 		}
-		for (childName in children) {
+		var sortedChildren = Object.keys(children);
+		sortedChildren.sort(function(a, b) {
+			if (children[a].age == children[b].age){
+				if ( a < b) {return 1}
+				else { return -1 }
+			}
+    		return children[a].age - children[b].age
+		});
+		for (childName of sortedChildren) {
 			var child = children[childName]
 			if ( filterName && !(child.mother == filterName || child.father == filterName) ) {
 				continue
@@ -35,10 +43,10 @@ module.exports.showChildren =  (children, population, filterName="", hideFathers
 				if (child.age < 0 && notStartedUnborn){
 					response += '-----> Unborn <-----\n'
 					notStartedUnborn = false;
-                } else if (child.age < 4 && notStartedYoungChildren ){
-					response += '-----> Young Children <-----\n'
+                } else if (0 <= child.age && child.age < 4 && notStartedYoungChildren ){
+					response += '-----> Nursing Children <-----\n'
 					notStartedYoungChildren = false;
-				} else if (child.age < 24 && notStartedMiddleChildren){
+				} else if (4 <= child.age && child.age < 24 && notStartedMiddleChildren){
 					response += '-----> Children <-----\n'
 					notStartedMiddleChildren = false;
 				}	else if (child.age >= 24 && notPrintedNewAdultHeader){

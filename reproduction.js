@@ -37,72 +37,135 @@ function eligibleMates(name, population, debug=false){
 }
 module.exports.eligibleMates = eligibleMates;
 
+function validMate(inviter, target, gameState){
 
+}
+
+function invite(args, gameState, bot){
+
+}
 /* 
-invite <arg>
-    if target is wrong gender OR visibly pregnant
+invite <target1> [ optional additional targets]
+    actor.inviteTargets = [target1, target2]
+    validateMatingTargets(source, [targets])
+    globalMatingCheck()
+*/
+/*
+consent <target1> [ optional additional targets]
+    validateMatingTargets(source, [targets])
+    actor.consentList = [target1, target2...]
+    globalMatingCheck()
+*/
+/*
+ decline <target1> [additional targets]
+    if any <target1> not in tribe
         err, exit
-    if in public channel:
-        announce in public channel
-        person.publicInvite = <arg>
-    else 
-        message target about invite
-        person.privateInvite = <arg>
-
-consent <arg>
-    if in public channel
-        if inviter.publicInvite != actor
-            err, exit
-        announce in public channel
-    else 
-        if inviter.secretInvite != actor
-            err, exit
-        message inviter about consent
-    spawn child (handles the roll)
-    mark inviter 'cannotInvite'
-    if (tribe has everyone cannotInvite)
-        end mating
-        announce pregnancies
-
- decline <arg>
-    if <arg> not in tribe
-        err, exit
-    inviter = personByName(arg)
-    if in public channel
-        if inviter.publicInvite != actor
-            err, exit
-        announce pass in public channel 
-        delete inviter.publicInvite
-    else 
-        if inviter.secretInvite != actor
-            err, exit
-        delete secretInvite.publicInvite
-
+    actor.declineList = [target1, target2...]
+    globalMatingCheck()       
+*/
+/*
 pass
     // NOTE: a) pass is ALWAYS public.  b) You CAN secret invite, get a consent, then publicly skip.
     mark actor 'cannotInvite'
+    delete actor.inviteList
     announce pass in public channel
     if (tribe has everyone cannotInvite)
         end mating
         announce pregnancies
 
 skip <arg>
-    if actor is not chief
+    if actor is not chief or arg != actor 
 		err, exit
 	target.cannotInvite = true
-	if (tribe has everyone cannotInvite)
-        end mating
-        announce pregnancies
+    delete target.inviteTargets
+    globalMatingCheck
 
+
+*/
+/* 
+globalMatingCheck()
+    allDone = true;
+    actionableInvites = true;    
+    while (actionableInvites){
+        actionableInvites = false;
+        sexList = keys(population)
+        for every person in sexList{
+            if (person.cannotInvite) {
+                remove person from sexList
+                continue
+            }
+            if person.inviteTargets.length > 0 {
+                targetName = inviteTargets[0]
+                if (targetName == "!pass"){
+                    person.cannotInvite = true
+                    message channel person is passing
+                    remove person from sexList
+                    continue
+                }
+                target = personForName(targetName)
+                if (target.consentList.includes(personName)){
+                    spawn(target, person)
+                    person.cannotInvite = true
+                    delete person.inviteTargets
+                    remove person from sexList
+                    continue
+                } else if (target.declineList.includes(personNamne)){
+                    message person (target declines your invitation)
+                    person.inviteTargets.shift()
+                    // can't lose your invite power just because of rejection
+                    if (person.inviteTargets.length > 0) {
+                        actionableInvites = true
+                    }
+                    allDone = false
+                } else {
+                    // this will get spammy, if the function is called every time anyone updates.
+                    message target (person wants to mate with you)
+                    message person (target is considering your invitation)
+                    remove person from sexList
+                    allDone = false
+                }
+            } else {
+                // person has no invites pending
+                remove person from sexList
+                allDone = false
+            }
+        }
+    }
+    // allDone = true should also mean sexList is empty.
+    if (allDone){
+        message the channel repro is over, time for chance
+        for person in tribe{
+            if (person.hiddenPregnant){
+                announce pregnancy
+                person.isPregnant = true 
+                delete person.hiddenPregnant
+            }
+            delete person.inviteList  // this should already be empty or done.
+            // I think I lean towards KEEPING
+        }
+    }
+}
+*/
+/*
 spawn 
     <existing dice roll code>
-	<pregnancy can only result if the mother is not already pregnant>
+	if (roll1+roll2 > 9 && ! (mother.hiddenPregnant || mother.isPregnant) ){
+        addChild
+        mother.hiddenPregnant = true
+    }
     if gameData.secretMating
-        message the parents about feelings (show rolls?)
+        message the parents about feelings (show each their own roll)
     else 
-        message the channel feelings (not showing rolls)
+        message the channel feelings (showing rolls)
 
 children 
     if gameData.secretMating
         don't show the fathers of children
+scoreChildren
+    if gameData.secretMating
+        don't show the fathers of children
+
+
+ready
+    (tracking status of mating needs to change)
 */

@@ -52,3 +52,32 @@ test("filter mixed ages", () =>{
     expect(actualMessage.indexOf('c2')).toBe(-1)
     expect(actualMessage.indexOf('c3')).toBeGreaterThan(-1)
 });
+test("Check sorting", () =>{
+  var children = {
+      "Achild": {
+        "mother": "m1",
+        "father": "f1",
+        "age": 14, "name":"A", "food": 2, 'gender':'male'
+      },
+      "Bchild": {
+        "mother": "m2",
+        "father": "f2",
+        "age": 14, "name":"B", "food": 2, 'gender':'male'
+      },
+      "Cchild": {
+        "mother": "m1",
+        "father": "f2",
+        "age": -1,"name":"C", "food": 2, 'gender':'male'
+      }
+  }
+  actualMessage = childlib.showChildren(children, {})
+  alocation = actualMessage.indexOf('Achild')
+  blocation = actualMessage.indexOf('Bchild')
+  clocation = actualMessage.indexOf('Cchild')
+  expect(alocation).toBeGreaterThan(-1)
+  expect(blocation).toBeGreaterThan(-1)
+  expect(clocation).toBeGreaterThan(-1)
+  expect(alocation).toBeGreaterThan(blocation)
+  expect(blocation).toBeGreaterThan(clocation)
+  expect(alocation).toBeGreaterThan(clocation)
+});
