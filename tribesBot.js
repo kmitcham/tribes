@@ -889,7 +889,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			return
 		}
 		if (bits.length < 3 || bits.length > 4){
-			msg.author.send('usage: !edit <targetname> <type> <value>')
+			msg.author.send('usage: !edit <targetName> <type> <value>')
 			cleanUpMessage(msg);; 
 			return
 		}
@@ -2103,10 +2103,10 @@ function clearWorkFlags(population){
 	// for every person
 	// if injured and !worked, injured = false
 	// worked = false
-	for  (var targetname in population) {
-		person = population[targetname]
+	for  (var targetName in population) {
+		person = population[targetName]
 		if (! person){
-			console.log('null person for name '+targetname)
+			console.log('null person for name '+targetName)
 			continue
 		}
 		if (person.isInjured && person.isInjured != 'false' && person.worked == false){
@@ -2127,11 +2127,11 @@ function nextMating(currentInviterName, gameState){
 	if (!player){
 		console.log('bad attempt to call nextMating, person not found '+currentInviterName)
 	}
-	for (var targetname in gameState['population']){
-		if (gameState['population'][targetname].invite){
-			console.log("deleting invite from "+targetname+" to "+gameState['population'][targetname].invite)
+	for (var targetName in gameState['population']){
+		if (gameState['population'][targetName].invite){
+			console.log("deleting invite from "+targetName+" to "+gameState['population'][targetName].invite)
 		}
-		delete gameState['population'][targetname].invite
+		delete gameState['population'][targetName].invite
 	}
 	if (!gameState.reproductionList){
 		console.log (" no reproduction list yet. bad call to nextMating")
@@ -2333,22 +2333,24 @@ function countChildrenOfParentUnderAge(children, parentName, age){
 function checkFood(gameState){
 	message = ''
 	hungryAdults = []
-	satedAdults = []
+	happyAdults = []
+	worriedAdults = []
 	hungryChildren = []
 	satedChildren = []
 	children = gameState.children
 	population = gameState.population
-	for  (var targetname in population) {
-		person = population[targetname]
+	for  (var targetName in population) {
+		person = population[targetName]
 		hunger = 4
-		if (person.gender == 'female' && countChildrenOfParentUnderAge(children, targetname, 4) > 1){
+		if (person.gender == 'female' && countChildrenOfParentUnderAge(children, targetName, 4) > 1){
 			hunger = 6
 		}
-		snacks = person.food + person.grain
-		if (snacks >= hunger) {
-			satedAdults.push(targetname)
+		if (person.food >= hunger) {
+			happyAdults.push(targetName);
+		} else if ( ((person.food+person.grain) >= hunger )){
+			worriedAdults.push(targetName);
 		} else {
-			hungryAdults.push(targetname)
+			hungryAdults.push(targetName);
 		}
 	}
 	for (var childName in children){
@@ -2359,8 +2361,9 @@ function checkFood(gameState){
 			hungryChildren.push(childName)
 		}
 	}
-	message = 'Happy People: '+satedAdults+", "+satedChildren
+	message = 'Happy People: '+happyAdults+", "+satedChildren
 	message += '\nHungry adults: '+hungryAdults
+	message += '\nWorried adults: '+worriedAdults
 	message += '\nHungry children: '+hungryChildren
 	return message
 }
