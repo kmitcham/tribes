@@ -100,7 +100,7 @@ module.exports.hunt = (playername, player, rollValue, gameState) =>{
     // check for spearhead loss
     if (player.spearhead > 0 && roll(1) <= 2){
         player.spearhead -= 1
-        message += '(the spearhead broke)'
+        message += '(the spearhead broke!)'
     }
     var oldTrack = gameState.gameTrack[gameState.currentLocationName]
     gameState.gameTrack[gameState.currentLocationName] += huntercount

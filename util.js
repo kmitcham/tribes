@@ -20,31 +20,32 @@ function getYear(gameState){
 	return gameState.seasonCounter/2;
 }
 
-function personByName(name, gameState){
+function personByName(argName, gameState){
+	var name = argName;
 	if (name == null){
-		console.log('attempt to find person for null name '+name)
+		console.log('attempt to find person for null name ')
 		return null
 	}
+	if (name.username != null){
+		name = argName.username
+		console.log("getting username from object ")
+	}
+	if (name != removeSpecialChars(name)){
+		name = removeSpecialChars(name)
+		console.log("cleaning up "+name)
+	}
+	name = name.toLowerCase()
 	if (!gameState || gameState.population == null){
 		console.log('no people yet, or gameState is otherwise null')
 		return
-	}
-	if (name.indexOf('(') != -1){
-		name = name.substring(0, name.indexOf('('))
-		console.log('paren name was '+name)
 	}
 	var person = null
 	var population = gameState.population;
 	if (population[name] != null){
 		 person = population[name]
-	} else if (name && population[name.username] != null){
-		person = population[removeSpecialChars(name.username)]
-	} else if (name.indexOf('@') != -1 && population[name.substring(1)] != null){
-		person = population[name.substring(1)]
 	} else {
 		for (match in population){
-			if (match.toLowerCase() == name.toLowerCase()
-			|| population[match].handle.username == name ){
+			if ( population[match].handle.username == argName  || population[match].handle.username == argName.username){
 				person = population[match]
 				break;
 			}
@@ -66,6 +67,20 @@ function personByName(name, gameState){
 }
 
 
+module.exports.messagePlayerName = async (playerName, message, gameState, bot)=>{
+	console.log("trying message to "+playerName+" "+message)
+	player = personByName(playerName, gameState);
+	console.log("got a player")
+	if ( !player){
+		console.log("No player for name "+playerName)
+		return
+	}
+	playerId = player.handle.id
+	console.log("player id is "+playerId)
+	playerUser =  await bot.users.fetch(playerId);
+	console.log("got the user object")
+	playerUser.send(message);
+}
 
 module.exports.gameStateMessage= (gameState) =>{
 	var numAdults = (Object.keys(gameState.population)).length
