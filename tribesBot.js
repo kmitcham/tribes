@@ -251,7 +251,6 @@ function getUserFromMention(mention) {
 	if (!mention) return;
 	if (mention.startsWith('<@') && mention.endsWith('>')) {
 		mention = mention.slice(2, -1);
-
 		if (mention.startsWith('!')) {
 			mention = mention.slice(1);
 		}
@@ -279,8 +278,8 @@ function createReproductionList(gameState){
 }
 function countByType(dictionary, key, value){
 	count = 0
-	for (name in dictionary){
-		element = dictionary[name]
+	for (elementName in dictionary){
+		element = dictionary[elementName]
 		if (element[key] && element[key] == value){ count++}
 	}
 	return count
@@ -365,7 +364,7 @@ function doChance(rollValue, gameState){
 			if (message.indexOf('devoured') > 0 ){
 				msgArray = message.split(' ')
 				target = msgArray[5]  // chance 10: A hyena attacks TARGET
-				kill(target, 'hyena attack', gameState)
+				killlib.kill(target, 'hyena attack', gameState)
 			}
 			break;
 		case 9 : 
@@ -380,7 +379,7 @@ function doChance(rollValue, gameState){
 			message += name + " loses "+amount+" food to weevils."
 			break;
 		case 8: 
-			message +=  "Favorable weather conditions allow the tribe to make “jerky,” which keeps very well. Each person may trade Food counters for Grain counters (representing the jerky), at a rate of 3 Food for 1 Grain.  Syntax: jerk <amount>"
+			message +=  "Favorable weather conditions allow the tribe to make “jerky,” which keeps very well. Each person may trade Food counters for Grain counters (representing the jerky), at a rate of 3 Food for 1 Grain.  Syntax: jerk <amount of food>"
 			gameState.canJerky = true
 			break;
 		case 7: 
@@ -754,6 +753,16 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			msg.author.send(command+' requires referee priviliges')
 			return
 		}
+		//(playerName, message, gameState, bot)
+		playerName = bits[1]
+		message = bits.slice(2).join(" ")
+		util.messagePlayerName(playerName, message, gameState, bot);
+		cleanUpMessage(msg);
+		return 
+		console.log("should not get this message")
+	}
+	if (command == 'scoutnerd'){
+
 		GATHER = 0
 		GATHER_STRONG = 1
 		GRAIN = 2
@@ -790,11 +799,11 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		response = '216 totals:'
 		for (locationName in totals){
 			response += '\n'+locationName+' food:'+totals[locationName][GATHER]
-				+ ' grain:'+totals[locationName][GRAIN]
-				+ ' sf:'+totals[locationName][GATHER_STRONG] 
-				+ ' sg:'+totals[locationName][GRAIN_STRONG] 
-				+ ' hunt:'+totals[locationName][HUNT]
-				+ ' spear:'+totals[locationName][SPEAR]
+				+ '\tgrain:'+totals[locationName][GRAIN]
+				+ '\tsf:'+totals[locationName][GATHER_STRONG] 
+				+ '\tsg:'+totals[locationName][GRAIN_STRONG] 
+				+ '\thunt:'+totals[locationName][HUNT]
+				+ '\tspear:'+totals[locationName][SPEAR]
 		}
 		util.messageChannel(response,gameState, bot)
 		totals = {
@@ -823,14 +832,14 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		}
 		response = MAX+'x Random avg:'
 		for (locationName in totals){
-			response += '\n'+locationName+' food:'+Math.round(10*totals[locationName][GATHER]/MAX)
-									    +' grain:'+Math.round(10*totals[locationName][GRAIN]/MAX)
-										+ ' sf:'  +Math.round(10*totals[locationName][GATHER_STRONG]/MAX)
-										 +' sg:'  +Math.round(10*totals[locationName][GRAIN_STRONG]/MAX)
-										 +  ' hunt:'+Math.round(10* totals[locationName][HUNT]/MAX)
-										 +  ' spear:'+Math.round(10* totals[locationName][SPEAR]/MAX)
+			response += '\n'+locationName+'food:'+Math.round(10*totals[locationName][GATHER]/MAX)
+									    +'\tgrain:'+Math.round(10*totals[locationName][GRAIN]/MAX)
+										+'\tsf:'  +Math.round(10*totals[locationName][GATHER_STRONG]/MAX)
+										+'\tsg:'  +Math.round(10*totals[locationName][GRAIN_STRONG]/MAX)
+										+'\thunt:'+Math.round(10* totals[locationName][HUNT]/MAX)
+										+'\tspear:'+Math.round(10* totals[locationName][SPEAR]/MAX)
 		}
-		msg.reply(response)
+		util.messageChannel(response,gameState, bot)
 		return
 	}
 	if (command == 'demand'){
@@ -1309,7 +1318,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		}
 		var amount = bits[1]
 		if (!amount || isNaN(amount) ){
-			msg.author.send('jerk <amount>')
+			msg.author.send('jerk <amount of food>')
 			return	
 		}
 		person = util.personByName(actor, gameState)
@@ -2036,7 +2045,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 	}
 	msg.author.send('TribesBot did not understand the command '+bits)
 	msg.author.send('Try !help ')
-	cleanUpMessage(msg);; 
+	cleanUpMessage(msg);
 	return	
 }
 function listReadyToWork(tribe){
@@ -2185,7 +2194,12 @@ function spawnFunction(mother, father, msg, population, gameState, force = false
 	if (force != false || (mroll+droll) >= spawnChance ){
 		var child = addChild(mother, father, gameState)
 		// check secretMating
-		util.messageChannel('The mating of '+mother+'['+mroll+'] and '+father+'['+droll+'] spawned '+child.name, gameState, bot)
+		if (gameState.secretMating){
+			util.messagePlayerName(mother, father +'['+droll+'] shares good feelings with you ['+mroll+']')
+			util.messagePlayerName(father, mother +'['+mroll+'] shares good feelings with you ['+droll+']')
+		} else {
+			util.messageChannel('The mating of '+mother+'['+mroll+'] and '+father+'['+droll+'] spawned '+child.name, gameState, bot)
+		}
 		if (gameState.reproductionList){
 			var hasNotMated = gameState.reproductionList.includes(mother)
 			if (hasNotMated){
@@ -2196,8 +2210,13 @@ function spawnFunction(mother, father, msg, population, gameState, force = false
 			}
 		}
 	} else {
-		// check secretMating
-		util.messageChannel('The mating of '+mother+'['+mroll+'] and '+father+'['+droll+'] produced only good feelings', gameState, bot)
+		if (gameState.secretMating){
+			util.messagePlayerName(mother, father +'['+droll+'] shares good feelings with you ['+mroll+']')
+			util.messagePlayerName(father, mother +'['+mroll+'] shares good feelings with you ['+droll+']')
+		} else {
+			// check secretMating
+			util.messageChannel('The mating of '+mother+'['+mroll+'] and '+father+'['+droll+'] produced only good feelings', gameState, bot)
+		}
 	}
 	var allPregnant = true
 	for (var personName in population){
@@ -2362,8 +2381,8 @@ function checkFood(gameState){
 		}
 	}
 	message = 'Happy People: '+happyAdults+", "+satedChildren
-	message += '\nHungry adults: '+hungryAdults
 	message += '\nWorried adults: '+worriedAdults
+	message += '\nHungry adults: '+hungryAdults
 	message += '\nHungry children: '+hungryChildren
 	return message
 }
@@ -2443,7 +2462,7 @@ function consumeFoodChildren(gameState){
 				if (birthRoll < 5 ){
 					response += ' but the child did not survive\n'
 					child.dead = true
-					kill(child.name, 'birth complications', gameState)
+					killlib.kill(child.name, 'birth complications', gameState)
 					console.log('removing stillborn '+child.name)
 					continue;
 				} else {
@@ -2627,7 +2646,7 @@ function migrate(msg, destination, force, gameState){
 		for (childName in children){
 			var child = children[childName]
 			// child age is in seasons
-			if (child.age < 5){
+			if (child.age < 4 ){
 				if (child.food < 2){
 					deceasedChildren.push(childName)
 				} else {
@@ -2699,7 +2718,8 @@ function shuffle(array) {
 //////////////////////////////////////////////////////////
 /////  WORK SECTION   
 /////////////////////////////////////////////////////////
-function craft(playername, player, type, rollValue){
+function craft(playername, player, type, rawValue){
+	var rollValue = rawValue;
 	console.log('craft type '+type+' roll '+rollValue)
 	player.worked = true
 	if (type.startsWith('spear')){
@@ -2713,9 +2733,9 @@ function craft(playername, player, type, rollValue){
 	} else if (rollValue > 2 && type == 'spearhead') {		
 			player.spearhead += 1
 	} else {
-		return playername+ ' fails['+rollValue+'] at crafting a '+type
+		return playername+ ' fails['+rawValue+'] at crafting a '+type
 	}
-	return playername+' crafts['+rollValue+'] a '+type
+	return playername+' crafts['+rawValue+'] a '+type
 }
 function assist(playername, player, helpedPlayer){
 	player.worked = true

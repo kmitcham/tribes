@@ -182,11 +182,11 @@ module.exports.computeBonus = computeBonus
 const resolveSingleAttack = ( attacker, defender, roll, gameState) =>{
     if (!attacker ){
         console.log('Bad attacker for resolveSingleAttack')
-        return 'Bad call gives no result'
+        return 'No attacker gives no result\n'
     }
     if (!defender){
         console.log('Bad defender for resolveSingleAttack attacker was '+attacker.name)
-        return 'Bad call gives no result'
+        return 'No defender gives no result\n'
     }
     bonus = computeBonus(attacker, defender);
     netRoll = roll + bonus;
@@ -274,7 +274,7 @@ const resolveViolence = (gameState) =>{
         targetName = attackers[randomIndex]
         console.log('defender first strike vs '+attackerName)
         attacker = util.personByName(defenderName, gameState);
-        if (attacker.strategy == "defend"){
+        if (attacker && attacker.strategy == "defend"){
             defender = util.personByName(targetName, gameState);
             roll = util.roll(2)
             response += resolveSingleAttack(attacker, defender, roll, gameState);

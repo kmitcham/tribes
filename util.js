@@ -45,7 +45,8 @@ function personByName(argName, gameState){
 		 person = population[name]
 	} else {
 		for (match in population){
-			if ( population[match].handle.username == argName  || population[match].handle.username == argName.username){
+			if ( (population[match] && population[match].handle) 
+				&& ( population[match].handle.username == argName || population[match].handle.username == argName.username)){
 				person = population[match]
 				break;
 			}

@@ -367,7 +367,7 @@ test("ResolveViolence for fatality", () =>{
               "spearhead":1,
               "strength":"strong",
               "strategy": "attack",
-              "attack_target":"con1X"
+              "attack_target":"con1x"
             },
           "pro1": {
               "name": "pro1",
@@ -378,11 +378,10 @@ test("ResolveViolence for fatality", () =>{
               "profession":"hunter",
               "gender":"male",
               "strategy": "attack",
-              "attack_target":"con1X"
+              "attack_target":"con1x"
             },
           "pro2": {
               "name": "pro2",
-              "profession":"hunter",
               "profession":"hunter",
               "spearhead":1,
               "strength":"strong",
@@ -390,12 +389,12 @@ test("ResolveViolence for fatality", () =>{
               "faction":"for",
               "strategy":"defend"
           },
-          "con1X": {
-              "name": "con1X",
+          "con1x": {
+              "name": "con1x",
               "faction":"against",
               "isInjured": true,
               "strength":"weak",
-              "strategy":"run"
+              "strategy":"defend"
           }
       },
       "demand":"some demand"
