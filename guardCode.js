@@ -1,4 +1,5 @@
 const utillib = require("./util.js");
+const locations = require('./locations.json');
 
 
 module.exports.findGuardValueForChild = (childName, population, children) =>{
@@ -93,31 +94,33 @@ module.exports.unguardChild = (childName, population) =>{
 
 module.exports.hyenaAttack= (children, gameState) => {
 	population = gameState.population
+	currentLocation = gameState["currentLocationName"]
+	predator = locations[currentLocation]['predator'] || 'vulture'
 	if (!children || Object.keys(children).length == 0){
 		// this needs to check if children are born
-		return 'No children, no hyena problem '
+		return 'No children, no predator problem '
 	}
 	// get the least guarded message
 	leastGuardedMessageArray = findLeastGuarded(children, population).split(" ")
 	//  this is stupid and hacky; take the name from the start of the message, and the value from the last bit
 	leastGuardedName = leastGuardedMessageArray[0]
 	lowGuardValue = Number(leastGuardedMessageArray[10])
-	response = 'A hyena attacks '+leastGuardedName // exclamation point breaks simple string splitting elsewhere
+	response = 'A '+predator+' attacks '+leastGuardedName // exclamation point breaks simple string splitting elsewhere
 	var child = children[leastGuardedName]
 	if (!child){
-		console.log('hyena did not find the child somehow '+leastGuardedName)
+		console.log(predator+' did not find the child somehow '+leastGuardedName)
 		return response+ " but a bug saved the child."
 	}
 	guardians = child.guardians
 	for (guardName in guardians){
 		rollValue = utillib.roll(1)
 		watchValue = guardians[ guardName ]		
-		console.log(guardName+' rollValue '+rollValue+ ' watchValue '+watchValue)
+		//console.log(guardName+' rollValue '+rollValue+ ' watchValue '+watchValue)
 		if (rollValue > watchValue){
 			response += '\n\tFortunately, '+guardName+'['+rollValue+ '] chases off the beast.'
 			return response
 		} else {
-			response += '\n\tThe hyena slips past '+guardName+'['+rollValue+ ']'
+			response += '\n\tThe '+predator+' slips past '+guardName+'['+rollValue+ ']'
 		}
 	}
 	response += '\n\tThe poor child is devoured!'

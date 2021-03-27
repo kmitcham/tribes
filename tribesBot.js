@@ -417,12 +417,14 @@ function doChance(rollValue, gameState){
 		case 3: 
 			name = util.randomMemberName(population)
 			person = population[name]
-			message +=  name +" gets a severe injury: miss next turn and become Average (if Strong) or Weak (if Average)."
+			message +=  name +" gets a severe injury: miss next turn and "
 			person.isInjured = 'true'
 			if (person.strength && person.strength == 'strong'){
 				delete person.strength
+				message += ' is reduced to average strength.'
 			} else {
 				person.strength = 'weak'
+				message+= ' becomes weak.'
 			}
 			break;
 		default:

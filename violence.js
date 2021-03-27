@@ -260,10 +260,10 @@ const resolveViolence = (gameState) =>{
         attacker = population[attackerName]
         targetName = attacker.attack_target
         if (defenderTargets[targetName]){
-            console.log(' defenderTargets adds '+attackerName)
+            //console.log(' defenderTargets adds '+attackerName)
             defenderTargets[targetName].push(attackerName)
         } else {
-            console.log(' defenderTargets initialized with '+attackerName)
+            //console.log(' defenderTargets initialized with '+attackerName)
             defenderTargets[targetName] = [attackerName]
         }
     }
@@ -272,7 +272,7 @@ const resolveViolence = (gameState) =>{
         attackers = defenderTargets[defenderName]
         var randomIndex =  Math.trunc( Math.random ( ) * attackers.length )
         targetName = attackers[randomIndex]
-        console.log('defender first strike vs '+attackerName)
+        //console.log('defender first strike vs '+attackerName)
         attacker = util.personByName(defenderName, gameState);
         if (attacker && attacker.strategy == "defend"){
             defender = util.personByName(targetName, gameState);
@@ -288,7 +288,7 @@ const resolveViolence = (gameState) =>{
         }
         targetName = attacker.attack_target
         defender = util.personByName(targetName, gameState);
-        console.log(attackerName+' attacks '+targetName)
+        //console.log(attackerName+' attacks '+targetName)
         roll = util.roll(2)
         response += resolveSingleAttack(attacker, defender, roll, gameState)
     }
