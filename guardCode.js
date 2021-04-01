@@ -1,5 +1,6 @@
 const utillib = require("./util.js");
 const locations = require('./locations.json');
+const killlib = require("./kill.js")
 
 
 module.exports.findGuardValueForChild = (childName, population, children) =>{
@@ -124,6 +125,7 @@ module.exports.hyenaAttack= (children, gameState) => {
 		}
 	}
 	response += '\n\tThe poor child is devoured!'
+	killlib.kill(leastGuardedName, 'hyena attack', gameState)
 	return response
 }
 function asJson(data){

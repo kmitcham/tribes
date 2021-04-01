@@ -34,7 +34,6 @@ function personByName(argName, gameState){
 		name = removeSpecialChars(name)
 		console.log("cleaning up "+name)
 	}
-	name = name.toLowerCase()
 	if (!gameState || gameState.population == null){
 		console.log('no people yet, or gameState is otherwise null')
 		return

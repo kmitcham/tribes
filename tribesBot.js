@@ -216,7 +216,7 @@ function nextSeason(gameState){
 }
 function inventoryMessage(person){
 	if (!person){
-		return 'No person '+targetName
+		return 'No person '+person
 	}
 	message = person.food+' food \t'
 	message += person.grain+' grain \t'
@@ -361,11 +361,6 @@ function doChance(rollValue, gameState){
 			message += guardlib.hyenaAttack(children, gameState)
 			// ugly hack until kill is a lib,
 			// TODO move the kill to the guardlib
-			if (message.indexOf('devoured') > 0 ){
-				msgArray = message.split(' ')
-				target = msgArray[5]  // chance 10: A hyena attacks TARGET
-				killlib.kill(target, 'hyena attack', gameState)
-			}
 			break;
 		case 9 : 
 			name = util.randomMemberName(population)
@@ -764,7 +759,10 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		console.log("should not get this message")
 	}
 	if (command == 'scoutnerd'){
-
+		var gameTrack=0
+		if (bits[1]){
+			gameTrack= Number(bits[1])
+		}
 		GATHER = 0
 		GATHER_STRONG = 1
 		GRAIN = 2
@@ -781,6 +779,9 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			for (var j =1; j <= 6; j++){
 				for (var k =1; k <= 6; k++){
 					droll = i+j+k
+					if (droll > huntlib.locationDecay[gameTrack]){
+						droll = huntlib.locationDecay[gameTrack]						
+					}
 					for (locationName in totals){
 						locationData = locations[locationName]
 						data = gatherDataFor(locationName, droll)
@@ -817,6 +818,9 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		MAX = 6000
 		for (var i = 0; i < MAX; i++){
 			val = util.roll(3)
+			if (val > huntlib.locationDecay[gameTrack]){
+				val = huntlib.locationDecay[gameTrack]						
+			}
 			for (locationName in totals){
 				locationData = locations[locationName]
 				data = gatherDataFor(locationName, val)
@@ -2311,6 +2315,7 @@ function addToPopulation(msg, author, bits, target,targetObject,gameState){
 	person.handle = targetObject
 	person.name = target
 	var strRoll = util.roll(1)
+	target = util.removeSpecialChars(target)
 	response = 'added '+target+' '+gender+' to the tribe. '
 	if (strRoll == 1){
 		person.strength = 'weak'
