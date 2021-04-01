@@ -19,6 +19,7 @@ const locationDecay = [30, // arrays count from 0 so add extra item
     15,15,14,14,13,
     13,12,12,11,11,
     10,10,9,9,8]
+module.exports.locationDecay = locationDecay
 
 //TODO: rewrite this to do seperate checks for injury( rollValue+strong, assistants)
 	//  and success (if rollValue >9, add spearpoint)
