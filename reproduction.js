@@ -104,151 +104,31 @@ function invite(msg, gameState, bot){
     actorName = util.removeSpecialChars(author.username)
     let messageArray = message.content.split(" ");
     let args = messageArray.slice(1);
-    handleInvite(actorName, args, gameState, bot )
+    handleReproductionList(actorName, args, "inviteList",gameState, bot )
     globalMatingCheck(gameState, bot);
 
 }
 module.exports.invite = invite;
-
-
-function handleInvite(actorName, args, gameState, bot){
-    actor = util.personByName(actorName, gameState);
-    population = gameState.population
-    errors = []
-    invites = []
-    for (rawTargetName of args){
-        localErrors = "";
-        if (rawTargetName == "!pass"){
-            if (args.indexOf(rawTargetName != (args.length -1))){
-                localErrors+= "Values after '!pass' will be ignored.\n"
-            }
-            break;
-        }
-        targetName = util.removeSpecialChars(targetName)
-        target = util.personByName(targetName, gameState);
-        if (target){
-            localErrors+= matingObjections(actor, target)
-        } else {
-            localErrors+= rawTargetName+" is not in the tribe.\n"
-        }
-        if (localErrors != ""){
-            errors.push(localErrors)
-        } else {
-            invites.push(targetName)
-        }
-    }
-    // if just !pass, or no args, or something perverse not thought of
-    if (invites.length == 0 && errors.length == 0 ){
-        errors.push("No valid items for the invite list.\n");
-    }
-    if (errors.length > 0){
-        for (error of errors){
-            author.message(error)
-        }
-        // clean up message?
-        return -1 * errors.length;
-    }
-    actor.invites = invites;
-    author.message("Setting your invite list to:"+invites)
-    globalMatingCheck(gameState, bot);
-    return;
-}
-module.exports.handleInvite = handleInvite;
 
 function consent(msg, gameState, bot){
     author = msg.author
     actorName = util.removeSpecialChars(author.username)
     let messageArray = message.content.split(" ");
     let args = messageArray.slice(1);
-    return handleConsent(actorName, args, gameState, bot )
+    handleReproductionList(actorName, args, "consentList",gameState, bot )
+    globalMatingCheck(gameState, bot)
 }
 module.exports.consent = consent;
-
-    
-function handleConsent(actorName, args, gameState, bot){
-    actor = util.personByName(actorName, gameState);
-    population = gameState.population
-    errors = []
-    consents = []
-    for (rawTargetName of args){
-        localErrors = "";
-        targetName = util.removeSpecialChars(targetName)
-        target = util.personByName(targetName, gameState);
-        if (target){
-            localErrors+= matingObjections(actor, target)
-        } else {
-            localErrors+= rawTargetName+" is not in the tribe.\n"
-        }
-        if (localErrors != ""){
-            errors.push(localErrors)
-        } else {
-            consents.push(targetName)
-        }
-    }
-    // if just !pass, or no args, or something perverse not thought of
-    if (consents.length == 0 && errors.length == 0 ){
-        errors.push("No valid items for the consent list.\n");
-    }
-    if (errors.length > 0){
-        for (error of errors){
-            author.message(error)
-        }
-        // clean up message?
-        return -1 * errors.length;
-    }
-    actor.consents = consents;
-    author.message("Setting your consent list to:"+consents)
-    globalMatingCheck(gameState, bot);
-    return;
-}
-module.exports.handleConsent = handleConsent;
 
 function decline(msg, gameState, bot){
     author = msg.author
     actorName = util.removeSpecialChars(author.username)
     let messageArray = message.content.split(" ");
     let args = messageArray.slice(1);
-    return handleDecline(author.username, args, gameState, bot )
+    handleReproductionList(actorName, args, "declineList",gameState, bot )
 }
 module.exports.decline = decline;
    
-function handleDecline(actorName, args, gameState, bot){
-    actor = util.personByName(actorName, gameState);
-    population = gameState.population
-    errors = []
-    consents = []
-    for (rawTargetName of args){
-        localErrors = "";
-        targetName = util.removeSpecialChars(targetName)
-        target = util.personByName(targetName, gameState);
-        if (target){
-            localErrors+= matingObjections(actor, target)
-        } else {
-            localErrors+= rawTargetName+" is not in the tribe.\n"
-        }
-        if (localErrors != ""){
-            errors.push(localErrors)
-        } else {
-            consents.push(targetName)
-        }
-    }
-    // if just !pass, or no args, or something perverse not thought of
-    if (consents.length == 0 && errors.length == 0 ){
-        errors.push("No valid items for the decline list.\n");
-    }
-    if (errors.length > 0){
-        for (error of errors){
-            author.message(error)
-        }
-        // clean up message?
-        return -1 * errors.length;
-    }
-    actor.consents = consents;
-    author.message("Setting your decline list to:"+consents)
-    globalMatingCheck(gameState, bot);
-    return;
-}
-module.exports.handleDecline = handleDecline;
 
 function pass(msg, gameState, bot){
     author = msg.author
@@ -278,6 +158,9 @@ function globalMatingCheck(gameState, bot){
     console.log("global mating not yet implented")
     allDone = true;
     actionableInvites = true;
+    if (! gameState.reproductionRound){
+        return;
+    }
     while (actionableInvites){
         actionableInvites = false;
         sexList = keys(population)

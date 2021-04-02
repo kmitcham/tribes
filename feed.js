@@ -1,3 +1,5 @@
+const util = require("./util.js");
+
 module.exports.feed = ( msg, player, amount, childList,  gameState) =>{
         children = gameState.children;
         message = ''
@@ -5,6 +7,22 @@ module.exports.feed = ( msg, player, amount, childList,  gameState) =>{
             childName = capitalizeFirstLetter(cName)
             amount = Number(amount)
             if (!children[childName]) {
+                if (cName == "!all"){
+                    for (var child in children){
+                        childList.push(child)
+                    }
+                    continue;
+                }
+                var parent = util.personByName(cName, gameState)
+                if (parent && parent.gender && parent.gender == 'female'){
+                    for (var filterChildName in children){
+                        var filterChild = children[filterChildName]
+                        if (filterChild.mother == parent.name){
+                            childList.push(filterChildName)
+                        }
+                    }
+                    continue;
+                }
                 msg.author.send('no such child as '+childName)
                 continue    
             }
@@ -30,7 +48,7 @@ module.exports.feed = ( msg, player, amount, childList,  gameState) =>{
                     player.food = 0
                     player['grain'] -= (amount-fed)
                 }
-                message += actor+' feeds '+amount+' to '+childName;
+                message += player.name+' feeds '+amount+' to '+childName;
                 children[childName].food += Number(amount)
                 if (children[childName].food != 2){
                     message += ' '+childName+' could eat more.'

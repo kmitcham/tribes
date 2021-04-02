@@ -257,8 +257,6 @@ function getUserFromMention(mention) {
 		return bot.users.cache.get(mention);
 	}
 }
-
-
 function createReproductionList(gameState){
 	population = gameState.population
 	nameList = []
@@ -397,9 +395,9 @@ function doChance(rollValue, gameState){
 			name = util.randomMemberName(population)
 			person = population[name]
 			person.isSick = 'true'
-			message +=  name + " got sick – lost 2 food and miss next turn. "
+			message +=  name + " got sick – eat 2 extra food and miss next turn. "
 			if (person.food < 2){
-				message += '( but they only had '+person.food+' so the ref might kill them if no help is given)'
+				message += '( but they only had '+person.food+' so the ref might kill them if no help is given or grain is used)'
 			}
 			person.food -= 2
 			if (person.food < 0) { person.food = 0}
