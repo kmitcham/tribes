@@ -43,7 +43,29 @@ test("Name with @", ()=>{
     actualName = player.name;
     expect(actualName).toEqual(expectName);
 })
-
+test("person by handle", ()=>{
+  var gameState = {
+      "population": {
+          "demander": {
+              "name": "demander",
+              "faction":"for",
+              "handle":{
+                "id":7
+              }
+            },
+            "pro1": {
+              "name": "pro1",
+              "faction":"for"
+            }
+                      },
+      "round": "work"
+  }
+  expectName = 'demander'
+  player = util.personByName('7', gameState);
+  expect(player).toBeTruthy();
+  actualName = player.name;
+  expect(actualName).toEqual(expectName);
+})
 test("Remove special chars",()=>{
   expect(util.removeSpecialChars("Has Spaces")).toEqual("HasSpaces")
   expect(util.removeSpecialChars("Has(Paren)")).toEqual("HasParen")

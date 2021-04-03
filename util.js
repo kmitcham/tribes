@@ -30,9 +30,10 @@ function personByName(argName, gameState){
 		name = argName.username
 		console.log("getting username from object ")
 	}
-	if (name != removeSpecialChars(name)){
-		name = removeSpecialChars(name)
-		console.log("cleaning up "+name)
+	cleaned = removeSpecialChars(name)
+	if (name != cleaned ){
+		console.log(name + " cleaned into "+cleaned)
+		name = cleaned
 	}
 	if (!gameState || gameState.population == null){
 		console.log('no people yet, or gameState is otherwise null')
@@ -45,7 +46,9 @@ function personByName(argName, gameState){
 	} else {
 		for (match in population){
 			if ( (population[match] && population[match].handle) 
-				&& ( population[match].handle.username == argName || population[match].handle.username == argName.username)){
+				&& ( population[match].handle.username == argName 
+					|| population[match].handle.username == argName.username
+					|| population[match].handle.id == argName)){
 				person = population[match]
 				break;
 			}

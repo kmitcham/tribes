@@ -56,7 +56,7 @@ module.exports.feed = ( msg, player, amount, childList,  gameState) =>{
                 message += '\n'
             } else {
                 msg.author.send('You do not have enough food or grain to feed '+childName)
-                continue
+                break;
             }
         }
         return message;
