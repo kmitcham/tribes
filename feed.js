@@ -8,8 +8,11 @@ module.exports.feed = ( msg, player, amount, childList,  gameState) =>{
             amount = Number(amount)
             if (!children[childName]) {
                 if (cName == "!all"){
-                    for (var child in children){
-                        childList.push(child)
+                    for (var childName in children){
+                        var child = children[childName]
+                        if (( child.newAdult && child.newAdult == true) || child.food < 2){
+                            childList.push(childName)
+                        }
                     }
                     continue;
                 }
@@ -18,7 +21,9 @@ module.exports.feed = ( msg, player, amount, childList,  gameState) =>{
                     for (var filterChildName in children){
                         var filterChild = children[filterChildName]
                         if (filterChild.mother == parent.name){
-                            childList.push(filterChildName)
+                            if (( filterChild.newAdult && filterChild.newAdult == true) || filterChild.food < 2){
+                                childList.push(filterChildName)
+                            }
                         }
                     }
                     continue;
