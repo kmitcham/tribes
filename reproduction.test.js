@@ -183,3 +183,37 @@ test("make a consentList, with pass", () =>{
   response = reproLib.handleReproductionList("p1", ["p2", "p4", "!pass", "p3"],"consentList", gameState, {})
   expect(response).toBe(-1)
 });
+test("trigger end of mating", () =>{
+  var gameState = {
+    "name": "unitTest-tribe",
+      "population": {
+          "p1":{
+              "name": "p1",
+              "gender": "female",
+              "inviteList":["p2","!pass"]
+          },
+          "p2":{
+            "name": "p2",
+            "gender": "male",
+            "consentList":["p1"],
+            "cannotInvite": true
+          }
+          , "p3":{
+            "name": "p3",
+            "gender": "male",
+            "cannotInvite":true
+          },
+          "p4":{
+              "name": "p4",
+              "gender": "male",
+              "cannotInvite":true
+            }
+       },
+       "children":{},
+      "reproductionRound": true
+  }
+  //function handleReproductionList(actorName, args, listName, gameState, bot){
+  response = reproLib.globalMatingCheck( gameState, {})
+  expect(gameState["population"]["p1"]["cannotInvite"]).toBeTruthy()
+  expect(response).toBe(0)
+});

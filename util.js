@@ -4,6 +4,13 @@ var bot;
 function isColdSeason(gameState){
 	return (gameState.seasonCounter%2 == 0);
 }
+function cleanUpMessage(msg){
+	if (msg.channel && msg.channel.name ){
+		console.log(' cleaning up message in channel '+msg.channel.name )
+		msg.delete({timeout: 1000}); 
+	}
+}
+module.exports.cleanUpMessage = cleanUpMessage;
 
 function roll(count){
 		if (!count){
@@ -71,17 +78,13 @@ function personByName(argName, gameState){
 
 
 module.exports.messagePlayerName = async (playerName, message, gameState, bot)=>{
-	console.log("trying message to "+playerName+" "+message)
 	player = personByName(playerName, gameState);
-	console.log("got a player")
 	if ( !player){
 		console.log("No player for name "+playerName)
 		return
 	}
 	playerId = player.handle.id
-	console.log("player id is "+playerId)
 	playerUser =  await bot.users.fetch(playerId);
-	console.log("got the user object")
 	playerUser.send(message);
 }
 
@@ -137,7 +140,7 @@ function removeSpecialChars(strVal){
 module.exports.removeSpecialChars = removeSpecialChars;
 
 function messageChannel(message, gameState, argBot){
-	if (!argBot){
+	if (!argBot || !argBot.channels || !argBot.channels.cache ){
 		console.log('no bot, no message to the channel')
 		return
 	}

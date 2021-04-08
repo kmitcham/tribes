@@ -194,10 +194,7 @@ function scoreChildren(children, gameState){
 	return message
 }
 function cleanUpMessage(msg){
-	if (msg.channel && msg.channel.name ){
-		console.log(' cleaning up message in channel '+msg.channel.name )
-		msg.delete({timeout: 1000}); 
-	}
+	util.cleanUpMessage(msg)
 }
 
 function nextSeason(gameState){
@@ -1171,7 +1168,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		bits.shift();
 		cName = bits.shift()
 		safety = 1;
-		while (cName && (safety < 10 )){
+		while (cName && (safety < 30 )){
 			childName = util.capitalizeFirstLetter(cName)
 			child = children[childName]
 			if (!child ){
@@ -1187,7 +1184,6 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 				util.messageChannel(actor+' starts guarding '+childName, gameState, bot)
 			}
 			cName = bits.shift()
-			console.log(' cname is >'+cName+'< '+safety)
 			safety += 1
 		}
 		return
@@ -2088,27 +2084,9 @@ function getNextChildName(children, childNames, nextIndex){
 	}
 	return possibleName
 }
+// TODO wire this correctly
 function addChild(mother, father, gameState){
-	var child = Object()
-	child.mother = mother
-	child.father = father
-	child.age = -2
-	child.food = 0
-	child.gender = genders[ (Math.trunc( Math.random ( ) * genders.length))]
-	nextIndex = (gameState.conceptionCounter % 26 )
-	child.name = getNextChildName(gameState.children, allNames, nextIndex)
-	children[child.name] = child	
-	console.log('added child '+child.name)
-	person = util.personByName(mother, gameState)
-	gameState.population[child.mother].isPregnant = child.name
-	if (gameState.reproductionList){
-		const indexOfPreggers = gameState.reproductionList.indexOf(mother);
-		if (indexOfPreggers > -1) {
-			gameState.reproductionList.splice(indexOfPreggers, 1);
-			console.log('attempting to remove pregnant woman from reproduction list')
-		}
-	}
-	gameState.conceptionCounter++
+	child = reproLib.addChild(mother, father, gameState)
 	return child
 }
 
@@ -2199,8 +2177,8 @@ function spawnFunction(mother, father, msg, population, gameState, force = false
 		var child = addChild(mother, father, gameState)
 		// check secretMating
 		if (gameState.secretMating){
-			util.messagePlayerName(mother, father +'['+droll+'] shares good feelings with you ['+mroll+']')
-			util.messagePlayerName(father, mother +'['+mroll+'] shares good feelings with you ['+droll+']')
+			util.messagePlayerName(mother, father +'['+droll+'] shares good feelings with you ['+mroll+']', gameState, bot)
+			util.messagePlayerName(father, mother +'['+mroll+'] shares good feelings with you ['+droll+']', gameState, bot)
 		} else {
 			util.messageChannel('The mating of '+mother+'['+mroll+'] and '+father+'['+droll+'] spawned '+child.name, gameState, bot)
 		}
@@ -2574,6 +2552,7 @@ function startWork(gameState){
 	gameState.foodRound = false
 	gameState.reproductionRound = false
 	canJerky = false
+	reproLib.clearReproduction(gameState, bot)
 	util.messageChannel(util.gameStateMessage(gameState), gameState, bot)
 	util.messageChannel('\nStarting the work round.  Guard (or ignore) your children, then craft, gather, hunt, assist or train.', gameState, bot)
 	savelib.saveTribe(gameState);

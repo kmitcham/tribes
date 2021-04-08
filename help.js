@@ -89,3 +89,18 @@ module.exports.playerHelpConflict = playerHelpConflict;
 module.exports.chiefHelp = chiefHelp;
 
 module.exports.refHelp = refHelp;
+
+/*
+Each player takes the role of a member of a Stone Age tribe trying to survive and multiply in the world. Tribe members can be hunters, gatherers, or crafters. They can travel among the veldt, marsh, hills and forest environments. They can try to reproduce, to guard children from dangers, and to keep everyone fed.
+
+The four physical resources in the game are food, grain, baskets, and spearheads. Food and grain are consumed to prevent starvation; grain is harder to obtain, but is not vulnerable to destruction from bad luck. Baskets double the effectiveness of gathering. Spearheads give a substantial bonus to hunting.
+
+dult tribe members need to consume 4 food or grain each season to avoid starvation. Children, including those not yet born, need to be given 2 food or grain each season until they reach 12 years old. Mothers with two or more children under 2 years old need 6 food or grain each season.
+
+Children are produced when a tribe member invites a tribe member of the opposite gender to mate, the invitee consents, and there is a successful dice roll. A player can invite multiple people until one of them consents. They can receive consent to only one invitation per season. Consenting to a mating does not change how many invitations a player can make that season.
+
+All tribes commands begin with a !, eg, "!inventory" is the command to see the tribe's possessions.  To see a list of commands, with some explanations of what they do, you can type "!help" in your tribe channel.  The bot will send you messages about actions you can take.
+
+Players use a split screen, with one window for the private messages from the bot, and one window for the shared conversation with the bot and the other players in the tribe channel (<tribename>-tribe).
+
+*/
