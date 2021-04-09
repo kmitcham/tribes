@@ -52,12 +52,21 @@ function personByName(argName, gameState){
 		 person = population[name]
 	} else {
 		for (match in population){
-			if ( (population[match] && population[match].handle) 
-				&& ( population[match].handle.username == argName 
-					|| population[match].handle.username == argName.username
-					|| population[match].handle.id == argName)){
-				person = population[match]
-				break;
+			if ( (population[match] && population[match].handle) ){
+				if ( population[match].handle.username == name 
+					|| population[match].handle.username == name.username
+					|| population[match].handle.id == name){
+					person = population[match]
+					break;
+				}
+				if (population[match].handle.id == cleaned){
+					person = population[match]
+					break;
+				}
+				if (population[match].name.toUpperCase() === name.toUpperCase){
+					person = population[match]
+					break;
+				}
 			}
 		}
 	}
