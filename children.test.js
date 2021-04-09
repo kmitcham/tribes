@@ -18,7 +18,7 @@ test("Display adults only", () =>{
           "age": 30,"name":"c3", "food": 2, 'gender':'male'
         }
     }
-    actualMessage = childlib.showChildren(children,{})
+    actualMessage = (childlib.showChildren(children,{})).join()
     expect(actualMessage.indexOf('Unborn')).toBe(-1)
     expect(actualMessage.indexOf('Children')).toBe(-1)
     expect(actualMessage.indexOf('Adults')).toBeGreaterThan(-1)
@@ -44,7 +44,7 @@ test("filter mixed ages", () =>{
           "age": -1,"name":"c3", "food": 2, 'gender':'male'
         }
     }
-    actualMessage = childlib.showChildren(children, {}, 'm1')
+    actualMessage = childlib.showChildren(children, {}, 'm1').join()
     expect(actualMessage.indexOf('Unborn')).toBeGreaterThan(-1)
     expect(actualMessage.indexOf('Adults')).toBeGreaterThan(-1)
     expect(actualMessage.indexOf('Children')).toBe(-1)
@@ -70,7 +70,7 @@ test("Check sorting", () =>{
         "age": -1,"name":"C", "food": 2, 'gender':'male'
       }
   }
-  actualMessage = childlib.showChildren(children, {})
+  actualMessage = childlib.showChildren(children, {}).join()
   alocation = actualMessage.indexOf('Achild')
   blocation = actualMessage.indexOf('Bchild')
   clocation = actualMessage.indexOf('Cchild')

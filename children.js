@@ -3,7 +3,8 @@ const guardlib = require("./guardCode.js");
 const { child } = require("winston");
 
 module.exports.showChildren =  (children, population, filterName="", hideFathers=false ) =>{
-		response = ''
+		
+		responseMessages = []
 		childNames = Object.keys(children)
 		response = 'There are '+childNames.length+' children in total. \n'
 		mine = 0 
@@ -23,6 +24,7 @@ module.exports.showChildren =  (children, population, filterName="", hideFathers
     		return children[a].age - children[b].age
 		});
 		for (childName of sortedChildren) {
+			var response = ''
 			var child = children[childName]
 			if ( filterName && !(child.mother == filterName || child.father == filterName) ) {
 				continue
@@ -72,6 +74,7 @@ module.exports.showChildren =  (children, population, filterName="", hideFathers
 				}
 				response += ')\n'
 			}
+			responseMessages.push(response)
         } 
-		return response
+		return responseMessages
 }
