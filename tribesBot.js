@@ -703,9 +703,10 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		} else {
 			response = childlib.showChildren(children, population, "", gameState.secretMating)
 		}
-		
-		msg.author.send(response)
-		cleanUpMessage(msg);; 
+		for (part of response){
+			msg.author.send(part)
+		}
+		cleanUpMessage(msg);
 		return
 	}	
 	if (command == 'close'){
@@ -2086,7 +2087,7 @@ function getNextChildName(children, childNames, nextIndex){
 }
 // TODO wire this correctly
 function addChild(mother, father, gameState){
-	child = reproLib.addChild(mother, father, gameState)
+	var child = reproLib.addChild(mother, father, gameState)
 	return child
 }
 
@@ -2193,8 +2194,8 @@ function spawnFunction(mother, father, msg, population, gameState, force = false
 		}
 	} else {
 		if (gameState.secretMating){
-			util.messagePlayerName(mother, father +'['+droll+'] shares good feelings with you ['+mroll+']')
-			util.messagePlayerName(father, mother +'['+mroll+'] shares good feelings with you ['+droll+']')
+			util.messagePlayerName(mother, father +'['+droll+'] shares good feelings with you ['+mroll+']', gameState, bot)
+			util.messagePlayerName(father, mother +'['+mroll+'] shares good feelings with you ['+droll+']', gameState, bot)
 		} else {
 			// check secretMating
 			util.messageChannel('The mating of '+mother+'['+mroll+'] and '+father+'['+droll+'] produced only good feelings', gameState, bot)
@@ -2357,7 +2358,10 @@ function checkFood(gameState){
 	}
 	for (var childName in children){
 		var child = children[childName]
-		if (child.food >= 2 || child.newAdult ){
+		if (child.newAdult && child.newAdult== true){
+			continue;
+		}
+		if (child.food >= 2 ){
 			satedChildren.push(childName)
 		}else {
 			hungryChildren.push(childName)

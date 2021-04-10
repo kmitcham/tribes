@@ -55,11 +55,28 @@ function matingObjections(inviter, target){
 }
 module.exports.matingObjections = matingObjections;
 
+function showMatingLists(actorName, gameState, bot){
+    response = "";
+    actor = util.personByName(actorName, gameState)
+    if (actor.inviteList){
+        response += "Your inviteList is:"+inviteList+"\n"
+    }
+    if (actor.consentList){
+        response += "Your consentList is:"+consentList+"\n"
+    }
+    if (actor.declineList){
+        response += "Your declineList is:"+declineList+"\n"
+    }
+    return util.messagePlayerName(actorName, response, gameState, bot);
+}
+module.exports.showMatingLists = showMatingLists    ;
+
 function handleReproductionList(actorName, args, listName, gameState, bot){
     console.log("Building "+listName+" for "+actorName+" args "+args)
     actor = util.personByName(actorName, gameState);
     if (!args || args.length == 0){
-        util.messagePlayerName(actorName, "Your "+listName+" list is:"+actor[listName], gameState, bot)
+        delete actor[listName]
+        util.messagePlayerName(actorName,"Deleting your "+listName, gameState, bot);
         return;
     }
     population = gameState.population
@@ -322,7 +339,7 @@ function getNextChildName(children, childNames, nextIndex){
 	possibles = childNames['names'][nextIndex]
 	counter = 0
 	possibleName = possibles[ (Math.trunc( Math.random ( ) * possibles.length))]
-	while (counter < 10 && (possibleName in currentNames) ){
+	while (counter < 10 && (currentNames.indexOf(possibleName) != -1 ) ){
 		possibleName = possibles[ (Math.trunc( Math.random ( ) * possibles.length))]	
 	}
 	if (counter == 10){
@@ -334,6 +351,8 @@ function getNextChildName(children, childNames, nextIndex){
 	}
 	return possibleName
 }
+module.exports.getNextChildName = getNextChildName
+
 function addChild(mother, father, gameState){
 	var child = Object()
 	child.mother = mother

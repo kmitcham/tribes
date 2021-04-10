@@ -183,6 +183,7 @@ test("make a consentList, with pass", () =>{
   response = reproLib.handleReproductionList("p1", ["p2", "p4", "!pass", "p3"],"consentList", gameState, {})
   expect(response).toBe(-1)
 });
+
 test("trigger end of mating", () =>{
   var gameState = {
     "name": "unitTest-tribe",
@@ -217,3 +218,32 @@ test("trigger end of mating", () =>{
   expect(gameState["population"]["p1"]["cannotInvite"]).toBeTruthy()
   expect(response).toBe(0)
 });
+
+test("unique names",()=>{
+  //getNextChildName(children, childNames, nextIndex){
+    const fakeNames = {"names":[
+      ["a1","a2","a3"],["b1","b2","b3"]
+    ]}
+    const children = {
+      "a1": {
+      "mother": "m1",
+      "father": "f1",
+      "age": 8, "name":"a1", "food": 2, 'gender':'male'
+    },
+    "b1": {
+      "mother": "m2",
+      "father": "f2",
+      "age": 4, "name":"b1", "food": 2, 'gender':'male'
+    },
+    "a2": {
+      "mother": "m1",
+      "father": "f2",
+      "age": -1,"name":"a2", "food": 2, 'gender':'male'
+    }
+  }
+  result = reproLib.getNextChildName(children, fakeNames, 1)
+  console.log("next name was "+result)
+  expect(result.indexOf("b")).toBe(0)
+  expect(result.indexOf("a")).toBe(-1)
+  expect(result.indexOf("1")).toBe(-1)
+})
