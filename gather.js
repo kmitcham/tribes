@@ -1,4 +1,6 @@
 const locations = require('./locations.json');
+const util = require("./util.js");
+
 // in the ideal world, these are imports
 function roll(count){
     if (!count){
@@ -113,5 +115,6 @@ module.exports.gather = (playername, player, rollValue,gameState) => {
 		}
 	}
 	player.worked = true
+	util.history(player.name, message,gameState)
 	return message
 }

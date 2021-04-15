@@ -216,7 +216,7 @@ test("trigger end of mating", () =>{
   //function handleReproductionList(actorName, args, listName, gameState, bot){
   response = reproLib.globalMatingCheck( gameState, {})
   expect(gameState["population"]["p1"]["cannotInvite"]).toBeTruthy()
-  expect(response).toBe(0)
+  expect(response).toBe(4)
 });
 
 test("unique names",()=>{
@@ -242,8 +242,53 @@ test("unique names",()=>{
     }
   }
   result = reproLib.getNextChildName(children, fakeNames, 1)
-  console.log("next name was "+result)
   expect(result.indexOf("b")).toBe(0)
   expect(result.indexOf("a")).toBe(-1)
   expect(result.indexOf("1")).toBe(-1)
 })
+
+test("matingList tests", () =>{
+  var gameState = {
+    "name": "unitTest-tribe",
+      "population": {
+          "p1":{
+              "name": "p1",
+              "gender": "female",
+              "inviteList":["p2","!pass"],
+              "consentList":["p2"],
+              "declineList":[]
+          },
+          "p2":{
+            "name": "p2",
+            "gender": "male",
+            "consentList":["p1"],
+            "cannotInvite": true
+          }
+          , "p3":{
+            "name": "p3",
+            "gender": "male",
+            "consentList":["p1"],
+            "cannotInvite":true
+          },
+          "p4":{
+              "name": "p4",
+              "gender": "male",
+              "declineList":[],
+              "cannotInvite":true
+            }
+       },
+       "children":{},
+      "reproductionRound": true
+  }
+  //function handleReproductionList(actorName, args, listName, gameState, bot){
+  response = reproLib.showMatingLists("p1", gameState, {})
+  expect(response.indexOf("inviteList")).toBeGreaterThan(0)
+  expect(response.indexOf("consentList")).toBeGreaterThan(0)
+  expect(response.indexOf("declineList")).toBeGreaterThan(0)
+  response = reproLib.showMatingLists("p2", gameState, {})
+  expect(response.indexOf("inviteList")).toBeGreaterThan(0)
+  expect(response.indexOf("consentList")).toBeGreaterThan(0)
+  expect(response.indexOf("declineList")).toBeGreaterThan(0)
+  canResponse = reproLib.canStillInvite(gameState)
+  expect(canResponse).toBe("p1")
+});

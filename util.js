@@ -1,5 +1,5 @@
 const violencelib = require("./violence.js");
-var bot;
+const reproLib = require("./reproduction.js");
 
 function isColdSeason(gameState){
 	return (gameState.seasonCounter%2 == 0);
@@ -84,6 +84,13 @@ function personByName(argName, gameState){
 	console.log("tribe "+gameState.name+" has no such person in population:"+name)
 	return null
 }
+module.exports.history = (playerName, message, gameState)=>{
+	player = personByName(playerName, gameState)
+	if (!player.history){
+		player.history = []
+	}
+	player.history.push(gameState.seasonCounter/2+": "+message)
+}
 
 
 module.exports.messagePlayerName = async (playerName, message, gameState, bot)=>{
@@ -96,7 +103,6 @@ module.exports.messagePlayerName = async (playerName, message, gameState, bot)=>
 	playerUser =  await bot.users.fetch(playerId);
 	playerUser.send(message);
 }
-
 module.exports.gameStateMessage= (gameState) =>{
 	var numAdults = (Object.keys(gameState.population)).length
 	var numKids = (Object.keys(gameState.children)).length
@@ -118,7 +124,13 @@ module.exports.gameStateMessage= (gameState) =>{
 	}
 	if (gameState.workRound ) {message += '  (work round)'}
 	if (gameState.foodRound ) {message += '  (food round)'}
-	if (gameState.reproductionRound ) {message += '  (reproduction invitation order:'+gameState.reproductionList+')'}
+	if (gameState.reproductionRound){
+		if (gameState.secretMating){
+			message += ' (awaiting mating for '+reproLib.canStillInvite(gameState)+')'
+		} else {
+			message += ' (reproduction invitation order:'+gameState.reproductionList+')'
+		}
+	}
 	return message
 }
 

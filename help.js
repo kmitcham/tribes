@@ -30,11 +30,12 @@ function playerHelpRounds(){
 		text+='-=Food Round Commands=-\n'
 		text+=' !foodcheck (examine the food situation for every adult and living child)\n'
 		text+=' !feed <amt> <childName>  [<more childNames>]\n'
-		text+='-=Reproduction Round Commands=-\n'
-		text+=' !romance  (show the order of reproduction invitations)'
-		text+=' !invite <target>\n'
-		text+=' !consent (agree to a mating invitation)\n'
-		text+=' !pass (decline a mating, or end the members invitation turn)\n'
+		text+='-=Reproduction Commands=-\n'
+		text+=' !romance  (show your current reproduction lists)\n'
+		text+=' !invite <target> [target !pass]   The order you would like to invite people to mate.  If the list ends with !pass, you will give up if they decline.\n'
+		text+=' !consent <target> [target] The list of people you would accept mating invitations from.\n'
+		text+=' !decline <target> [target] The list of people whose mating invitations you would decline\n'
+		text+=' !pass (decline to invite anyone in the mating round; can still get invitations)\n'
 		return text;
 }
 function playerHelpConflict(){
@@ -57,7 +58,7 @@ function chiefHelp(){
 	text+=' !startwork (begins the work round, enabling work attempts and rolls)\n'
 	text+=' !startfood (ends the work round; subtract food/grain; birth; child age increase)\n'
 	text+=' !startreproduction (Start the reproduction round. Also when migration happens)\n'
-	text+=' !skip <person>   (end a players reproduction turn, giving the next player a chance)\n'
+	text+=' !skip <person>   (end a players reproduction turn)\n'
 	text+=' !chance (after mating, chance is required to end the season)\n'
 	text+=' !migrate <newlocation> <force>  (without force, just checks who would perish on the journey)\n'
 	text+=' !legislate <law number> <law text> (record a rule for the tribe, or replace the rule of the specified number)\n'

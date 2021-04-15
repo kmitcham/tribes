@@ -53,7 +53,7 @@ function findLeastGuarded (children, population){
 	guardChildSort.sort((a,b) => parseFloat(a.score) - parseFloat(b.score))
 	if (guardChildSort.length == 0){
 		console.log(' ERROR EMPTY LIST OF GUARD CHULDREN')
-		return "Bug means all kids are guarded equally"
+		return "No children need guarding"
 	}
 	lowGuardValue = guardChildSort[0].score;
 	for (var i = 0; i < guardChildSort.length; i++){
@@ -105,6 +105,9 @@ module.exports.hyenaAttack= (children, gameState) => {
 	leastGuardedMessageArray = findLeastGuarded(children, population).split(" ")
 	//  this is stupid and hacky; take the name from the start of the message, and the value from the last bit
 	leastGuardedName = leastGuardedMessageArray[0]
+	if (leastGuardedName === 'No'){
+		return 'All the children are safely unborn, so predators are not a worry.'
+	}
 	lowGuardValue = Number(leastGuardedMessageArray[10])
 	response = 'A '+predator+' attacks '+leastGuardedName // exclamation point breaks simple string splitting elsewhere
 	var child = children[leastGuardedName]

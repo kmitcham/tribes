@@ -36,7 +36,7 @@ const locationDecay = [30,30,30,17,17,
 					13,12,12,11,11,
 					10,10,9,9,8]
 const childSurvivalChance = 
-	[ 8, 8, 8, 8, 9, 9,10,10,10,11  // 4 years
+    [ 8, 8, 8, 8, 9, 9,10,10,10,11  // 4 years
 	,11,11,12,12,13,13,13,14,14,14  // 9 years
 	,15,15,16,16,17]
 var gameState = Object()
@@ -145,11 +145,11 @@ function endGame(gameState){
 	population = gameState.population
 	for (childName in children){
 		var child = children[childName]
-		console.log('end game scoring for '+childName+' '+child.newAdult+' '+child.age)
+		console.log('end game scoring for '+childName+' '+child.newAdult+' '+child.age+2)
 		if (!child.newAdult){
 			var roll = util.roll(3)
-			response += '\t'+childName+' ['+roll+' vs '+childSurvivalChance[child.age]+'] '
-			if (roll <= childSurvivalChance[child.age]){
+			response += '\t'+childName+' ['+roll+' vs '+childSurvivalChance[child.age+2]+'] '
+			if (roll <= childSurvivalChance[child.age+2]){
 				child.newAdult = true
 				response += 'grows up\n'
 			} else {
@@ -423,12 +423,22 @@ function doChance(rollValue, gameState){
 	gameState.needChanceRoll = false
 	return message
 }
-
 async function handleCommand(msg, author, actor, command, bits, gameState){
 	player = util.personByName(actor, gameState)
 	population = gameState.population
 	children = gameState.children
 	graveyard = gameState.graveyard
+	if (gameState.secretMating){
+		if (command == 'consent'){
+			return reproLib.consent(msg, gameState, bot)
+		}
+		if (command == 'decline'){
+			return reproLib.decline(msg, gameState, bot);
+		}
+		if (command == 'invite'){
+			return reproLib.invite(msg, gameState, bot);
+		}
+	}
 	if (command === 'help'){
 		msg.author.send( helplib.playerHelpBasic());
 		msg.author.send( helplib.playerHelpRounds());
@@ -643,7 +653,9 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		if (target ){
 			if (population[targetName]){
 				person = util.personByName(targetName, gameState)
-				gameState.banished[targetName] = person;
+				if (!gameState.banished){
+					gameState.banished = {}
+				}
 				// removing the player from the banish list is a pain.
 				delete population[targetName]
 				util.messageChannel(targetName+' is banished from the tribe',gameState, bot)
@@ -1189,6 +1201,23 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		}
 		return
 	}
+	if (command == 'history'){
+		if (player.history){
+			var message = '';
+			for (record of player.history){
+				message += record+"\n"
+				if (message.length > 1900){
+					msg.author.send(message);
+					message = ''
+				}
+			}
+			msg.author.send(message);
+		} else {
+			msg.author.send("No history found.");
+		}
+		cleanUpMessage(msg);; 
+		return;
+	}
 	if (command == 'ignore'){
 		if (bits.length < 2){
 			msg.author.send('ignore <childName> [otherNames]')
@@ -1495,6 +1524,10 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			// error meesssage here
 			return
 		}
+		if (gameState.secretMating){
+			reproLib.pass(msg, gameState, bot)
+			return;
+		}
 		// pass is valid a) when the actor name is top of the reproductionlist
 		// or b) when the player is invited
 		if (gameState && gameState.reproductionList && gameState.reproductionList[0]
@@ -1571,6 +1604,13 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		return
 	}
 	if (command == 'romance'){
+		if (gameState.secretMating){
+			console.log('secret mating')
+			reproLib.showMatingLists(actor, gameState, bot)
+			return
+		}
+		console.log('not secret mating')
+
 		if (gameState.reproductionRound && gameState.reproductionList ){
 			msg.author.send("The mating invitation order is "+gameState.reproductionList)
 			for (personName in population){
@@ -1659,7 +1699,11 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		if (bits[1]){
 			locationName = bits[1]
 		}
-		response = 'The '+locationName+' resources are:\n'
+		var season = 'warm season.'
+		if (util.isColdSeason(gameState)){
+			season = 'cold season.'
+		}
+		response = 'The '+locationName+' '+season+' resources are:\n'
 		locationData = locations[locationName]
 		if (!locationData){
 			msg.author.send('Valid locations are: '+Object.keys(locations))
@@ -1683,6 +1727,16 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		msg.author.send(response)
 		cleanUpMessage(msg);;
 		return
+	}
+	if (command == 'secretmating'){
+		if (referees.includes(actor) || player.chief){
+			gameState.secretMating = ! gameState.secretMating;
+			msg.reply("SecretMating is "+gameState.secretMating)
+		}
+		else {
+
+		}
+		return;
 	}
 	if (command == 'secrets'){
 		player = util.personByName(actor, gameState)
@@ -1715,7 +1769,20 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			cleanUpMessage(msg);; 
 			return
 		}
-		if (gameState.reproductionRound && gameState.reproductionList 
+		if (!gameState.reproductionRound){
+			msg.author.send('Only valid during the reproduction round.')
+			cleanUpMessage(msg);; 
+			return
+		}
+		if (gameState.secretMating){
+			person = util.personByName(target, gameState)
+			if (person){
+				person.cannotInvite = true;  // for secret mating
+			}
+			util.messageChannel('The chief cancels this chance to reproduce', gameState, bot)
+			return;
+		}
+		if (gameState.reproductionList 
 			&& gameState.reproductionList[0] && gameState.reproductionList[0].startsWith(target)){
 			console.log('legal target to skip')
 		} else {
@@ -1858,14 +1925,14 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			return
 		}
 		if (!player){
-			msg.author.send(targetName+'You are not a member of the tribe yet.')
+			msg.author.send('You are not a member of the tribe yet.')
 			cleanUpMessage(msg);; 
 			return
 		}
-		player.vote = targetName
+		player.vote = targetPerson.name
 		totalVotes = countByType(gameState.population, 'vote', targetName)
 		tribeSize = Object.keys(gameState.population).length
-		if (totalVotes > (2/3 * tribeSize)){
+		if (totalVotes >= (2/3 * tribeSize)){
 			for (name in gameState.population){
 				person = util.personByName(name, gameState)
 				if (person.chief && name != targetName){
@@ -1983,6 +2050,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 				return	
 			}
 			message = assist(actor, player, assistedPlayer)
+			util.history(actor, message, gameState)
 			player.activity = 'assist'
 		} 
 		if (command == 'train'){
@@ -2273,6 +2341,7 @@ function addToPopulation(msg, author, bits, target,targetObject,gameState){
 		msg.author.send('must specify: <gender> <name>')
 		return
 	}
+	target = util.removeSpecialChars(target)
 	if (gameState.population[target]){
 		msg.author.send(target+' is already in the tribe')
 		return
@@ -2292,7 +2361,6 @@ function addToPopulation(msg, author, bits, target,targetObject,gameState){
 	person.handle = targetObject
 	person.name = target
 	var strRoll = util.roll(1)
-	target = util.removeSpecialChars(target)
 	response = 'added '+target+' '+gender+' to the tribe. '
 	if (strRoll == 1){
 		person.strength = 'weak'
@@ -2300,13 +2368,17 @@ function addToPopulation(msg, author, bits, target,targetObject,gameState){
 	} else if (strRoll == 6){
 		person.strength == 'strong'
 		response+= target +' is strong.'
-	}
+	} 
 	gameState.population[target] = person
 	if (profession){
 		specialize(msg, target, profession, gameState)
 	}
 	util.messageChannel(response, gameState, bot)
 	savelib.saveTribe(gameState);
+	if (!person.strength){
+		util.messagePlayerName(target, "You are of average strength", gameState, bot)
+	}
+	util.history(target, "Joined the tribe", gameState)
 	return
 }
 
@@ -2493,7 +2565,6 @@ function consumeFoodChildren(gameState){
 				if (population[child.mother].nursing && population[child.mother].nursing.length == 0){
 					delete population[child.mother].nursing 
 				}
-				
 			}
 		}
 		if (child.age >= 24 && ! child.newAdult ){
@@ -2533,11 +2604,11 @@ function consumeFood(gameState){
 	}
 	console.log('adults are eating')
 	response = "Food round results:\n"
-	console.log('food response is '+response)
+	//console.log('food response is '+response)
 	response += consumeFoodPlayers(gameState);
-	console.log('food response is '+response)
+	//console.log('food response is '+response)
 	response += consumeFoodChildren(gameState);
-	console.log('food response is '+response)
+	//console.log('food response is '+response)
 	return response
 }
 
@@ -2586,12 +2657,17 @@ function startReproduction(gameState){
 	gameState.foodRound = false
 	gameState.reproductionRound = true
 	util.messageChannel(foodMessage+'\n', gameState, bot)
-	util.messageChannel('Starting the Reproduction round; invite other tribe members to reproduce (not automated)', gameState, bot)
+	util.messageChannel('Starting the Reproduction round; invite other tribe members to reproduce.', gameState, bot)
 	util.messageChannel('The tribe can decide to move to a new location, but the injured and children under 2 will need 2 food', gameState, bot)
+	if (gameState.secretMating){
+		reproLib.globalMatingCheck(gameState, bot)
+		util.messageChannel('(awaiting mating for '+reproLib.canStillInvite(gameState)+')')
+	} else {
+		util.messageChannel("Invitation order: "+shuffle(namelist), gameState, bot)
+		gameState.reproductionList = nameList
+		util.messageChannel(gameState.reproductionList[0]+ " should now !invite people to reproduce, or !pass ", gameState, bot)
+	}
 	namelist = createReproductionList(gameState)
-	util.messageChannel("Invitation order: "+shuffle(namelist), gameState, bot)
-	gameState.reproductionList = nameList
-	util.messageChannel(gameState.reproductionList[0]+ " should now !invite people to reproduce, or !pass ", gameState, bot)
 	savelib.saveTribe(gameState);
 	allGames[gameState.name] = gameState;
 	return
@@ -2710,20 +2786,24 @@ function craft(playername, player, type, rawValue){
 	var rollValue = rawValue;
 	console.log('craft type '+type+' roll '+rollValue)
 	player.worked = true
+	var message = playername+' crafts['+rawValue+'] a '+type
 	if (type.startsWith('spear')){
 		type = 'spearhead'
 	}
 	if (player.profession != 'crafter'){
 		rollValue -= 1
 	}
+
 	if (rollValue > 1 && type == 'basket'){
 			player.basket += 1
 	} else if (rollValue > 2 && type == 'spearhead') {		
 			player.spearhead += 1
 	} else {
-		return playername+ ' fails['+rawValue+'] at crafting a '+type
+		message =  playername+ ' fails['+rawValue+'] at crafting a '+type
 	}
-	return playername+' crafts['+rawValue+'] a '+type
+	message = playername+' crafts['+rawValue+'] a '+type
+	util.history(playername,message, gameState)
+	return message
 }
 function assist(playername, player, helpedPlayer){
 	player.worked = true
