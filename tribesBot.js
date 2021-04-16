@@ -429,17 +429,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 	population = gameState.population
 	children = gameState.children
 	graveyard = gameState.graveyard
-	if (gameState.secretMating){
-		if (command == 'consent'){
-			return reproLib.consent(msg, gameState, bot)
-		}
-		if (command == 'decline'){
-			return reproLib.decline(msg, gameState, bot);
-		}
-		if (command == 'invite'){
-			return reproLib.invite(msg, gameState, bot);
-		}
-	}
+
 	if (command === 'help'){
 		msg.author.send( helplib.playerHelpBasic());
 		msg.author.send( helplib.playerHelpRounds());
@@ -733,6 +723,11 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		return
 	}
 	if (command == 'consent'){
+		if (gameState.secretMating){
+			if (command == 'consent'){
+				return reproLib.consent(msg, gameState, bot)
+			}
+		}
 		var inviterName = ''
 		var inviter = null
 		for (personName in population){
@@ -753,6 +748,9 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			nextMating(inviterName, gameState)
 		}
 		return
+	}
+	if (command == 'decline'){
+		return reproLib.decline(msg, gameState, bot);
 	}
 	if (command == 'debug'){
 		if (!referees.includes(actor)){
@@ -1062,6 +1060,25 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		savelib.saveTribe(gameState);
 		return
 	} 
+	if (command == 'force'){
+		if (!referees.includes(actor)){
+			cleanUpMessage();
+			msg.author.send(command+' requires referee priviliges')
+			return
+		}
+		command = bits.shift()
+		targetName = bits.shift()
+		forceCommand = bits[0]
+		console.log("attempt to force "+targetName+" to "+bits)
+		target = util.personByName(targetName, gameState)
+		if (!target){
+			cleanUpMessage();
+			msg.author.send(targetName+' not found')
+			return
+		}
+		//tion handleCommand(msg, author,       actor,        command,     bits, gameState){
+		return handleCommand(msg, target.handle, target.name, forceCommand, bits, gameState)
+	}
 	if (command == 'foodcheck'){
 		message = checkFood(gameState)
 		msg.author.send( message)
@@ -1285,6 +1302,9 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		return
 	} 
 	if (command == 'invite'){
+		if (gameState.secretMating){
+			return reproLib.invite(msg, gameState, bot);
+		}
 		inviteMessage = ''
 		if (gameState.reproductionRound && gameState.reproductionList 
 			&& gameState.reproductionList[0] && gameState.reproductionList[0].startsWith(actor)){
@@ -2628,7 +2648,7 @@ function startWork(gameState){
 	canJerky = false
 	reproLib.clearReproduction(gameState, bot)
 	util.messageChannel(util.gameStateMessage(gameState), gameState, bot)
-	util.messageChannel('\nStarting the work round.  Guard (or ignore) your children, then craft, gather, hunt, assist or train.', gameState, bot)
+	util.messageChannel('\n==>Starting the work round.  Guard (or ignore) your children, then craft, gather, hunt, assist or train.<==', gameState, bot)
 	savelib.saveTribe(gameState);
 	allGames[gameState.name] = gameState;
 	return
@@ -2640,7 +2660,7 @@ function startFood(gameState){
 	gameState.foodRound = true
 	gameState.reproductionRound = false
 	message = util.gameStateMessage(gameState)
-	util.messageChannel(message+'\nStarting the food and trading round.  Make sure everyone has enough to eat, or they will starve', gameState, bot)
+	util.messageChannel(message+'\n==>Starting the food and trading round.  Make sure everyone has enough to eat, or they will starve<==', gameState, bot)
 	foodMessage = checkFood(gameState)
 	util.messageChannel(foodMessage, gameState, bot)
 	savelib.saveTribe(gameState);
@@ -2656,7 +2676,7 @@ function startReproduction(gameState){
 	gameState.foodRound = false
 	gameState.reproductionRound = true
 	util.messageChannel(foodMessage+'\n', gameState, bot)
-	util.messageChannel('Starting the Reproduction round; invite other tribe members to reproduce.', gameState, bot)
+	util.messageChannel('\n==> Starting the Reproduction round; invite other tribe members to reproduce.<==', gameState, bot)
 	util.messageChannel('The tribe can decide to move to a new location, but the injured and children under 2 will need 2 food', gameState, bot)
 	if (gameState.secretMating){
 		reproLib.globalMatingCheck(gameState, bot)

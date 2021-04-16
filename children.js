@@ -66,9 +66,9 @@ module.exports.showChildren =  (children, population, filterName="", hideFathers
 			} else {
 				response += '  needs '+(2-child.food)+' food'
 			} 
-			response += ' parents:'+child.mother
+			response += ' mother:'+child.mother
 			if (!hideFathers){
-				response += '+'+child.father
+				response += ' father:'+child.father
 			}
 			if (child.age < 24 ){
 				response += ' guardValue:'+ utillib.round(guardlib.findGuardValueForChild(childName, population, children))

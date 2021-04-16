@@ -243,9 +243,13 @@ function globalMatingCheck(gameState, bot){
                 doneMating.push(personName)
                 console.log("\t cannotInvite.  ")
                 continue
-            } else if (person.inviteList && person.inviteList.length > 0) {
+            } else if (person.isPregnant){
+                console.log("\t inviter was pregnant")
+                continue;
+            }
+            else if (person.inviteList && person.inviteList.length > 0) {
                 targetName = person.inviteList[0]
-                console.log("\t inviting "+targetName)
+                console.log(" inviting "+targetName)
                 if (targetName == "!pass"){
                     person.cannotInvite = true
                     util.messageChannel(personName+" is passing on mating this round.")
@@ -261,19 +265,25 @@ function globalMatingCheck(gameState, bot){
                     person.cannotInvite = true
                     delete person.inviteList
                     doneMating.push(personName)
-                    console.log("\t consent "+targetName)
+                    console.log("\t consents ")
                     continue
-                } else if (target.declineList && target.declineList.includes(personName)){
-                    util.messagePlayerName(personName, targetName+" declines your invitation.", gameState, bot)
-                    util.messagePlayerName(targetName, personName+" flirts with you, but you decline.", gameState, bot)
+                }  else if ( target.isPregnant || (target.declineList && target.declineList.includes(personName))){
+                    if (target.isPregnant){
+                        util.messagePlayerName(personName, targetName+" is visibly pregnant.", gameState, bot)
+                        util.messagePlayerName(targetName, personName+" flirts with you, but you are pregnant.", gameState, bot)    
+                        console.log("\t is pregnant  ")
+                    } else {
+                        util.messagePlayerName(personName, targetName+" declines your invitation.", gameState, bot)
+                        util.messagePlayerName(targetName, personName+" flirts with you, but you decline.", gameState, bot)
+                        console.log("\t declines  ")
+                    }
                     person.inviteList.shift()
                     // can't lose your invite power just because of rejection
                     if (person.inviteList.length > 0) {
                         actionableInvites = true
-                        console.log("\t declined invite, but more invitations exist")
+                        console.log("\t more invitations exist")
                     }
                     allDone = false
-                    console.log("\t decline  "+targetName)
                 } else {
                     // this will get spammy, if the function is called every time anyone updates.
                     util.messagePlayerName(targetName, personName+" has invited you to mate- !consent "+personName+" or !decline "+personName, gameState, bot)
@@ -289,16 +299,23 @@ function globalMatingCheck(gameState, bot){
             }
         }
     }
-    // allDone = true should also mean sexList is empty.
     if (allDone){
+        util.messageChannel("---> Reproductive activites are complete for the season <---", gameState, bot)
+        noPregnancies = true
         for (personName in population){
             person = population[personName]
+            util.messagePlayerName(personName, "Reproduction round activites are over.", gameStat,bot)
             if (person.hiddenPregnant){
-                util.messageChannel(person.name+ " has been blessed with a child.", gameState, bot)
                 person.isPregnant = person.hiddenPregnant
                 delete person.hiddenPregnant
+                noPregnancies = false
+                util.messageChannel(person.name+ " has been blessed with a child: "+person.isPregnant, gameState, bot)
+                util.messagePlayerName(personName, "You have been blessed with the child "+person.isPregnant, gameState)
             }
             delete person.inviteList  // this should already be empty or done.
+        }
+        if (noPregnancies){
+            util.messageChannel("No one has become pregnant this season.", gameState, bot)
         }
         util.messageChannel("There are no outstanding invitations.  Time for chance.", gameState, bot)
     }
@@ -394,93 +411,4 @@ function addChild(mother, father, gameState){
 	return child
 }
 module.exports.addChild = addChild;
-/* 
-globalMatingCheck(gamestate, bot)
-    allDone = true;
-    actionableInvites = true;    
-    while (actionableInvites){
-        actionableInvites = false;
-        sexList = keys(population)
-        for every person in sexList{
-            if (person.cannotInvite) {
-                remove person from sexList
-                continue
-            }
-            if person.inviteTargets.length > 0 {
-                targetName = inviteTargets[0]
-                if (targetName == "!pass"){
-                    person.cannotInvite = true
-                    message channel person is passing
-                    remove person from sexList
-                    continue
-                }
-                target = personForName(targetName)
-                if (target.consentList.includes(personName)){
-                    spawn(target, person)
-                    person.cannotInvite = true
-                    delete person.inviteTargets
-                    remove person from sexList
-                    continue
-                } else if (target.declineList.includes(personNamne)){
-                    message person (target declines your invitation)
-                    message target (person tried to flirt with you)
-                    person.inviteTargets.shift()
-                    // can't lose your invite power just because of rejection
-                    if (person.inviteTargets.length > 0) {
-                        actionableInvites = true
-                    }
-                    allDone = false
-                } else {
-                    // this will get spammy, if the function is called every time anyone updates.
-                    message target (person wants to mate with you)
-                    message person (target is considering your invitation)
-                    remove person from sexList
-                    allDone = false
-                }
-            } else {
-                // person has no invites pending
-                remove person from sexList
-                allDone = false
-            }
-        }
-    }
-    // allDone = true should also mean sexList is empty.
-    if (allDone){
-        message the channel repro is over, time for chance
-        for person in tribe{
-            if (person.hiddenPregnant){
-                announce pregnancy in channel
-                person.isPregnant = true 
-                delete person.hiddenPregnant
-            }
-            delete person.inviteList  // this should already be empty or done.
-        }
-    }
-}
-*/
-/*
-spawn 
-    <existing dice roll code>
-	if (roll1+roll2 > 9 && ! (mother.hiddenPregnant || mother.isPregnant) ){
-        addChild
-        if (gameData.secretMating)
-            mother.hiddenPregnant = true
-        else 
-            mother.isPregnant
-    }
-    if gameData.secretMating
-        message the parents about feelings (show each their own roll)
-    else 
-        message the channel feelings (showing rolls)
 
-children 
-    if gameData.secretMating
-        don't show the fathers of children
-scoreChildren
-    if gameData.secretMating
-        don't show the fathers of children
-
-
-ready
-    (tracking status of mating needs to change)
-*/
