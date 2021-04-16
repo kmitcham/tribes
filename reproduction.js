@@ -42,11 +42,9 @@ module.exports.eligibleMates = eligibleMates;
 
 function matingObjections(inviter, target){
     response = "";
-    if (inviter.isPregnant){
-        response += inviter.name+" is pregnant.\n"
-    }
     if (target.isPregnant){
-        response += target.name+" is pregnant.\n"
+        // maybe check the age of the child; -2 is bad, but -1 is on the market
+        //response += target.name+" is pregnant.\n"
     }
     if (inviter.gender == target.gender){
         response += inviter.name+" is the same gender as "+target.name+".\n"
@@ -163,7 +161,7 @@ function invite(msg, gameState, bot){
         util.messagePlayerName(actorName, "Your invitations for this season are past.", gameState,bot)
         return;
     }
-    if (person.isPregnant){
+    if (person.isPregnant && gameState.children[person.isPregnant] && gameState.children[person.isPregnant].age == -2){
         util.messagePlayerName(actorName, "You are already pregnant.", gameState,bot)
         return;
     }
@@ -252,7 +250,7 @@ function globalMatingCheck(gameState, bot){
                 console.log(" inviting "+targetName)
                 if (targetName == "!pass"){
                     person.cannotInvite = true
-                    util.messageChannel(personName+" is passing on mating this round.")
+                    util.messageChannel(personName+" is passing on mating this round.",gameState, bot)
                     delete person.inviteList
                     doneMating.push(personName)
                     continue
@@ -304,7 +302,7 @@ function globalMatingCheck(gameState, bot){
         noPregnancies = true
         for (personName in population){
             person = population[personName]
-            util.messagePlayerName(personName, "Reproduction round activites are over.", gameStat,bot)
+            util.messagePlayerName(personName, "Reproduction round activites are over.", gameState,bot)
             if (person.hiddenPregnant){
                 person.isPregnant = person.hiddenPregnant
                 delete person.hiddenPregnant

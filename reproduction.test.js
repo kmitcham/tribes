@@ -91,9 +91,9 @@ test("pregnant mates", () =>{
             "gender": "male"
           };
   var response = reproLib.matingObjections(p1,p2)
-  expect(response).toBe("p1 is pregnant.\n")
+  expect(response).toBe("")
   var response = reproLib.matingObjections(p2,p1)
-  expect(response).toBe("p1 is pregnant.\n")
+  expect(response).toBe("")
 });
 test("Mating objections happy path", ()=> {
   p1 = {
@@ -125,11 +125,11 @@ test("Mating objections fail", ()=> {
   var response = reproLib.matingObjections(p2,p3);
   expect(response).toBe("p2 is the same gender as p3.\n")
   response = reproLib.matingObjections(p1,p2);
-  expect(response).toBe("p1 is pregnant.\n");
+  expect(response).toBe("");
   response = reproLib.matingObjections(p2,p1);
-  expect(response).toBe("p1 is pregnant.\n");
+  expect(response).toBe("");
   response = reproLib.matingObjections(p1,p1);
-  expect(response).toBe("p1 is pregnant.\np1 is pregnant.\np1 is the same gender as p1.\n");
+  expect(response).toBe("p1 is the same gender as p1.\n");
 })
 test("make a consentList, happy path", () =>{
   var gameState = {
