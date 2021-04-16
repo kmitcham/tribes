@@ -60,13 +60,11 @@ module.exports.showChildren =  (children, population, filterName="", hideFathers
 				response += '-----> New Adults <-----\n'
 				notPrintedNewAdultHeader = false;
 			}
-			response += (childName+':'+child.gender)
-			response += ' age:'+((child.age)/2)
-			response.padEnd(30,' ')
+			response += (childName+':'+child.gender).padEnd(30,' ')+'age:'+((child.age)/2)
 			if (child.newAdult){
 				response += 'Full grown!'.padStart(16, ' ')
 			} else {
-				response += 'needs '+(2-child.food)+' food'
+				response += '  needs '+(2-child.food)+' food'
 			} 
 			response += ' parents:'+child.mother
 			if (!hideFathers){

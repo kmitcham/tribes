@@ -1606,13 +1606,11 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		return
 	}
 	if (command == 'romance'){
+		cleanUpMessage(msg);
 		if (gameState.secretMating){
-			console.log('secret mating')
 			reproLib.showMatingLists(actor, gameState, bot)
 			return
 		}
-		console.log('not secret mating')
-
 		if (gameState.reproductionRound && gameState.reproductionList ){
 			msg.author.send("The mating invitation order is "+gameState.reproductionList)
 			for (personName in population){
@@ -1624,7 +1622,6 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			msg.author.send("Only valid during reproduction round")
 			return
 		}
-		cleanUpMessage(msg);; 
 		return
 	}
 	if (command == 'roll'){
