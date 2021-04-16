@@ -1419,6 +1419,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			gameState.laws[number] = law;
 		} else {
 			msg.author.send('syntax: !legislate <number> <everything else is the law>')
+			msg.author.send('You typed:'+msg.content)
 			cleanUpMessage(msg);; 
 			return
 		}
