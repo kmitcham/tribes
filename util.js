@@ -44,7 +44,7 @@ function personByName(argName, gameState){
 	}
 	if (!gameState || gameState.population == null){
 		console.log('no people yet, or gameState is otherwise null')
-		return
+		return null
 	}
 	var person = null
 	var population = gameState.population;
@@ -59,14 +59,14 @@ function personByName(argName, gameState){
 					person = population[match]
 					break;
 				}
-				if (population[match].handle.id == cleaned){
+				if (population[match].handle.id == name){
 					person = population[match]
 					break;
 				}
-				if (population[match].name.toUpperCase() === name.toUpperCase){
-					person = population[match]
-					break;
-				}
+			}
+			if (population[match].name.toUpperCase() === name.toUpperCase()){
+				person = population[match]
+				break;
 			}
 		}
 	}
@@ -81,7 +81,7 @@ function personByName(argName, gameState){
 		}
 		return person
 	}
-	console.log("tribe "+gameState.name+" has no such person in population:"+name)
+	console.log("tribe "+gameState.name+" has no such person in population:"+argName+" tried "+name+" and "+name.toUpperCase())
 	return null
 }
 module.exports.history = (playerName, message, gameState)=>{
