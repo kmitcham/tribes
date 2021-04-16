@@ -219,7 +219,8 @@ function inventoryMessage(person){
 	message += person.grain+' grain \t'
 	message += person.basket+' baskets \t'
 	message += person.spearhead+' spearheads \t'
-	message += person.profession+' '+person.gender.substring(0,1)+'\t'+person.name
+	message += person.profession.padEnd(9,' ')
+	message += person.gender.substring(0,1)+'\t'+person.name
 	if (person.isPregnant && person.isPregnant != ''){
 		message += '\n\t\t is pregnant with '+person.isPregnant
 	}

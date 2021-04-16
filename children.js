@@ -61,8 +61,8 @@ module.exports.showChildren =  (children, population, filterName="", hideFathers
 				notPrintedNewAdultHeader = false;
 			}
 			response += (childName+':'+child.gender)
-			response += 'age:'+((child.age)/2)
-			response.padEnd(25,' ')
+			response += ' age:'+((child.age)/2)
+			response.padEnd(30,' ')
 			if (child.newAdult){
 				response += 'Full grown!'.padStart(16, ' ')
 			} else {

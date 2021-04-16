@@ -295,7 +295,7 @@ function globalMatingCheck(gameState, bot){
             person = population[personName]
             if (person.hiddenPregnant){
                 util.messageChannel(person.name+ " has been blessed with a child.", gameState, bot)
-                person.isPregnant = true 
+                person.isPregnant = person.hiddenPregnant
                 delete person.hiddenPregnant
             }
             delete person.inviteList  // this should already be empty or done.
