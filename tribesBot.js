@@ -2795,6 +2795,7 @@ function craft(playername, player, type, rawValue){
 		rollValue -= 1
 	}
 
+	message = playername+' crafts['+rawValue+'] a '+type
 	if (rollValue > 1 && type == 'basket'){
 			player.basket += 1
 	} else if (rollValue > 2 && type == 'spearhead') {		
@@ -2802,7 +2803,6 @@ function craft(playername, player, type, rawValue){
 	} else {
 		message =  playername+ ' fails['+rawValue+'] at crafting a '+type
 	}
-	message = playername+' crafts['+rawValue+'] a '+type
 	util.history(playername,message, gameState)
 	return message
 }
