@@ -2829,7 +2829,7 @@ function shuffle(array) {
 /////////////////////////////////////////////////////////
 function craft(playername, player, type, rawValue){
 	var rollValue = rawValue;
-	console.log('craft type '+type+' roll '+rollValue)
+	console.log('craft type '+type+' roll '+rawValue)
 	player.worked = true
 	var message = playername+' crafts['+rawValue+'] a '+type
 	if (type.startsWith('spear')){
@@ -2838,8 +2838,6 @@ function craft(playername, player, type, rawValue){
 	if (player.profession != 'crafter'){
 		rollValue -= 1
 	}
-
-	message = playername+' crafts['+rawValue+'] a '+type
 	if (rollValue > 1 && type == 'basket'){
 			player.basket += 1
 	} else if (rollValue > 2 && type == 'spearhead') {		

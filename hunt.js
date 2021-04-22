@@ -107,6 +107,7 @@ module.exports.hunt = (playername, player, rollValue, gameState) =>{
     }
     var oldTrack = gameState.gameTrack[gameState.currentLocationName]
     gameState.gameTrack[gameState.currentLocationName] += huntercount
+    message += ' The game track goes from '+oldTrack+' to '+gameState.gameTrack[gameState.currentLocationName]
     // clear the stuff for group hunting
     if (player.bonus){
         delete player.bonus
