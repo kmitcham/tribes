@@ -99,7 +99,7 @@ module.exports.messagePlayerName = async (playerName, message, gameState, bot)=>
 		console.log("No player for name "+playerName)
 		return
 	}
-	if (!users in bot){
+	if (!"users" in bot){
 		console.log('bot has no users for message :'+message)
 	}
 	playerId = player.handle.id
@@ -129,7 +129,7 @@ module.exports.gameStateMessage= (gameState, bot) =>{
 	if (gameState.foodRound ) {message += '  (food round)'}
 	if (gameState.reproductionRound){
 		if (gameState.secretMating){
-			message += ' (awaiting invitations or !pass from '+reproLib.canStillInvite(gameState)+')'
+			message += ' (reproduction round: awaiting invitations or !pass from '+reproLib.canStillInvite(gameState)+')'
 		} else {
 			message += ' (reproduction invitation order:'+gameState.reproductionList+')'
 		}

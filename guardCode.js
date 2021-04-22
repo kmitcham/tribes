@@ -128,7 +128,7 @@ module.exports.hyenaAttack= (children, gameState) => {
 		}
 	}
 	response += '\n\tThe poor child is devoured!'
-	killlib.kill(leastGuardedName, 'hyena attack', gameState)
+	killlib.kill(leastGuardedName, predator+' attack', gameState)
 	return response
 }
 function asJson(data){
