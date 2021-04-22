@@ -181,9 +181,60 @@ test("make a consentList, with pass", () =>{
   }
   //function handleReproductionList(actorName, args, listName, gameState, bot){
   response = reproLib.handleReproductionList("p1", ["p2", "p4", "!pass", "p3"],"consentList", gameState, {})
+  expect(response).toBe(-2)
+});
+test("make a inviteList, with pass", () =>{
+  var gameState = {
+      "population": {
+          "p1":{
+              "name": "p1",
+              "gender": "female"
+          },
+          "p2":{
+            "name": "p2",
+            "gender": "male"
+          }
+          , "p3":{
+            "name": "p3",
+            "gender": "male"
+          }
+          , "p4":{
+              "name": "p4",
+              "gender": "male"
+            }
+       },
+      "round": "reproduction"
+  }
+  //function handleReproductionList(actorName, args, listName, gameState, bot){
+  response = reproLib.handleReproductionList("p1", ["p2", "p4", "!pass", "p3"],"inviteList", gameState, {})
   expect(response).toBe(-1)
 });
-
+test("make a inviteList, with pass happypath", () =>{
+  var gameState = {
+      "population": {
+          "p1":{
+              "name": "p1",
+              "gender": "female"
+          },
+          "p2":{
+            "name": "p2",
+            "gender": "male"
+          }
+          , "p3":{
+            "name": "p3",
+            "gender": "male"
+          }
+          , "p4":{
+              "name": "p4",
+              "gender": "male"
+            }
+       },
+      "round": "reproduction"
+  }
+  //function handleReproductionList(actorName, args, listName, gameState, bot){
+  response = reproLib.handleReproductionList("p1", ["p2", "p4", "!pass"],"inviteList", gameState, {})
+  expect(response).toBe(0)
+});
 test("trigger end of mating", () =>{
   var gameState = {
     "name": "unitTest-tribe",

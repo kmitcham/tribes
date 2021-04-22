@@ -74,7 +74,7 @@ function personByName(argName, gameState){
 		for (var type in person) {
 			if (Object.prototype.hasOwnProperty.call( person, type)) {
 				if (person[type] && person[type].constructor === Array && person[type].length == 0){
-					console.log('deleting empty array for '+type)
+					//console.log('deleting empty array for '+type)
 					delete person[type]
 				}
 			}
@@ -98,6 +98,9 @@ module.exports.messagePlayerName = async (playerName, message, gameState, bot)=>
 	if ( !player){
 		console.log("No player for name "+playerName)
 		return
+	}
+	if (!users in bot){
+		console.log('bot has no users for message :'+message)
 	}
 	playerId = player.handle.id
 	playerUser =  await bot.users.fetch(playerId);
@@ -126,7 +129,7 @@ module.exports.gameStateMessage= (gameState, bot) =>{
 	if (gameState.foodRound ) {message += '  (food round)'}
 	if (gameState.reproductionRound){
 		if (gameState.secretMating){
-			message += ' (awaiting mating for '+reproLib.canStillInvite(gameState)+')'
+			message += ' (awaiting invitations or !pass from '+reproLib.canStillInvite(gameState)+')'
 		} else {
 			message += ' (reproduction invitation order:'+gameState.reproductionList+')'
 		}
@@ -162,7 +165,7 @@ module.exports.removeSpecialChars = removeSpecialChars;
 
 function messageChannel(message, gameState, argBot){
 	if (!argBot || !argBot.channels || !argBot.channels.cache ){
-		console.log('no bot, no message to the channel')
+		console.log('no bot, channel does not see '+message)
 		return
 	}
 	channel = argBot.channels.cache.find(channel => channel.name === gameState.name)

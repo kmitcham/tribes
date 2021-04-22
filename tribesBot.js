@@ -186,6 +186,10 @@ function scoreChildren(children, gameState){
 	for (parentName in parentScores){
 		player = util.personByName(parentName, gameState)
 		if (player){
+			if (parent.gender == 'male' && gameState.secretMating){
+				message += "\t"+parentName+" score will be revealed in the end game."
+				continue;
+			}
 			message+= '\t'+parentName+'('+player.gender.substring(0, 1)+'): '+parentScores[parentName]
 		} else {
 			console.log('Cound not find parent '+[parentName]+'with score '+parentScores[parentName])
@@ -316,7 +320,15 @@ function doChance(rollValue, gameState){
 			name = util.randomMemberName(population)
 			person= population[name]
 			person.food = 0
-			message +="Rats! All "+name+"'s food, except for grain, spoils and is lost. Others’ stored food is not affected. If there are 8 or more players, this happens to two people"
+			message +="Rats! All "+name+"'s food, except for grain, spoils and is lost. Others’ stored food is not affected."
+			if (Object.keys(population).length >= 8){
+				name2 = util.randomMemberName(population)
+				if (name != name2){
+					person2 = population[name2]
+					person2.food = 0
+					message+= name2+"'s food is also spoiled, in a strange coincidence."
+				}
+			}
 			break;
 		case 13 : 
 			name = util.randomMemberName(population)
@@ -684,6 +696,16 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			msg.author.send(command+' happens after reproduction attempts, before migration')
 			return
 		}
+	}
+	if (command == 'checkmating'){
+		if (!referees.includes(actor) && (player && !player.chief)){
+			msg.author.send(command+' requires referee  or chief priviliges')
+			cleanUpMessage(msg);; 
+			return
+		}
+		msg.author.send('Checking the status of mating')
+		reproLib.globalMatingCheck(gameState, bot)
+		return;
 	}
 	// list the children
 	if (command == 'children'){
@@ -1133,13 +1155,15 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		return
 	}
 		if (  population[actor][type] >= amount){
-			util.messageChannel(actor+' gave '+amount+' '+type+' to '+username, gameState, bot)
 			if (!population[username][type]){
 				population[username][type] = Number(amount)
 			} else {
 				population[username][type] += Number(amount)
 			}         
 			population[actor][type] -= Number(amount)
+			util.messageChannel(actor+' gave '+amount+' '+type+' to '+username, gameState, bot)
+			util.history(username, actor+ " gave you "+amount+ " "+type, gameState)
+			util.history(actor, "You gave "+username+"  "+amount+ " "+type, gameState)
 		} else {
 			msg.author.send('You do not have that many '+type+': '+ population[actor][type])
 			cleanUpMessage(msg);; 
@@ -2537,6 +2561,7 @@ function consumeFoodChildren(gameState){
 			if (child.age == 0 ){
 				birthRoll = util.roll(3)
 				response += '\t'+child.mother+' gives birth to a '+child.gender+'-child, '+child.name
+				util.history(child.mother,child.mother+' gives birth to a '+child.gender+'-child, '+child.name, gameState)
 				if (birthRoll < 5 ){
 					response += ' but the child did not survive\n'
 					child.dead = true
@@ -2556,6 +2581,7 @@ function consumeFoodChildren(gameState){
 				if (birthRoll == 17){
 					twin = addChild(child.mother, child.father, gameState);
 					response += child.mother+' gives birth to a twin! Meet '+twin.name+', a healthy young '+twin.gender+'-child.\n'
+					util.history(child.mother,child.mother+' gives birth to a twin! Meet '+twin.name+', a healthy young '+twin.gender+'-child', gameState)
 					person.guarding.push(twin.name)
 					twin.age = 0
 				}
@@ -2680,7 +2706,7 @@ function startReproduction(gameState){
 	util.messageChannel('The tribe can decide to move to a new location, but the injured and children under 2 will need 2 food', gameState, bot)
 	if (gameState.secretMating){
 		reproLib.globalMatingCheck(gameState, bot)
-		util.messageChannel('(awaiting mating for '+reproLib.canStillInvite(gameState)+')')
+		util.messageChannel('(awaiting invitations or !pass from '+reproLib.canStillInvite(gameState)+')', bot)
 	} else {
 		util.messageChannel("Invitation order: "+shuffle(namelist), gameState, bot)
 		gameState.reproductionList = nameList

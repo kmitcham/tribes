@@ -97,6 +97,19 @@ function canStillInvite(gameState){
 }
 module.exports.canStillInvite = canStillInvite ;
 
+function checkCompleteLists(gameState, bot){
+    // unresolvable = []
+    // malelist = getPlayersByKeyValue("gender","male")
+    // femaleList = getPlayersByKeyValue("gender","female")
+    // for every player
+        // if cannotInvite
+        // else if !inviteList || inviteList doesn't end with !pass
+        //  unreslvable.append[playername]
+        // if consent+decline != genderList
+        //   unresolvable.append[playename]
+}
+
+
 function handleReproductionList(actorName, args, listName, gameState, bot){
     console.log("Building "+listName+" for "+actorName+" args "+args)
     actor = util.personByName(actorName, gameState);
@@ -111,12 +124,16 @@ function handleReproductionList(actorName, args, listName, gameState, bot){
     for (rawTargetName of args){
         localErrors = "";        
         if (rawTargetName == "!pass"){
-            console.log("Detected pass "+args.indexOf(rawTargetName)+"  "+(args.length -1));
-            if (args.indexOf(rawTargetName) != (args.length -1)){
-                errors.push("Values after '!pass' must be removed.\n")
+            console.log("Detected pass at position "+args.indexOf(rawTargetName)+" of "+(args.length -1));
+            if (listName == 'inviteList'){
+                if (args.indexOf(rawTargetName) != (args.length -1)){
+                    errors.push("Values after '!pass' must be removed.\n")
+                }
+                list.push(rawTargetName)
+                break;
+            } else {
+                errors.push("!pass is only valid in the inviteList.")
             }
-            list.push(rawTargetName)
-            break;
         }
         targetName = util.removeSpecialChars(rawTargetName)
         target = util.personByName(targetName, gameState);
@@ -132,7 +149,7 @@ function handleReproductionList(actorName, args, listName, gameState, bot){
         }
     }
     if (errors.length > 0){
-        console.log(actorName+" "+listName+" has errors")
+        console.log(actorName+" "+listName+" has errors:"+errors)
         for (error of errors){
             util.messagePlayerName(actorName, error, gameState, bot)
         }
@@ -172,12 +189,28 @@ function invite(msg, gameState, bot){
 }
 module.exports.invite = invite;
 
+function intersect(a, b) {
+    var t;
+    if (!a || !b){
+        return []
+    }
+    if (b.length > a.length) t = b, b = a, a = t; // indexOf to loop over shorter
+    return a.filter(function (e) {
+        return b.indexOf(e) > -1;
+    });
+}
+
 function consent(msg, gameState, bot){
     author = msg.author
     actorName = util.removeSpecialChars(author.username)
     let messageArray = msg.content.split(" ");
     messageArray.shift();
     handleReproductionList(actorName, messageArray, "consentList",gameState, bot )
+    person = util.personByName(actorName, gameState);
+    intersectList = intersect(person.consentList, person.declineList)
+    if (intersectList && intersectList.length > 0){
+        util.messagePlayerName(actorName, "Your consent and decline lists have overlaps.  Consent is checked first.")
+    }
     return globalMatingCheck(gameState, bot)
 }
 module.exports.consent = consent;
@@ -188,6 +221,11 @@ function decline(msg, gameState, bot){
     let messageArray = msg.content.split(" ");
     messageArray.shift();
     handleReproductionList(actorName, messageArray, "declineList",gameState, bot )
+    person = util.personByName(actorName, gameState);
+    intersectList = intersect(person.consentList, person.declineList)
+    if (intersectList && intersectList.length > 0){
+        util.messagePlayerName(actorName, "Your consent and decline lists have overlaps.  Consent is checked first.")
+    }
     return globalMatingCheck(gameState, bot)
 }
 module.exports.decline = decline;
@@ -226,6 +264,7 @@ function globalMatingCheck(gameState, bot){
     while (actionableInvites){
         actionableInvites = false;
         var sexList = Object.keys(population)
+        sexList.sort(function(){return Math.random()-.5});
         doneMating = []
         console.log("a sexlist "+sexList)
         counter = 0
@@ -243,6 +282,7 @@ function globalMatingCheck(gameState, bot){
                 continue
             } else if (person.isPregnant){
                 console.log("\t inviter was pregnant")
+                person.cannotInvite = true;
                 continue;
             }
             else if (person.inviteList && person.inviteList.length > 0) {
@@ -280,20 +320,22 @@ function globalMatingCheck(gameState, bot){
                     if (person.inviteList.length > 0) {
                         actionableInvites = true
                         console.log("\t more invitations exist")
+                    } else {
+                        allDone = false
+                        console.log("allDone is false, since no invites to try, and no resolution.")
                     }
-                    allDone = false
                 } else {
                     // this will get spammy, if the function is called every time anyone updates.
                     util.messagePlayerName(targetName, personName+" has invited you to mate- !consent "+personName+" or !decline "+personName, gameState, bot)
                     util.messagePlayerName(personName, targetName+" considers your invitation.", gameState, bot)
                     doneMating.push(personName)
                     allDone = false
-                    console.log("\t no response found  "+targetName)
+                    console.log("\t no response found  "+targetName+" so allDone is false")
                 }
             } else {
                 // person has no invites pending
                 allDone = false
-                console.log("\t No invites found  ")
+                console.log("\t No invites found so allDone is false")
             }
         }
     }
@@ -304,18 +346,19 @@ function globalMatingCheck(gameState, bot){
             person = population[personName]
             util.messagePlayerName(personName, "Reproduction round activites are over.", gameState,bot)
             if (person.hiddenPregnant){
-                person.isPregnant = person.hiddenPregnant
+                fatherName = person.hiddenPregnant
+                var child = addChild(person.name, fatherName, gameState)
                 delete person.hiddenPregnant
                 noPregnancies = false
                 util.messageChannel(person.name+ " has been blessed with a child: "+person.isPregnant, gameState, bot)
-                util.messagePlayerName(personName, "You have been blessed with the child "+person.isPregnant, gameState)
+                util.messagePlayerName(personName, "You have been blessed with the child "+person.isPregnant, gameState, bot)
             }
             delete person.inviteList  // this should already be empty or done.
         }
         if (noPregnancies){
             util.messageChannel("No one has become pregnant this season.", gameState, bot)
         }
-        util.messageChannel("There are no outstanding invitations.  Time for chance.", gameState, bot)
+        util.messageChannel("Time for chance.", gameState, bot)
     }
     return doneMating.length
 }
@@ -344,8 +387,7 @@ function makeLove(name1, name2, gameState, bot, force = false){
         if (mother.hiddenPregnant){
             console.log(motherName+" is secretly already pregnant")
         } else {
-		    var child = addChild(motherName, fatherName, gameState)
-            mother.hiddenPregnant = child.name;
+            mother.hiddenPregnant = fatherName;
             savelib.saveTribe(gameState);
         }
 	} 
@@ -397,7 +439,7 @@ function addChild(mother, father, gameState){
 	gameState.children[child.name] = child	
 	console.log('added child '+child.name)
 	person = util.personByName(mother, gameState)
-	gameState.population[child.mother].isPregnant = child.name
+    gameState.population[child.mother].isPregnant = child.name
 	if (gameState.reproductionList){
 		const indexOfPreggers = gameState.reproductionList.indexOf(mother);
 		if (indexOfPreggers > -1) {
