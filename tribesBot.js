@@ -2705,8 +2705,11 @@ function startReproduction(gameState){
 	util.messageChannel('\n==> Starting the Reproduction round; invite other tribe members to reproduce.<==', gameState, bot)
 	util.messageChannel('The tribe can decide to move to a new location, but the injured and children under 2 will need 2 food', gameState, bot)
 	if (gameState.secretMating){
+		gameState.doneMating = false;
 		reproLib.globalMatingCheck(gameState, bot)
-		util.messageChannel('(awaiting invitations or !pass from '+reproLib.canStillInvite(gameState)+')', bot)
+		if (reproLib.canStillInvite(gameState)){		
+			util.messageChannel('(awaiting invitations or !pass from '+reproLib.canStillInvite(gameState)+')', bot)
+		}
 	} else {
 		util.messageChannel("Invitation order: "+shuffle(namelist), gameState, bot)
 		gameState.reproductionList = nameList

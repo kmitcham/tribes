@@ -175,8 +175,7 @@ function invite(msg, gameState, bot){
         return
     }
     if (person.cannotInvite){
-        util.messagePlayerName(actorName, "Your invitations for this season are past.", gameState,bot)
-        return;
+        util.messagePlayerName(actorName, "Your invitations for this season are used up.", gameState,bot)
     }
     if (person.isPregnant && gameState.children[person.isPregnant] && gameState.children[person.isPregnant].age == -2){
         util.messagePlayerName(actorName, "You are already pregnant.", gameState,bot)
@@ -249,7 +248,6 @@ function clearReproduction(gameState, bot){
 	for (var personName in population){
 		person = population[personName]
 		delete person.cannotInvite;
-        delete person.inviteList; 
 	}
 
 }
@@ -259,6 +257,9 @@ function globalMatingCheck(gameState, bot){
     allDone = true;
     actionableInvites = true;
     if (! gameState.reproductionRound){
+        return;
+    }
+    if (gameState.doneMating){
         return;
     }
     while (actionableInvites){
@@ -291,7 +292,6 @@ function globalMatingCheck(gameState, bot){
                 if (targetName == "!pass"){
                     person.cannotInvite = true
                     util.messageChannel(personName+" is passing on mating this round.",gameState, bot)
-                    delete person.inviteList
                     doneMating.push(personName)
                     continue
                 }
@@ -301,7 +301,6 @@ function globalMatingCheck(gameState, bot){
                     // makeLove should message the people
                     makeLove(targetName, personName, gameState, bot)
                     person.cannotInvite = true
-                    delete person.inviteList
                     doneMating.push(personName)
                     console.log("\t consents ")
                     continue
@@ -353,12 +352,13 @@ function globalMatingCheck(gameState, bot){
                 util.messageChannel(person.name+ " has been blessed with a child: "+person.isPregnant, gameState, bot)
                 util.messagePlayerName(personName, "You have been blessed with the child "+person.isPregnant, gameState, bot)
             }
-            delete person.inviteList  // this should already be empty or done.
+            delete person.inviteList
         }
         if (noPregnancies){
             util.messageChannel("No one has become pregnant this season.", gameState, bot)
         }
         util.messageChannel("Time for chance.", gameState, bot)
+        gameState.doneMating = true;
     }
     return doneMating.length
 }

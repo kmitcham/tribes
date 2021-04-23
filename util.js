@@ -129,7 +129,11 @@ module.exports.gameStateMessage= (gameState, bot) =>{
 	if (gameState.foodRound ) {message += '  (food round)'}
 	if (gameState.reproductionRound){
 		if (gameState.secretMating){
-			message += ' (reproduction round: awaiting invitations or !pass from '+reproLib.canStillInvite(gameState)+')'
+			if (reproLib.canStillInvite(gameState)){
+				message += ' (reproduction round: awaiting invitations or !pass from '+reproLib.canStillInvite(gameState)+')'
+			} else {
+				message += ' (reproduction round, awaiting chance )'
+			}
 		} else {
 			message += ' (reproduction invitation order:'+gameState.reproductionList+')'
 		}
