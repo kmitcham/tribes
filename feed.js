@@ -1,3 +1,5 @@
+const util = require("./util.js");
+
 module.exports.feed = ( msg, player, amount, childList,  gameState) =>{
         children = gameState.children;
         message = ''
@@ -5,6 +7,27 @@ module.exports.feed = ( msg, player, amount, childList,  gameState) =>{
             childName = capitalizeFirstLetter(cName)
             amount = Number(amount)
             if (!children[childName]) {
+                if (cName == "!all"){
+                    for (var childName in children){
+                        var child = children[childName]
+                        if (!( child.newAdult && child.newAdult == true) || child.food < 2){
+                            childList.push(childName)
+                        }
+                    }
+                    continue;
+                }
+                var parent = util.personByName(cName, gameState)
+                if (parent && parent.gender && parent.gender == 'female'){
+                    for (var filterChildName in children){
+                        var filterChild = children[filterChildName]
+                        if (filterChild.mother == parent.name){
+                            if (! (filterChild.newAdult && filterChild.newAdult == true) || filterChild.food < 2){
+                                childList.push(filterChildName)
+                            }
+                        }
+                    }
+                    continue;
+                }
                 msg.author.send('no such child as '+childName)
                 continue    
             }
@@ -30,7 +53,7 @@ module.exports.feed = ( msg, player, amount, childList,  gameState) =>{
                     player.food = 0
                     player['grain'] -= (amount-fed)
                 }
-                message += actor+' feeds '+amount+' to '+childName;
+                message += player.name+' feeds '+amount+' to '+childName;
                 children[childName].food += Number(amount)
                 if (children[childName].food != 2){
                     message += ' '+childName+' could eat more.'
@@ -38,7 +61,7 @@ module.exports.feed = ( msg, player, amount, childList,  gameState) =>{
                 message += '\n'
             } else {
                 msg.author.send('You do not have enough food or grain to feed '+childName)
-                continue
+                break;
             }
         }
         return message;

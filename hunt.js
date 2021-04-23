@@ -1,4 +1,6 @@
 const locations = require('./locations.json');
+const util = require("./util.js");
+
 // in the ideal world, these are imports
 function roll(count){
     if (!count){
@@ -19,6 +21,7 @@ const locationDecay = [30, // arrays count from 0 so add extra item
     15,15,14,14,13,
     13,12,12,11,11,
     10,10,9,9,8]
+module.exports.locationDecay = locationDecay
 
 //TODO: rewrite this to do seperate checks for injury( rollValue+strong, assistants)
 	//  and success (if rollValue >9, add spearpoint)
@@ -100,10 +103,11 @@ module.exports.hunt = (playername, player, rollValue, gameState) =>{
     // check for spearhead loss
     if (player.spearhead > 0 && roll(1) <= 2){
         player.spearhead -= 1
-        message += '(the spearhead broke)'
+        message += ' (the spearhead broke!)'
     }
     var oldTrack = gameState.gameTrack[gameState.currentLocationName]
     gameState.gameTrack[gameState.currentLocationName] += huntercount
+    message += ' The game track goes from '+oldTrack+' to '+gameState.gameTrack[gameState.currentLocationName]
     // clear the stuff for group hunting
     if (player.bonus){
         delete player.bonus
@@ -111,6 +115,7 @@ module.exports.hunt = (playername, player, rollValue, gameState) =>{
     if (player.helpers){
         delete player.helpers 
     }
+    util.history(player.name, message, gameState)
     return message
 }
 

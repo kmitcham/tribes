@@ -1,9 +1,16 @@
 const violencelib = require("./violence.js");
-var bot;
+const reproLib = require("./reproduction.js");
 
 function isColdSeason(gameState){
 	return (gameState.seasonCounter%2 == 0);
 }
+function cleanUpMessage(msg){
+	if (msg.channel && msg.channel.name ){
+		console.log(' cleaning up message in channel '+msg.channel.name )
+		msg.delete({timeout: 1000}); 
+	}
+}
+module.exports.cleanUpMessage = cleanUpMessage;
 
 function roll(count){
 		if (!count){
@@ -20,31 +27,44 @@ function getYear(gameState){
 	return gameState.seasonCounter/2;
 }
 
-function personByName(name, gameState){
+function personByName(argName, gameState){
+	var name = argName;
 	if (name == null){
-		console.log('attempt to find person for null name '+name)
+		console.log('attempt to find person for null name ')
 		return null
+	}
+	if (name.username != null){
+		name = argName.username
+		console.log("getting username from object ")
+	}
+	cleaned = removeSpecialChars(name)
+	if (name != cleaned ){
+		console.log(name + " cleaned into "+cleaned)
+		name = cleaned
 	}
 	if (!gameState || gameState.population == null){
 		console.log('no people yet, or gameState is otherwise null')
-		return
-	}
-	if (name.indexOf('(') != -1){
-		name = name.substring(0, name.indexOf('('))
-		console.log('paren name was '+name)
+		return null
 	}
 	var person = null
 	var population = gameState.population;
 	if (population[name] != null){
 		 person = population[name]
-	} else if (name && population[name.username] != null){
-		person = population[removeSpecialChars(name.username)]
-	} else if (name.indexOf('@') != -1 && population[name.substring(1)] != null){
-		person = population[name.substring(1)]
 	} else {
 		for (match in population){
-			if (match.toLowerCase() == name.toLowerCase()
-			|| population[match].handle.username == name ){
+			if ( (population[match] && population[match].handle) ){
+				if ( population[match].handle.username == name 
+					|| population[match].handle.username == name.username
+					|| population[match].handle.id == name){
+					person = population[match]
+					break;
+				}
+				if (population[match].handle.id == name){
+					person = population[match]
+					break;
+				}
+			}
+			if (population[match].name.toUpperCase() === name.toUpperCase()){
 				person = population[match]
 				break;
 			}
@@ -54,20 +74,39 @@ function personByName(name, gameState){
 		for (var type in person) {
 			if (Object.prototype.hasOwnProperty.call( person, type)) {
 				if (person[type] && person[type].constructor === Array && person[type].length == 0){
-					console.log('deleting empty array for '+type)
+					//console.log('deleting empty array for '+type)
 					delete person[type]
 				}
 			}
 		}
 		return person
 	}
-	console.log("tribe "+gameState.name+" has no such person in population:"+name)
+	console.log("tribe "+gameState.name+" has no such person in population:"+argName+" tried "+name+" and "+name.toUpperCase())
 	return null
+}
+module.exports.history = (playerName, message, gameState)=>{
+	player = personByName(playerName, gameState)
+	if (!player.history){
+		player.history = []
+	}
+	player.history.push(gameState.seasonCounter/2+": "+message)
 }
 
 
-
-module.exports.gameStateMessage= (gameState) =>{
+module.exports.messagePlayerName = async (playerName, message, gameState, bot)=>{
+	player = personByName(playerName, gameState);
+	if ( !player){
+		console.log("No player for name "+playerName)
+		return
+	}
+	if (!"users" in bot){
+		console.log('bot has no users for message :'+message)
+	}
+	playerId = player.handle.id
+	playerUser =  await bot.users.fetch(playerId);
+	playerUser.send(message);
+}
+module.exports.gameStateMessage= (gameState, bot) =>{
 	var numAdults = (Object.keys(gameState.population)).length
 	var numKids = (Object.keys(gameState.children)).length
 	var message = "Year "+(gameState.seasonCounter/2)+', '
@@ -80,13 +119,25 @@ module.exports.gameStateMessage= (gameState) =>{
 	message+= 'The '+gameState.currentLocationName+' game track is at '+ gameState.gameTrack[gameState.currentLocationName]+'\n'
 	if (gameState.demand){ 
 		message+= '\nThe DEMAND is:'+gameState.demand+'\n'
+		message+= violencelib.getFactionResult(gameState, bot)
 	}
 	if (gameState.violence){ 
 		message+= '\nVIOLENCE has erupted over this demand: '+gameState.violence+'\n'
+		message+= violencelib.resolveViolence(gameState, bot)+'\n';
 	}
 	if (gameState.workRound ) {message += '  (work round)'}
 	if (gameState.foodRound ) {message += '  (food round)'}
-	if (gameState.reproductionRound ) {message += '  (reproduction invitation order:'+gameState.reproductionList+')'}
+	if (gameState.reproductionRound){
+		if (gameState.secretMating){
+			if (reproLib.canStillInvite(gameState)){
+				message += ' (reproduction round: awaiting invitations or !pass from '+reproLib.canStillInvite(gameState)+')'
+			} else {
+				message += ' (reproduction round, awaiting chance )'
+			}
+		} else {
+			message += ' (reproduction invitation order:'+gameState.reproductionList+')'
+		}
+	}
 	return message
 }
 
@@ -117,8 +168,8 @@ function removeSpecialChars(strVal){
 module.exports.removeSpecialChars = removeSpecialChars;
 
 function messageChannel(message, gameState, argBot){
-	if (!argBot){
-		console.log('no bot, no message to the channel')
+	if (!argBot || !argBot.channels || !argBot.channels.cache ){
+		console.log('no bot, channel does not see '+message)
 		return
 	}
 	channel = argBot.channels.cache.find(channel => channel.name === gameState.name)

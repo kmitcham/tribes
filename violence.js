@@ -182,11 +182,11 @@ module.exports.computeBonus = computeBonus
 const resolveSingleAttack = ( attacker, defender, roll, gameState) =>{
     if (!attacker ){
         console.log('Bad attacker for resolveSingleAttack')
-        return 'Bad call gives no result'
+        return 'No attacker gives no result\n'
     }
     if (!defender){
         console.log('Bad defender for resolveSingleAttack attacker was '+attacker.name)
-        return 'Bad call gives no result'
+        return 'No defender gives no result\n'
     }
     bonus = computeBonus(attacker, defender);
     netRoll = roll + bonus;
@@ -260,10 +260,10 @@ const resolveViolence = (gameState, bot) =>{
         attacker = population[attackerName]
         targetName = attacker.attack_target
         if (defenderTargets[targetName]){
-            console.log(' defenderTargets adds '+attackerName)
+            //console.log(' defenderTargets adds '+attackerName)
             defenderTargets[targetName].push(attackerName)
         } else {
-            console.log(' defenderTargets initialized with '+attackerName)
+            //console.log(' defenderTargets initialized with '+attackerName)
             defenderTargets[targetName] = [attackerName]
         }
     }
@@ -272,9 +272,9 @@ const resolveViolence = (gameState, bot) =>{
         attackers = defenderTargets[defenderName]
         var randomIndex =  Math.trunc( Math.random ( ) * attackers.length )
         targetName = attackers[randomIndex]
-        console.log('defender first strike vs '+attackerName)
+        //console.log('defender first strike vs '+attackerName)
         attacker = util.personByName(defenderName, gameState);
-        if (attacker.strategy == "defend"){
+        if (attacker && attacker.strategy == "defend"){
             defender = util.personByName(targetName, gameState);
             roll = util.roll(2)
             response += resolveSingleAttack(attacker, defender, roll, gameState);
@@ -288,7 +288,7 @@ const resolveViolence = (gameState, bot) =>{
         }
         targetName = attacker.attack_target
         defender = util.personByName(targetName, gameState);
-        console.log(attackerName+' attacks '+targetName)
+        //console.log(attackerName+' attacks '+targetName)
         roll = util.roll(2)
         response += resolveSingleAttack(attacker, defender, roll, gameState)
     }

@@ -125,6 +125,7 @@ test('babysitter', () =>{
 
 test('devours unwatched child', () =>{
   var gameState = {
+    "currentLocationName":"marsh",
     "population": {
       "p1":{
         "name": "p1",
@@ -188,6 +189,7 @@ test('devours unwatched child', () =>{
 // test case: many guards on a child (no mock rolls yet, though)
 test('multi-watch checks each guard', () =>{
   var gameState = {
+    "currentLocationName":"marsh",
     "population": {
       "p1":{
         "name": "p1",
@@ -224,7 +226,7 @@ test('multi-watch checks each guard', () =>{
   var children = gameState["children"]
   var population = gameState["population"]
   response = lib.hyenaAttack(children, gameState)
-  console.log('base response '+response)
+  //console.log('base response '+response)
   expect(lib.findGuardValueForChild("c1", population, children)).toBeLessThan(3);
   expect(children["c1"].guardians).toBeTruthy();
   expect(Object.keys(children["c1"].guardians).length).toBe(3);

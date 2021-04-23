@@ -1,6 +1,7 @@
 {
 	"veldt":{
 		"game_track_recover":3,
+		"predator":"hyena",
 		"gather":[
 			[7,2,0,"grubs"],
 			[8,3,0,"roots"],
@@ -27,7 +28,8 @@
 		]
 	},
 	"forest":{
-		"game_track_recover":2,		
+		"game_track_recover":2,	
+		"predator":"leopard",
 		"gather":[
 			[7,3,0,"grubs"],
 			[8,0,3,"grain"],
@@ -53,7 +55,8 @@
 		]
 	},	
 	"marsh":{
-		"game_track_recover":3,		
+		"game_track_recover":3,	
+		"predator":"alligator",	
 		"gather":[
 			[7,4,0,"clams"],
 			[8,5,0,"frogs and turtles"],
@@ -83,6 +86,7 @@
 	},
 	"hills":{
 		"game_track_recover":2,
+		"predator":"bear",	
 		"gather":[
 			[7,2,0,"grubs"],
 			[8,3,0,"snakes and turtles"],
