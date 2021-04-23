@@ -61,7 +61,7 @@ function chiefHelp(){
 	text+=' !skip <person>   (end a players reproduction turn)\n'
 	text+=' !chance (after mating, chance is required to end the season)\n'
 	text+=' !migrate <newlocation> <force>  (without force, just checks who would perish on the journey)\n'
-	text+=' !legislate <law number> <law text> (record a rule for the tribe, or replace the rule of the specified number)\n'
+	text+=' !decree <law number> <law text> (record a rule for the tribe, or replace the rule of the specified number)\n'
     return text;
 }
 

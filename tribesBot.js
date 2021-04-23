@@ -1447,7 +1447,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		cleanUpMessage(msg);; 
 		return
 	}
-	if (command == 'legislate'){
+	if (command == 'legislate' || command == 'decree'){
 		if (!referees.includes(actor) && !player.chief){
 			msg.author.send(command+' requires referee or chief priviliges')
 			cleanUpMessage(msg);; 
