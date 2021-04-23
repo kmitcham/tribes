@@ -1184,7 +1184,12 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			person = gameState.graveyard[name]
 			response += '\n '+name+' died of '+person.deathMessage
 			if (person.mother){
-				response += ' parents:'+person.mother +'-'+person.father
+				response += ' parents:'+person.mother 
+				if (gameState.secretMating){
+					response += '-???'
+				} else {
+					response += '-'+person.father
+				}
 				response += ' age:'+person.age/2
 			} else {
 				response += ' profession:'+person.profession
@@ -2308,7 +2313,6 @@ function spawnFunction(mother, father, msg, population, gameState, force = false
 			util.messagePlayerName(mother, father +'['+droll+'] shares good feelings with you ['+mroll+']', gameState, bot)
 			util.messagePlayerName(father, mother +'['+mroll+'] shares good feelings with you ['+droll+']', gameState, bot)
 		} else {
-			// check secretMating
 			util.messageChannel('The mating of '+mother+'['+mroll+'] and '+father+'['+droll+'] produced only good feelings', gameState, bot)
 		}
 	}
@@ -2550,7 +2554,7 @@ function consumeFoodChildren(gameState){
 		if (child.age < 24 ){
 			child.food -= 2
 			if (child.food < 0){
-				response += " child:"+childName+"("+child.mother+"+"+child.father+") has starved to death.\n"
+				response += " child:"+childName+" has starved to death.\n"
 				child.dead = true
 				if (population[child.mother] && population[child.mother].isPregnant ) {
 					delete population[child.mother].isPregnant
