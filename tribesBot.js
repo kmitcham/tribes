@@ -698,14 +698,15 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		}
 	}
 	if (command == 'checkmating'){
-		if (!referees.includes(actor) && (player && !player.chief)){
-			msg.author.send(command+' requires referee  or chief priviliges')
+		if (referees.includes(actor) || (player && player.chief)){
+			msg.author.send('Checking the status of mating')
+			reproLib.globalMatingCheck(gameState, bot)
+			return;
+		}else {
+			msg.author.send(command+' requires referee  or chief privileges')
 			cleanUpMessage(msg);; 
 			return
 		}
-		msg.author.send('Checking the status of mating')
-		reproLib.globalMatingCheck(gameState, bot)
-		return;
 	}
 	// list the children
 	if (command == 'children'){
@@ -1082,24 +1083,46 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		savelib.saveTribe(gameState);
 		return
 	} 
-	if (command == 'force'){
-		if (!referees.includes(actor)){
-			cleanUpMessage();
+	if (command == 'force' || command == 'command') {
+		cleanUpMessage(msg);
+		if (referees.includes(actor) || (player && player.chief)){
+		} else {
 			msg.author.send(command+' requires referee priviliges')
 			return
 		}
 		command = bits.shift()
 		targetName = bits.shift()
 		forceCommand = bits[0]
-		console.log("attempt to force "+targetName+" to "+bits)
 		target = util.personByName(targetName, gameState)
 		if (!target){
-			cleanUpMessage();
 			msg.author.send(targetName+' not found')
 			return
 		}
+		if (player && player.chief){
+			if (! target.obeyList || target.obeyList.indexOf(forceCommand) == -1 ){
+				msg.author.send(target.name+' is not willing to '+command+' just because you say so.')
+				return
+			}
+		}
+		console.log("attempt to force "+targetName+" to "+bits)
 		//tion handleCommand(msg, author,       actor,        command,     bits, gameState){
 		return handleCommand(msg, target.handle, target.name, forceCommand, bits, gameState)
+	}
+	if (command == 'obey'){
+		if (player ){
+			bits.shift(); // drop off the 'obey'
+			obeyList = []
+			for (command of bits){
+				obeyList.push(util.removeSpecialChars(command))
+			}
+			player.obeyList = obeyList
+			msg.author.send("You will obey if a chief tells you to: "+player.obeyList)
+			cleanUpMessage(msg);
+			return;
+		}
+		msg.author.send("You need to be in a tribe to have a chief to obey")
+		cleanUpMessage(msg);
+		return		
 	}
 	if (command == 'foodcheck'){
 		message = checkFood(gameState)
@@ -2675,7 +2698,7 @@ function startWork(gameState){
 	gameState.workRound = true
 	gameState.foodRound = false
 	gameState.reproductionRound = false
-	canJerky = false
+	gameState.canJerky = false
 	reproLib.clearReproduction(gameState, bot)
 	util.messageChannel(util.gameStateMessage(gameState, bot), gameState, bot)
 	util.messageChannel('\n==>Starting the work round.  Guard (or ignore) your children, then craft, gather, hunt, assist or train.<==', gameState, bot)

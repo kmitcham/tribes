@@ -13,6 +13,7 @@ function playerHelpBasic(){
 		text+=' !specialize <hunter|gatherer|crafter>(at the start of the game)\n'
 		text+=' !status (see the current location, year, season and local game)\n'
 		text+=' !vote <target>  (your choice for chief)\n'
+		text+=' !obey <commands>  (things you will do if the chief commands, in case of extended AFK)\n'
 		return text;
 }
 function playerHelpRounds(){
@@ -59,9 +60,11 @@ function chiefHelp(){
 	text+=' !startfood (ends the work round; subtract food/grain; birth; child age increase)\n'
 	text+=' !startreproduction (Start the reproduction round. Also when migration happens)\n'
 	text+=' !skip <person>   (end a players reproduction turn)\n'
+	text+=' !checkmating (report on status of mating attempts)'
 	text+=' !chance (after mating, chance is required to end the season)\n'
 	text+=' !migrate <newlocation> <force>  (without force, just checks who would perish on the journey)\n'
 	text+=' !decree <law number> <law text> (record a rule for the tribe, or replace the rule of the specified number)\n'
+	text+=' !command <target> <command>  (order a tribe member.  They might obey)\n'
     return text;
 }
 
