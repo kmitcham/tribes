@@ -12,6 +12,27 @@ function cleanUpMessage(msg){
 }
 module.exports.cleanUpMessage = cleanUpMessage;
 
+function decrementSickness(population, gameState, bot){
+	for (person in population){
+		if (person.isSick && person.isSick > 0 ){
+			person.isSick = person.isSick -1;
+		}
+		if (person.isInjured && person.isInjured > 0 ){
+			person.isInjured = person.isInjured -1;
+		}
+		if (person.isSick < 1){
+			delete person.isSick
+			messagePlayerName(person.name, "You have recovered from your illness.", gameState, bot)
+		}
+		if (person.isInjured < 1){
+			messagePlayerName(person.name, "You have recovered from your injury.", gameState, bot)
+			delete person.isInjured
+		}
+	}
+}
+module.exports.decrementSickness = decrementSickness;
+
+
 function roll(count){
 		if (!count){
 			count = 3

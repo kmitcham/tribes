@@ -285,8 +285,18 @@ function globalMatingCheck(gameState, bot){
                 console.log("\t inviter was pregnant")
                 person.cannotInvite = true;
                 continue;
-            }
-            else if (person.inviteList && person.inviteList.length > 0) {
+            } else if (person.isInjured && person.isInjured > 0){
+                console.log("\t inviter is injured")
+                util.messagePlayerName(person.name, "Your injury prevents you from mating.")
+                person.cannotInvite = true;
+                continue
+            } else if (person.isSick && person.isSick > 0){
+                console.log("\t inviter is sick")
+                util.messagePlayerName(person.name, "Your illness prevents you from mating.")
+                person.cannotInvite = true;
+                continue
+                
+            } else if (person.inviteList && person.inviteList.length > 0) {
                 targetName = person.inviteList[0]
                 console.log(" inviting "+targetName)
                 if (targetName == "!pass"){
@@ -295,8 +305,27 @@ function globalMatingCheck(gameState, bot){
                     doneMating.push(personName)
                     continue
                 }
+                var attemptFailed = false
                 target = util.personByName(targetName, gameState)
-                if (target.consentList && target.consentList.includes(personName)){
+                if (target.isSick || target.isInjured){
+                    util.messagePlayerName(targetName, personName+" flirts with you, but you are not healthy enough to respond.", gameState, bot)
+                    util.messagePlayerName(personName, targetName+" is not healthy enough to enjoy your attention.", gameState, bot)
+                    console.log("\t sick or injured")
+                    person.inviteList.shift()
+                    attemptFailed = true;
+                } else if (target.isPregnant){
+                        util.messagePlayerName(personName, targetName+" is visibly pregnant.", gameState, bot)
+                        util.messagePlayerName(targetName, personName+" flirts with you, but you are pregnant.", gameState, bot)    
+                        console.log("\t is pregnant  ")
+                        person.inviteList.shift()
+                        attemptFailed = true;
+                } else if (target.declineList && target.declineList.includes(personName)){
+                        util.messagePlayerName(personName, targetName+" declines your invitation.", gameState, bot)
+                        util.messagePlayerName(targetName, personName+" flirts with you, but you decline.", gameState, bot)
+                        console.log("\t declines  ")
+                        person.inviteList.shift()
+                        attemptFailed = true;
+                } else if (target.consentList && target.consentList.includes(personName)){
                     util.messagePlayerName(targetName, personName+" flirts with you, and you are interested.", gameState, bot)
                     // makeLove should message the people
                     makeLove(targetName, personName, gameState, bot)
@@ -304,17 +333,15 @@ function globalMatingCheck(gameState, bot){
                     doneMating.push(personName)
                     console.log("\t consents ")
                     continue
-                }  else if ( target.isPregnant || (target.declineList && target.declineList.includes(personName))){
-                    if (target.isPregnant){
-                        util.messagePlayerName(personName, targetName+" is visibly pregnant.", gameState, bot)
-                        util.messagePlayerName(targetName, personName+" flirts with you, but you are pregnant.", gameState, bot)    
-                        console.log("\t is pregnant  ")
-                    } else {
-                        util.messagePlayerName(personName, targetName+" declines your invitation.", gameState, bot)
-                        util.messagePlayerName(targetName, personName+" flirts with you, but you decline.", gameState, bot)
-                        console.log("\t declines  ")
-                    }
-                    person.inviteList.shift()
+                } else {
+                    // this will get spammy, if the function is called every time anyone updates.
+                    util.messagePlayerName(targetName, personName+" has invited you to mate- !consent "+personName+" or !decline "+personName, gameState, bot)
+                    util.messagePlayerName(personName, targetName+" considers your invitation.", gameState, bot)
+                    doneMating.push(personName)
+                    allDone = false
+                    console.log("\t no response found  "+targetName+" so allDone is false")
+                }
+                if (attemptFailed){
                     // can't lose your invite power just because of rejection
                     if (person.inviteList.length > 0) {
                         actionableInvites = true
@@ -323,13 +350,6 @@ function globalMatingCheck(gameState, bot){
                         allDone = false
                         console.log("allDone is false, since no invites to try, and no resolution.")
                     }
-                } else {
-                    // this will get spammy, if the function is called every time anyone updates.
-                    util.messagePlayerName(targetName, personName+" has invited you to mate- !consent "+personName+" or !decline "+personName, gameState, bot)
-                    util.messagePlayerName(personName, targetName+" considers your invitation.", gameState, bot)
-                    doneMating.push(personName)
-                    allDone = false
-                    console.log("\t no response found  "+targetName+" so allDone is false")
                 }
             } else {
                 // person has no invites pending
@@ -382,10 +402,10 @@ function makeLove(name1, name2, gameState, bot, force = false){
 	}
 	mroll = util.roll(1)
 	droll = util.roll(1)
+    console.log('secret mating rolls ['+mroll+']['+droll+']')
 	if (force != false || (mroll+droll) >= spawnChance ){
-        console.log('secret mating rolls ['+mroll+']['+droll+']')
         if (mother.hiddenPregnant){
-            console.log(motherName+" is secretly already pregnant")
+            console.log(motherName+" is secretly already pregnant by "+mother.hiddenPregnant)
         } else {
             mother.hiddenPregnant = fatherName;
             savelib.saveTribe(gameState);

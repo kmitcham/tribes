@@ -86,7 +86,18 @@ module.exports.hunt = (playername, player, rollValue, gameState) =>{
         netRoll = 18
     }
     if ( (rollValue+strMod < 6) || (rollValue+strMod < 7 && player.profession != 'hunter') ){
-		message += ' Injury!'
+		if ((rollValue+strMod) == 3){
+            message += 'Severe Injury!'
+            if (player.strength && player.strength == 'strong'){
+				delete person.strength
+				message += player.name+ ' is reduced to average strength.'
+			} else {
+				player.strength = 'weak'
+				message+= player.name +' becomes weak.'
+			}
+        } else {
+            message += ' Injury!'
+        }
 		player.isInjured = true
 	} else if (netRoll <= 8){
         message += "  No game."

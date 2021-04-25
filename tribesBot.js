@@ -231,10 +231,10 @@ function inventoryMessage(person){
 	if (person.nursing && person.nursing.length > 0 ){
 		message += '\n\t\t is nursing '+person.nursing
 	}
-	if (person.isInjured && person.isInjured != 'false' ){
+	if (person.isInjured && person.isInjured > 0 ){
 		message += '\n\t\t is injured and unable to work'
 	}	
-	if (person.isSick && person.isSick != 'false' ){
+	if (person.isSick && person.isSick > 0 ){
 		message += '\n\t\t is sick and unable to work'
 	}
 	if (person.guarding){
@@ -397,14 +397,14 @@ function doChance(rollValue, gameState){
 		case 6: 
 			name = util.randomMemberName(population)
 			person = population[name]
-			person.isInjured = 'true'
+			person.isInjured = 3
 			// TODO clear the guarding array of the injured person
 			message +=  name + " injured – miss next turn."
 			break;
 		case 5: 
 			name = util.randomMemberName(population)
 			person = population[name]
-			person.isSick = 'true'
+			person.isSick = 3
 			message +=  name + " got sick – eat 2 extra food and miss next turn. "
 			if (person.food < 2){
 				message += '( but they only had '+person.food+' so the ref might kill them if no help is given or grain is used)'
@@ -421,7 +421,7 @@ function doChance(rollValue, gameState){
 			name = util.randomMemberName(population)
 			person = population[name]
 			message +=  name +" gets a severe injury: miss next turn and "
-			person.isInjured = 'true'
+			person.isInjured = 3
 			if (person.strength && person.strength == 'strong'){
 				delete person.strength
 				message += ' is reduced to average strength.'
@@ -1101,6 +1101,9 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		if (player && player.chief){
 			if (! target.obeyList || target.obeyList.indexOf(forceCommand) == -1 ){
 				msg.author.send(target.name+' is not willing to '+command+' just because you say so.')
+				if (target.obeyList){
+					msg.author.send(target.name + ' would do:'+targer.obeyList.join(','))
+				}
 				return
 			}
 		}
@@ -1238,7 +1241,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			cleanUpMessage(msg);; 
 			return
 		}
-		if (person.isSick && person.isSick != false){
+		if (person.isSick && person.isSick > 0 ){
 			msg.author.send('You are too sick to watch children')
 			cleanUpMessage(msg);; 
 			return
@@ -1849,6 +1852,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			person = util.personByName(target, gameState)
 			if (person){
 				person.cannotInvite = true;  // for secret mating
+				reproLib.globalMatingCheck(gameState, bot)
 			}
 			util.messageChannel('The chief cancels this chance to reproduce', gameState, bot)
 			return;
@@ -2039,12 +2043,12 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			cleanUpMessage(msg);; 
 			return
 		}
-		if (player.isInjured && player.isInjured != 'false'){
+		if (player.isInjured && player.isInjured > 0 ){
 			msg.author.send('you can not work while you are injured')
 			cleanUpMessage(msg);; 
 			return
 		}
-		if (player.isSick && player.isSick != 'false'){
+		if (player.isSick && player.isSick > 0 ){
 			msg.author.send('you can not work while you are sick')
 			cleanUpMessage(msg);; 
 			return
@@ -2058,6 +2062,9 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		if (command == 'idle'){
 			player.activity = 'idle'
 			message = player.playerName +' does nothing for a whole season.'
+			util.history(player.name, " does nothing for a season.", gameState)
+			cleanUpMessage(msg);; 
+			return;
 		}
 		if (command == 'gather'){
 			if (player.guarding && player.guarding.length > 5){
@@ -2193,8 +2200,8 @@ function listReadyToWork(tribe){
 	for (playerName in tribe){
 		person = tribe[playerName]
 		// edit can leave isinjured as the string 'false'
-		if (person.worked || (person.isInjured && person.isInjured != 'false')
-			||(person.isSick && person.isSick != 'false')){
+		if (person.worked || (person.isInjured && person.isInjured > 0)
+			||(person.isSick && person.isSick > 0 )){
 			// do nothing
 		} else {
 			unworked.push(playerName)
@@ -2240,15 +2247,15 @@ function clearWorkFlags(population){
 			console.log('null person for name '+targetName)
 			continue
 		}
-		if (person.isInjured && person.isInjured != 'false' && person.worked == false){
+		if (person.isInjured && person.isInjured > 0 && person.worked == false){
 			// did not work means rested
-			delete person.isInjured
 			person.activity = 'recovery'
+			util.history(person.name, "recovered from injury", gameState)
 		}
-		if (person.isSick && person.isSick != 'false' && person.worked == false){
+		if (person.isSick && person.isSick > 0 && person.worked == false){
 			// did not work means rested
-			delete person.isSick
 			person.activity = 'recovery'
+			util.history(person.name, "recovered from illness", gameState)
 		}
 		person.worked = false
 	}
@@ -2607,6 +2614,7 @@ function consumeFoodChildren(gameState){
 				}
 				if (birthRoll == 17){
 					twin = addChild(child.mother, child.father, gameState);
+					delete child.mother.isPregnant; // this gets set by addChild, but the child was just born.
 					response += child.mother+' gives birth to a twin! Meet '+twin.name+', a healthy young '+twin.gender+'-child.\n'
 					util.history(child.mother,child.mother+' gives birth to a twin! Meet '+twin.name+', a healthy young '+twin.gender+'-child', gameState)
 					person.guarding.push(twin.name)
@@ -2691,10 +2699,11 @@ function startWork(gameState){
 		nextSeason(gameState)
 	}
 	// clear out old activities
-	for (personName in population){
+	for (personName in gameState.population){
 		person = population[personName]
 		delete person.activity
 	}
+	util.decrementSickness(gameState.population, gameState, bot)
 	gameState.workRound = true
 	gameState.foodRound = false
 	gameState.reproductionRound = false
@@ -2712,6 +2721,7 @@ function startFood(gameState){
 	gameState.workRound = false
 	gameState.foodRound = true
 	gameState.reproductionRound = false
+	util.decrementSickness(gameState.population, gameState, bot)
 	message = util.gameStateMessage(gameState, bot)
 	util.messageChannel(message+'\n==>Starting the food and trading round.  Make sure everyone has enough to eat, or they will starve<==', gameState, bot)
 	foodMessage = checkFood(gameState)
@@ -2724,6 +2734,7 @@ function startReproduction(gameState){
 	// actually consume food here
 	savelib.archiveTribe(gameState);
 	foodMessage = consumeFood(gameState)
+	util.decrementSickness(gameState.population, gameState, bot)
 	gameState.needChanceRoll = true  // this magic boolean prevents starting work until we did chance roll
 	gameState.workRound = false
 	gameState.foodRound = false
@@ -2766,7 +2777,7 @@ function migrate(msg, destination, force, gameState){
 	if (force){
 		for (personName in population){
 			var person = util.personByName(personName, gameState)
-			if (person.isInjured){
+			if (person.isInjured && person.isInjured > 0){
 				need = 2
 				eaten = 0
 				while (eaten < need){
@@ -2813,7 +2824,7 @@ function migrate(msg, destination, force, gameState){
 	} else {
 		for (personName in population){
 			person = util.personByName(personName, gameState)
-			if (person.isInjured){
+			if (person.isInjured && person.isInjured > 0){
 				need = 2
 				eaten = 0
 				if ((person.food + person.grain) < 2 ){

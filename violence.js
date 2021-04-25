@@ -63,10 +63,10 @@ function getFactionBaseScore(faction){
                 score += 1
             }
         }
-        if (person.isInjured && person.isInjured != 'false' ){
+        if (person.isInjured && person.isInjured > 0 ){
             score -= 1
         }	
-        if (person.isSick && person.isSick != 'false' ){
+        if (person.isSick && person.isSick > 0 ){
             score -= 1
         }
     }
@@ -206,16 +206,18 @@ const resolveSingleAttack = ( attacker, defender, roll, gameState) =>{
         return response +'A miss!\n'
     }
     if (defender.hits == 1 ){
-        defender.isInjured = true
+        defender.isInjured = 3
         response += defender.name+' is injured!'
     }
     if (defender.hits == 2){
+        defender.isInjured = 3
         defender.strength = 'weak'
         response += defender.name+' is crippled, and becomes Weak!'
     }
     gameState.population[defender.name] = defender
     if (defender.hits >= 3){
         response += defender.name+' is killed!'
+        util.history(defender.name, 'killed by '+attacker.name+' over '+gameState.violence, gameState)
         killlib.kill(defender.name, 'killed by '+attacker.name+' over '+gameState.violence, gameState)
     }
     return response+'\n';

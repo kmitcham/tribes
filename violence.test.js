@@ -95,7 +95,7 @@ test("Base Score chief", () =>{
         {   "name": "pro1",
             "faction":"for",
             "gender": "male",
-            "isSick":true,
+            "isSick":3,
             "chief": true
         }
     ]
@@ -124,7 +124,7 @@ test("bonus checking ", ()=>{
     attacker.spearhead = 1
     response = violencelib.computeBonus(attacker,defender);
     expect(response).toBe(2)
-    attacker.isSick = true
+    attacker.isSick = 3
     response = violencelib.computeBonus(attacker,defender);
     expect(response).toBe(0)
     delete attacker.strength
