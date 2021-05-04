@@ -6,27 +6,32 @@ function isColdSeason(gameState){
 }
 function cleanUpMessage(msg){
 	if (msg.channel && msg.channel.name ){
-		console.log(' cleaning up message in channel '+msg.channel.name )
-		msg.delete({timeout: 1000}); 
+		//console.log(' cleaning up message in channel '+msg.channel.name )
+		msg.delete({timeout: 200}); 
 	}
 }
 module.exports.cleanUpMessage = cleanUpMessage;
 
 function decrementSickness(population, gameState, bot){
-	for (person in population){
+	for (personName in population){
+		person = population[personName]
 		if (person.isSick && person.isSick > 0 ){
 			person.isSick = person.isSick -1;
+			console.log(person.name+" decrement sickness  "+person.isSick)
 		}
 		if (person.isInjured && person.isInjured > 0 ){
 			person.isInjured = person.isInjured -1;
+			console.log(person.name+" decrement injury  "+person.isSick)
 		}
 		if (person.isSick < 1){
 			delete person.isSick
 			messagePlayerName(person.name, "You have recovered from your illness.", gameState, bot)
+			console.log(person.name+" recover sickness  ")
 		}
 		if (person.isInjured < 1){
 			messagePlayerName(person.name, "You have recovered from your injury.", gameState, bot)
 			delete person.isInjured
+			console.log(person.name+" recover injury  ")
 		}
 	}
 }
@@ -114,7 +119,7 @@ module.exports.history = (playerName, message, gameState)=>{
 }
 
 
-module.exports.messagePlayerName = async (playerName, message, gameState, bot)=>{
+async function messagePlayerName(playerName, message, gameState, bot){
 	player = personByName(playerName, gameState);
 	if ( !player){
 		console.log("No player for name "+playerName)
@@ -127,6 +132,8 @@ module.exports.messagePlayerName = async (playerName, message, gameState, bot)=>
 	playerUser =  await bot.users.fetch(playerId);
 	playerUser.send(message);
 }
+module.exports.messagePlayerName = messagePlayerName
+
 module.exports.gameStateMessage= (gameState, bot) =>{
 	var numAdults = (Object.keys(gameState.population)).length
 	var numKids = (Object.keys(gameState.children)).length

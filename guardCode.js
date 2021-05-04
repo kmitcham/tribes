@@ -20,7 +20,7 @@ module.exports.findGuardValueForChild = (childName, population, children) =>{
     // check for babysitters
     for (var name in children){
 		babysitter = children[name];
-        if (babysitter.newAdult && babysitter.babysitting == childName){
+        if ( babysitter.age >= 23 && babysitter.babysitting == childName){
             guardValue = guardValue + 1;
 			logMessage += '\t '+name+' adds '+1
 			child.guardians[name] = 1
@@ -44,7 +44,7 @@ function findLeastGuarded (children, population){
 			// unborn children should be skipped; 0 is born
 			continue
 		}	
-		if (child.newAdult){
+		if (child.age >= 23 ){
 			continue
 		}
 		guardValue = module.exports.findGuardValueForChild(childName, population, children)

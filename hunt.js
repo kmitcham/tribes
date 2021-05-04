@@ -98,7 +98,7 @@ module.exports.hunt = (playername, player, rollValue, gameState) =>{
         } else {
             message += ' Injury!'
         }
-		player.isInjured = true
+		player.isInjured = 4
 	} else if (netRoll <= 8){
         message += "  No game."
     } else {

@@ -6,7 +6,7 @@ module.exports.showChildren =  (children, population, filterName="", hideFathers
 		
 	responseMessages = []
 	childNames = Object.keys(children)
-	response = 'There are '+childNames.length+' children in total. \n'
+	var response = 'There are '+childNames.length+' children in total. \n'
 	mine = 0 
 	var notPrintedNewAdultHeader = true;
 	var notStartedMiddleChildren = true;
@@ -23,7 +23,6 @@ module.exports.showChildren =  (children, population, filterName="", hideFathers
 		}
 		return children[a].age - children[b].age
 	});
-	var response = ''
 	for (childName of sortedChildren) {
 		if (response.length > 1900){
 			responseMessages.push(response)

@@ -326,6 +326,7 @@ function globalMatingCheck(gameState, bot){
                         person.inviteList.shift()
                         attemptFailed = true;
                 } else if (target.consentList && target.consentList.includes(personName)){
+                    util.messagePlayerName(personName, targetName+" is impressed by your flirtation.", gameState, bot)
                     util.messagePlayerName(targetName, personName+" flirts with you, and you are interested.", gameState, bot)
                     // makeLove should message the people
                     makeLove(targetName, personName, gameState, bot)

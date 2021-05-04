@@ -397,7 +397,7 @@ function doChance(rollValue, gameState){
 		case 6: 
 			name = util.randomMemberName(population)
 			person = population[name]
-			person.isInjured = 3
+			person.isInjured = 4
 			// TODO clear the guarding array of the injured person
 			message +=  name + " injured – miss next turn."
 			break;
@@ -421,7 +421,7 @@ function doChance(rollValue, gameState){
 			name = util.randomMemberName(population)
 			person = population[name]
 			message +=  name +" gets a severe injury: miss next turn and "
-			person.isInjured = 3
+			person.isInjured = 4
 			if (person.strength && person.strength == 'strong'){
 				delete person.strength
 				message += ' is reduced to average strength.'
@@ -616,10 +616,11 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			cleanUpMessage(msg);; 
 			return
 		}
-		if (babysitter.newAdult){
+		console.log(" babysitter age:"+babysitter.age+" reproductionRound:"+gameState.reproductionRound)
+		if (babysitter.newAdult || ( babysitter.age == 23 && !gameState.reproductionRound )){
 			if (targetChild.newAdult){
 				msg.author.send(targetChildName+' does not need watching');
-				cleanUpMessage(msg);; 
+				cleanUpMessage(msg);
 				return
 			}
 			if (babysitter.babysitting){
@@ -710,7 +711,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 	}
 	// list the children
 	if (command == 'children'){
-		response = ''
+		response = 'There are no children.'
 		if (bits[1]){
 			var filterName = ''
 			user = getUserFromMention(bits[1])
@@ -1087,7 +1088,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		cleanUpMessage(msg);
 		if (referees.includes(actor) || (player && player.chief)){
 		} else {
-			msg.author.send(command+' requires referee priviliges')
+			msg.author.send(command+' requires referee or chief priviliges')
 			return
 		}
 		command = bits.shift()
@@ -1102,13 +1103,14 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			if (! target.obeyList || target.obeyList.indexOf(forceCommand) == -1 ){
 				msg.author.send(target.name+' is not willing to '+command+' just because you say so.')
 				if (target.obeyList){
-					msg.author.send(target.name + ' would do:'+targer.obeyList.join(','))
+					msg.author.send(target.name + ' would do:'+target.obeyList.join(','))
 				}
 				return
 			}
 		}
-		console.log("attempt to force "+targetName+" to "+bits)
+		console.log("attempt to force "+target.name+" to "+bits)
 		//tion handleCommand(msg, author,       actor,        command,     bits, gameState){
+		util.history(target.name, "Commanded by "+actor+" to do something:"+bits, gameState)
 		return handleCommand(msg, target.handle, target.name, forceCommand, bits, gameState)
 	}
 	if (command == 'obey'){
@@ -1311,6 +1313,10 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		bits.shift()
 		foo = bits.shift()
 		while (foo) {
+			if ("!all" == foo && person.guarding && person.guarding.length > 0){
+				util.messageChannel(actor+" stops watching: "+person.guarding.join())
+				delete person.guarding;
+			}
 			childName = util.capitalizeFirstLetter(foo)
 			child = children[childName];
 			if (!child ){
@@ -1852,9 +1858,9 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			person = util.personByName(target, gameState)
 			if (person){
 				person.cannotInvite = true;  // for secret mating
+				util.messageChannel("The chief cancels "+person.name+"'s chance to reproduce", gameState, bot)
 				reproLib.globalMatingCheck(gameState, bot)
 			}
-			util.messageChannel('The chief cancels this chance to reproduce', gameState, bot)
 			return;
 		}
 		if (gameState.reproductionList 
@@ -1965,17 +1971,17 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		|| (command.startsWith('start') && bits[1] && bits[1].startsWith('r'))){
 		if (!referees.includes(actor) && !player.chief){
 			msg.author.send(command+' requires referee  or chief priviliges')
-			cleanUpMessage(msg);; 
+			cleanUpMessage(msg);
 			return
 		}
 		if (gameState.reproductionRound == true){
 			msg.author.send('already in the reproductionRound ')
-			cleanUpMessage(msg);; 
+			cleanUpMessage(msg);
 			return 
 		}		
 		if(gameState.foodRound == false){
 			msg.author.send('Can only go to reproduction from food')
-			cleanUpMessage(msg);; 
+			cleanUpMessage(msg);
 			return 
 		}
 		startReproduction(gameState)
@@ -2717,10 +2723,10 @@ function startWork(gameState){
 }
 function startFood(gameState){
 	savelib.archiveTribe(gameState);
-	clearWorkFlags(population)
 	gameState.workRound = false
 	gameState.foodRound = true
 	gameState.reproductionRound = false
+	clearWorkFlags(population)
 	util.decrementSickness(gameState.population, gameState, bot)
 	message = util.gameStateMessage(gameState, bot)
 	util.messageChannel(message+'\n==>Starting the food and trading round.  Make sure everyone has enough to eat, or they will starve<==', gameState, bot)
@@ -2733,12 +2739,11 @@ function startFood(gameState){
 function startReproduction(gameState){
 	// actually consume food here
 	savelib.archiveTribe(gameState);
-	foodMessage = consumeFood(gameState)
-	util.decrementSickness(gameState.population, gameState, bot)
 	gameState.needChanceRoll = true  // this magic boolean prevents starting work until we did chance roll
 	gameState.workRound = false
 	gameState.foodRound = false
 	gameState.reproductionRound = true
+	foodMessage = consumeFood(gameState)
 	util.messageChannel(foodMessage+'\n', gameState, bot)
 	util.messageChannel('\n==> Starting the Reproduction round; invite other tribe members to reproduce.<==', gameState, bot)
 	util.messageChannel('The tribe can decide to move to a new location, but the injured and children under 2 will need 2 food', gameState, bot)
@@ -2749,11 +2754,12 @@ function startReproduction(gameState){
 			util.messageChannel('(awaiting invitations or !pass from '+reproLib.canStillInvite(gameState)+')', bot)
 		}
 	} else {
+		namelist = createReproductionList(gameState)
 		util.messageChannel("Invitation order: "+shuffle(namelist), gameState, bot)
 		gameState.reproductionList = nameList
 		util.messageChannel(gameState.reproductionList[0]+ " should now !invite people to reproduce, or !pass ", gameState, bot)
 	}
-	namelist = createReproductionList(gameState)
+	util.decrementSickness(gameState.population, gameState, bot)
 	savelib.saveTribe(gameState);
 	allGames[gameState.name] = gameState;
 	return
@@ -2844,7 +2850,7 @@ function migrate(msg, destination, force, gameState){
 		response += '\nThe following tribe members would die on the journey to '+destination+': '+deceasedPeople
 		response += '\nThe following children would die along the way: '+deceasedChildren
 	}
-	return response+'\n'
+	return response+' \n'
 }
 // blatantly lifted from https://stackoverflow.com/questions/2450954/how-to-randomize-shuffle-a-javascript-array
 function shuffle(array) {

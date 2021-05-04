@@ -113,7 +113,7 @@ test('babysitter', () =>{
           "mother": "p1",
           "father": "p2",
           "newAdult":true,
-          "age": 15,
+          "age": 30,
           "babysitting":"c1",
           "name": "sitter",
         }
@@ -158,7 +158,7 @@ test('devours unwatched child', () =>{
           "mother": "p1",
           "father": "p2",
           "newAdult":true,
-          "age": 15,
+          "age": 23,
           "babysitting":"c1",
           "name": "sitter",
         },
@@ -216,7 +216,7 @@ test('multi-watch checks each guard', () =>{
           "mother": "p1",
           "father": "p2",
           "newAdult":true,
-          "age": 15,
+          "age": 24,
           "babysitting":"c1",
           "name": "sitter",
         }
