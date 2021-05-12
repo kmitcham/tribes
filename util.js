@@ -125,6 +125,10 @@ async function messagePlayerName(playerName, message, gameState, bot){
 		console.log("No player for name "+playerName)
 		return
 	}
+	if (!message){
+		console.log("Not sending empty message to "+playerName)
+		return
+	}
 	if (!"users" in bot){
 		console.log('bot has no users for message :'+message)
 	}
@@ -198,6 +202,10 @@ module.exports.removeSpecialChars = removeSpecialChars;
 function messageChannel(message, gameState, argBot){
 	if (!argBot || !argBot.channels || !argBot.channels.cache ){
 		console.log('no bot, channel does not see '+message)
+		return
+	}
+	if (!message){
+		console.log("Not sending empty message to channel")
 		return
 	}
 	channel = argBot.channels.cache.find(channel => channel.name === gameState.name)

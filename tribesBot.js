@@ -186,8 +186,8 @@ function scoreChildren(children, gameState){
 	for (parentName in parentScores){
 		player = util.personByName(parentName, gameState)
 		if (player){
-			if (parent.gender == 'male' && gameState.secretMating){
-				message += "\t"+parentName+" score will be revealed in the end game."
+			if (player.gender == 'male' && gameState.secretMating){
+				message += "\t"+parentName+" score will be revealed in the end game.\n"
 				continue;
 			}
 			message+= '\t'+parentName+'('+player.gender.substring(0, 1)+'): '+parentScores[parentName]
@@ -624,7 +624,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 				return
 			}
 			if (babysitter.babysitting){
-				response += babysitterName+" stops watching "+babysitter.babysitting+".  ";
+				response += babysitterName+" stops watching "+babysitter.babysitting+".  \n";
 			}
 			babysitter.babysitting = targetChildName;
 			response += babysitterName + " starts watching "+targetChildName;
@@ -1471,7 +1471,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 	if (command == 'leastguarded' || command == 'leastwatched'){
 		response  = guardlib.findLeastGuarded(children, gameState.population)
 		msg.author.send(response )
-		cleanUpMessage(msg);; 
+		cleanUpMessage(msg);
 		return 
 	}
 	if (command.startsWith('law')){
@@ -1481,13 +1481,13 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			response += '\n\t'+number+'\t'+laws[number]
 		}
 		msg.author.send(response)
-		cleanUpMessage(msg);; 
+		cleanUpMessage(msg);
 		return
 	}
 	if (command == 'legislate' || command == 'decree'){
+		cleanUpMessage(msg);
 		if (!referees.includes(actor) && !player.chief){
 			msg.author.send(command+' requires referee or chief priviliges')
-			cleanUpMessage(msg);; 
 			return
 		}
 		command = bits.shift()
@@ -1501,7 +1501,6 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		} else {
 			msg.author.send('syntax: !legislate <number> <everything else is the law>')
 			msg.author.send('You typed:'+msg.content)
-			cleanUpMessage(msg);; 
 			return
 		}
 		util.messageChannel("Your chief creates a new law: "+law, gameState, bot)
@@ -2663,7 +2662,7 @@ function consumeFoodChildren(gameState){
 					const index = player.guarding.indexOf(child.name);
 					if (index > -1) {
 						player.guarding.splice(index, 1);
-						response += name+' stops watching the new adult.'
+						response += name+' stops watching the new adult.\n'
 					}
 				}
 

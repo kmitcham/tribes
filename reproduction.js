@@ -364,10 +364,11 @@ function globalMatingCheck(gameState, bot){
         noPregnancies = true
         for (personName in population){
             person = population[personName]
-            util.messagePlayerName(personName, "Reproduction round activites are over.", gameState,bot)
+            util.messagePlayerName(personName, "Reproduction round activities are over.", gameState,bot)
             if (person.hiddenPregnant){
                 fatherName = person.hiddenPregnant
                 var child = addChild(person.name, fatherName, gameState)
+                savelib.saveTribe(gameState);
                 delete person.hiddenPregnant
                 noPregnancies = false
                 util.messageChannel(person.name+ " has been blessed with a child: "+person.isPregnant, gameState, bot)
@@ -425,8 +426,7 @@ module.exports.makeLove = makeLove;
 function getNextChildName(children, childNames, nextIndex){
 	var currentNames = Object.keys(children)
 	if (!nextIndex){
-		numberOfChildren = currentNames.length
-		nextIndex = (numberOfChildren % 26 )
+		nextIndex = (gameState.conceptionCounter % 26 )
 		console.log('getNextChild with default index '+nextIndex)
 	}
 	possibles = childNames['names'][nextIndex]
