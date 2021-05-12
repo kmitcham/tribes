@@ -1132,66 +1132,68 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 	if (command == 'foodcheck'){
 		message = checkFood(gameState)
 		msg.author.send( message)
-		cleanUpMessage(msg);; 
+		cleanUpMessage(msg);
 		return
 	}
 	if (command === 'give'){
+		syntax = 'Give syntax is give  <amount> <food|grain|spearhead|basket> <recipient>'
 		if (bits.length < 3){
-			msg.author.send('Give syntax is give  <amount> <food|grain|spearhead|basket> <recipient>')
+			msg.author.send(syntax)
 			cleanUpMessage(msg);; 
 			return
 		}
-		var username = ''
+		var targetName = ''
 		if (bits.length >= 4){
-			username = bits[3]
+			targetName = bits[3]
 		} 
 		if (msg.mentions.users.first()){
-			username= util.removeSpecialChars(msg.mentions.users.first().username)
+			targetName = util.removeSpecialChars(msg.mentions.users.first().username)
 		}
-		if (!username){
-			msg.author.send('Give syntax is give  <amount> <food|grain|spearhead|basket> <recipient>')
-			cleanUpMessage(msg);; 
+		if (!targetName){
+			msg.author.send(syntax)
+			cleanUpMessage(msg);
 			return
 		}
 		amount = bits[1]
 		type = bits[2]
 
 		if (isNaN(amount) || ! types.includes(type)){
-			msg.author.send('Give syntax is give  <amount> <food|grain|spearhead|basket> <recipient>')
-			cleanUpMessage(msg);; 
+			msg.author.send(syntax)
+			cleanUpMessage(msg);
 			return
 		}
 		if (amount <= 0  ){
 			msg.author.send('Can not give negative amounts')
 			cleanUpMessage(msg);; 
 			return
-		}			
-		if (!population[username] ) {
-			msg.author.send(username+' is not a member of the tribe')
-			cleanUpMessage(msg);; 
+		}	
+		targetPlayer = util.personByName(targetName, gameState)		
+		if (!targetPlayer ) {
+			msg.author.send(targetName+' is not a member of the tribe')
+			cleanUpMessage(msg);
 			return
 		}
 		if (type == 'spearhead' && player && player.activity && gameState.workRound
 			&& ( player.activity == 'hunt' || player.activity == 'assist')){
 			msg.author.send('The game suspects you used that item to work with.  Ask the referee to help trade it if you did not.')
-			cleanUpMessage(msg);; 
+			cleanUpMessage(msg);
 			return
 		}
 		if ( type =='basket' && player && player.activity && player.activity == 'gather' && gameState.workRound ){
 		msg.author.send('The game suspects you used that item to work with.  Ask the referee to help trade it if you did not.')
-		cleanUpMessage(msg);; 
+		cleanUpMessage(msg);
 		return
 	}
 		if (  population[actor][type] >= amount){
-			if (!population[username][type]){
-				population[username][type] = Number(amount)
+			if (!targetPlayer[type]){
+				targetPlayer[type] = Number(amount)
 			} else {
-				population[username][type] += Number(amount)
+				targetPlayer[type] += Number(amount)
 			}         
 			population[actor][type] -= Number(amount)
-			util.messageChannel(actor+' gave '+amount+' '+type+' to '+username, gameState, bot)
-			util.history(username, actor+ " gave you "+amount+ " "+type, gameState)
-			util.history(actor, "You gave "+username+"  "+amount+ " "+type, gameState)
+			util.messageChannel(actor+' gave '+amount+' '+type+' to '+targetName, gameState, bot)
+			util.history(targetName, actor+ " gave you "+amount+ " "+type, gameState)
+			util.history(actor, "You gave "+targetName+"  "+amount+ " "+type, gameState)
 		} else {
 			msg.author.send('You do not have that many '+type+': '+ population[actor][type])
 			cleanUpMessage(msg);; 
