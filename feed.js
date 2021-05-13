@@ -2,12 +2,14 @@ const util = require("./util.js");
 
 module.exports.feed = ( msg, player, amount, childList,  gameState) =>{
         children = gameState.children;
+        var showErrors = true;
         message = ''
         for (cName of childList){
             childName = capitalizeFirstLetter(cName)
             amount = Number(amount)
             if (!children[childName]) {
                 if (cName == "!all"){
+                    showErrors = false;
                     for (var childName in children){
                         var child = children[childName]
                         if (!( child.newAdult && child.newAdult == true) || child.food < 2){
@@ -33,15 +35,15 @@ module.exports.feed = ( msg, player, amount, childList,  gameState) =>{
             }
             child = children[childName]
             if (  Number(child.food) >= 2 ){
-                msg.author.send(childName+' has enough food already.')
+                if (showErrors){msg.author.send(childName+' as enough food already.')}
                 continue
             }
             if ( (child.food + amount) > 2 ){
-                msg.author.send(childName+' does not need to eat that much.')
+                if (showErrors){msg.author.send(childName+' does not need to eat that much.')}
                 continue
             }
             if ( child.newAdult && child.newAdult == true){
-                msg.author.send(childName+' is all grown up and does not need food from you.')
+                if (showErrors){msg.author.send(childName+' is all grown up and does not need food from you.')}
                 continue
             }
             var fed = 0

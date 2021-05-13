@@ -42,7 +42,7 @@ module.exports.gather = (playername, player, rollValue,gameState) => {
 			modifier-= 4
 		}
 		if (guardCount > 4){
-			return ' is guarding too many children to gather.'
+			return message +' is guarding too many children to gather.'
 		}
 	}
 	if (player.strength){

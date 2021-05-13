@@ -711,22 +711,25 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 	}
 	// list the children
 	if (command == 'children'){
-		response = 'There are no children.'
-		if (bits[1]){
-			var filterName = ''
-			user = getUserFromMention(bits[1])
-			if (user ){
-				filterName = util.removeSpecialChars(user.username)
-			} else {
-				person = util.personByName(bits[1], gameState)
-				if (person){filterName = person.name}
-			}
-			if (!filterName ){
-				response = 'Could not find '+bits[1]
-			} else {
-				response += 'The descendants of '+filterName+' are:\n'
-				response = childlib.showChildren(children, population, filterName, gameState.secretMating)
-			}
+		response = ['There are no children.']
+		if (bits[1] == '!hungry'){
+			response = ['These children need food:\n']
+			response.push(childlib.showChildren(children, population, '!hungry', gameState.secretMating))
+		} else if (bits[1]){
+				var filterName = ''
+				user = getUserFromMention(bits[1])
+				if (user ){
+					filterName = util.removeSpecialChars(user.username)
+				} else {
+					person = util.personByName(bits[1], gameState)
+					if (person){filterName = person.name}
+				}
+				if (!filterName ){
+					response = ['Could not find '+bits[1]]
+				} else {
+					response = ['The descendants of '+filterName+' are:\n']
+					response.push(childlib.showChildren(children, population, filterName, gameState.secretMating))
+				}
 		} else {
 			response = childlib.showChildren(children, population, "", gameState.secretMating)
 		}
@@ -1739,8 +1742,10 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		if (  population[actor][type] >= amount){
 			ritualResults = [
 				 'You feel a vague sense of unease.'
+				 ,'Nothing seems to happen.'
+				 ,actor+"'s eyes gleam wildly."
 				,'A hawk flies directly overhead.'
-				,'There is the distant sound of thunder'
+				,'There is the distant sound of thunder.'
 				,'The campfire flickers brightly.'
 				,'You feel a vague sense of unease.'
 				,'The sun goes behind a cloud.'
@@ -1750,7 +1755,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 				,'You remember the way your mother held you as a child.'
 				,'You feel protected.'
 			]
-			random = util.roll(2);
+			random = util.roll(2)+Math.log(amount);
 			rndMsg = ritualResults[random-2]+'\n';
 			util.messageChannel(actor+' deliberately destroys '+amount+' '+type+' as part of a ritual.\n'+rndMsg, gameState, bot)
 			population[actor][type] -= Number(amount)
@@ -2074,9 +2079,9 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			return;
 		}
 		if (command == 'gather'){
-			if (player.guarding && player.guarding.length > 5){
-				msg.author.send('You can not gather while guarding more than 5 children.  You are guarding '+player.guarding)
-				cleanUpMessage(msg);; 
+			if (player.guarding && player.guarding.length >= 5){
+				msg.author.send('You can not gather while guarding more than 4 children.  You are guarding '+player.guarding)
+				cleanUpMessage(msg);
 				return
 			}
 			var gatherRoll = util.roll(3)
@@ -2667,7 +2672,13 @@ function consumeFoodChildren(gameState){
 						response += name+' stops watching the new adult.\n'
 					}
 				}
-
+			}
+			for (var sitterName in children){
+				sitter = children[sitterName]
+				if (sitter.babysitting && sitter.babysitting == child.name){
+					delete sitter.babysitting
+					response += sitter.name +" stops watching the new adult.\n"
+				}
 			}
 		}
 	}

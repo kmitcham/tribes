@@ -6,15 +6,12 @@ module.exports.showChildren =  (children, population, filterName="", hideFathers
 		
 	responseMessages = []
 	childNames = Object.keys(children)
-	var response = 'There are '+childNames.length+' children in total. \n'
+	var response = ''
 	mine = 0 
 	var notPrintedNewAdultHeader = true;
 	var notStartedMiddleChildren = true;
 	var notStartedYoungChildren = true;
 	var notStartedUnborn = true;
-	if (filterName){
-		response += 'The descendants of '+filterName+' are:\n'
-	}
 	var sortedChildren = Object.keys(children);
 	sortedChildren.sort(function(a, b) {
 		if (children[a].age == children[b].age){
@@ -38,7 +35,11 @@ module.exports.showChildren =  (children, population, filterName="", hideFathers
 				// do nothing
 			} else if (filterName == child.father && !hideFathers){
 				// also do nothing
-			} else {
+			} else if (filterName == "!hungry") {
+				if (child.food >= 2){
+					continue;
+				}
+			}else {
 				continue;
 			}
 		}
@@ -79,5 +80,6 @@ module.exports.showChildren =  (children, population, filterName="", hideFathers
 		}
 	} 
 	responseMessages.push(response)
+	responseMessages.push('There are '+childNames.length+' children in total. \n')
 	return responseMessages
 }
