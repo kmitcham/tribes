@@ -38,7 +38,7 @@ const locationDecay = [30,30,30,17,17,
 const childSurvivalChance = 
     [ 8, 8, 8, 8, 9, 9,10,10,10,11  // 4 years
 	,11,11,12,12,13,13,13,14,14,14  // 9 years
-	,15,15,16,16,17]
+	,15,15,16,16,17,20] // the 20 is to cover aging out?  Not sure why it fails.
 var gameState = Object()
 var allGames = Object()
 var referees = ["kevinmitcham", "@kevinmitcham"]
@@ -79,15 +79,15 @@ bot.on('message', msg => {
 	}
   });
   
-function processMessage(msg){
-	  author = msg.author
-	  actor = util.removeSpecialChars(author.username)
-	  bits = msg.content.split(' ')
-	  command = bits[0]
-	  command = command.toLowerCase().substring(1) // strip out the leading !
-	  console.log('command:'+command+' bits:'+bits+' actor:'+actor )  
-	  var gameState = {}
-	  if (msg.channel && msg.channel.name ){
+async function processMessage(msg){
+	author = msg.author
+	actor = util.removeSpecialChars(author.username)
+	bits = msg.content.split(' ')
+	command = bits[0]
+	command = command.toLowerCase().substring(1) // strip out the leading !
+	console.log('command:'+command+' bits:'+bits+' actor:'+actor )  
+	var gameState = {}
+	if (msg.channel && msg.channel.name ){
 		gameState = allGames[msg.channel.name.toLowerCase()]
 		if (!gameState){
 			gameState = savelib.loadTribe(msg.channel.name.toLowerCase());
@@ -99,15 +99,15 @@ function processMessage(msg){
 			allGames[gameState.name] = gameState;
 			console.log("loading game "+msg.channel.name.toLowerCase()+" from file");
 		}
-	  } else {
+	} else {
 		  gameState = findGameStateForActor(actor)
 		  if (!gameState){
 			console.log(author+" had no game state found")
 			return
 		}
-	  }
-	  handleCommand(msg, author, actor,  command, bits, gameState)
-	  return	
+	}
+	handleCommand(msg, author, actor,  command, bits, gameState)
+	return	
   }
   
 function initGame(gameName){
@@ -223,8 +223,16 @@ function inventoryMessage(person){
 	message += person.grain+' grain \t'
 	message += person.basket+' baskets \t'
 	message += person.spearhead+' spearheads \t'
-	message += person.profession.padEnd(9,' ')
+	if (person.profession){
+		message += person.profession.padEnd(9,' ')
+	} else {
+		message += "         "
+	}
 	message += person.gender.substring(0,1)+'\t'+person.name
+	console.log(person.name+ " nickname "+person.nickname)
+	if (person.nickname ){
+		message += " ("+person.nickname+")"
+	} 
 	if (person.isPregnant && person.isPregnant != ''){
 		message += '\n\t\t is pregnant with '+person.isPregnant
 	}
@@ -1407,6 +1415,8 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		if (msg.mentions.users.first()){
 			targetName = util.removeSpecialChars(msg.mentions.users.first().username)
 		}
+		guild = msg.guild
+		util.updateNicknames(guild, gameState)
 		response = 'error'
 		if (!targetName || targetName == 'all' ){
 			response = 'Whole Tribe Inventory:'
@@ -2455,7 +2465,7 @@ function addToPopulation(msg, author, bits, target,targetObject,gameState){
 		person.strength = 'weak'
 		response+= target +' is weak.'
 	} else if (strRoll == 6){
-		person.strength == 'strong'
+		person.strength = 'strong'
 		response+= target +' is strong.'
 	} 
 	gameState.population[target] = person
@@ -2621,7 +2631,7 @@ function consumeFoodChildren(gameState){
 				person = util.personByName(child.mother, gameState)
 				if (!person.guarding){
 					person.guarding = [child.name]
-				} else if (person.guarding.indexOf(child.name == -1)){
+				} else if (person.guarding.indexOf(child.name) == -1){
 					person.guarding.push(child.name)
 				}
 				if (birthRoll == 17){
@@ -2763,7 +2773,7 @@ function startReproduction(gameState){
 		gameState.doneMating = false;
 		reproLib.globalMatingCheck(gameState, bot)
 		if (reproLib.canStillInvite(gameState)){		
-			util.messageChannel('(awaiting invitations or !pass from '+reproLib.canStillInvite(gameState)+')', bot)
+			util.messageChannel('(awaiting invitations or !pass from '+reproLib.canStillInvite(gameState)+')', gameState, bot)
 		}
 	} else {
 		namelist = createReproductionList(gameState)

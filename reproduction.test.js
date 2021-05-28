@@ -1,5 +1,5 @@
 var reproLib = require("./reproduction.js");
-
+const allNames = require('./names.json');
 
 test("excludes people", () =>{
     var gameState = {
@@ -270,8 +270,12 @@ test("trigger end of mating", () =>{
   expect(response).toBe(4)
 });
 
+test("sorting check", ()=>{
+  
+})
+
 test("unique names",()=>{
-  //getNextChildName(children, childNames, nextIndex){
+  //getNextChildName(children, allNames, nextIndex, gameState){
     const fakeNames = {"names":[
       ["a1","a2","a3"],["b1","b2","b3"]
     ]}
@@ -292,7 +296,7 @@ test("unique names",()=>{
       "age": -1,"name":"a2", "food": 2, 'gender':'male'
     }
   }
-  result = reproLib.getNextChildName(children, fakeNames, 1)
+  result = reproLib.getNextChildName(children, fakeNames, 1,{})
   expect(result.indexOf("b")).toBe(0)
   expect(result.indexOf("a")).toBe(-1)
   expect(result.indexOf("1")).toBe(-1)

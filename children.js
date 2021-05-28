@@ -64,7 +64,11 @@ module.exports.showChildren =  (children, population, filterName="", hideFathers
 			if (child.newAdult){
 				response += 'Full grown!'.padStart(16, ' ')
 			} else {
-				response += '  needs '+(2-child.food)+' food'
+				if (child.food < 2){
+					response += '  needs '+(2-child.food)+' food'
+				} else { 
+					response += '  not hungry'.padStart(16, ' ')
+				}
 			} 
 			response += ' mother:'+child.mother
 			if (!hideFathers){

@@ -241,8 +241,6 @@ function pass(msg, gameState, bot){
 }
 module.exports.pass = pass;
 
-function skip(){}
-
 function clearReproduction(gameState, bot){
     population = gameState.population;
 	for (var personName in population){
@@ -252,6 +250,17 @@ function clearReproduction(gameState, bot){
 
 }
 module.exports.clearReproduction = clearReproduction;
+
+function sortCommitFirst(a,b){
+    if (a.commit && ! b.commit){
+        return 1;
+    }
+    if (b.commit && ! a.commit){
+        return -1
+    }
+    return Math.random()-.5
+}
+
 
 function globalMatingCheck(gameState, bot){
     allDone = true;
@@ -295,10 +304,9 @@ function globalMatingCheck(gameState, bot){
                 util.messagePlayerName(person.name, "Your illness prevents you from mating.")
                 person.cannotInvite = true;
                 continue
-                
             } else if (person.inviteList && person.inviteList.length > 0) {
-                targetName = person.inviteList[0]
-                console.log(" inviting "+targetName)
+                    targetName = person.inviteList[0]
+                    console.log(" inviting "+targetName)
                 if (targetName == "!pass"){
                     person.cannotInvite = true
                     util.messageChannel(personName+" is passing on mating this round.",gameState, bot)
@@ -419,17 +427,33 @@ function makeLove(name1, name2, gameState, bot, force = false){
     util.history(motherName, motherMessage, gameState)
     util.messagePlayerName(fatherName, fatherMessage, gameState, bot)
     util.history(fatherName, fatherMessage, gameState)
+    detection(mother, father, (mroll+droll), gameState, bot)
 	return
 }
 module.exports.makeLove = makeLove;
 
-function getNextChildName(children, childNames, nextIndex){
+function detection(mother,father, reproRoll, gameState, bot){
+    observerName = util.randomMemberName(gameState.population)
+    observer = util.personByName(observerName, gameState)
+    var netRoll;
+    baseRoll = util.roll(2)
+    netRoll = baseRoll+reproRoll;
+    if (observer.profession == mother.profession || observer.profession == father.profession){
+        netRoll = netRoll + 1
+    }
+    if (netRoll >= 16){
+        util.messagePlayerName(observerName,"You observe "+mother.name+" and "+father.name+" sharing good feelings.")
+    }
+    console.log("Detection: obv:"+observerName+" base:"+baseRoll+" net:"+netRoll)
+}
+
+function getNextChildName(children, childNames, nextIndex, gameState){
 	var currentNames = Object.keys(children)
-	if (!nextIndex){
+	if (! nextIndex===null){
 		nextIndex = (gameState.conceptionCounter % 26 )
 		console.log('getNextChild with default index '+nextIndex)
 	}
-	possibles = childNames['names'][nextIndex]
+	var possibles = childNames['names'][nextIndex]
 	var counter = 0
 	possibleName = possibles[ (Math.trunc( Math.random ( ) * possibles.length))]
 	while (counter < 10 && (currentNames.indexOf(possibleName) != -1 ) ){

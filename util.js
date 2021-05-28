@@ -53,6 +53,31 @@ function getYear(gameState){
 	return gameState.seasonCounter/2;
 }
 
+async function updateNicknames(guild, gameState){
+	population = gameState.population
+	members = guild.members
+	for (personName in population){
+		person = population[personName]
+		try {
+			var id = person.handle.id
+			var someMember;
+			await members.fetch(id)
+				.then(function(value){
+					someMember = value
+				})
+				.catch(console.error);
+			nickname = someMember.nickname
+			gameState.population[personName].nickname = nickname
+			console.log(personName+" has nickname "+nickname+ " id:"+id)
+			console.log("  set to:"+gameState.population[personName].nickname)
+		} catch (err){
+			console.log(personName+" failure getting nickname "+err)
+		}
+	}
+	return gameState;
+}
+module.exports.updateNicknames = updateNicknames
+
 function personByName(argName, gameState){
 	var name = argName;
 	if (name == null){
