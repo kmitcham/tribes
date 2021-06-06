@@ -292,16 +292,17 @@ function globalMatingCheck(gameState, bot){
                 continue
             } else if (person.isPregnant){
                 console.log("\t inviter was pregnant")
+                util.messagePlayerName(person.name, "Your pregnancy prevents you from mating.", gameState, bot)
                 person.cannotInvite = true;
                 continue;
             } else if (person.isInjured && person.isInjured > 0){
                 console.log("\t inviter is injured")
-                util.messagePlayerName(person.name, "Your injury prevents you from mating.")
+                util.messagePlayerName(person.name, "Your injury prevents you from mating.", gameState, bot)
                 person.cannotInvite = true;
                 continue
             } else if (person.isSick && person.isSick > 0){
                 console.log("\t inviter is sick")
-                util.messagePlayerName(person.name, "Your illness prevents you from mating.")
+                util.messagePlayerName(person.name, "Your illness prevents you from mating.", gameState, bot)
                 person.cannotInvite = true;
                 continue
             } else if (person.inviteList && person.inviteList.length > 0) {
@@ -441,10 +442,17 @@ function detection(mother,father, reproRoll, gameState, bot){
     if (observer.profession == mother.profession || observer.profession == father.profession){
         netRoll = netRoll + 1
     }
-    if (netRoll >= 16){
-        util.messagePlayerName(observerName,"You observe "+mother.name+" and "+father.name+" sharing good feelings.")
-    }
     console.log("Detection: obv:"+observerName+" base:"+baseRoll+" net:"+netRoll)
+    if (netRoll >= 17){
+        console.log("should send a message to "+observerName)
+        if (observerName == mother.name || observerName == father.name){
+            console.log("self observation is discarded")
+            return false;
+        }
+        util.messagePlayerName(observerName,"You observe "+mother.name+" and "+father.name+" sharing good feelings.", gameState, bot)
+        return true
+    }
+    return false
 }
 
 function getNextChildName(children, childNames, nextIndex, gameState){
@@ -454,6 +462,10 @@ function getNextChildName(children, childNames, nextIndex, gameState){
 		console.log('getNextChild with default index '+nextIndex)
 	}
 	var possibles = childNames['names'][nextIndex]
+    if (! possibles || possibles.lenght < 1){
+        console.log("Unpossible name  possibles:"+possibles)
+        return "Unpossible"
+    }
 	var counter = 0
 	possibleName = possibles[ (Math.trunc( Math.random ( ) * possibles.length))]
 	while (counter < 10 && (currentNames.indexOf(possibleName) != -1 ) ){

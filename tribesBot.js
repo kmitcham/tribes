@@ -229,7 +229,6 @@ function inventoryMessage(person){
 		message += "         "
 	}
 	message += person.gender.substring(0,1)+'\t'+person.name
-	console.log(person.name+ " nickname "+person.nickname)
 	if (person.nickname ){
 		message += " ("+person.nickname+")"
 	} 
@@ -250,6 +249,9 @@ function inventoryMessage(person){
 	}
 	if (person.strength){
 		message += '\n\t\t is '+person.strength
+	}
+	if (person.profession != 'crafter' && person.canCraft){
+		message += '\n\t\t is able to craft a little'
 	}
 	if (person.chief){
 		message += '\n\t\t is Chief'
@@ -394,7 +396,7 @@ function doChance(rollValue, gameState){
 			gameState.canJerky = true
 			break;
 		case 7: 
-			message +=  "FIRE! Move the Hunting Track token down to 20 (no game!) The tribe must move to another area immediately (Section 9). "
+			message +=  "FIRE! The hunting track moves to 20 (no game!) The tribe must move to another area immediately (Section 9). "
 			if ( util.isColdSeason(gameState) && (gameState.currentLocationName == 'marsh' || gameState.currentLocationName == 'hills')){
 				message = doChance(util.roll(3), gameState)
 				return message
@@ -1235,6 +1237,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			} else {
 				response += ' profession:'+person.profession
 			}
+			response += ' gender:'+person.gender
 		}
 		msg.author.send(response)
 		return
@@ -1327,8 +1330,9 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		foo = bits.shift()
 		while (foo) {
 			if ("!all" == foo && person.guarding && person.guarding.length > 0){
-				util.messageChannel(actor+" stops watching: "+person.guarding.join())
+				util.messageChannel(actor+' stops guarding '+person.guarding, gameState, bot)
 				delete person.guarding;
+				return
 			}
 			childName = util.capitalizeFirstLetter(foo)
 			child = children[childName];
@@ -1600,7 +1604,13 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		if (!gameState.reproductionRound){
 			msg.author.send("migration happens in the reproduction round")
 			return
+		} else {
+			if (gameState.needChanceRoll){
+				msg.author.send("migration happens in the reproduction, after chance")
+				return
+			}
 		}
+		
 		force = bits[2]
 		message = migrate(msg, destination, force,  gameState)
 		util.messageChannel(message, gameState, bot)
@@ -1958,7 +1968,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			msg.author.send('You still need to do the !chanceroll ')
 			return
 		}
-		startWork(gameState)
+		startWork(gameState, bot)
 		allGames[gameState.name] = gameState;
 		return
 	}
@@ -1979,7 +1989,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			cleanUpMessage(msg);; 
 			return 
 		}
-		startFood(gameState)
+		startFood(gameState, bot)
 		allGames[gameState.name] = gameState;
 		return
 	}
@@ -2000,13 +2010,14 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			cleanUpMessage(msg);
 			return 
 		}
-		startReproduction(gameState)
+		startReproduction(gameState, bot)
 		allGames[gameState.name] = gameState;
 		return
 	}
 	if (command == 'status'){
 		message = util.gameStateMessage(gameState, bot)
 		msg.author.send(message)
+		util.updateNicknames(msg.guild, gameState)
 		cleanUpMessage(msg);; 
 		return
 	}
@@ -2207,7 +2218,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		slackers = listReadyToWork(population)
 		if (slackers && slackers.length == 0){
 			util.messageChannel('-= All available workers have worked =-', gameState, bot)
-			startFood(gameState)
+			startFood(gameState, bot)
 		}
 		savelib.saveTribe(gameState);
 		return	
@@ -2542,6 +2553,10 @@ function checkFood(gameState){
 	message += '\nWorried adults: '+worriedAdults
 	message += '\nHungry adults: '+hungryAdults
 	message += '\nHungry children: '+hungryChildren
+	if (!worriedAdults.length && !hungryAdults.length && !hungryChildren.length){
+		console.log("No food worries, could have started reproduction round safely")
+		gameState.enoughFood = true
+	}
 	return message
 }
 function consumeFoodPlayers(gameState){
@@ -2720,7 +2735,7 @@ function consumeFood(gameState){
 	return response
 }
 
-function startWork(gameState){
+function startWork(gameState, bot){
 	savelib.archiveTribe(gameState);
 	// advance the calendar; the if should only skip on the 0->1 transition
 	if (gameState.workRound == false){
@@ -2743,7 +2758,7 @@ function startWork(gameState){
 	allGames[gameState.name] = gameState;
 	return
 }
-function startFood(gameState){
+function startFood(gameState, bot){
 	savelib.archiveTribe(gameState);
 	gameState.workRound = false
 	gameState.foodRound = true
@@ -2756,15 +2771,20 @@ function startFood(gameState){
 	util.messageChannel(foodMessage, gameState, bot)
 	savelib.saveTribe(gameState);
 	allGames[gameState.name] = gameState;
+	if (gameState.enoughFood){
+		util.messageChannel("Everyone has enough food.  Starting reproduction round automatically.\n", gameState, bot)
+		startReproduction(gameState, bot)
+	}
 	return
 }
-function startReproduction(gameState){
+function startReproduction(gameState, bot){
 	// actually consume food here
 	savelib.archiveTribe(gameState);
 	gameState.needChanceRoll = true  // this magic boolean prevents starting work until we did chance roll
 	gameState.workRound = false
 	gameState.foodRound = false
 	gameState.reproductionRound = true
+	delete gameState.enoughFood 
 	foodMessage = consumeFood(gameState)
 	util.messageChannel(foodMessage+'\n', gameState, bot)
 	util.messageChannel('\n==> Starting the Reproduction round; invite other tribe members to reproduce.<==', gameState, bot)
@@ -2912,7 +2932,7 @@ function craft(playername, player, type, rawValue){
 	} else if (rollValue > 2 && type == 'spearhead') {		
 			player.spearhead += 1
 	} else {
-		message =  playername+ ' fails['+rawValue+'] at crafting a '+type
+		message =  playername+ ' creates something['+rawValue+'], but it is not a '+type
 	}
 	util.history(playername,message, gameState)
 	return message

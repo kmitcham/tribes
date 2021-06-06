@@ -55,6 +55,9 @@ function getYear(gameState){
 
 async function updateNicknames(guild, gameState){
 	population = gameState.population
+	if (!guild){
+		return
+	}
 	members = guild.members
 	for (personName in population){
 		person = population[personName]
@@ -68,8 +71,6 @@ async function updateNicknames(guild, gameState){
 				.catch(console.error);
 			nickname = someMember.nickname
 			gameState.population[personName].nickname = nickname
-			console.log(personName+" has nickname "+nickname+ " id:"+id)
-			console.log("  set to:"+gameState.population[personName].nickname)
 		} catch (err){
 			console.log(personName+" failure getting nickname "+err)
 		}
@@ -189,7 +190,7 @@ module.exports.gameStateMessage= (gameState, bot) =>{
 			if (reproLib.canStillInvite(gameState)){
 				message += ' (reproduction round: awaiting invitations or !pass from '+reproLib.canStillInvite(gameState)+')'
 			} else {
-				message += ' (reproduction round, awaiting chance )'
+				message += ' (reproduction round, awaiting chance and/or migration )'
 			}
 		} else {
 			message += ' (reproduction invitation order:'+gameState.reproductionList+')'
