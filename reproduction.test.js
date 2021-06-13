@@ -174,7 +174,7 @@ test("make a consentList, with pass", () =>{
           }
           , "p4":{
               "name": "p4",
-              "gender": "male"
+              "gender": "female"
             }
        },
       "round": "reproduction"

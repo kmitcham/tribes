@@ -139,3 +139,37 @@ const huntDataFor= (huntData, netRoll) =>{
     return huntData[huntData.length-1]
 }
 module.exports.huntDataFor = huntDataFor;
+
+function getScoutMessage(otherLocation, gameState){
+    locationName = gameState.currentLocationName
+    if (otherLocation){
+        locationName = otherLocation
+    }
+    var season = 'warm season.'
+    if (util.isColdSeason(gameState)){
+        season = 'cold season.'
+    }
+    response = 'The '+locationName+' '+season+' resources are:\n'
+    locationData = locations[locationName]
+    if (!locationData){
+        return 'Valid locations are: '+Object.keys(locations)
+    }
+    response += '\tGather:\n'
+    for (var index in locationData['gather']){
+        entry = locationData['gather'][index]
+        response += '\t\t'+entry[3]+'('+(Number(entry[1])+Number(entry[2]))+') roll '+entry[0]+'\n'
+    }
+    response += '\tHunt:  Game Track:'+gameState.gameTrack[locationName]+'\n'
+    for (var index in locationData['hunt']){
+        entry = locationData['hunt'][index]
+        capValue = locationDecay[gameState.gameTrack[locationName]]
+        //console.log(' index is '+index+" entry is "+entry+' capValue is '+capValue+' trackValue was '+gameState.gameTrack[locationName]  )
+        if (entry[0] > capValue ){
+            response += '\t\t (game track capped)\n'
+            break;
+        }
+        response += '\t\t'+entry[2]+'('+entry[1]+')\n'
+    }
+    return response
+}
+module.exports.getScoutMessage = getScoutMessage;

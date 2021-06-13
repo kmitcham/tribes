@@ -51,7 +51,7 @@ module.exports.feed = ( msg, player, amount, childList,  gameState) =>{
                 if (player['food'] >= amount){
                     player.food -= Number(amount)
                 } else {
-                    fed -= player.food
+                    fed = player.food
                     player.food = 0
                     player['grain'] -= (amount-fed)
                 }

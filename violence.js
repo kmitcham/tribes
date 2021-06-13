@@ -117,6 +117,8 @@ const getFactionResult = (gameState, bot) =>{
         for (playerName in gameState['population']){
             delete gameState['population'][playerName]['faction']
         }
+        console.log("The demand has been resolved via overwheming support.  Deleting: "+gameState.demand)
+        delete gameState['demand']
     } else if (againstScore >= 2*(forScore+undeclaredScore)){
         response = 'The Oppostion faction has overwhelming support ('+againstScore+'). The demand to '+gameState.demand+' should be ignored.'
         for (playerName in gameState['population']){
@@ -138,12 +140,13 @@ const getFactionResult = (gameState, bot) =>{
             gameState.violence = gameState.demand
             response = "Tribal society breaks down as VIOLENCE is required to settle the issue of "+gameState.demand
         }
+        console.log("The demand has been resolved.  Deleting: "+gameState.demand)
         delete gameState['demand']
         for (playerName in gameState['population']){
             delete gameState['population'][playerName]['faction']
         }
+        console.log("Deleted: "+gameState.demand)
     }
-    util.messageChannel(response, gameState, bot)
     return response
 }
 module.exports.getFactionResult = getFactionResult

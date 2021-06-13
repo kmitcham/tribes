@@ -31,10 +31,7 @@ const genders = ['male','female']
 const locations = require('./locations.json');
 const allNames = require('./names.json');
 
-const locationDecay = [30,30,30,17,17,
-					15,15,14,14,13,
-					13,12,12,11,11,
-					10,10,9,9,8]
+const locationDecay = huntlib.locationDecay;
 const childSurvivalChance = 
     [ 8, 8, 8, 8, 9, 9,10,10,10,11  // 4 years
 	,11,11,12,12,13,13,13,14,14,14  // 9 years
@@ -673,6 +670,20 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 				// removing the player from the banish list is a pain.
 				delete population[targetName]
 				util.messageChannel(targetName+' is banished from the tribe',gameState, bot)
+				for (childName in gameState.children){
+					child = gameState.children[childName]
+					if (child.mother == targetName && child.age < 1){
+						banished[childName] = child;
+						delete gameState.children[childName]
+					}
+					if (person.guarding && person.guarding.indexOf(childName) > -1 ){
+						childIndex = person.guarding.indexOf(childName)
+				if (childIndex > -1) {
+					person.guarding.splice(childIndex, 1);
+				}
+				util.messageChannel(actor+' stops guarding '+childName, gameState, bot)
+			}
+				}
 				const name = person.name
 				if (gameState.banished){
 					gameState.banished[name] = person
@@ -1066,7 +1077,8 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		}
 		//TODO the case when there is no current demand
 		player.faction = side;
-		violencelib.getFactionResult(gameState,bot)
+		response = violencelib.getFactionResult(gameState,bot)
+		util.messageChannel(response, gameState, bot)
 		return
 	}
   	// add food to a child
@@ -1186,13 +1198,18 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			cleanUpMessage(msg);
 			return
 		}
+		if (!player){
+			msg.author.send('No record for you in this game.')
+			cleanUpMessage(msg);
+			return
+		}
 		if (type == 'spearhead' && player && player.activity && gameState.workRound
-			&& ( player.activity == 'hunt' || player.activity == 'assist')){
+			&& ( player.activity == 'hunt' || player.activity == 'assist') && player.spearHead < 2){
 			msg.author.send('The game suspects you used that item to work with.  Ask the referee to help trade it if you did not.')
 			cleanUpMessage(msg);
 			return
 		}
-		if ( type =='basket' && player && player.activity && player.activity == 'gather' && gameState.workRound ){
+		if ( type =='basket' && player && player.activity && player.activity == 'gather' && gameState.workRound && player.basket < 2){
 		msg.author.send('The game suspects you used that item to work with.  Ask the referee to help trade it if you did not.')
 		cleanUpMessage(msg);
 		return
@@ -1801,35 +1818,10 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		return
 	}
 	if (command == 'scout'){
-		locationName = gameState.currentLocationName
 		if (bits[1]){
-			locationName = bits[1]
+			targetLocation = bits[1]
 		}
-		var season = 'warm season.'
-		if (util.isColdSeason(gameState)){
-			season = 'cold season.'
-		}
-		response = 'The '+locationName+' '+season+' resources are:\n'
-		locationData = locations[locationName]
-		if (!locationData){
-			msg.author.send('Valid locations are: '+Object.keys(locations))
-			cleanUpMessage(msg);;
-			return
-		}
-		response += '\tGather:\n'
-		for (var index in locationData['gather']){
-			entry = locationData['gather'][index]
-			response += '\t\t'+entry[3]+'('+(Number(entry[1])+Number(entry[2]))+') roll '+entry[0]+'\n'
-		}
-		response += '\tHunt:  Game Track:'+gameState.gameTrack[locationName]+'\n'
-		for (var index in locationData['hunt']){
-			entry = locationData['hunt'][index]
-			response += '\t\t'+entry[2]+'('+entry[1]+')\n'
-			if (entry[0] <= gameState.gameTrack[locationName] ){
-				response += '\t\t (game track capped)\n'
-				break;
-			}
-		}
+		response = huntlib.getScoutMessage(targetLocation, gameState)
 		msg.author.send(response)
 		cleanUpMessage(msg);;
 		return
@@ -2736,6 +2728,7 @@ function consumeFood(gameState){
 }
 
 function startWork(gameState, bot){
+	reproLib.restoreSaveLists(gameState, bot);
 	savelib.archiveTribe(gameState);
 	// advance the calendar; the if should only skip on the 0->1 transition
 	if (gameState.workRound == false){
@@ -2790,6 +2783,7 @@ function startReproduction(gameState, bot){
 	util.messageChannel('\n==> Starting the Reproduction round; invite other tribe members to reproduce.<==', gameState, bot)
 	util.messageChannel('The tribe can decide to move to a new location, but the injured and children under 2 will need 2 food', gameState, bot)
 	if (gameState.secretMating){
+		reproLib.rememberInviteLists(gameState, bot);
 		gameState.doneMating = false;
 		reproLib.globalMatingCheck(gameState, bot)
 		if (reproLib.canStillInvite(gameState)){		
@@ -2883,7 +2877,7 @@ function migrate(msg, destination, force, gameState){
 		for (childName in children){
 			var child = children[childName]
 			// child age is in seasons
-			if (child.age < 5){
+			if (child.age < 4){
 				if (child.food < 2){
 					deceasedChildren.push(childName)
 				} 
@@ -2981,7 +2975,7 @@ function findGameStateForActor(actor){
 	for (var gameName in allGames){
 		gameState = allGames[gameName]
 		if (gameState && util.personByName(actor, gameState)){
-			console.log('found game '+gameName+' for '+actor)
+			//console.log('found game '+gameName+' for '+actor)
 			return gameState
 		}
 		console.log('Did not find '+actor+' in game '+gameState.name)

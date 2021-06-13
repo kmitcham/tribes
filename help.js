@@ -33,7 +33,7 @@ function playerHelpRounds(){
 		text+=' !feed <amt> <childName>  [<more childNames>]\n'
 		text+='-=Reproduction Commands=-\n'
 		text+=' !romance  (show your current reproduction lists)\n'
-		text+=' !invite <target> [target !pass]   The order you would like to invite people to mate.  If the list ends with !pass, you will give up if they decline.\n'
+		text+=' !invite <target> [target !pass]   The order you would like to invite people to mate.  \n\tIf the list ends with !pass, you will give up if they decline. !save will retain the list every season\n'
 		text+=' !consent <target> [target] The list of people you would accept mating invitations from.\n'
 		text+=' !decline <target> [target] The list of people whose mating invitations you would decline\n'
 		text+=' !pass (decline to invite anyone in the mating round; can still get invitations)\n'

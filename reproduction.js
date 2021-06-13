@@ -130,22 +130,29 @@ function handleReproductionList(actorName, args, listName, gameState, bot){
                     errors.push("Values after '!pass' must be removed.\n")
                 }
                 list.push(rawTargetName)
-                break;
             } else {
                 errors.push("!pass is only valid in the inviteList.")
             }
-        }
-        targetName = util.removeSpecialChars(rawTargetName)
-        target = util.personByName(targetName, gameState);
-        if (target){
-            localErrors+= matingObjections(actor, target)
+        } else if (rawTargetName == '!save'){
+            if (listName == 'inviteList'){
+                list.push(rawTargetName)
+                break;
+            } else {
+                errors.push("!save is only valid in the inviteList.")
+            }
         } else {
-            localErrors+= rawTargetName+" is not in the tribe.\n"
-        }
-        if (localErrors != ""){
-            errors.push(localErrors)
-        } else {
-            list.push(target.name)
+            targetName = util.removeSpecialChars(rawTargetName)
+            target = util.personByName(targetName, gameState);
+            if (target){
+                localErrors+= matingObjections(actor, target)
+            } else {
+                localErrors+= rawTargetName+" is not in the tribe.\n"
+            }
+            if (localErrors != ""){
+                errors.push(localErrors)
+            } else {
+                list.push(target.name)
+            }
         }
     }
     if (errors.length > 0){
@@ -293,16 +300,19 @@ function globalMatingCheck(gameState, bot){
             } else if (person.isPregnant){
                 console.log("\t inviter was pregnant")
                 util.messagePlayerName(person.name, "Your pregnancy prevents you from mating.", gameState, bot)
+                util.messageChannel(personName+" is too pregnant for mating this round.",gameState, bot)
                 person.cannotInvite = true;
                 continue;
             } else if (person.isInjured && person.isInjured > 0){
                 console.log("\t inviter is injured")
                 util.messagePlayerName(person.name, "Your injury prevents you from mating.", gameState, bot)
+                util.messageChannel(personName+" is too injured for mating this round.",gameState, bot)
                 person.cannotInvite = true;
                 continue
             } else if (person.isSick && person.isSick > 0){
                 console.log("\t inviter is sick")
                 util.messagePlayerName(person.name, "Your illness prevents you from mating.", gameState, bot)
+                util.messageChannel(personName+" is too sick for mating this round.",gameState, bot)
                 person.cannotInvite = true;
                 continue
             } else if (person.inviteList && person.inviteList.length > 0) {
@@ -509,3 +519,31 @@ function addChild(mother, father, gameState){
 }
 module.exports.addChild = addChild;
 
+function rememberInviteLists(gameState, bot){
+    population = gameState.population
+    for (personName in population){
+        person = population[personName]
+        if (person.inviteList && person.inviteList.length > 0 && person.inviteList.indexOf('!save') > -1) {
+            console.log('saving inviteList for '+personName)
+            person.saveInviteList = [...person.inviteList]
+            const index = person.inviteList.indexOf("!save");
+            if (index > -1) {
+                person.inviteList.splice(index, 1);
+            }
+        }
+    }
+}
+module.exports.rememberInviteLists = rememberInviteLists;
+
+function restoreSaveLists(gameState, bot){
+    population = gameState.population
+    for (personName in population){
+        person = population[personName]
+        if (person.saveInviteList && person.saveInviteList.length > 0 ) {
+            console.log('restoring inviteList for '+personName)
+            person.inviteList = person.saveInviteList
+            util.messagePlayerName(personName,'restoring your invitelist to what it was at the start of the reproduction round', gameState, bot)
+        }
+    }
+}
+module.exports.restoreSaveLists = restoreSaveLists;

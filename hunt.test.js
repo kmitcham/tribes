@@ -272,3 +272,85 @@ test('game track limited', () =>{
   expect(gameState["gameTrack"]["marsh"]).toBe(6)
   expect(gameState["population"][playername]['food']).toBe(40)
 });
+test('scout current location', () =>{
+  var gameState = {
+        "seasonCounter": 1,
+        "gameTrack": {
+          "veldt": 1,
+          "forest": 1,
+          "marsh": 1,
+          "hills": 1
+        },
+        "name": "flounder-tribe",
+        "population": {
+          "Hunter1": {
+            "gender": "female",
+            "spearhead": 0,
+            "food":0,
+            "name": "Hunter1",
+            "profession": "hunter"
+          }
+        },
+        "currentLocationName": "marsh",
+        "round": "work"
+  }
+  var location = null
+  output = lib.getScoutMessage(location, gameState)
+  expect(output).toMatch('hippo');
+});
+test('scout current location, capped', () =>{
+  var gameState = {
+        "seasonCounter": 1,
+        "gameTrack": {
+          "veldt": 1,
+          "forest": 1,
+          "marsh": 10,
+          "hills": 1
+        },
+        "name": "flounder-tribe",
+        "population": {
+          "Hunter1": {
+            "gender": "female",
+            "spearhead": 0,
+            "food":0,
+            "name": "Hunter1",
+            "profession": "hunter"
+          }
+        },
+        "currentLocationName": "marsh",
+        "round": "work"
+  }
+  var location = null
+  output = lib.getScoutMessage(location, gameState)
+  expect(output).toMatch('waterfowl');
+  expect(output).toMatch('capped');
+  expect(output).not.toMatch('deer');
+});
+test('scout alt location, capped', () =>{
+  var gameState = {
+        "seasonCounter": 1,
+        "gameTrack": {
+          "veldt": 6,
+          "forest": 1,
+          "marsh": 11,
+          "hills": 1
+        },
+        "name": "flounder-tribe",
+        "population": {
+          "Hunter1": {
+            "gender": "female",
+            "spearhead": 0,
+            "food":0,
+            "name": "Hunter1",
+            "profession": "hunter"
+          }
+        },
+        "currentLocationName": "marsh",
+        "round": "work"
+  }
+  var location = "veldt"
+  output = lib.getScoutMessage(location, gameState)
+  expect(output).toMatch('antelope');
+  expect(output).toMatch('capped');
+  expect(output).not.toMatch('zebra');
+})
