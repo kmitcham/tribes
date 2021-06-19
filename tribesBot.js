@@ -863,7 +863,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 				+ '\thunt:'+totals[locationName][HUNT]
 				+ '\tspear:'+totals[locationName][SPEAR]
 		}
-		util.messageChannel(response,gameState, bot)
+		msg.author.send(response)
 		totals = {
 			'veldt':[0,0,0,0,0,0],
 			'hills':[0,0,0,0,0,0],
@@ -900,7 +900,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 										+'\thunt:'+Math.round(10* totals[locationName][HUNT]/MAX)
 										+'\tspear:'+Math.round(10* totals[locationName][SPEAR]/MAX)
 		}
-		util.messageChannel(response,gameState, bot)
+		msg.author.send(response)
 		return
 	}
 	if (command == 'demand'){
@@ -1544,7 +1544,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 	}
 	// how much stuff does the target have?  if used by ref with no args, list whole population
 	if (command == 'list' || command == 'self'){
-		cleanUpMessage(msg);; 
+		cleanUpMessage(msg);
 		if (referees.includes(actor)){
 				big_message = 'list:\n'
 				for (var target in gameState.population){
@@ -1555,6 +1555,10 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 						}
 					}
 					big_message += message +'\n'
+					if (big_message.length > 1000 ){
+						msg.author.send(big_message)
+						big_message = '';
+					}
 				}
 				msg.author.send(big_message)
 				return
@@ -1562,7 +1566,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			message = ''
 			for (var type in player) {
 				if (Object.prototype.hasOwnProperty.call( player, type)) {
-					message+= type+':'+player[type]+', '
+					message+= type+':'+player[type]+'\n'
 				}
 			}
 			msg.author.send(message)

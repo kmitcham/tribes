@@ -326,24 +326,24 @@ function globalMatingCheck(gameState, bot){
                 }
                 var attemptFailed = false
                 target = util.personByName(targetName, gameState)
-                if (target.isSick || target.isInjured){
+                if (target.declineList && target.declineList.includes(personName)){
+                    util.messagePlayerName(personName, targetName+" declines your invitation.", gameState, bot)
+                    util.messagePlayerName(targetName, personName+" flirts with you, but you decline.", gameState, bot)
+                    console.log("\t declines  ")
+                    person.inviteList.shift()
+                    attemptFailed = true;
+                } else if (target.isPregnant){
+                    util.messagePlayerName(personName, targetName+" is visibly pregnant.", gameState, bot)
+                    util.messagePlayerName(targetName, personName+" flirts with you, but you are pregnant.", gameState, bot)    
+                    console.log("\t is pregnant  ")
+                    person.inviteList.shift()
+                    attemptFailed = true;
+                } else if (target.isSick || target.isInjured){
                     util.messagePlayerName(targetName, personName+" flirts with you, but you are not healthy enough to respond.", gameState, bot)
                     util.messagePlayerName(personName, targetName+" is not healthy enough to enjoy your attention.", gameState, bot)
                     console.log("\t sick or injured")
                     person.inviteList.shift()
                     attemptFailed = true;
-                } else if (target.isPregnant){
-                        util.messagePlayerName(personName, targetName+" is visibly pregnant.", gameState, bot)
-                        util.messagePlayerName(targetName, personName+" flirts with you, but you are pregnant.", gameState, bot)    
-                        console.log("\t is pregnant  ")
-                        person.inviteList.shift()
-                        attemptFailed = true;
-                } else if (target.declineList && target.declineList.includes(personName)){
-                        util.messagePlayerName(personName, targetName+" declines your invitation.", gameState, bot)
-                        util.messagePlayerName(targetName, personName+" flirts with you, but you decline.", gameState, bot)
-                        console.log("\t declines  ")
-                        person.inviteList.shift()
-                        attemptFailed = true;
                 } else if (target.consentList && target.consentList.includes(personName)){
                     util.messagePlayerName(personName, targetName+" is impressed by your flirtation.", gameState, bot)
                     util.messagePlayerName(targetName, personName+" flirts with you, and you are interested.", gameState, bot)
@@ -542,6 +542,7 @@ function restoreSaveLists(gameState, bot){
         if (person.saveInviteList && person.saveInviteList.length > 0 ) {
             console.log('restoring inviteList for '+personName)
             person.inviteList = person.saveInviteList
+            delete person.saveInviteList;
             util.messagePlayerName(personName,'restoring your invitelist to what it was at the start of the reproduction round', gameState, bot)
         }
     }
