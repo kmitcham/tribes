@@ -183,6 +183,35 @@ test("make a consentList, with pass", () =>{
   response = reproLib.handleReproductionList("p1", ["p2", "p4", "!pass", "p3"],"consentList", gameState, {})
   expect(response).toBe(-2)
 });
+test("make a invitelist, with pass and save", () =>{
+  var gameState = {
+      "population": {
+          "p1":{
+              "name": "p1",
+              "gender": "female"
+          },
+          "p2":{
+            "name": "p2",
+            "gender": "male"
+          }
+          , "p3":{
+            "name": "p3",
+            "gender": "male"
+          }
+          , "p4":{
+              "name": "p4",
+              "gender": "female"
+            }
+       },
+      "round": "reproduction"
+  }
+  //function handleReproductionList(actorName, args, listName, gameState, bot){
+  expectedList = ["p2", "p3", "!save","!pass"]
+  response = reproLib.handleReproductionList("p1", expectedList ,"inviteList", gameState, {})
+  expect(response).toBe(0)
+  expect(gameState["population"]["p1"]["inviteList"]).toStrictEqual(expectedList)
+
+});
 test("make a inviteList, with pass", () =>{
   var gameState = {
       "population": {

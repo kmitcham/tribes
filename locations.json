@@ -16,8 +16,8 @@
 		"hunt":[
 			[8,0,"nothing"],
 			[9,2,"small game"],
-			[10,2,"small game"],
-			[11,8,"small game"],
+			[10,2,"hornbill"],
+			[11,8,"dik dik"],
 			[12,15,"small antelope"],
 			[13,20,"ostrich"],
 			[14,25,"antelope"],
@@ -74,7 +74,7 @@
 		"hunt":[
 			[9,2,"small game"],
 			[10,4,"small game"],
-			[11,8,"small game"],
+			[11,8,"capybara"],
 			[12,12,"small fish"],
 			[13,15,"waterfowl"],
 			[14,25,"deer"],

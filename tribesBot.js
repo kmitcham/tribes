@@ -108,6 +108,7 @@ async function processMessage(msg){
   }
   
 function initGame(gameName){
+	gameState = {}
 	if (!gameName){
 		console.log('init game without a name')
 		gameName = ''
@@ -1101,7 +1102,12 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			cleanUpMessage(msg);; 
             msg.author.send("Children do not take food from strangers")
             return
-		}	
+		}
+		if (gameState.reproductionRound  && gameState.needChanceRoll){
+			cleanUpMessage(msg);; 
+			msg.author.send("Must wait until after chance to feed the children.")
+			return
+		}
 
 		//module.exports.feed = ( msg, player, amount, childList,  gameState) =>{
 		message = feedlib.feed(msg, player, amount, childList, gameState)
@@ -1634,7 +1640,10 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		
 		force = bits[2]
 		message = migrate(msg, destination, force,  gameState)
-		util.messageChannel(message, gameState, bot)
+		console.log('migration message is: '+message)
+		if (message){
+			util.messageChannel(message, gameState, bot)
+		}
 		return
 	}
 	if (command == 'open'){
@@ -1824,6 +1833,8 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 	if (command == 'scout'){
 		if (bits[1]){
 			targetLocation = bits[1]
+		} else {
+			targetLocation = gameState.currentLocationName;
 		}
 		response = huntlib.getScoutMessage(targetLocation, gameState)
 		msg.author.send(response)
@@ -2511,6 +2522,7 @@ function countChildrenOfParentUnderAge(children, parentName, age){
 	}
 	return count
 }
+// Side effect: if everyone has enough food, and it is foodRound, start reproduction round.
 function checkFood(gameState){
 	message = ''
 	hungryAdults = []
@@ -2549,9 +2561,10 @@ function checkFood(gameState){
 	message += '\nWorried adults: '+worriedAdults
 	message += '\nHungry adults: '+hungryAdults
 	message += '\nHungry children: '+hungryChildren
-	if (!worriedAdults.length && !hungryAdults.length && !hungryChildren.length){
-		console.log("No food worries, could have started reproduction round safely")
+	if (!worriedAdults.length && !hungryAdults.length && !hungryChildren.length && gameState.foodRound ){
 		gameState.enoughFood = true
+		util.messageChannel("Everyone has enough food, starting reproduction automatically.", gameState, bot)
+		startReproduction(gameState,bot)
 	}
 	return message
 }
@@ -2757,20 +2770,22 @@ function startWork(gameState, bot){
 }
 function startFood(gameState, bot){
 	savelib.archiveTribe(gameState);
+	foodMessage = checkFood(gameState)
 	gameState.workRound = false
 	gameState.foodRound = true
 	gameState.reproductionRound = false
 	clearWorkFlags(population)
 	util.decrementSickness(gameState.population, gameState, bot)
 	message = util.gameStateMessage(gameState, bot)
-	util.messageChannel(message+'\n==>Starting the food and trading round.  Make sure everyone has enough to eat, or they will starve<==', gameState, bot)
-	foodMessage = checkFood(gameState)
 	util.messageChannel(foodMessage, gameState, bot)
 	savelib.saveTribe(gameState);
 	allGames[gameState.name] = gameState;
 	if (gameState.enoughFood){
 		util.messageChannel("Everyone has enough food.  Starting reproduction round automatically.\n", gameState, bot)
+		util.messageChannel(message+'\n==>Starting the food and trading round.  Skipping to reproduction since everyone has enough food<==', gameState, bot)
 		startReproduction(gameState, bot)
+	} else {
+		util.messageChannel(message+'\n==>Starting the food and trading round.  Make sure everyone has enough to eat, or they will starve<==', gameState, bot)
 	}
 	return
 }
@@ -2785,7 +2800,7 @@ function startReproduction(gameState, bot){
 	foodMessage = consumeFood(gameState)
 	util.messageChannel(foodMessage+'\n', gameState, bot)
 	util.messageChannel('\n==> Starting the Reproduction round; invite other tribe members to reproduce.<==', gameState, bot)
-	util.messageChannel('The tribe can decide to move to a new location, but the injured and children under 2 will need 2 food', gameState, bot)
+	util.messageChannel('After chance, the tribe can decide to move to a new location, but the injured and children under 2 will need 2 food', gameState, bot)
 	if (gameState.secretMating){
 		reproLib.rememberInviteLists(gameState, bot);
 		gameState.doneMating = false;
@@ -2890,7 +2905,7 @@ function migrate(msg, destination, force, gameState){
 		response += '\nThe following tribe members would die on the journey to '+destination+': '+deceasedPeople
 		response += '\nThe following children would die along the way: '+deceasedChildren
 	}
-	return response+' \n'
+	return response
 }
 // blatantly lifted from https://stackoverflow.com/questions/2450954/how-to-randomize-shuffle-a-javascript-array
 function shuffle(array) {

@@ -55,7 +55,7 @@ function chiefHelp(){
 	text = '\n### Chief Commands ###\n'
 	text+=' !induct|banish <player> (add|remove a tribe member)\n'
 	text+=' !open|close  (toggle if people can join with "!join" or only with "!induct" by the chief\n'
-	text+=' !save (Saves the game. Automatically done at the start of every work round)\n'
+	text+=' !save (Saves the game. Automatically done at the start of every round)\n'
 	text+=' !startwork (begins the work round, enabling work attempts and rolls)\n'
 	text+=' !startfood (ends the work round; subtract food/grain; birth; child age increase)\n'
 	text+=' !startreproduction (Start the reproduction round. Also when migration happens)\n'

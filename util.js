@@ -138,7 +138,7 @@ function personByName(argName, gameState){
 }
 module.exports.history = (playerName, message, gameState)=>{
 	player = personByName(playerName, gameState)
-	if (!player.history){
+	if (player && !player.history){
 		player.history = []
 	}
 	player.history.push(gameState.seasonCounter/2+": "+message)
@@ -216,7 +216,7 @@ function randomMemberName(population){
 module.exports.randomMemberName = randomMemberName;
 
 function round(number){
-	return Math.round(10*number)/10;
+	return Math.round(100*number)/100;
 }
 module.exports.round = round;
 
@@ -230,8 +230,8 @@ function messageChannel(message, gameState, argBot){
 		console.log('no bot, channel does not see '+message)
 		return
 	}
-	if (!message){
-		console.log("Not sending empty message to channel")
+	if (!message || message.length == 0 ){
+		console.log("Not sending empty message to channel:"+message)
 		return
 	}
 	channel = argBot.channels.cache.find(channel => channel.name === gameState.name)

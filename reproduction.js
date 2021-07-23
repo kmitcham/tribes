@@ -121,6 +121,7 @@ function handleReproductionList(actorName, args, listName, gameState, bot){
     population = gameState.population
     errors = []
     list = []
+    save = false;
     for (rawTargetName of args){
         localErrors = "";        
         if (rawTargetName == "!pass"){
@@ -130,13 +131,14 @@ function handleReproductionList(actorName, args, listName, gameState, bot){
                     errors.push("Values after '!pass' must be removed.\n")
                 }
                 list.push(rawTargetName)
+                break;
             } else {
                 errors.push("!pass is only valid in the inviteList.")
             }
         } else if (rawTargetName == '!save'){
             if (listName == 'inviteList'){
                 list.push(rawTargetName)
-                break;
+                save = true
             } else {
                 errors.push("!save is only valid in the inviteList.")
             }
@@ -166,6 +168,10 @@ function handleReproductionList(actorName, args, listName, gameState, bot){
     }
     actor[listName] = list;
     util.messagePlayerName(actorName, "Setting your "+listName+" list to:"+list, gameState, bot)
+    if (save){
+        actor.saveInviteList = [...actor.inviteList]
+        util.messagePlayerName(actorName, "Saving your "+listName+" list be used in future rounds", gameState, bot)
+    }
     return 0;
 }
 module.exports.handleReproductionList = handleReproductionList;
@@ -182,7 +188,10 @@ function invite(msg, gameState, bot){
         return
     }
     if (person.cannotInvite){
-        util.messagePlayerName(actorName, "Your invitations for this season are used up.", gameState,bot)
+        util.messagePlayerName(actorName
+            , "Your invitations for this season are used up.  You will be able to edit your invites for next season after reproduction ends."
+            , gameState,bot)
+        return;
     }
     if (person.isPregnant && gameState.children[person.isPregnant] && gameState.children[person.isPregnant].age == -2){
         util.messagePlayerName(actorName, "You are already pregnant.", gameState,bot)
@@ -316,12 +325,16 @@ function globalMatingCheck(gameState, bot){
                 person.cannotInvite = true;
                 continue
             } else if (person.inviteList && person.inviteList.length > 0) {
-                    targetName = person.inviteList[0]
-                    console.log(" inviting "+targetName)
+                targetName = person.inviteList[0]
+                console.log(" inviting "+targetName)
                 if (targetName == "!pass"){
                     person.cannotInvite = true
                     util.messageChannel(personName+" is passing on mating this round.",gameState, bot)
                     doneMating.push(personName)
+                    continue
+                }
+                if (targetName == "!save"){
+                    console.log("Skipping the !save since it isn't really an invite")
                     continue
                 }
                 var attemptFailed = false
