@@ -35,7 +35,7 @@ module.exports.feed = ( msg, player, amount, childList,  gameState) =>{
             }
             child = children[childName]
             if (  Number(child.food) >= 2 ){
-                if (showErrors){msg.author.send(childName+' as enough food already.')}
+                if (showErrors){msg.author.send(childName+' has enough food already.')}
                 continue
             }
             if ( (child.food + amount) > 2 ){
