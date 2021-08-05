@@ -178,7 +178,7 @@ test('threshold, no spear', () =>{
     var playername = "Hunter1"
     var player = gameState["population"][playername]
     output = lib.hunt(playername, player, 9, gameState)
-    expect(output).toMatch('small game');
+    expect(output).toMatch('marsh rat');
     expect(gameState["population"][playername]['food']).toBe(2)
     expect(gameState["population"][playername]['worked']).toBeTruthy()
     expect(gameState["gameTrack"]["marsh"]).toBe(2)

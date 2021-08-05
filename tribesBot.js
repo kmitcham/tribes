@@ -704,6 +704,11 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			cleanUpMessage(msg);; 
 			return
 		}
+		if ((gameState.demand || gameState.violence)){
+			msg.author.send('The game can not advance until the demand is dealt with.')
+			cleanUpMessage(msg);; 
+			return 
+		}
 		if (gameState.reproductionRound && gameState.needChanceRoll){
 			if (!referees.includes(actor) && bits[1]){
 				msg.author.send('Only a referee can force the roll')
@@ -1628,6 +1633,11 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			msg.author.send(command+' requires a destination (and force for chief to make it happen)')
 			return
 		}
+		if ((gameState.demand || gameState.violence)){
+			msg.author.send('The game can not advance until the demand is dealt with.')
+			cleanUpMessage(msg);; 
+			return 
+		}
 		if (!gameState.reproductionRound){
 			msg.author.send("migration happens in the reproduction round")
 			return
@@ -1967,6 +1977,11 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			msg.author.send('already in the work round')
 			return 
 		}
+		if ((gameState.demand || gameState.violence)){
+			msg.author.send('The game can not advance until the demand is dealt with.')
+			cleanUpMessage(msg);; 
+			return 
+		}
 		if(gameState.reproductionRound == false){
 			msg.author.send('Can only go to work from reproduction')
 			return 
@@ -1991,6 +2006,11 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			cleanUpMessage(msg);; 
 			return 
 		}
+		if ((gameState.demand || gameState.violence)){
+			msg.author.send('The game can not advance until the demand is dealt with.')
+			cleanUpMessage(msg);; 
+			return 
+		}
 		if(gameState.workRound == false){
 			msg.author.send('Can only go to food round from work round')
 			cleanUpMessage(msg);; 
@@ -2006,6 +2026,11 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			msg.author.send(command+' requires referee  or chief priviliges')
 			cleanUpMessage(msg);
 			return
+		}
+		if ((gameState.demand || gameState.violence)){
+			msg.author.send('The game can not advance until the demand is dealt with.')
+			cleanUpMessage(msg);; 
+			return 
 		}
 		if (gameState.reproductionRound == true){
 			msg.author.send('already in the reproductionRound ')
