@@ -21,7 +21,7 @@ module.exports.showChildren =  (children, population, filterName="", hideFathers
 		return children[a].age - children[b].age
 	});
 	for (childName of sortedChildren) {
-		if (response.length > 1900){
+		if (response.length > 1700){
 			responseMessages.push(response)
 			response = ''
 		}

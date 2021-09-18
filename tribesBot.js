@@ -116,6 +116,7 @@ function initGame(gameName){
 	gameState.seasonCounter = 1
 	gameState.gameTrack = {}
 	gameState.name = gameName
+	gameState.secretMating = true
 	gameState.open = true
 	gameState.conceptionCounter = 0
 	gameState.population = {}
@@ -755,7 +756,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 					response = ['Could not find '+bits[1]]
 				} else {
 					response = ['The descendants of '+filterName+' are:\n']
-					response.push(childlib.showChildren(children, population, filterName, gameState.secretMating))
+					response.push.apply(response, childlib.showChildren(children, population, filterName, gameState.secretMating))
 				}
 		} else {
 			response = childlib.showChildren(children, population, "", gameState.secretMating)
@@ -2093,6 +2094,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		|| command == 'hunt'
 		|| command == 'assist'
 		|| command == 'train'
+		|| command == 'idle'
 		){
 		var message = 'no work done'	
 		//////////////////////////////
@@ -2109,12 +2111,12 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			return
 		}
 		if (player.isInjured && player.isInjured > 0 ){
-			msg.author.send('you can not work while you are injured')
+			msg.author.send('You cannot work while you are injured')
 			cleanUpMessage(msg);; 
 			return
 		}
 		if (player.isSick && player.isSick > 0 ){
-			msg.author.send('you can not work while you are sick')
+			msg.author.send('You cannot work while you are sick')
 			cleanUpMessage(msg);; 
 			return
 		}

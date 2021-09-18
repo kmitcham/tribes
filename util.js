@@ -141,6 +141,10 @@ module.exports.history = (playerName, message, gameState)=>{
 	if (player && !player.history){
 		player.history = []
 	}
+	if (!player){
+		console.log('trying to record history with no player record:'+playerName)
+		return;
+	}
 	player.history.push(gameState.seasonCounter/2+": "+message)
 }
 

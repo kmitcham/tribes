@@ -189,7 +189,7 @@ function invite(msg, gameState, bot){
     }
     if (person.cannotInvite){
         util.messagePlayerName(actorName
-            , "Your invitations for this season are used up.  You will be able to edit your invites for next season after reproduction ends."
+            , "Your invitations for this season are used up.  You will be able to edit your invites for next season after the work round starts."
             , gameState,bot)
         return;
     }

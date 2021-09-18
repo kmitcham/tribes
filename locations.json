@@ -100,10 +100,10 @@
 			[16,12,0,"ripe fruit and berries"]
 		],
 		"hunt":[
-			[9,2,"small game"],
-			[10,4,"small game"],
-			[11,8,"small game"],
-			[12,12,"small game"],
+			[9,2,"squirrel"],
+			[10,4,"hare"],
+			[11,8,"porcupine"],
+			[12,12,"goat"],
 			[13,15,"wildfowl"],
 			[14,25,"small deer"],
 			[15,30,"deer"],
