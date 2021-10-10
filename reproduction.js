@@ -124,7 +124,7 @@ function handleReproductionList(actorName, args, listName, gameState, bot){
     save = false;
     for (rawTargetName of args){
         localErrors = "";        
-        if (rawTargetName == "!pass"){
+        if (rawTargetName.toLowerCase() == "!pass"){
             console.log("Detected pass at position "+args.indexOf(rawTargetName)+" of "+(args.length -1));
             if (listName == 'inviteList'){
                 if (args.indexOf(rawTargetName) != (args.length -1)){
@@ -135,7 +135,7 @@ function handleReproductionList(actorName, args, listName, gameState, bot){
             } else {
                 errors.push("!pass is only valid in the inviteList.")
             }
-        } else if (rawTargetName == '!save'){
+        } else if (rawTargetName.toLowerCase() == '!save'){
             if (listName == 'inviteList'){
                 list.push(rawTargetName)
                 save = true

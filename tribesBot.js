@@ -1358,7 +1358,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		bits.shift()
 		foo = bits.shift()
 		while (foo) {
-			if ("!all" == foo && person.guarding && person.guarding.length > 0){
+			if ("!all" == foo.toLowerCase() && person.guarding && person.guarding.length > 0){
 				util.messageChannel(actor+' stops guarding '+person.guarding, gameState, bot)
 				delete person.guarding;
 				return

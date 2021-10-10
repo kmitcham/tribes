@@ -8,7 +8,7 @@ module.exports.feed = ( msg, player, amount, childList,  gameState) =>{
             childName = capitalizeFirstLetter(cName)
             amount = Number(amount)
             if (!children[childName]) {
-                if (cName == "!all"){
+                if (cName.toLowerCase() == "!all"){
                     showErrors = false;
                     for (var childName in children){
                         var child = children[childName]
