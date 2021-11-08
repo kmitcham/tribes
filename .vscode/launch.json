@@ -17,14 +17,27 @@
       ],
       "type": "pwa-node"
     },
+    {
+      "name": "Launch via NPM",
+      "request": "launch",
+      "runtimeArgs": [
+        "run-script",
+        "debug"
+      ],
+      "runtimeExecutable": "npm",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "type": "pwa-node"
+    },
   {
     "type": "node",
     "request": "launch",
-    "name": "Launch via NPM for test",
+    "name": "Launch via NPM for test banish",
     "runtimeExecutable": "npm",
     "runtimeArgs": [
       "test",
-      "reproduction.test.js",
+      "banish.test.js",
       "debug"
     ],
     "port": 9229,

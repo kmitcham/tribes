@@ -52,7 +52,7 @@ test("makes a list", () =>{
       "round": "reproduction"
   }
   response = reproLib.eligibleMates("p1", gameState.population, false);
-  expect(response).toBe("p2, p3, p4")
+  expect(response).toBe("p2 p3 p4")
 });
 
 test("valid mates", () =>{
@@ -403,4 +403,33 @@ test("matingList tests", () =>{
   expect(response.indexOf("declineList")).toBeGreaterThan(0)
   canResponse = reproLib.canStillInvite(gameState)
   expect(canResponse).toBe("p1")
+});
+test("make a invitelist, with commas, pass and save", () =>{
+  var gameState = {
+      "population": {
+          "p1":{
+              "name": "p1",
+              "gender": "female"
+          },
+          "p2":{
+            "name": "p2",
+            "gender": "male"
+          }
+          , "p3":{
+            "name": "p3",
+            "gender": "male"
+          }
+          , "p4":{
+              "name": "p4",
+              "gender": "female"
+            }
+       },
+      "round": "reproduction"
+  }
+  //function handleReproductionList(actorName, args, listName, gameState, bot){
+  expectedList = ["p2", "p3", "!save","!pass"]
+  inputList = ["p2,", "p3,", "!save,","!pass"]
+  response = reproLib.handleReproductionList("p1", inputList ,"inviteList", gameState, {})
+  expect(response).toBe(0)
+  expect(gameState["population"]["p1"]["inviteList"]).toStrictEqual(expectedList)
 });

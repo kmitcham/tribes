@@ -1,5 +1,6 @@
 var Discord = require('discord.js');
 
+const { banish } = require('./banish.js');
 const huntlib = require("./hunt.js");
 const gatherlib = require("./gather.js");
 const feedlib = require("./feed.js");
@@ -142,6 +143,8 @@ function endGame(gameState){
 	response = 'The fate of the children:\n'
 	children = gameState.children
 	population = gameState.population
+	gameState.secretMating = false;
+	gameState.gameOver = true;
 	for (childName in children){
 		var child = children[childName]
 		console.log('end game scoring for '+childName+' '+child.newAdult+' '+child.age+2)
@@ -296,7 +299,7 @@ function countByType(dictionary, key, value){
 function doChance(rollValue, gameState){
 	population = gameState.population
 	chanceRoll = Number(rollValue)
-	if (!rollValue || rollValue < 3 || rollValue > 18 ){
+	if (!chanceRoll || chanceRoll < 3 || chanceRoll > 18 ){
 		console.log(' invalid chance roll'+rollValue)
 		chanceRoll = util.roll(3)
 	}
@@ -376,8 +379,6 @@ function doChance(rollValue, gameState){
 			break;
 		case 10 : 
 			message += guardlib.hyenaAttack(children, gameState)
-			// ugly hack until kill is a lib,
-			// TODO move the kill to the guardlib
 			break;
 		case 9 : 
 			name = util.randomMemberName(population)
@@ -664,36 +665,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		targetName = util.removeSpecialChars(target.username)
 		
 		if (target ){
-			if (population[targetName]){
-				person = util.personByName(targetName, gameState)
-				if (!gameState.banished){
-					gameState.banished = {}
-				}
-				// removing the player from the banish list is a pain.
-				delete population[targetName]
-				util.messageChannel(targetName+' is banished from the tribe',gameState, bot)
-				for (childName in gameState.children){
-					child = gameState.children[childName]
-					if (child.mother == targetName && child.age < 1){
-						banished[childName] = child;
-						delete gameState.children[childName]
-					}
-					if (person.guarding && person.guarding.indexOf(childName) > -1 ){
-						childIndex = person.guarding.indexOf(childName)
-				if (childIndex > -1) {
-					person.guarding.splice(childIndex, 1);
-				}
-				util.messageChannel(actor+' stops guarding '+childName, gameState, bot)
-			}
-				}
-				const name = person.name
-				if (gameState.banished){
-					gameState.banished[name] = person
-				} else {
-					gameState.banished = { name : person}
-				}
-				return
-			}
+			banish(gameState, targetName, bot)
 		} else {
 			msg.author.send(command+' could not find '+target)
 			return
@@ -779,9 +751,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 	}
 	if (command == 'consent'){
 		if (gameState.secretMating){
-			if (command == 'consent'){
-				return reproLib.consent(msg, gameState, bot)
-			}
+			return reproLib.consent(msg, gameState, bot)
 		}
 		var inviterName = ''
 		var inviter = null
@@ -818,7 +788,6 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		util.messagePlayerName(playerName, message, gameState, bot);
 		cleanUpMessage(msg);
 		return 
-		console.log("should not get this message")
 	}
 	if (command == 'scoutnerd'){
 		var gameTrack=0
@@ -1123,11 +1092,6 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 	} 
 	if (command == 'force' || command == 'command') {
 		cleanUpMessage(msg);
-		if (referees.includes(actor) || (player && player.chief)){
-		} else {
-			msg.author.send(command+' requires referee or chief priviliges')
-			return
-		}
 		command = bits.shift()
 		targetName = bits.shift()
 		forceCommand = bits[0]
@@ -1136,15 +1100,19 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			msg.author.send(targetName+' not found')
 			return
 		}
-		if (player && player.chief){
-			if (! target.obeyList || target.obeyList.indexOf(forceCommand) == -1 ){
+		if (player && ( player.chief || target.golem) ){
+			if (!target.obeyList || target.obeyList.indexOf(forceCommand) == -1 ){
 				msg.author.send(target.name+' is not willing to '+command+' just because you say so.')
 				if (target.obeyList){
 					msg.author.send(target.name + ' would do:'+target.obeyList.join(','))
 				}
 				return
-			}
+			} 
+		} else {
+			msg.author.send(targetName +" wonders who the hell you think you are.")
+			return
 		}
+		util.messageChannel(playerName+" tells "+targetName+" to "+bits, gameState, bot)
 		console.log("attempt to force "+target.name+" to "+bits)
 		//tion handleCommand(msg, author,       actor,        command,     bits, gameState){
 		util.history(target.name, "Commanded by "+actor+" to do something:"+bits, gameState)
@@ -1410,7 +1378,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 	} 
 	if (command == 'invite'){
 		if (gameState.secretMating){
-			return reproLib.invite(msg, gameState, bot);
+			return reproLib.invite(msg,  gameState, bot);
 		}
 		inviteMessage = ''
 		if (gameState.reproductionRound && gameState.reproductionList 
@@ -1858,7 +1826,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			msg.reply("SecretMating is "+gameState.secretMating)
 		}
 		else {
-
+			msg.author.send("You need more power to toggle that.")
 		}
 		return;
 	}
@@ -1967,20 +1935,28 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		specialize(msg, actor, bits[1], gameState)
 		return
 	}
-	if (command == 'startwork' || command.startsWith('startw') || command.startsWith('work')
-		|| (command.startsWith('start') && bits[1] && bits[1].startsWith('w'))){
+	if ( command.startsWith("start")){
+		if (gameState.gameOver){
+			msg.author.send('The game is over.')
+			cleanUpMessage(msg);; 
+			return 
+		}
 		if (!referees.includes(actor) && !player.chief){
 			msg.author.send(command+' requires referee  or chief priviliges')
 			cleanUpMessage(msg);; 
 			return
 		}
-		if (gameState.workRound == true){
-			msg.author.send('already in the work round')
-			return 
-		}
 		if ((gameState.demand || gameState.violence)){
 			msg.author.send('The game can not advance until the demand is dealt with.')
 			cleanUpMessage(msg);; 
+			return 
+		}
+	}
+	if (command == 'startwork' || command.startsWith('startw') || command.startsWith('work')
+		|| (command.startsWith('start') && bits[1] && bits[1].startsWith('w'))){
+		
+		if (gameState.workRound == true){
+			msg.author.send('already in the work round')
 			return 
 		}
 		if(gameState.reproductionRound == false){
@@ -1997,18 +1973,8 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 	}
 	if (command == 'startfood' || command.startsWith('startf')  
 		|| (command.startsWith('start') && bits[1] && bits[1].startsWith('f'))){
-		if (!referees.includes(actor) && !player.chief){
-			msg.author.send(command+' requires referee  or chief priviliges')
-			cleanUpMessage(msg);; 
-			return
-		}
 		if (gameState.foodRound == true){
 			msg.author.send('already in the foodRound')
-			cleanUpMessage(msg);; 
-			return 
-		}
-		if ((gameState.demand || gameState.violence)){
-			msg.author.send('The game can not advance until the demand is dealt with.')
 			cleanUpMessage(msg);; 
 			return 
 		}
@@ -2023,16 +1989,6 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 	}
 	if (command == 'startreproduction' || command.startsWith('startr') || command.startsWith('repro')
 		|| (command.startsWith('start') && bits[1] && bits[1].startsWith('r'))){
-		if (!referees.includes(actor) && !player.chief){
-			msg.author.send(command+' requires referee  or chief priviliges')
-			cleanUpMessage(msg);
-			return
-		}
-		if ((gameState.demand || gameState.violence)){
-			msg.author.send('The game can not advance until the demand is dealt with.')
-			cleanUpMessage(msg);; 
-			return 
-		}
 		if (gameState.reproductionRound == true){
 			msg.author.send('already in the reproductionRound ')
 			cleanUpMessage(msg);
@@ -2073,7 +2029,15 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		player.vote = targetPerson.name
 		totalVotes = countByType(gameState.population, 'vote', targetName)
 		tribeSize = Object.keys(gameState.population).length
-		if (totalVotes >= (2/3 * tribeSize)){
+		droneCount = 0;
+		for (memberName in gameState.population){
+			temp = util.personByName(memberName, gameState);
+			if (temp.golem) {
+				droneCount = droneCount+1
+			}
+		}
+		console.log("Drone count is "+droneCount);
+		if (totalVotes >= (2/3 * (tribeSize-droneCount))){
 			for (name in gameState.population){
 				person = util.personByName(name, gameState)
 				if (person.chief && name != targetName){

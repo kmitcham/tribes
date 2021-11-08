@@ -30,7 +30,7 @@ function playerHelpRounds(){
 		text+=' !idle (do nothing) \n'
 		text+='-=Food Round Commands=-\n'
 		text+=' !foodcheck (examine the food situation for every adult and living child)\n'
-		text+=' !feed <amt> <childName>  [<more childNames>]\n'
+		text+=' !feed <amt> <childName | @mothername | !all >  [<more childNames>]\n'
 		text+='-=Reproduction Commands=-\n'
 		text+=' !romance  (show your current reproduction lists)\n'
 		text+=' !invite <target> [target !pass]   The order you would like to invite people to mate.  \n\tIf the list ends with !pass, you will give up if they decline. !save will retain the list every season\n'

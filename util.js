@@ -162,9 +162,13 @@ async function messagePlayerName(playerName, message, gameState, bot){
 	if (!"users" in bot){
 		console.log('bot has no users for message :'+message)
 	}
-	playerId = player.handle.id
-	playerUser =  await bot.users.fetch(playerId);
-	playerUser.send(message);
+	if (player.handle && player.handle.id){
+		playerId = player.handle.id
+		playerUser =  await bot.users.fetch(playerId);
+		playerUser.send(message);
+	} else {
+		console.log(playerName+" has no handle or id- maybe a drone? ")
+	}
 }
 module.exports.messagePlayerName = messagePlayerName
 
@@ -225,7 +229,7 @@ function round(number){
 module.exports.round = round;
 
 function removeSpecialChars(strVal){ 
-	return strVal.replace(/[^a-zA-Z0-9_]+/g,'');
+	return strVal.replace(/[^!a-zA-Z0-9_]+/g,'');
 }
 module.exports.removeSpecialChars = removeSpecialChars;
 

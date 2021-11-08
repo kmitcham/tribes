@@ -31,7 +31,7 @@ function eligibleMates(name, population, debug=false){
     }
     if (debug) {console.log('matched ='+potentialMatches)}
 	if (potentialMatches.length > 0){
-		response = potentialMatches.join(', ')
+		response = potentialMatches.join(' ')
 	} else {
 		response = "No eligible partners-"+name+" should pass."
 	}
@@ -87,13 +87,13 @@ function canStillInvite(gameState){
     var canInvite = []
     for (personName in population){
         person = population[personName]
-        if (person.cannotInvite){
+        if (person.cannotInvite ){
             // do nothing
         } else {
             canInvite.push(personName)
         }
     }
-    return canInvite.join(',');
+    return canInvite.join(' ');
 }
 module.exports.canStillInvite = canStillInvite ;
 
@@ -115,7 +115,7 @@ function handleReproductionList(actorName, args, listName, gameState, bot){
     actor = util.personByName(actorName, gameState);
     if (!args || args.length == 0){
         delete actor[listName]
-        util.messagePlayerName(actorName,"Deleting your "+listName, gameState, bot);
+        util.messagePlayerName(actorName,"Deleting your empty "+listName, gameState, bot);
         return;
     }
     population = gameState.population
@@ -123,7 +123,8 @@ function handleReproductionList(actorName, args, listName, gameState, bot){
     list = []
     save = false;
     for (rawTargetName of args){
-        localErrors = "";        
+        localErrors = "";   
+        rawTargetName = util.removeSpecialChars(rawTargetName)     
         if (rawTargetName.toLowerCase() == "!pass"){
             console.log("Detected pass at position "+args.indexOf(rawTargetName)+" of "+(args.length -1));
             if (listName == 'inviteList'){
@@ -194,8 +195,7 @@ function invite(msg, gameState, bot){
         return;
     }
     if (person.isPregnant && gameState.children[person.isPregnant] && gameState.children[person.isPregnant].age == -2){
-        util.messagePlayerName(actorName, "You are already pregnant.", gameState,bot)
-        return;
+        util.messagePlayerName(actorName, "You are already pregnant, and will not invite this round.", gameState,bot)
     }
     let messageArray = msg.content.split(" ");
     messageArray.shift();
@@ -302,10 +302,13 @@ function globalMatingCheck(gameState, bot){
                 continue;
             }
             index = sexList.indexOf(personName)
-            if (person.cannotInvite ) {
+            if (person.cannotInvite  ) {
                 doneMating.push(personName)
                 console.log("\t cannotInvite.  ")
                 continue
+            } else if ( person.golem){
+                person.cannotInvite = true;
+                console.log("Skipping golem "+personName)
             } else if (person.isPregnant){
                 console.log("\t inviter was pregnant")
                 util.messagePlayerName(person.name, "Your pregnancy prevents you from mating.", gameState, bot)
@@ -324,6 +327,7 @@ function globalMatingCheck(gameState, bot){
                 util.messageChannel(personName+" is too sick for mating this round.",gameState, bot)
                 person.cannotInvite = true;
                 continue
+                
             } else if (person.inviteList && person.inviteList.length > 0) {
                 targetName = person.inviteList[0]
                 console.log(" inviting "+targetName)
