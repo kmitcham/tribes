@@ -331,14 +331,14 @@ function doChance(rollValue, gameState){
 		case 14 : 
 			name = util.randomMemberName(population)
 			person= population[name]
+			message +="Rats! All "+name+"'s food ["+person.food+"], except for grain, spoils and is lost. Others’ stored food is not affected."
 			person.food = 0
-			message +="Rats! All "+name+"'s food, except for grain, spoils and is lost. Others’ stored food is not affected."
 			if (Object.keys(population).length >= 8){
 				name2 = util.randomMemberName(population)
 				if (name != name2){
 					person2 = population[name2]
+					message+= name2+"'s ["+person2.food+"] food is also spoiled, in a strange coincidence."
 					person2.food = 0
-					message+= name2+"'s food is also spoiled, in a strange coincidence."
 				}
 			}
 			break;
@@ -1112,7 +1112,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			msg.author.send(targetName +" wonders who the hell you think you are.")
 			return
 		}
-		util.messageChannel(playerName+" tells "+targetName+" to "+bits, gameState, bot)
+		util.messageChannel(actor+" tells "+targetName+" to "+bits, gameState, bot)
 		console.log("attempt to force "+target.name+" to "+bits)
 		//tion handleCommand(msg, author,       actor,        command,     bits, gameState){
 		util.history(target.name, "Commanded by "+actor+" to do something:"+bits, gameState)
