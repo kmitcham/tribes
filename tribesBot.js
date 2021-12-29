@@ -9,6 +9,7 @@ const util = require("./util.js");
 const killlib = require("./kill.js");
 const savelib = require("./save.js");
 const helplib = require("./help.js");
+const endLib = require("./endgame.js");
 const violencelib = require("./violence.js");
 const reproLib = require("./reproduction.js");
 var childlib = require("./children.js");
@@ -104,7 +105,12 @@ async function processMessage(msg){
 			return
 		}
 	}
-	handleCommand(msg, author, actor,  command, bits, gameState)
+	try {
+		handleCommand(msg, author, actor,  command, bits, gameState)
+	} catch (err){
+		console.log("handleCommand failure: "+bits.join(" "))
+		console.log(err)
+	}
 	return	
   }
   
@@ -117,6 +123,7 @@ function initGame(gameName){
 	gameState.seasonCounter = 1
 	gameState.gameTrack = {}
 	gameState.name = gameName
+	gameState.startStamp = performance.now();
 	gameState.secretMating = true
 	gameState.open = true
 	gameState.conceptionCounter = 0
@@ -138,67 +145,8 @@ function initGame(gameName){
 	savelib.saveTribe(gameState);
 	return gameState
 }
-function endGame(gameState){
-	adultCount = 0
-	response = 'The fate of the children:\n'
-	children = gameState.children
-	population = gameState.population
-	gameState.secretMating = false;
-	gameState.gameOver = true;
-	for (childName in children){
-		var child = children[childName]
-		console.log('end game scoring for '+childName+' '+child.newAdult+' '+child.age+2)
-		if (!child.newAdult){
-			var roll = util.roll(3)
-			response += '\t'+childName+' ['+roll+' vs '+childSurvivalChance[child.age+2]+'] '
-			if (roll <= childSurvivalChance[child.age+2]){
-				child.newAdult = true
-				response += 'grows up\n'
-			} else {
-				response += 'dies young\n'
-				killlib.kill(childName, 'endgame scoring', gameState)
-			}
-		}
-		if (child.newAdult){
-			adultCount++
-		}
-	}
-	adultCount += Object.keys(population).length
-	response += 'Count of adults is:'+adultCount
-	savelib.saveTribe(gameState);
-	allGames[gameState.name] = gameState;
-	return response
-}
-function scoreChildren(children, gameState){
-	var parentScores = {}
-	for (childName in children){
-		var child = children[childName]
-		if (parentScores[child.mother]){
-			parentScores[child.mother]++
-		} else {
-			parentScores[child.mother] = 1
-		}
-		if (parentScores[child.father]){
-			parentScores[child.father]++
-		} else {
-			parentScores[child.father] = 1
-		}
-	}
-	message = 'Child scores:\n'
-	for (parentName in parentScores){
-		player = util.personByName(parentName, gameState)
-		if (player){
-			if (player.gender == 'male' && gameState.secretMating){
-				message += "\t"+parentName+" score will be revealed in the end game.\n"
-				continue;
-			}
-			message+= '\t'+parentName+'('+player.gender.substring(0, 1)+'): '+parentScores[parentName]
-		} else {
-			console.log('Cound not find parent '+[parentName]+'with score '+parentScores[parentName])
-		}
-	}
-	return message
-}
+
+
 function cleanUpMessage(msg){
 	util.cleanUpMessage(msg)
 }
@@ -653,17 +601,12 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			cleanUpMessage(msg);; 
 			return
 		}
-		if (!msg || !msg.mentions || !msg.mentions.users || !msg.mentions.users.first()){
-			msg.author.send(command+' requires at least one @target')
-			return
-		}
 		if (!referees.includes(actor) && (gameState.demand || gameState.violence)){
 			msg.author.send(command+' can not be used during a conflict')
 			return
 		}
-		var target = msg.mentions.users.first()
-		targetName = util.removeSpecialChars(target.username)
-		
+		var targetName = bits[1]
+		target = util.personByName(targetName, gameState);		
 		if (target ){
 			banish(gameState, targetName, bot)
 		} else {
@@ -699,15 +642,18 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		}
 	}
 	if (command == 'checkmating'){
-		if (referees.includes(actor) || (player && player.chief)){
-			msg.author.send('Checking the status of mating')
-			reproLib.globalMatingCheck(gameState, bot)
-			return;
-		}else {
-			msg.author.send(command+' requires referee  or chief privileges')
-			cleanUpMessage(msg);; 
-			return
+		if (!gameState.reproductionRound ){
+			msg.author.send(command+" is only relevant in the reproduction round.")
+			cleanUpMessage(msg);
 		}
+		if (referees.includes(actor) || (player)) {  // && player.chief
+			doneMating = reproLib.globalMatingCheck(gameState, bot)
+			msg.author.send('Checking the status of mating; reminding those who need reminding.  '+doneMating+' people are satisfied.')
+		} else {
+			msg.author.send(command+' requires tribe membership')
+			cleanUpMessage(msg);
+		}
+		return
 	}
 	// list the children
 	if (command == 'children'){
@@ -788,6 +734,15 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		util.messagePlayerName(playerName, message, gameState, bot);
 		cleanUpMessage(msg);
 		return 
+	}
+	if (command == 'drone'){
+		console.log("in drone")
+		if (reproLib.validateDrone(gameState, actor, bits, bot)){
+			console.log("Validated")
+			reproLib.addDrone(gameState, bot, bits[1], bits[2],bits[3])
+			console.log("added")
+		}
+		return;
 	}
 	if (command == 'scoutnerd'){
 		var gameTrack=0
@@ -1022,11 +977,12 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 
 	}
 	if (command == 'endgame'){
-		if (!referees.includes(actor)){
-			msg.author.send(command+' requires referee priviliges')
+		if (!(referees.includes(actor) || (player && player.chief))){
+			msg.author.send(command+' requires referee or chief priviliges')
 			return
 		}
-		util.messageChannel(endGame(gameState), gameState, bot)
+		message = endLib.endGame(gameState)
+		util.messageChannel(message, gameState, bot)
 		return
 	}
 	if (command == 'faction'){
@@ -1112,11 +1068,15 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			msg.author.send(targetName +" wonders who the hell you think you are.")
 			return
 		}
-		util.messageChannel(actor+" tells "+targetName+" to "+bits, gameState, bot)
-		console.log("attempt to force "+target.name+" to "+bits)
+		util.messageChannel(actor+" tells "+targetName+" to "+bits.join(' '), gameState, bot)
+		console.log("attempt to force "+target.name+" to "+bits.join(' '))
 		//tion handleCommand(msg, author,       actor,        command,     bits, gameState){
-		util.history(target.name, "Commanded by "+actor+" to do something:"+bits, gameState)
-		return handleCommand(msg, target.handle, target.name, forceCommand, bits, gameState)
+		util.history(target.name, "Commanded by "+actor+" to do something: "+bits.join(' '), gameState)
+		try {
+			handleCommand(msg, target.handle, target.name, forceCommand, bits, gameState)
+		} catch (err){
+			console.log("Error with forcing target  "+err)
+		}
 	}
 	if (command == 'obey'){
 		if (player ){
@@ -1701,18 +1661,23 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		if (gameState.workRound){
 			message = "People available to work: "+listReadyToWork(population)
 		}	
-		if (gameState.reproductionRound && gameState.reproductionList && gameState.reproductionList[0] ){
-			message = "The mating invitation order is "+gameState.reproductionList.join(", ")+"\n"
-			var cleanName = gameState.reproductionList[0]
-			if (cleanName.indexOf('(') > 0){
-				startParen = cleanName.indexOf('(')
-				cleanName = cleanName.substring(0, startParen)
+		if (gameState.reproductionRound){ 
+			if (gameState.reproductionList && gameState.reproductionList[0] ){
+				message = "The mating invitation order is "+gameState.reproductionList.join(", ")+"\n"
+				var cleanName = gameState.reproductionList[0]
+				if (cleanName.indexOf('(') > 0){
+					startParen = cleanName.indexOf('(')
+					cleanName = cleanName.substring(0, startParen)
+				}
+				message += "Available partners: "+reproLib.eligibleMates(cleanName, gameState.population)
+				for (personName in population){
+					if (population[personName].invite){
+						message += '\n'+personName+' is awaiting a response from '+population[personName].invite;
+					} 
+				}
 			}
-			message += "Available partners: "+reproLib.eligibleMates(cleanName, gameState.population)
-			for (personName in population){
-				if (population[personName].invite){
-					message += '\n'+personName+' is awaiting a response from '+population[personName].invite;
-				} 
+			if (gameState.secretMating){
+				
 			}
 		}
 		util.messageChannel(message,gameState, bot)
@@ -1805,7 +1770,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		return
 	}	
 	if (command == 'scorechildren'){
-		msg.author.send(scoreChildren(children, gameState))
+		msg.author.send(endLib.scoreChildrenMessage(children, gameState))
 		cleanUpMessage(msg);;
 		return
 	}
@@ -1821,9 +1786,13 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		return
 	}
 	if (command == 'secretmating'){
-		if (referees.includes(actor) || player.chief){
-			gameState.secretMating = ! gameState.secretMating;
-			msg.reply("SecretMating is "+gameState.secretMating)
+		if (referees.includes(actor) || player.chief ){
+			if (gameState.reproductionRound){
+				msg.author.send("Wait until the reproduction round is over to change that setting.")
+			}else {
+				gameState.secretMating = ! gameState.secretMating;
+				msg.reply("SecretMating is "+gameState.secretMating)
+			}
 		}
 		else {
 			msg.author.send("You need more power to toggle that.")
@@ -2748,10 +2717,11 @@ function startWork(gameState, bot){
 		delete person.activity
 	}
 	util.decrementSickness(gameState.population, gameState, bot)
-	gameState.workRound = true
-	gameState.foodRound = false
-	gameState.reproductionRound = false
-	gameState.canJerky = false
+	gameState.workRound = true;
+	gameState.foodRound = false;
+	gameState.reproductionRound = false;
+	gameState.doneMating = false;
+	gameState.canJerky = false;
 	reproLib.clearReproduction(gameState, bot)
 	util.messageChannel(util.gameStateMessage(gameState, bot), gameState, bot)
 	util.messageChannel('\n==>Starting the work round.  Guard (or ignore) your children, then craft, gather, hunt, assist or train.<==', gameState, bot)
@@ -2789,6 +2759,7 @@ function startReproduction(gameState, bot){
 	gameState.reproductionRound = true
 	delete gameState.enoughFood 
 	foodMessage = consumeFood(gameState)
+	savelib.saveTribe(gameState);
 	util.messageChannel(foodMessage+'\n', gameState, bot)
 	util.messageChannel('\n==> Starting the Reproduction round; invite other tribe members to reproduce.<==', gameState, bot)
 	util.messageChannel('After chance, the tribe can decide to move to a new location, but the injured and children under 2 will need 2 food', gameState, bot)

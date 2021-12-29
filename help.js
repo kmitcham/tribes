@@ -28,6 +28,7 @@ function playerHelpRounds(){
 		text+=' !hunt\n'
 		text+=' !train (learn crafting, if there is a willing teacher)\n'
 		text+=' !idle (do nothing) \n'
+		text+=' !command <target> <command>  (order a tribe member.  They might obey)\n'
 		text+='-=Food Round Commands=-\n'
 		text+=' !foodcheck (examine the food situation for every adult and living child)\n'
 		text+=' !feed <amt> <childName | @mothername | !all >  [<more childNames>]\n'
@@ -37,6 +38,7 @@ function playerHelpRounds(){
 		text+=' !consent <target> [target] The list of people you would accept mating invitations from.\n'
 		text+=' !decline <target> [target] The list of people whose mating invitations you would decline\n'
 		text+=' !pass (decline to invite anyone in the mating round; can still get invitations)\n'
+		text+=' scorechildren  count number of children by parent'
 		return text;
 }
 function playerHelpConflict(){
@@ -55,17 +57,19 @@ function chiefHelp(){
 	text = '\n### Chief Commands ###\n'
 	text+=' !induct|banish <player> (add|remove a tribe member)\n'
 	text+=' !open|close  (toggle if people can join with "!join" or only with "!induct" by the chief\n'
+	text+=' !drone <gender> <profession> <name>  adds a worker to the tribe that takes commands but is sterile.'
 	text+=' !save (Saves the game. Automatically done at the start of every round)\n'
 	text+=' !startwork (begins the work round, enabling work attempts and rolls)\n'
 	text+=' !startfood (ends the work round; subtract food/grain; birth; child age increase)\n'
 	text+=' !startreproduction (Start the reproduction round. Also when migration happens)\n'
-	text+=' !skip <person>   (end a players reproduction turn)\n'
-	text+=' !checkmating (report on status of mating attempts)\n'
-	text+=' !secretmating (toggle the state of secretmating)\n'
 	text+=' !chance (after mating, chance is required to end the season)\n'
 	text+=' !migrate <newlocation> <force>  (without force, just checks who would perish on the journey)\n'
 	text+=' !decree <law number> <law text> (record a rule for the tribe, or replace the rule of the specified number)\n'
-	text+=' !command <target> <command>  (order a tribe member.  They might obey)\n'
+	text+='\n !skip <person>   (end a players reproduction turn)\n'
+	text+=' !checkmating (report on status of mating attempts)\n'
+	text+=' !secretmating (toggle the state of secretmating)\n'
+	text+=' endgame convert all the child to corpses, or new adults\n'
+
     return text;
 }
 
@@ -82,8 +86,7 @@ function refHelp(){
     text+=' load the saved file, replacing the current state\n'
     text+=' listnames | listchildren just the names\n'
     text+=' initgame erase the current game state and start fresh\n'
-    text+=' endgame   convert all the child to corpses, or new adults\n'
-    text+=' scorechildren   count number of children by parent'
+    text+=' endgame convert all the child to corpses, or new adults\n'
     return text;
 }
 

@@ -292,6 +292,7 @@ function globalMatingCheck(gameState, bot){
         var sexList = Object.keys(population)
         sexList.sort(function(){return Math.random()-.5});
         doneMating = []
+        whoNeedsToGiveAnAnswer = []
         console.log("a sexlist "+sexList)
         counter = 0
         for (personName of sexList){
@@ -374,6 +375,7 @@ function globalMatingCheck(gameState, bot){
                     // this will get spammy, if the function is called every time anyone updates.
                     util.messagePlayerName(targetName, personName+" has invited you to mate- !consent "+personName+" or !decline "+personName, gameState, bot)
                     util.messagePlayerName(personName, targetName+" considers your invitation.", gameState, bot)
+                    whoNeedsToGiveAnAnswer.push(targetName)
                     doneMating.push(personName)
                     allDone = false
                     console.log("\t no response found  "+targetName+" so allDone is false")
@@ -393,6 +395,11 @@ function globalMatingCheck(gameState, bot){
                 allDone = false
                 console.log("\t No invites found so allDone is false")
             }
+        }
+    }
+    if (whoNeedsToGiveAnAnswer && whoNeedsToGiveAnAnswer.length > 0){
+        for (personName in whoNeedsToGiveAnAnswer){
+            util.messagePlayerName("You have not responded to an invitation");
         }
     }
     if (allDone){
@@ -565,3 +572,101 @@ function restoreSaveLists(gameState, bot){
     }
 }
 module.exports.restoreSaveLists = restoreSaveLists;
+
+function validateDrone(gameState, actorName, args, bot){
+    population = gameState.population
+    // is actorname Chief
+    player = population[actorName]
+    if (!player ||  !player.chief){
+        util.messagePlayerName(actorName,"You need to be chief of the tribe to add a drone.", gameState, bot)
+        return
+    }
+    // is tribe too big?
+    if (Object.keys(population).length > 7){
+        util.messagePlayerName(actorName,"The tribe is too full to add another drone.", gameState, bot)
+        return
+    }
+    if (!args[3] ){
+        util.messagePlayerName(actorName,"Syntax: <gender> <profession> <name> ", gameState, bot)
+        return
+    }
+    gender = args[1]
+    profession = args[2]
+    droneName = args[3]
+    message = "";
+    fail = false;
+    // is args valid gender
+    if (!( gender && 
+        (  gender==="male"   || gender==="m" 
+        || gender==="female" || gender==="f"  )) ){
+            message += gender+" is not a valid gender in the game.\n"
+            fail = true;
+    }
+    // is args valid profession
+    profession = profession.toLowerCase();
+    if ( !(profession &&
+            ("g"===(profession) || "gatherer"===(profession)
+            || "h"===(profession) || "hunter"===(profession)
+            || "c"===(profession) || "crafter"===(profession) )
+        )){
+            message+= profession+" is not a valid profession\n";
+            fail = true;
+    }
+    if (profession.toLowerCase() === "h"){
+        profession = 'hunter'
+    }
+    if (profession.toLowerCase() === "c"){
+        profession = 'crafter'
+    }
+    if (profession.toLowerCase() === "g"){
+        profession = 'gatherer'
+    }
+    // is args name unique
+    if ( !droneName || droneName in population){
+        fail = true;
+        message+= "Drones need a name that is not already in the tribe.\n";
+    } 
+    // is args name annoying?  (bad chars, command)
+    cleanName = util.cleanUpMessage(droneName);
+    if (!cleanName===(droneName) || 
+        ( droneName===("chief") || droneName===("vote")) ){
+        fail = true;
+        message+= "Drones need a name that is not a command or hard to parse.\n";
+    }
+    if (fail){
+        util.messagePlayerName(actorName, message, gameState, bot)
+        return false;
+    }
+    return true
+}
+module.exports.validateDrone = validateDrone;
+
+function addDrone(gameState, bot, gender, profession, droneName){
+    // 
+    droneData =  {
+        "gender": gender,
+        "golem": true,
+        "food": 10,
+        "grain": 4,
+        "basket": 0,
+        "spearhead": 0,
+        "profession": profession,
+        "obeyList": [
+          "hunt",
+          "gather",
+          "give",
+          "guard",
+          "ignore",
+          "feed",
+          "babysit"
+        ],
+        "name": droneName,
+        "history": [],
+        "worked": false,
+        "guarding": [
+        ],
+      }
+      util.messageChannel("Adding "+droneName+" to the tribe as a drone.", gameState, bot)
+      gameState.population[droneName] = droneData;
+}
+module.exports.addDrone = addDrone;
