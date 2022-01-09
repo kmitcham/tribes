@@ -32,6 +32,7 @@ const member_properties = ['canCraft','chief','nursing','isPregnant','isInjured'
 const genders = ['male','female']
 const locations = require('./locations.json');
 const allNames = require('./names.json');
+const { stringify } = require('querystring');
 
 const locationDecay = huntlib.locationDecay;
 const childSurvivalChance = 
@@ -123,7 +124,9 @@ function initGame(gameName){
 	gameState.seasonCounter = 1
 	gameState.gameTrack = {}
 	gameState.name = gameName
-	gameState.startStamp = performance.now();
+	var d = new Date();
+    var startStamp = d.toISOString();
+	gameState.startStamp = startStamp;
 	gameState.secretMating = true
 	gameState.open = true
 	gameState.conceptionCounter = 0
@@ -279,7 +282,7 @@ function doChance(rollValue, gameState){
 		case 14 : 
 			name = util.randomMemberName(population)
 			person= population[name]
-			message +="Rats! All "+name+"'s food ["+person.food+"], except for grain, spoils and is lost. Others’ stored food is not affected."
+			message +="Rats! All "+name+"'s food ["+person.food+"], except for grain, spoils and is lost.  "
 			person.food = 0
 			if (Object.keys(population).length >= 8){
 				name2 = util.randomMemberName(population)
@@ -288,6 +291,8 @@ function doChance(rollValue, gameState){
 					message+= name2+"'s ["+person2.food+"] food is also spoiled, in a strange coincidence."
 					person2.food = 0
 				}
+			} else {
+				message += "Others’ stored food is not affected."
 			}
 			break;
 		case 13 : 
@@ -606,6 +611,9 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			return
 		}
 		var targetName = bits[1]
+		if (msg.mentions.users && msg.mentions.users.first() ){
+			targetName = util.removeSpecialChars(msg.mentions.users.first().username)
+		}
 		target = util.personByName(targetName, gameState);		
 		if (target ){
 			banish(gameState, targetName, bot)
@@ -1047,7 +1055,6 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		return
 	} 
 	if (command == 'force' || command == 'command') {
-		cleanUpMessage(msg);
 		command = bits.shift()
 		targetName = bits.shift()
 		forceCommand = bits[0]
@@ -1071,12 +1078,13 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		util.messageChannel(actor+" tells "+targetName+" to "+bits.join(' '), gameState, bot)
 		console.log("attempt to force "+target.name+" to "+bits.join(' '))
 		//tion handleCommand(msg, author,       actor,        command,     bits, gameState){
-		util.history(target.name, "Commanded by "+actor+" to do something: "+bits.join(' '), gameState)
 		try {
 			handleCommand(msg, target.handle, target.name, forceCommand, bits, gameState)
+			console.log("ending force")
 		} catch (err){
 			console.log("Error with forcing target  "+err)
 		}
+		util.history(target.name, "Commanded by "+actor+" to do something: "+bits.join(' '), gameState)
 	}
 	if (command == 'obey'){
 		if (player ){
@@ -1114,8 +1122,8 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		if (msg.mentions.users.first()){
 			targetName = util.removeSpecialChars(msg.mentions.users.first().username)
 		}
-		if (!targetName){
-			msg.author.send(syntax)
+		if (!targetName ){
+			if (msg.author) {msg.author.send(syntax)}
 			cleanUpMessage(msg);
 			return
 		}
@@ -1123,37 +1131,49 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		type = bits[2]
 
 		if (isNaN(amount) || ! types.includes(type)){
-			msg.author.send(syntax)
-			cleanUpMessage(msg);
+			if (msg && msg.author) {
+				msg.author.send(syntax)
+				cleanUpMessage(msg);
+			}
 			return
 		}
 		if (amount <= 0  ){
-			msg.author.send('Can not give negative amounts')
-			cleanUpMessage(msg);; 
+			if (msg) {
+				msg.author.send(syntax)
+				cleanUpMessage(msg);
+			}
 			return
 		}	
 		targetPlayer = util.personByName(targetName, gameState)		
 		if (!targetPlayer ) {
-			msg.author.send(targetName+' is not a member of the tribe')
-			cleanUpMessage(msg);
+			if (msg) {
+				msg.author.send(targetName+' is not a member of the tribe')
+				cleanUpMessage(msg);
+			}
 			return
 		}
 		if (!player){
-			msg.author.send('No record for you in this game.')
-			cleanUpMessage(msg);
+			if (msg) {
+				msg.author.send('No record for you in this game.')
+				cleanUpMessage(msg);
+			}
 			return
 		}
 		if (type == 'spearhead' && player && player.activity && gameState.workRound
 			&& ( player.activity == 'hunt' || player.activity == 'assist') && player.spearHead < 2){
-			msg.author.send('The game suspects you used that item to work with.  Ask the referee to help trade it if you did not.')
-			cleanUpMessage(msg);
+				if (msg) {
+					msg.author.send('The game suspects you used that item to work with.  Ask the referee to help trade it if you did not.')
+					cleanUpMessage(msg);
+				}
 			return
 		}
 		if ( type =='basket' && player && player.activity && player.activity == 'gather' && gameState.workRound && player.basket < 2){
-		msg.author.send('The game suspects you used that item to work with.  Ask the referee to help trade it if you did not.')
-		cleanUpMessage(msg);
-		return
-	}
+			if (msg.author) {
+				msg.author.send('The game suspects you used that item to work with.  Ask the referee to help trade it if you did not.')
+				cleanUpMessage(msg);
+			}
+			return
+		}
 		if (  population[actor][type] >= amount){
 			if (!targetPlayer[type]){
 				targetPlayer[type] = Number(amount)
@@ -1164,9 +1184,15 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 			util.messageChannel(actor+' gave '+amount+' '+type+' to '+targetName, gameState, bot)
 			util.history(targetName, actor+ " gave you "+amount+ " "+type, gameState)
 			util.history(actor, "You gave "+targetName+"  "+amount+ " "+type, gameState)
+			return
 		} else {
-			msg.author.send('You do not have that many '+type+': '+ population[actor][type])
-			cleanUpMessage(msg);; 
+			if (msg) {
+				if (msg.author){
+					msg.author.send('You do not have that many '+type+': '+ population[actor][type])
+				}
+				cleanUpMessage(msg);
+				return;
+			}
 		}
 		savelib.saveTribe(gameState);
 		return
@@ -1368,7 +1394,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		util.messageChannel(inviteMessage, gameState, bot)
 		return
 	}
-	if (command == 'inventory'){
+	if (command == 'inventory' || command == "i" ){
 		var targetName = '';
 		if (bits[1]){
 			targetName = bits[1]
@@ -1720,38 +1746,43 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 
 		if (isNaN(amount) || ! types.includes(type)){
 			msg.author.send(syntaxMessage)
-			cleanUpMessage(msg);; 
+			cleanUpMessage(msg);
 			return
 		}
 		if (amount <= 0  ){
 			msg.author.send('Can not sacrifice negative amounts')
-			cleanUpMessage(msg);; 
+			cleanUpMessage(msg); 
 			return
 		}
 		if (! population[actor] || ! population[actor][type]  ){
 			msg.author.send('You have no goods in this tribe.')
-			cleanUpMessage(msg);; 
+			cleanUpMessage(msg); 
 			return
 		}	
 		if (  population[actor][type] >= amount){
 			ritualResults = [
-				 'You feel a vague sense of unease.'
-				 ,'Nothing seems to happen.'
-				 ,actor+"'s eyes gleam wildly."
-				,'A hawk flies directly overhead.'
-				,'There is the distant sound of thunder.'
-				,'The campfire flickers brightly.'
-				,'You feel a vague sense of unease.'
-				,'The sun goes behind a cloud.'
+				'The ritual seems clumsy.'    				// 0  Impossible result?
+				,'You feel a vague sense of unease.'    				// 1
+				,'Nothing seems to happen.'    				// 2
+				, actor+"'s eyes gleam wildly."					// 3
+				,'A hawk flies directly overhead.'				// 4
+				,'There is the distant sound of thunder.'		// 5  
+				,'The campfire flickers brightly.'				// 6
+				,'The sun goes behind a cloud.'					// 7   
 				,'The night goes very still and quiet when the ritual is complete.'
-				,'An owl hoots three times.'
-				,'In the distance, a wolf howls.'
-				,'You remember the way your mother held you as a child.'
-				,'You feel protected.'
+				,'An owl hoots three times.'					// 9
+				,'In the distance, a wolf howls.'				// 10   highest base roll
+				,'You remember the way your mother held you as a child.'  // 11
+				,'You feel protected.'   						// 12
+				,'You remember learning from the ones who came before you.'
+				,'You feel warm and satisfied.' 				// 14
+				,'You feel content.'		   					// 15
 			]
-			random = util.roll(2)+Math.log(amount);
-			rndMsg = ritualResults[random-2]+'\n';
-			util.messageChannel(actor+' deliberately destroys '+amount+' '+type+' as part of a ritual.\n'+rndMsg, gameState, bot)
+			random = util.roll(2) - 2;// 0-10
+			net = random +Math.trunc(Math.log(amount)) ;
+			console.log('sacrifice roll was '+random+ '  plus bonus = '+net)
+			rndMsg = ritualResults[net] || 'The ritual is clearly wrong.' 
+			util.messageChannel(actor+' deliberately destroys '+amount+' '+type+' as part of a ritual.\n'+rndMsg+"\n", gameState, bot)
 			population[actor][type] -= Number(amount)
 		} else {
 			msg.author.send('You do not have that many '+type+': '+ population[actor][type])

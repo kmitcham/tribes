@@ -344,7 +344,7 @@ function globalMatingCheck(gameState, bot){
                 }
                 var attemptFailed = false
                 target = util.personByName(targetName, gameState)
-                if (target.declineList && target.declineList.includes(personName)){
+                if (target.declineList && (target.declineList.includes(personName) || target.declineList.includes("!all")) ){
                     util.messagePlayerName(personName, targetName+" declines your invitation.", gameState, bot)
                     util.messagePlayerName(targetName, personName+" flirts with you, but you decline.", gameState, bot)
                     console.log("\t declines  ")
@@ -362,7 +362,7 @@ function globalMatingCheck(gameState, bot){
                     console.log("\t sick or injured")
                     person.inviteList.shift()
                     attemptFailed = true;
-                } else if (target.consentList && target.consentList.includes(personName)){
+                } else if (target.consentList && (target.consentList.includes(personName) || target.consentList.includes("!all"))){
                     util.messagePlayerName(personName, targetName+" is impressed by your flirtation.", gameState, bot)
                     util.messagePlayerName(targetName, personName+" flirts with you, and you are interested.", gameState, bot)
                     // makeLove should message the people

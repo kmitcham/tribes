@@ -5,9 +5,13 @@ function isColdSeason(gameState){
 	return (gameState.seasonCounter%2 == 0);
 }
 function cleanUpMessage(msg){
-	if (msg.channel && msg.channel.name ){
-		//console.log(' cleaning up message in channel '+msg.channel.name )
-		msg.delete({timeout: 200}); 
+	if (msg && msg.channel && msg.channel.name ){
+		console.log(' cleaning up '+msg.content.split(' ')+' in channel '+msg.channel.name )
+		try {
+			msg.delete({timeout: 200}); 
+		} catch  (err){
+			console.log("Failed to delete message; maybe a drone thing?")
+		}
 	}
 }
 module.exports.cleanUpMessage = cleanUpMessage;
@@ -61,32 +65,33 @@ async function updateNicknames(guild, gameState){
 	members = guild.members
 	for (personName in population){
 		person = population[personName]
-		try {
-			var id = person.handle.id
-			var someMember;
-			await members.fetch(id)
-				.then(function(value){
-					someMember = value
-				})
-				.catch(console.error);
-			nickname = someMember.nickname
-			gameState.population[personName].nickname = nickname
-		} catch (err){
-			console.log(personName+" failure getting nickname "+err)
+		if (person && person.handle && person.handle.id){
+			try {
+				var id = person.handle.id
+				var someMember;
+				await members.fetch(id)
+					.then(function(value){
+						someMember = value
+					})
+					.catch(console.error);
+				nickname = someMember.nickname
+				gameState.population[personName].nickname = nickname
+			} catch (err){
+				console.log(personName+" failure getting nickname "+err)
+			}
 		}
 	}
 	return gameState;
 }
 module.exports.updateNicknames = updateNicknames
 
-function personByName(argName, gameState){
-	var name = argName;
+function personByName(name, gameState){
 	if (name == null){
 		console.log('attempt to find person for null name ')
 		return null
 	}
 	if (name.username != null){
-		name = argName.username
+		name = name.username
 		console.log("getting username from object ")
 	}
 	cleaned = removeSpecialChars(name)
@@ -133,7 +138,7 @@ function personByName(argName, gameState){
 		}
 		return person
 	}
-	console.log("tribe "+gameState.name+" has no such person in population:"+argName+" tried "+name+" and "+name.toUpperCase())
+	console.log("tribe "+gameState.name+" has no such person in population. tried "+name+" and "+name.toUpperCase())
 	return null
 }
 module.exports.history = (playerName, message, gameState)=>{
