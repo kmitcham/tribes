@@ -312,8 +312,12 @@ function doChance(rollValue, gameState){
 					}
 					motherName = child.mother
 					mother = population[motherName]
-					mother.food += gift
-					message += '\n  '+motherName+' gets '+gift+' from '+childName
+					if (mother){
+						mother.food += gift
+						message += '\n  '+motherName+' gets '+gift+' from '+childName
+					} else {
+						message += '\n  '+motherName+' was not around, so '+childName+' eats it out of grief.'
+					}
 				}
 			}
 			break;
@@ -617,6 +621,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		target = util.personByName(targetName, gameState);		
 		if (target ){
 			banish(gameState, targetName, bot)
+			return
 		} else {
 			msg.author.send(command+' could not find '+target)
 			return

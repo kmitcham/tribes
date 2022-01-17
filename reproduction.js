@@ -143,6 +143,12 @@ function handleReproductionList(actorName, args, listName, gameState, bot){
             } else {
                 errors.push("!save is only valid in the inviteList.")
             }
+        } else if (rawTargetName.toLowerCase() == '!all'){
+            if (listName != 'inviteList'){
+                list.push(rawTargetName)
+            } else {
+                errors.push("!all is only valid in the consentList and declineList.")
+            }
         } else {
             targetName = util.removeSpecialChars(rawTargetName)
             target = util.personByName(targetName, gameState);

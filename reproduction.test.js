@@ -433,3 +433,31 @@ test("make a invitelist, with commas, pass and save", () =>{
   expect(response).toBe(0)
   expect(gameState["population"]["p1"]["inviteList"]).toStrictEqual(expectedList)
 });
+test("make a consent list with !all", () =>{
+  var gameState = {
+      "population": {
+          "p1":{
+              "name": "p1",
+              "gender": "female"
+          },
+          "p2":{
+            "name": "p2",
+            "gender": "male"
+          }
+          , "p3":{
+            "name": "p3",
+            "gender": "male"
+          }
+          , "p4":{
+              "name": "p4",
+              "gender": "female"
+            }
+       },
+      "round": "reproduction"
+  }
+  expectedList = ["p2", "p3", "!all"]
+  inputList = ["p2,", "p3,", "!all,"]
+  response = reproLib.handleReproductionList("p1", inputList ,"consentList", gameState, {})
+  expect(response).toBe(0)
+  expect(gameState["population"]["p1"]["consentList"]).toStrictEqual(expectedList)
+});
