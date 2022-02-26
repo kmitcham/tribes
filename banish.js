@@ -3,7 +3,7 @@ const util = require("./util.js");
 module.exports.banish = (gameState, targetName, bot) =>{
     population = gameState.population
     person = util.personByName(targetName, gameState)
-    console.log("In banish for "+targetName)
+    console.log("In banish lib for "+targetName)
     if (person){
         targetName = person.name
     }
@@ -29,7 +29,7 @@ module.exports.banish = (gameState, targetName, bot) =>{
                 if (childIndex > -1) {
                     person.guarding.splice(childIndex, 1);
                 }
-                util.messageChannel(actor+' stops guarding '+childName, gameState, bot)
+                util.messageChannel(targetName+' stops guarding '+childName, gameState, bot)
             }
         }
         // clean up inviteList

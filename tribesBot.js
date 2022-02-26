@@ -35,10 +35,7 @@ const allNames = require('./names.json');
 const { stringify } = require('querystring');
 
 const locationDecay = huntlib.locationDecay;
-const childSurvivalChance = 
-    [ 8, 8, 8, 8, 9, 9,10,10,10,11  // 4 years
-	,11,11,12,12,13,13,13,14,14,14  // 9 years
-	,15,15,16,16,17,20] // the 20 is to cover aging out?  Not sure why it fails.
+
 var gameState = Object()
 var allGames = Object()
 var referees = ["kevinmitcham", "@kevinmitcham"]
@@ -605,27 +602,22 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 	}
 	// remove member from the tribe
 	if (command === 'banish'){
+		console.log("in high level banish")
+		cleanUpMessage(msg);
 		if (!referees.includes(actor) && !player.chief){
-			msg.author.send(command+' requires referee  or chief priviliges')
-			cleanUpMessage(msg);; 
+			msg.author.send(command+' requires referee or chief priviliges')
 			return
 		}
-		if (!referees.includes(actor) && (gameState.demand || gameState.violence)){
+		if (gameState.demand || gameState.violence){
 			msg.author.send(command+' can not be used during a conflict')
 			return
 		}
 		var targetName = bits[1]
 		if (msg.mentions.users && msg.mentions.users.first() ){
-			targetName = util.removeSpecialChars(msg.mentions.users.first().username)
+			targetName = msg.mentions.users.first().username
+			console.log("Parse object to name "+targetName)
 		}
-		target = util.personByName(targetName, gameState);		
-		if (target ){
-			banish(gameState, targetName, bot)
-			return
-		} else {
-			msg.author.send(command+' could not find '+target)
-			return
-		}
+		return banish(gameState, targetName, bot)
 	}
 	if (command == 'chance'){
 		if (!referees.includes(actor) && (player && !player.chief)){

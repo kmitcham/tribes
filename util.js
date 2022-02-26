@@ -107,6 +107,8 @@ function personByName(name, gameState){
 	var population = gameState.population;
 	if (population[name] != null){
 		 person = population[name]
+	} else if (population[name.toLowerCase()] != null){
+		person = population[name.toLowerCase()]
 	} else {
 		for (match in population){
 			if ( (population[match] && population[match].handle) ){

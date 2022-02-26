@@ -1,11 +1,48 @@
 const locations = require('./locations.json');
 const util = require("./util.js");
+const killlib = require("./kill.js");
+const savelib = require("./save.js");
 
-module.exports.endGame = (gameState)=> {
+const childSurvivalChance = 
+    [ 8, 8, 8, 8, 9, 9,10,10,10,11  // 4 years
+	,11,11,12,12,13,13,13,14,14,14  // 9 years
+	,15,15,16,16,17,20] // the 20 is to cover aging out?  Not sure why it fails.
+
+module.exports.scoreTribe = scoreTribe
+function scoreTribe( gameState){
+    population = gameState.population
+    banished = gameState.banished
+    deadAdults = countDeadAdults(gameState);
+    banishCount = 0;
+    if (banished != null ){
+        banishCount = Object.keys(banished).length;
+    }
+    initialPlayers = Object.keys(population).length + banishCount + deadAdults
+    tribeTotal = Object.keys(population).length + Object.keys(gameState.children).length
+    tribeResult = "Unsuccessful"
+    if (tribeTotal < (2*initialPlayers)){
+        tribeResult = "Marginally successful"
+    } else if (tribeTotal < (3*initialPlayers)){
+        tribeResult = "Successful"
+    } else {
+        tribeResult = "Very successful"
+    }
+    gameState.tribeResult = tribeResult
+    return tribeResult;    
+}
+
+module.exports.endGame = endGame;
+function endGame(gameState){
 	adultCount = 0
+    newAdultCount = 0
 	response = 'The fate of the children:\n'
 	children = gameState.children
 	population = gameState.population
+    deadAdults = countDeadAdults(gameState);
+    banishCount = 0;
+    if (gameState.banished != null ){
+        banishCount = Object.keys(gameState.banished).length;
+    }
 	gameState.secretMating = false;
 	gameState.gameOver = true;
 	for (childName in children){
@@ -24,42 +61,27 @@ module.exports.endGame = (gameState)=> {
 		}
 		if (child.newAdult){
 			adultCount++
+            newAdultCount++ 
 		}
 	}
 	adultCount += Object.keys(population).length
-	response += 'Count of surviving adults is:'+adultCount
-	response += '\nThe tribe was '+scoreTribe(gameState);
+    response += 'The tribe lost '+deadAdults+' members and banished '+banishCount+'.\n';
+	response += 'Count of surviving adults is:'+adultCount+' ('+newAdultCount+' new adults)';
+	response += '\nThe tribe was '+ scoreTribe(gameState);
 	savelib.saveTribe(gameState);
-	allGames[gameState.name] = gameState;
 	return response
 }
 
-module.exports.scoreTribe = ( gameState) =>{
-    population = gameState.population
-    banished = gameState.banished
-    deadAdults = countDeadAdults(gameState);
-    initialPlayers = Object.keys(population).length + Object.keys(banished).length + deadAdults
-    tribeTotal = Object.keys(population).length + Object.keys(gameState.children).length
-    tribeResult = "Unsuccessful"
-    if (tribeTotal < (2*initialPlayers)){
-        tribeResult = "Marginally successful"
-    } else if (tribeTotal < (3*initialPlayers)){
-        tribeResult = "Successful"
-    } else {
-        tribeResult = "Very successful"
-    }
-    gameState.tribeResult = tribeResult
-    return tribeResult;    
-}
-
-module.exports.scoreMessage = (gameState, bot) =>{
+module.exports.scoreMessage = scoreMessage;
+function scoreMessage(gameState, bot){
     tribeResult = scoreTribe(gameState)
     messageText = "---> Score for the tribe:"+tribeResul+" <---\n"
         + scoreChildrenMessage(gameState)
     return messageText
 }
 
-module.exports.scoreChildrenMessage = (gameState) => {
+module.exports.scoreChildrenMessage = scoreChildrenMessage
+function scoreChildrenMessage(gameState){
     children = gameState.children
 	var parentScores = {}
 	for (childName in children){
@@ -86,7 +108,8 @@ module.exports.scoreChildrenMessage = (gameState) => {
 	}
 	return message
 }
-module.exports.countDeadAdults = ( gameState) =>{
+module.exports.countDeadAdults = countDeadAdults
+function countDeadAdults( gameState){
     graveyard = gameState.graveyard
     deadAdults = 0;
     for (entryName in graveyard){

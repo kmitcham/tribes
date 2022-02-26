@@ -89,6 +89,7 @@ test("person by ignoresCase", ()=>{
   actualName = player.name;
   expect(actualName).toEqual(expectName);
 })
+
 test("Remove special chars",()=>{
   expect(util.removeSpecialChars("Has Spaces")).toEqual("HasSpaces")
   expect(util.removeSpecialChars("Has(Paren)")).toEqual("HasParen")
