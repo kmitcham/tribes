@@ -1,0 +1,187 @@
+// Might there possibly be a !feed 2 !hungry option?
+// notify people who will hold up mating at the end of work and food
+// filter/clean up names on join/induct  
+// consent !all as an option
+// ref command to clear conflict- or just edit game keys in general?
+// remove pregnant people from the reproduction list  MAYBE
+// mixed feed (food and grain) takes too much grain
+// edit should be array-aware, and boolean aware 
+// invite should not require the @stuff
+// If two people watch the same kid, the kid is hyena-proof in the rules. Or if just only watched child by guardian who did not work
+// check on guarding age zero children
+// open/close tribe (allow join vs induct) test join
+// prevent edit of non-existent properties
+// MOCK version of message channel for testing
+// romance list -> rename as invite list
+// http://www.sjgames.com/pyramid/sample.html?id=1168
+--------------DONE -------------------
+// An option for the chief: allow/prevent secret mating.  DONE
+// commands should work with names OR @names
+// secret mating (outside the channel)  asynchronous mating.  Announce pregnancy at end of repro round; pregnant women can mate more the turn they concieve. !consent takes an arg
+// losing a turn includes missing a repro round
+// injury should block mating; maybe isInjury = 3, decrement by 1 at start of every round?
+// give should be case insensitive
+// Have adult kids automatically drop their babysitting when the babysittee grows up
+// referee force a player to do a work
+// people with spaces and special characters in the names
+// Alex Popiel(male) should now !invite people to reproduce, or !pass  use @Alex Popiel#0145 syntax, so that the target player get's a notification that he's up.
+// better display of the game track/hunt possibilities
+// messageChannel from libs
+// !feed !all  and !feed @parent  
+// don't try to delete DM; it causes exceptions DONE
+// faction command to deal with violence ( faction <for| against| neutral>   then violence <target|defend|flee> )  DONE
+// skip the pregnant people for mating turns DONE  at least there is code for it
+// ready during reproduction should show available partners DONE
+// !romance show current invite  DONE
+// child crossed 0 years, mother still pregnant, not nursing the child. DONE I hope
+// fewer flags (newAdult, pregnant, nursing), more raw data checks  (made the flag clearing better)
+// split file into sub-files > DONE with archive
+// Maybe let chiefs write Laws so people can see all the Official Decrees. Legislate <number> <Chiefly Decree> DONE
+// force option on hunt, gather to force the dieroll  DONE
+// work round start message should mention guarding DONE
+// scout should be aware of the hunt track DONE
+// channel message on game reload DONE
+// prevent non modulo 3 amounts of jerky  DONE
+// inventory all should show strong/Weak  DONE
+// chief should be able to skip/end a person's turn mating  DONE
+// added to tribe should include gender DONE
+// ignore should also be blocked outside of the watch round DONE
+// babysit based on adult children, separate from guard.  DONE
+// kid dieing does not clear nursing on the mother
+// ayo got eaten, despite a 1-1 guard belived  FIXED
+// new line after birth messages
+// nursing 0 should not be a gender
+// Missing new-line between !vote and !give, and with !invite
+// bad induct did not delete the command
+// chance rolls by a non-referee should not have the force roll option
+// block multiple chance rolls
+// blank line after migrate message
+// if finish feeding a child, should get a different message
+// person with 4 grain showed up as hungry on foodcheck (Daddy with 2+kids)
+// pregnant people should not be on the list of reproducers
+// failed invite should have better message DROPPED 
+// at start of R, tell the first person they are up
+// gather basket bug is back
+// after a mating, broadcast the next person up to the channel
+// line break after birth messages (before nobody starved)
+// spawn-> pass/propose/consent/decline pairing
+// players can/must select chief created on unanimoius? 2/3 agreement
+// DONE sex rolls in ()
+// 2020 09 22 playtest: first induct at 18:22; game end year 6, cold season at 21:02
+// DONEgathers (roll=18) basket: (11) basket breaks.
+// DONE automate Hyena attack 
+// DONE msg after last non-injured person works
+// DONE chief can start rounds, migrate, chance, induct, open/close tribe
+// DONE flag end of reproduction round when all females are pregnant
+// DONE hacky partial fix block trading of basket/spear used this round
+// DONE on chief branch split out 'specialize' vs induct
+// DONE I think this is fixed game files get saved as empty values on or after some crashes
+// DONE starvation death of children is not leasted as cause
+// DONE add train to help
+// DONE noTeach add willTrain variable to crafters
+// DONE allow trading in reproduction round
+// DONE people can not see who is guarding what child
+// DROPPED // at start of reproduction, list who is guarding
+// DONE declare guard of a child that is due  NOPE; autoset mother to watch
+// DONE alphabatize the command list
+// DONE don't show the pregnant in reproduction turn start
+// DONE can trade basket same turn as crafted?
+// DONE group inventory for just food, grain
+// DONE combined inventory, total food available?
+// DONEleast guarded is leastguarded, ties broken by age
+// DONE !children show guarders
+// DONE guard during the work round; only if your worked.flag is false
+// DONE birth message needs \n breaks
+// DONE banish needs to clear the guard list
+// DONE train show the dice roll
+// DONE easy track hunger Table Ug   M   Hunter   20 Food   8 Grain   1 Spearpoint   0 Baskets  0 hunger
+// DONE 'fails to craft a basket'
+// DONE two children under two- both can be nursing
+// DONE show spearpoint and other bonuses in hunt message
+// DONE You can only feed a child once, even if you feed it 1 instead of 2. Feeding it a second time gives the message that the child does not need more food, but it is still hungry
+// DONE roll 1000, show average
+// DONE ready does not respect injuries
+// DONE pregnant women can not hunt
+// DONE  guard and ignore case insensitive for names
+// DONE add a child
+// DONErandom list of players displayed at start of Repro round
+// DONE do not allow migrate with unfed children (unless force) (test)
+// DONE guard and ignore in the help list
+// DONE show basket roll, spear bonus (all bonuses)(show more rolls)
+// DONE Chance ONLY DURING reproduction
+// DONE hunt roll off the chart fails
+// DONE restore list for player, so can see worked and stuff
+// DONE add a child
+// DONE remove cuddle from help (and code)
+// DONE test train crafting
+// DONE test assist
+// DONE handle Weak/Strong
+// DONE chance round ; automate the chance roll, and some of the results
+// DONE Assist output has handle number, not playername
+// DONE assist either failed, or at least didn't acknowledge I tried to help
+// DONE assist did not mark 'worked' as true
+// DONE when edit isInjured, set to string or boolean?
+// DONE // gamestate command should give message this is SCOUT
+// DONE feed should not require specify 'food' should figure it out
+// DONE inventory pregnant syntax is bad
+// DONE fully handle graveyard; wire kill into more places
+// DONE when children starve, clear guarders
+// DONE edit/give/award should not crash when target is a string; should just handle it
+// DONE kill should clear isNursing, and isPregnant
+// DONE no negative food from !award
+// DONE award does a double message 
+// DONE save at the end of every round
+// DONE double guard a child; check for that
+// DONE list/ inventory for the whole tribe 
+// DONE start food should say 'nobody starved'
+// save at the end of every round  DONE
+// every round change message include year and season DONE
+// DONE children command - child age in years
+// DONE leastguarded should give the guarded value
+// DONE edit or some way to kill children (hyena)
+// DONE badly display the graveyard somehow
+// DONE make inventory more clear
+// DONE catch wrong phase; work must follow reproduction follow food
+// DONE It is the cold season of Year 12. The tribe has X adults and Y children.
+// DONE giving, feeding, all public
+// DONE warn at start of food round
+// DONE !food: give a list of all food by who has what
+// DONE named children
+// DONE: when child dies young, clear isPregnant
+// DONE: store track calendar/ seasons
+// DONE track guardian of children
+// DONE edit children
+// DONE crafting training
+// DONE a 'hookup' command  with a target so can check for pregnant
+// DONE check if can over-feed children nope
+// DONE how to change areas
+// DONE: play list -> !inventory; inventory is public
+// DONE trackng of game_track OUT of the locations.json, since it is a transient property
+// clear failed spawn messages DONE
+
+@kevinmitcham, 216 Gather totals:
+veldt food:717 grain:195 sf:731 sg:273
+hills food:899 grain:100 sf:981 sg:144
+marsh food:1141 grain:234 sf:1061 sg:396
+forest food:1284 grain:63 sf:1481 sg:45
+[8:26 PM]
+@kevinmitcham, 10x Random Gather avg:
+veldt food:33 grain:9 sf:34 sg:13
+hills food:42 grain:5 sf:45 sg:7
+marsh food:53 grain:11 sf:49 sg:19
+forest food:60 grain:3 sf:69 sg:2
+
+// ASK about overfeeding kids  NOT ALLOWED
+// is injury recovery 'do nothing' same as 'full time babysit' do nothing for single-child guardian hyena check?
+// If a pregnant mother dies, kill kid?  Nursing mother?  YES
+
+
+
+!commit <target>
+a) one target
+b) persists until changed
+c) changed by repeating command with new target, deleted by command with no target
+d) You invite the target, and will consent to the target
+e) if target declines, your invite list is used.
+f) is overridden by the !pass commands
+g) people with a commit target are evaluated first, before ordinary invites

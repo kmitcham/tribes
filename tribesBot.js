@@ -53,7 +53,7 @@ bot.once('ready', ()=>{
 bot.login(auth['token'])
 
 bot.on('message', msg => {
-	if (!msg.content ){
+	if (!msg.	content ){
 	  return
 	}
 	if (msg.content.substring(0,1) != '!'){
@@ -1798,7 +1798,7 @@ async function handleCommand(msg, author, actor, command, bits, gameState){
 		return
 	}	
 	if (command == 'scorechildren'){
-		msg.author.send(endLib.scoreChildrenMessage(children, gameState))
+		msg.author.send(endLib.scoreChildrenMessage(gameState))
 		cleanUpMessage(msg);;
 		return
 	}

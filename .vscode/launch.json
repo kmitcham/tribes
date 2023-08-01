@@ -4,47 +4,67 @@
 {
   "version": "0.2.0",
   "configurations": [
-    {
-      "name": "Launch via NPM",
-      "request": "launch",
-      "runtimeArgs": [
-        "run-script",
-        "debug"
-      ],
-      "runtimeExecutable": "npm",
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
-      "type": "pwa-node"
-    },
-    {
-      "name": "Launch via NPM",
-      "request": "launch",
-      "runtimeArgs": [
-        "run-script",
-        "debug"
-      ],
-      "runtimeExecutable": "npm",
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
-      "type": "pwa-node"
-    },
   {
-    "type": "node",
+    "command": "npm start",
+    "name": "Run npm start",
     "request": "launch",
-    "name": "Launch via NPM for test banish",
-    "runtimeExecutable": "npm",
-    "runtimeArgs": [
-      "test",
-      "banish.test.js",
-      "debug"
-    ],
-    "port": 9229,
-    "skipFiles": [
-      "<node_internals>/**"
-    ]
+    "type": "node-terminal"
   },
+    {
+      "name": "Launch via NPM",
+      "request": "launch",
+      "runtimeArgs": [
+        "run-script",
+        "debug"
+      ],
+      "runtimeExecutable": "npm",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "type": "pwa-node"
+    },
+    {
+      "name": "Launch via NPM",
+      "request": "launch",
+      "runtimeArgs": [
+        "run-script",
+        "debug"
+      ],
+      "runtimeExecutable": "npm",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "type": "pwa-node"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Launch via NPM for test banish",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "test",
+        "banish.test.js",
+        "debug"
+      ],
+      "port": 9229,
+      "skipFiles": [
+        "<node_internals>/**"
+      ]
+    },  {
+      "type": "node",
+      "request": "launch",
+      "name": "Launch via NPM for test endgame",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "test",
+        "endgame.test.js",
+        "debug"
+      ],
+      "port": 9229,
+      "skipFiles": [
+        "<node_internals>/**"
+      ]
+    },
     
     {
       "name": "Launch tribesBot.js",

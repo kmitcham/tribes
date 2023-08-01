@@ -404,8 +404,8 @@ function globalMatingCheck(gameState, bot){
         }
     }
     if (whoNeedsToGiveAnAnswer && whoNeedsToGiveAnAnswer.length > 0){
-        for (personName in whoNeedsToGiveAnAnswer){
-            util.messagePlayerName("You have not responded to an invitation");
+        for (personName of whoNeedsToGiveAnAnswer){
+            util.messagePlayerName(personName, "You have not responded to an invitation", gameState, bot);
         }
     }
     if (allDone){

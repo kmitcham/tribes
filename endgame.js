@@ -35,35 +35,38 @@ module.exports.endGame = endGame;
 function endGame(gameState){
 	adultCount = 0
     newAdultCount = 0
-	response = 'The fate of the children:\n'
-	children = gameState.children
 	population = gameState.population
     deadAdults = countDeadAdults(gameState);
     banishCount = 0;
     if (gameState.banished != null ){
         banishCount = Object.keys(gameState.banished).length;
     }
-	gameState.secretMating = false;
-	gameState.gameOver = true;
-	for (childName in children){
-		var child = children[childName]
-		console.log('end game scoring for '+childName+' '+child.newAdult+' '+child.age+2)
-		if (!child.newAdult){
-			var roll = util.roll(3)
-			response += '\t'+childName+' ['+roll+' vs '+childSurvivalChance[child.age+2]+'] '
-			if (roll <= childSurvivalChance[child.age+2]){
-				child.newAdult = true
-				response += 'grows up\n'
-			} else {
-				response += 'dies young\n'
-				killlib.kill(childName, 'endgame scoring', gameState)
-			}
-		}
-		if (child.newAdult){
-			adultCount++
-            newAdultCount++ 
-		}
-	}
+    children = gameState.children
+    if (children){
+        response = 'The fate of the children:\n'
+        gameState.secretMating = false;
+        gameState.gameOver = true;
+        for (childName in children){
+            var child = children[childName]
+            console.log('end game scoring for '+childName+' '+child.newAdult+' '+Number(child.age)+2)
+            if (!child.newAdult){
+                var roll = util.roll(3)
+                response += '\t'+childName+' ['+roll+' vs '+childSurvivalChance[Number(child.age)+2]+'] '
+                if (roll <= childSurvivalChance[Number(child.age)+2]){
+                    child.newAdult = true
+                    response += 'grows up\n'
+                } else {
+                    response += 'dies young\n'
+                    killlib.kill(childName, 'endgame scoring', gameState)
+                }
+            }
+            if (child.newAdult){
+                adultCount++
+                newAdultCount++ 
+            }
+        }
+    }
+
 	adultCount += Object.keys(population).length
     response += 'The tribe lost '+deadAdults+' members and banished '+banishCount+'.\n';
 	response += 'Count of surviving adults is:'+adultCount+' ('+newAdultCount+' new adults)';

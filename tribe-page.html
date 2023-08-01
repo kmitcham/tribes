@@ -1,0 +1,26 @@
+<html>
+  <head>
+    <script>
+      function displayJson(json) {
+        var jsonData = JSON.parse(json);
+        var keys = Object.keys(jsonData);
+        var content = "<table>";
+        for (var i = 0; i < keys.length; i++) {
+          content += "<tr><td>" + keys[i] + "</td><td>" + jsonData[keys[i]] + "</td></tr>";
+        }
+        content += "</table>";
+        document.getElementById("json-content").innerHTML = content;
+      }
+
+      var socket = new WebSocket("wss://example.com/ws");
+      socket.onmessage = function (event) {
+        displayJson(event.data);
+      };
+    </script>
+  </head>
+  <body>
+    <div id="json-content"></div>
+  </body>
+</html>
+
+

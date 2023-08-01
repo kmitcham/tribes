@@ -1,0 +1,28 @@
+
+Tutorial
+
+Welcome new hunter.  To hunt, do !hunt and the bot rolls 3d6.  Higher numbers are bigger animals, and very low numbers are bad - you could get injured. 
+You cannot guard children while hunting.
+Before you set out, you might consider waiting for a crafter to make you a spearhead which gives you a bonus to your roll.
+You can also `!gather`, but at a penalty. If your tribe has someone who knows how to craft, you can try to learn that skill with `!train`
+
+Welcome new gatherer.  To gather, do `!gather`, and the bot rolls 3d6.  Higher numbers generally produce more food.  
+You can guard 2 children without penalty; watching 3 or 4 gives an increasing penalty; 5 is too many to gather with.
+Before you set out, you might consider waiting for a crafter to make you a spearhead which gives you an additional gather attempt.
+You can also `!hunt`, but at a penalty. If your tribe has someone who knows how to craft, you can try to learn that skill with `!train`
+
+Welcome new crafter.  To craft, do `!craft basket` or `!craft spearpoint`, and the game will roll 1d6; you only fail on a 1.
+You can guard up to two children while crafting.
+You can also `!gather`  or `!hunt`, but at a penalty.
+By default, you will train others in crafting if they take a season to learn.  To toggle this setting, use `!secrets`.
+
+
+
+In our tribe we share food. In return the gatherers will take care of your children, since hunters are terrible at childcare. As a simple tribesman you may not know where babies come from but we’ll explain that in the next round.
+In a less close knit tribe where the chief was less trusted food swaps would probably happen in the next round (the Food round). 
+The food round is designed for negotiations: give me a basket and I will give you some grain. Promise to feed the baby if you want to reproduce with me.
+So, to mate, the game generates an order (leaving out any pregnant females). 
+In turn each player can !invite someone of the opposite sex to attempt to make a baby. The response is !consent. 
+If you don't want to mate, !pass will skip your turn.
+Nursing moms are slightly less likely to catch a baby. Also, nursing moms who get pregnant eat more. 
+To see the ages of current children do !children

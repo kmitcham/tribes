@@ -1,6 +1,27 @@
 const fs = require('fs');
 
+const WebSocket = require('ws');
 
+const server = new WebSocket.Server({
+  port: 8383,
+});
+
+function sendJson(json) {
+	server.clients.forEach((client) => {
+	  if (client.readyState === WebSocket.OPEN) {
+		client.send(JSON.stringify(json));
+	  }
+	});
+  }
+  
+  server.on('connection', (socket) => {
+	console.log('Client connected');
+  
+	socket.on('close', () => {
+	  console.log('Client disconnected');
+	});
+  });
+  
 function loadJson(fileName) {
 	let rawdata = fs.readFileSync(fileName);
 	if (!rawdata || rawdata.byteLength == 0 ){
