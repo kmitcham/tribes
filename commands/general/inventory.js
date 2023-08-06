@@ -12,7 +12,7 @@ module.exports = {
                 .setRequired(false)),
     async execute(interaction, gameState) {
         var response = inventory(interaction, gameState)
-        console.log(response)
+        //console.log(response)
         return interaction.reply(response);
 	},
 };
