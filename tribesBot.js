@@ -57,7 +57,6 @@ client.once('disconnect', () => {
 client.on(Events.InteractionCreate, async interaction => {
 	//console.log("got an event")
 	if (!interaction.isChatInputCommand()) return;
-	
 
 	const command = client.commands.get(interaction.commandName);
     if (!command) return;
@@ -78,7 +77,9 @@ client.on(Events.InteractionCreate, async interaction => {
 
 	try {
 		await command.execute(interaction, gameState);
+        console.log('after command await');
 	} catch (error) {
+        console.log("there was an error in that command");
 		console.error(error);
 		if (interaction.replied || interaction.deferred) {
 			await interaction.followUp({ content: 'There was an error while executing this command!', ephemeral: true });
