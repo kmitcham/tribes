@@ -13,7 +13,7 @@ module.exports = {
     async execute(interaction, gameState) {
         var response = inventory(interaction, gameState)
         //console.log(response)
-        return interaction.reply(response);
+		return interaction.user.send(response)
 	},
 };
 
