@@ -1,10 +1,44 @@
 const fs = require('fs');
-
 const WebSocket = require('ws');
+const locations = require('./locations.json');
 
 const server = new WebSocket.Server({
   port: 8383,
 });
+
+function initGame(gameName){
+	gameState = {}
+	if (!gameName){
+		console.log('init game without a name')
+		gameName = ''
+	}
+	gameState.seasonCounter = 1
+	gameState.gameTrack = {}
+	gameState.name = gameName
+	var d = new Date();
+    var startStamp = d.toISOString();
+	gameState.startStamp = startStamp;
+	gameState.secretMating = true
+	gameState.open = true
+	gameState.conceptionCounter = 0
+	gameState.population = {}
+	gameState.graveyard = {}
+	gameState.children = {}
+	for (locationName in locations){
+		gameState.gameTrack[locationName] = 1
+	}
+	gameState.currentLocationName = "veldt";
+	gameState.round = "work"
+	gameState.workRound = true;
+	gameState.foodRound = false;
+	gameState.reproductionRound = false;
+	gameState.needChanceRoll = true
+	gameState.canJerky = false
+	console.log('Adding game '+gameName+' to the list of games')
+	saveTribe(gameState);
+	return gameState
+}
+module.exports.initGame = initGame;
 
 function sendJson(json) {
 	server.clients.forEach((client) => {
