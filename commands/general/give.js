@@ -1,5 +1,6 @@
-const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const util = require("../../util.js");
+const savelib = require("../../save.js");
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -20,8 +21,8 @@ module.exports = {
             .setDescription('one of (food,grain,basket,spearhead')
             .setRequired(true)),
     async execute(interaction, gameState) {
-        response = give(interaction, gameState)
-        await interaction.reply(response);
+        await give(interaction, gameState)
+        
 	},
 };
 
@@ -41,7 +42,8 @@ function give(interaction, gameState){
     } else if ( item.startsWith('s')){
         item = 'spearhead'
     } else {
-        return "Unrecognized item "+item;
+        response = "Unrecognized item "+item;
+        return onError(interaction, response);
     }
     var targetPerson = {}
     var sourcePerson = {}
@@ -50,13 +52,25 @@ function give(interaction, gameState){
         targetPerson = population[targetName];
         sourcePerson = population[sourceName];
     } else {
-        return "Source or target "+sourceName+":"+targetName+" not found in tribe";
+        response = "Source or target "+sourceName+":"+targetName+" not found in tribe";
+        return onError(interaction, response)
     }
-    if (!sourcePerson[item]  || targetPerson[item] < amount){
-        return "You do not have "+amount+" "+item
+    if (!sourcePerson[item] || targetPerson[item] < amount){
+        
+        response = sourceName+" does not have "+amount+" "+item;
+        return onError(interaction, response)
     }
     sourcePerson[item] -= amount;
     targetPerson[item] += amount;
+    savelib.saveTribe(gameState);
 
-    return sourceName + " gives "+targetName+" "+amount+" "+item;
+    response = sourceName + " gives "+targetName+" "+amount+" "+item;
+    interaction.reply(response);
+}
+function onError(interaction, response){
+    interaction.user.send(response);
+        const embed = new EmbedBuilder().setDescription(response);
+		interaction.reply({ embeds: [embed], ephemeral: true })
+			.catch(console.error);
+        return
 }

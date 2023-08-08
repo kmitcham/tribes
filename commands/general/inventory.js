@@ -1,5 +1,6 @@
-const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const util = require("../../util.js");
+const savelib = require("../../save.js");
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -14,6 +15,9 @@ module.exports = {
         var response = inventory(interaction, gameState)
         //console.log(response)
 		interaction.user.send(response);
+		const embed = new EmbedBuilder().setDescription(response);
+		interaction.reply({ embeds: [embed], ephemeral: true })
+			.catch(console.error);
 	},
 };
 
