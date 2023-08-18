@@ -1,6 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const util = require("../../util.js");
-const savelib = require("../../save.js");
 
 module.exports = {
 	data: new SlashCommandBuilder()

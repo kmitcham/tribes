@@ -55,8 +55,7 @@ function give(interaction, gameState){
         response = "Source or target "+sourceName+":"+targetName+" not found in tribe";
         return onError(interaction, response)
     }
-    if (!sourcePerson[item] || targetPerson[item] < amount){
-        
+    if (!sourcePerson[item] || sourcePerson[item] < amount){
         response = sourceName+" does not have "+amount+" "+item;
         return onError(interaction, response)
     }
