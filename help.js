@@ -56,8 +56,8 @@ function chiefHelp(){
 	text = ''
 	text = '\n### Chief Commands ###\n'
 	text+=' !induct|banish <player> (add|remove a tribe member)\n'
-	text+=' !open|close  (toggle if people can join with "!join" or only with "!induct" by the chief\n'
-	text+=' !drone <gender> <profession> <name>  adds a worker to the tribe that takes commands but is sterile.'
+	text+=' !open|close  (toggle if people can join with "!join" or only with "!induct" by the chief)\n'
+	text+=' !drone <gender> <profession> <name>  adds a worker to the tribe that takes commands but is sterile.\n'
 	text+=' !save (Saves the game. Automatically done at the start of every round)\n'
 	text+=' !startwork (begins the work round, enabling work attempts and rolls)\n'
 	text+=' !startfood (ends the work round; subtract food/grain; birth; child age increase)\n'
@@ -65,10 +65,10 @@ function chiefHelp(){
 	text+=' !chance (after mating, chance is required to end the season)\n'
 	text+=' !migrate <newlocation> <force>  (without force, just checks who would perish on the journey)\n'
 	text+=' !decree <law number> <law text> (record a rule for the tribe, or replace the rule of the specified number)\n'
-	text+='\n !skip <person>   (end a players reproduction turn)\n'
+	text+=' !skip <person>   (end a players reproduction turn)\n'
 	text+=' !checkmating (report on status of mating attempts)\n'
 	text+=' !secretmating (toggle the state of secretmating)\n'
-	text+=' endgame convert all the child to corpses, or new adults\n'
+	text+=' !endgame convert all the child to corpses, or new adults\n'
 
     return text;
 }

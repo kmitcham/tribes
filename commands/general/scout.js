@@ -5,7 +5,7 @@ const huntlib = require("../../hunt.js")
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('scout')
-		.setDescription('Show the dead of the tribe')
+		.setDescription('Show the resources of an environment, defaulting to the current one.')
         .addStringOption(option => 
             option
             .setName('location')

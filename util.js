@@ -1,5 +1,6 @@
 const violencelib = require("./violence.js");
 const reproLib = require("./reproduction.js");
+const { EmbedBuilder } = require('discord.js');
 
 function isColdSeason(gameState){
 	return (gameState.seasonCounter%2 == 0);
@@ -179,7 +180,7 @@ async function messagePlayerName(playerName, message, gameState, bot){
 }
 module.exports.messagePlayerName = messagePlayerName
 
-module.exports.gameStateMessage= (gameState, bot) =>{
+module.exports.gameStateMessage= (gameState) =>{
 	var numAdults = (Object.keys(gameState.population)).length
 	var numKids = (Object.keys(gameState.children)).length
 	var message = "Year "+(gameState.seasonCounter/2)+', '
@@ -192,11 +193,11 @@ module.exports.gameStateMessage= (gameState, bot) =>{
 	message+= 'The '+gameState.currentLocationName+' game track is at '+ gameState.gameTrack[gameState.currentLocationName]+'\n'
 	if (gameState.demand){ 
 		message+= '\nThe DEMAND is:'+gameState.demand+'\n'
-		message+= violencelib.getFactionResult(gameState, bot)
+		//message+= violencelib.getFactionResult(gameState, bot)
 	}
 	if (gameState.violence){ 
 		message+= '\nVIOLENCE has erupted over this demand: '+gameState.violence+'\n'
-		message+= violencelib.resolveViolence(gameState, bot)+'\n';
+		//message+= violencelib.resolveViolence(gameState, bot)+'\n';
 	}
 	if (gameState.workRound ) {message += '  (work round)'}
 	if (gameState.foodRound ) {message += '  (food round)'}
@@ -257,3 +258,22 @@ function messageChannel(message, gameState, argBot){
 	}
 }
 module.exports.messageChannel = messageChannel;
+
+function ephemeralResponse(interaction, response){
+    interaction.user.send(response);
+        const embed = new EmbedBuilder().setDescription(response);
+		interaction.reply({ embeds: [embed], ephemeral: true })
+			.catch(console.error);
+        return
+}
+module.exports.ephemeralResponse = ephemeralResponse;
+
+function countByType(dictionary, key, value){
+	count = 0
+	for (elementName in dictionary){
+		element = dictionary[elementName]
+		if (element[key] && element[key] == value){ count++}
+	}
+	return count
+}
+module.exports.countByType = countByType;

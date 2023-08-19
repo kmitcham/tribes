@@ -17,6 +17,7 @@ const savelib = require("./save.js");
 client.commands = new Collection();
 const foldersPath = path.join(__dirname, 'commands');
 const commandFolders = fs.readdirSync(foldersPath);
+var referees = ["kevinmitcham", "@kevinmitcham"]
 
 var testDictionary = {"start": "value", "number": 10};
 var allGames = {}
@@ -77,7 +78,6 @@ client.on(Events.InteractionCreate, async interaction => {
 
 	try {
 		await command.execute(interaction, gameState);
-        console.log('after command await');
 	} catch (error) {
         console.log("there was an error in that command");
 		console.error(error);
