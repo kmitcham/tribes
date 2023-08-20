@@ -27,11 +27,11 @@ function onCommand(interaction, gameState){
     var population = gameState.population;
 
 	if (!candidate){
-		msg.author.send(candidateName+' not found in the tribe')
+		util.ephemeralResponse(interaction, candidateName+' not found in the tribe')
 		return
 	}
 	if (!player){
-		msg.author.send('You are not a member of the tribe yet.')
+		util.ephemeralResponse(interaction,'You are not a member of the tribe yet.')
 		return
 	}
 	player.vote = candidateName

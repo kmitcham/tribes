@@ -18,11 +18,16 @@ module.exports = {
         .addStringOption(option => 
             option
             .setName('item')
-            .setDescription('one of (food,grain,basket,spearhead')
+            .setDescription('one of (food,grain,basket,spearhead)')
+            .addChoices(
+                { name: 'food', value: 'food' },
+                { name: 'grain', value: 'grain' },
+                { name: 'basket', value: 'basket' },
+                { name: 'spearhead', value: 'spearhead'},
+            )
             .setRequired(true)),
     async execute(interaction, gameState) {
         await give(interaction, gameState)
-        
 	},
 };
 
