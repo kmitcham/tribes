@@ -232,3 +232,45 @@ function gatherDataFor(locationName, roll){
 	}
 	console.log('error looking up resourceData for '+locationName+' '+type+' '+roll)
 }
+
+function listReadyToWork(tribe){
+	var unworked = []
+	for (playerName in tribe){
+		person = tribe[playerName]
+		// edit can leave isinjured as the string 'false'
+		if (person.worked || (person.isInjured && person.isInjured > 0)
+			||(person.isSick && person.isSick > 0 )){
+			// do nothing
+		} else {
+			unworked.push(playerName)
+		}
+	}
+	return unworked
+}
+module.exports.listReadyToWork = listReadyToWork;
+
+function canWork(gameState, player){
+
+	if (gameState.workRound == false ){
+		msg = 'Can only work during the work round';
+		return msg;
+	}
+	if (player == null){
+		msg = 'Only tribe members can work.  Maybe !join';
+		return msg;
+	}
+	if (player.isInjured && player.isInjured > 0 ){
+		msg = 'You cannot work while you are injured';
+		return msg;
+	}
+	if (player.isSick && player.isSick > 0 ){
+		msg = 'You cannot work while you are sick'
+		return msg;
+	}
+	if (player.worked == true){
+		msg = 'You cannot work (again) this round'
+		return msg;
+	}
+	return null;
+}
+module.exports.canWork = canWork;

@@ -2,6 +2,9 @@ const violencelib = require("./violence.js");
 const reproLib = require("./reproduction.js");
 const { EmbedBuilder } = require('discord.js');
 
+var referees = ["kevinmitcham", "@kevinmitcham"]
+module.exports.referees = referees;
+
 function isColdSeason(gameState){
 	return (gameState.seasonCounter%2 == 0);
 }

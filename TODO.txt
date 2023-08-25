@@ -1,6 +1,7 @@
 // respond with DM, but don't give WARNING
 // respond to commands via DM
 // obey is undone
+// do not crash on errors
 
 
 
