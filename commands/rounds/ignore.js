@@ -5,8 +5,8 @@ const guardlib = require("../../guardCode.js");
 
 module.exports = {
 	data: new SlashCommandBuilder()
-		.setName('guard')
-		.setDescription('Add a child to the list of children you are guarding.  Use name "none" to stop guarding')
+		.setName('ignore')
+		.setDescription('Remove a child from the list of children you are guarding.  Use name "all" to stop guarding')
 		.addStringOption(option => 
             option
             .setName('child')
@@ -32,6 +32,7 @@ function onCommand(interaction, gameState){
 	var cName = interaction.options.getString('child');
     var actorName = interaction.user.displayName;
     var person = gameState.population[actorName];
+
 	if (person.worked == true){
         util.ephemeralResponse(interaction,'You can not change guard status after having worked.')
 		return
@@ -41,68 +42,48 @@ function onCommand(interaction, gameState){
 		return
 	}
     response = ""
-    response += guardChild(interaction, gameState, cName)+"\n";
+    response += ignoreChild(interaction, gameState, cName)+"\n";
     cName  = interaction.options.getString('child1');
     if (cName){
-        response += guardChild(interaction, gameState, cName)+"\n";
+        response += ignoreChild(interaction, gameState, cName)+"\n";
     }
     cName  = interaction.options.getString('child2');
     if (cName){
-        response += guardChild(interaction, gameState, cName)+"\n";
+        response += ignoreChild(interaction, gameState, cName)+"\n";
     }
     if (response.includes("FAIL")){
         util.ephemeralResponse(interaction, response);
     } else {
-        if (person.guarding){
-            interaction.reply(actorName+' starts guarding '+person.guarding);
-        } else {
-            interaction.reply(actorName+ ' is not guarding any children');
-        }
+        interaction.reply(response);
         console.log("Saving gameState");
         savelib.saveTribe(gameState);
     }
 }
 
-function guardChild(interaction, gameState, cName){
+function ignoreChild(interaction, gameState, cName){
     var actorName = interaction.user.displayName;
     var person = gameState.population[actorName];
     children = gameState.children;
     var response = "";
-    console.log("inside guard cName "+util.capitalizeFirstLetter(cName)+" actorName "+actorName);
-    if (!person){
-        return 'FAIL: you are not a person'
-    }
-    if (person.worked == true|| gameState.workRound == false){
-        return 'FAIL You can not change guard status after having worked, or outside the work round';
-    }
-    if (util.capitalizeFirstLetter(cName) == "None"){
-        if (person.guarding){
-            response += actorName+" stops watching "+person.guarding
-        }
+    console.log("inside ignore cName "+util.capitalizeFirstLetter(cName)+" actorName "+actorName);
+    if ("all" == cName.toLowerCase() && person.guarding && person.guarding.length > 0){
+        response = actorName+' stops guarding '+person.guarding +"\n";
         delete person.guarding;
         return response;
     }
-    if (person.guarding && person.guarding.length > 4){
-        return 'FAIL You are already guarding enough children: '+person.guarding;
-    }
-    if (person.isSick && person.isSick > 0 ){
-        return 'FAIL You are too sick to watch children';
-    }
     childName = util.capitalizeFirstLetter(cName)
-    console.log("checking "+childName );
-    child = children[childName]
+    child = children[childName];
     if (!child ){
-        return 'FAIL Could not find child: '+childName
-    } else if (person.guarding && person.guarding.indexOf(childName) != -1 ){
-        console.log(person.guarding);
-        return 'FAIL You are already guarding '+childName;
+        return 'FAIL: Could not find child: '+childName;
+    } else if (!person.guarding || person.guarding.indexOf(childName) == -1 ){
+       return  'FAIL: You are not guarding '+childName;
     } else {
-        console.log("valid guard "+childName);
-        if (person.guarding){
-            person.guarding.push(childName)
-        } else {
-            person.guarding = [childName]
+        childIndex = person.guarding.indexOf(childName)
+        if (childIndex > -1) {
+            person.guarding.splice(childIndex, 1);
         }
-        return "You start guarding "+childName;
+        return actorName+' stops guarding '+childName +"\n";
     }
+
+
 }

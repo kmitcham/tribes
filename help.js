@@ -24,7 +24,6 @@ function playerHelpRounds(){
 		text+=' !ready (list who is still available to work)\n'
 		text+=' !craft <spearhead|basket>\n'
 		text+=' !gather\n'
-		text+=' !assist <hunter>\n'
 		text+=' !hunt\n'
 		text+=' !train (learn crafting, if there is a willing teacher)\n'
 		text+=' !idle (do nothing) \n'
