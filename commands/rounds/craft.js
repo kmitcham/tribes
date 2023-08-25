@@ -18,7 +18,7 @@ module.exports = {
             .setRequired(true))
         .addIntegerOption(option =>
             option.setName('force')
-            .setDescription('referee can force a die roll value')
+            .setDescription('referee can force a die roll value 1-6')
             .setRequired(false)
             ),
         

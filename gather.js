@@ -19,7 +19,7 @@ function roll(count){
 
 //module.exports.hunt = (playername, player, rollValue, gameState) =>{
 //    function gather(playername, player, rollValue,gameState){
-module.exports.gather = (playername, player, rollValue,gameState) => {
+module.exports.gather = (playername, player, rollValue, gameState) => {
     var message = playername+' gathers ['+rollValue+']';
 	var netRoll = rollValue
 	modifier = 0
@@ -114,7 +114,6 @@ module.exports.gather = (playername, player, rollValue,gameState) => {
 			player.basket -= 1
 		}
 	}
-	player.worked = true
-	util.history(player.name, message,gameState)
+
 	return message
 }
