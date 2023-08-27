@@ -59,9 +59,6 @@ function train(interaction, gameState){
         message = actor+' tries to learn to craft, but does not understand it yet. ['+learnRoll+']'
     }
     player.activity = 'training'
-
-    player.activity = 'hunt'
-
     player.worked = true;
 	util.history(sourceName, message, gameState);
     savelib.saveTribe(gameState);

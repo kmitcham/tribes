@@ -1,4 +1,5 @@
 const violencelib = require("./violence.js");
+const killlib = require("./kill.js");
 const reproLib = require("./reproduction.js");
 const { EmbedBuilder } = require('discord.js');
 
@@ -280,3 +281,197 @@ function countByType(dictionary, key, value){
 	return count
 }
 module.exports.countByType = countByType;
+
+function countChildrenOfParentUnderAge(children, parentName, age){
+	var count = 0
+	for (var childName in children){
+		var child = children[childName]
+		if (child.mother == parentName || child.father == parentName){
+			if (child.age < age){
+				count++
+			}
+		}
+	}
+	return count
+}
+module.exports.countChildrenOfParentUnderAge = countChildrenOfParentUnderAge;
+
+function consumeFood(gameState){
+	if (!gameState){
+		console.log('no game state; ERROR')
+		return
+	}
+	console.log('adults are eating')
+	response = "Food round results:\n"
+	//console.log('food response is '+response)
+	response += consumeFoodPlayers(gameState);
+	//console.log('food response is '+response)
+	response += consumeFoodChildren(gameState);
+	//console.log('food response is '+response)
+	return response
+}
+module.exports.consumeFood = consumeFood;
+
+function consumeFoodPlayers(gameState){
+	perished = []
+	population = gameState.population
+	var response = '';
+	for  (var target in population) {
+		var hunger = 4
+		console.log(target+' f:'+population[target].food+' g:'+population[target].grain)
+		population[target].food = population[target].food - hunger
+		if (population[target].food < 0 ){
+			// food is negative, so just add it to grain here
+			population[target].grain = population[target].grain + population[target].food
+			population[target].food = 0
+			if (population[target].grain < 0){
+				response += "  "+target+" has starved to death.\n"
+				population[target].grain = 0
+				perished.push(target)
+			}
+		}
+		if (population[target].gender == 'female' && countChildrenOfParentUnderAge(children, target, 4 ) > 1 ){
+			// extra food issues here; mom needs 2 more food, or the child will die.
+			console.log(target+' needs extra food due to underage children. ')
+			population[target].food -= 2
+			if (population[target].food < 0 ){
+				// food is negative, so just add it to grain here
+				population[target].grain = population[target].grain + population[target].food
+				population[target].food = 0
+				if (population[target].grain < 0){
+					childname = population[target].isPregnant 
+					response += target+' lost her child '+child+' due to lack of food\n'
+					killlib.kill(childName, 'prenatal starvation',gameState)
+					delete population[target].isPregnant 
+				}
+			}
+		}
+		console.log(target+' f:'+population[target].food+' g:'+population[target].grain)
+	} 
+	var perishedCount = perished.length;
+	for (var i = 0; i < perishedCount; i++) {
+		corpse = perished[i]
+		console.log('removing corpse '+corpse)
+		killlib.kill(perished[i], 'starvation', gameState)
+	}
+	if ((perished.length) == 0 ){
+		response += 'No adults starved! \n'
+	}
+	return response;
+}
+module.exports.consumeFoodPlayers = consumeFoodPlayers;
+
+function consumeFoodChildren(gameState){
+	response = '';
+	perishedChildren = []
+	population = gameState.population
+
+	console.log('children are eating')
+	for (childName in children){
+		var child = children[childName]
+		if (child.dead){
+			continue;
+		}
+		child.age += 1
+		if (child.age < 24 ){
+			child.food -= 2
+			if (child.food < 0){
+				response += " child:"+childName+" has starved to death.\n"
+				child.dead = true
+				if (population[child.mother] && population[child.mother].isPregnant ) {
+					delete population[child.mother].isPregnant
+				}
+				perishedChildren.push(childName)
+				continue;
+			} 
+			if (child.age == 0 ){
+				birthRoll = util.roll(3)
+				response += '\t'+child.mother+' gives birth to a '+child.gender+'-child, '+child.name
+				util.history(child.mother,child.mother+' gives birth to a '+child.gender+'-child, '+child.name, gameState)
+				if (birthRoll < 5 ){
+					response += ' but the child did not survive\n'
+					child.dead = true
+					killlib.kill(child.name, 'birth complications', gameState)
+					console.log('removing stillborn '+child.name)
+					continue;
+				} else {
+					response += '\n'
+				}
+				//Mothers start guarding their newborns
+				person = personByName(child.mother, gameState)
+				if (!person.guarding){
+					person.guarding = [child.name]
+				} else if (person.guarding.indexOf(child.name) == -1){
+					person.guarding.push(child.name)
+				}
+				if (birthRoll == 17){
+					twin = addChild(child.mother, child.father, gameState);
+					delete child.mother.isPregnant; // this gets set by addChild, but the child was just born.
+					response += child.mother+' gives birth to a twin! Meet '+twin.name+', a healthy young '+twin.gender+'-child.\n'
+					util.history(child.mother,child.mother+' gives birth to a twin! Meet '+twin.name+', a healthy young '+twin.gender+'-child', gameState)
+					person.guarding.push(twin.name)
+					twin.age = 0
+				}
+			}
+			// Sometimes we get bugs where pregnancy doesn't clear; this will fix it eventually
+			if (child.age >= 0){
+				if (population[child.mother] && population[child.mother].isPregnant
+					&& population[child.mother].isPregnant == childName ){
+					delete population[child.mother].isPregnant
+				}
+			}
+			if (4 > child.age && child.age >=  0 && population[child.mother] ){
+				if ( ! population[child.mother].nursing){
+					population[child.mother].nursing = []
+				}
+				if (population[child.mother].nursing.indexOf(childName) == -1){
+					population[child.mother].nursing.push( child.name)
+				}
+			}
+			if (child.age >= 4 // 2 years in SEASONS
+					&& population[child.mother] && population[child.mother].nursing 
+					&&  population[child.mother].nursing.indexOf(childName) > -1 ){
+				childIndex = population[child.mother].nursing.indexOf(childName)
+				population[child.mother].nursing.splice(childIndex, 1);
+				response += child.name+' is weaned.\n'
+				if (population[child.mother].nursing && population[child.mother].nursing.length == 0){
+					delete population[child.mother].nursing 
+				}
+			}
+		}
+		if (child.age >= 24 && ! child.newAdult ){
+			child.newAdult = true
+			response += child.name+' has reached adulthood!\n'
+			// clear all guardians
+			for  (var name in population) {
+				player = population[name]
+				if (player.guarding && player.guarding.includes(child.name)){
+					const index = player.guarding.indexOf(child.name);
+					if (index > -1) {
+						player.guarding.splice(index, 1);
+						response += name+' stops watching the new adult.\n'
+					}
+				}
+			}
+			for (var sitterName in children){
+				sitter = children[sitterName]
+				if (sitter.babysitting && sitter.babysitting == child.name){
+					delete sitter.babysitting
+					response += sitter.name +" stops watching the new adult.\n"
+				}
+			}
+		}
+	}
+	// clean up the dead
+	perishedCount = perishedChildren.length;
+	for (var i = 0; i < perishedCount; i++) {
+		corpse = perishedChildren[i]
+		killlib.kill(perishedChildren[i], 'starvation', gameState)
+		console.log('removing child corpse '+corpse)
+	}
+	if ((perishedChildren.length) == 0 ){
+		response += 'No children starved!'
+	}
+	return response;
+}
+module.exports.consumeFoodChildren = consumeFoodChildren

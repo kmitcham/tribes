@@ -53,7 +53,7 @@ function matingObjections(inviter, target){
 }
 module.exports.matingObjections = matingObjections;
 
-function showMatingLists(actorName, gameState, bot){
+function showMatingLists(actorName, gameState){
     response = "";
     actor = util.personByName(actorName, gameState)
     if (!actor){
@@ -77,7 +77,6 @@ function showMatingLists(actorName, gameState, bot){
         actor.declineList = []
         response += "Your declineList is empty\n"
     }
-    util.messagePlayerName(actorName, response, gameState, bot);
     return response
 }
 module.exports.showMatingLists = showMatingLists  ;
@@ -676,3 +675,36 @@ function addDrone(gameState, bot, gender, profession, droneName){
       gameState.population[droneName] = droneData;
 }
 module.exports.addDrone = addDrone;
+
+function startReproduction(gameState, client){
+	// actually consume food here
+	savelib.archiveTribe(gameState);
+	gameState.needChanceRoll = true  // this magic boolean prevents starting work until we did chance roll
+	gameState.workRound = false
+	gameState.foodRound = false
+	gameState.reproductionRound = true
+	delete gameState.enoughFood 
+	foodMessage = consumeFood(gameState)
+	savelib.saveTribe(gameState);
+	util.messageChannel(foodMessage+'\n', gameState, bot)
+	util.messageChannel('\n==> Starting the Reproduction round; invite other tribe members to reproduce.<==', gameState, bot)
+	util.messageChannel('After chance, the tribe can decide to move to a new location, but the injured and children under 2 will need 2 food', gameState, bot)
+	if (gameState.secretMating){
+		reproLib.rememberInviteLists(gameState, bot);
+		gameState.doneMating = false;
+		reproLib.globalMatingCheck(gameState, bot)
+		if (reproLib.canStillInvite(gameState)){		
+			util.messageChannel('(awaiting invitations or !pass from '+reproLib.canStillInvite(gameState)+')', gameState, bot)
+		}
+	} else {
+		namelist = createReproductionList(gameState)
+		util.messageChannel("Invitation order: "+shuffle(namelist), gameState, bot)
+		gameState.reproductionList = nameList
+		util.messageChannel(gameState.reproductionList[0]+ " should now !invite people to reproduce, or !pass ", gameState, bot)
+	}
+	util.decrementSickness(gameState.population, gameState, bot)
+	savelib.saveTribe(gameState);
+	allGames[gameState.name] = gameState;
+	return
+}
+module.exports.startReproduction = startReproduction;

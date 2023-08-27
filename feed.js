@@ -1,9 +1,9 @@
 const util = require("./util.js");
 
-module.exports.feed = ( msg, player, amount, childList,  gameState) =>{
+function feed( msg, player, amount, childList,  gameState){
         children = gameState.children;
+        message = player.name +' starts to feed children:\n';
         var showErrors = true;
-        message = ''
         for (cName of childList){
             childName = capitalizeFirstLetter(cName)
             amount = Number(amount)
@@ -35,15 +35,15 @@ module.exports.feed = ( msg, player, amount, childList,  gameState) =>{
             }
             child = children[childName]
             if (  Number(child.food) >= 2 ){
-                if (showErrors){msg.author.send(childName+' has enough food already.')}
+                if (showErrors){util.ephemeralResponse(msg, childName+' has enough food already.')}
                 continue
             }
             if ( (child.food + amount) > 2 ){
-                if (showErrors){msg.author.send(childName+' does not need to eat that much.')}
+                if (showErrors){util.ephemeralResponse(msg, childName+' does not need to eat that much.')}
                 continue
             }
             if ( child.newAdult && child.newAdult == true){
-                if (showErrors){msg.author.send(childName+' is all grown up and does not need food from you.')}
+                if (showErrors){util.ephemeralResponse(msg, childName+' is all grown up and does not need food from you.')}
                 continue
             }
             var fed = 0
@@ -62,12 +62,14 @@ module.exports.feed = ( msg, player, amount, childList,  gameState) =>{
                 }
                 message += '\n'
             } else {
-                msg.author.send('You do not have enough food or grain to feed '+childName)
+                util.ephemeralResponse(msg, 'You do not have enough food or grain to feed '+childName)
                 break;
             }
         }
+        console.log("message is "+message);
         return message;
 };	
+module.exports.feed = feed;
 
 function capitalizeFirstLetter(string) {
         return string.charAt(0).toUpperCase() + string.slice(1);
