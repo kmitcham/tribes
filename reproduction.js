@@ -183,29 +183,28 @@ function handleReproductionList(actorName, args, listName, gameState, bot){
 module.exports.handleReproductionList = handleReproductionList;
 
 
-function invite(msg, gameState, bot){
-    author = msg.author
+function invite(interaction, gameState){
+    author = interaction.user.displayName;
     console.log('author '+author)
     actorName = util.removeSpecialChars(author.username)
     console.log('actorName:'+actorName)
     person = util.personByName(actorName, gameState)
     if (!person){
-        msg.author.send("Can not find you in the tribe, sorry")
-        return
+        return "Can not find you in the tribe, sorry"
     }
     if (person.cannotInvite){
-        util.messagePlayerName(actorName
-            , "Your invitations for this season are used up.  You will be able to edit your invites for next season after the work round starts."
-            , gameState,bot)
-        return;
+        message = 
+             "Your invitations for this season are used up.  You will be able to edit your invites for next season after the work round starts."
+            , gameState,bot
+        return message;
     }
     if (person.isPregnant && gameState.children[person.isPregnant] && gameState.children[person.isPregnant].age == -2){
-        util.messagePlayerName(actorName, "You are already pregnant, and will not invite this round.", gameState,bot)
+        return "You are already pregnant, and will not invite this round.", gameState,bot;
     }
-    let messageArray = msg.content.split(" ");
-    messageArray.shift();
+    var rawList = interaction.options.getString('invitelist');
+    let messageArray = rawList.split(" ");
     handleReproductionList(actorName, messageArray, "inviteList",gameState, bot )
-    return globalMatingCheck(gameState, bot);
+    return globalMatingCheck(gameState, interaction);
 }
 module.exports.invite = invite;
 
@@ -283,7 +282,7 @@ function sortCommitFirst(a,b){
 }
 
 
-function globalMatingCheck(gameState, bot){
+function globalMatingCheck(gameState, interaction){
     allDone = true;
     actionableInvites = true;
     if (! gameState.reproductionRound){
