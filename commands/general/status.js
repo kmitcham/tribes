@@ -12,6 +12,9 @@ module.exports = {
 };
 
 function onCommand(interaction, gameState){
+	if (!gameState){
+		return util.ephemeralResponse(interaction, "Not in a tribe")
+	}
     var response = util.gameStateMessage(gameState)
 	return util.ephemeralResponse(interaction, response)
 }

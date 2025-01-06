@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const util = require("../../util.js");
+const utillib = require("../../util.js");
 const savelib = require("../../save.js");
 
 module.exports = {
@@ -40,19 +40,23 @@ function induct(interaction, gameState){
     targetObject = interaction.options.getMember('target')
     var targetName = targetObject.displayName;
     var gender = interaction.options.getString('gender')
-    var profession = interaction.option.getString('profession')
-    var sourceName = interaction.user.displayName;
+    var profession = interaction.options.getString('profession')
+    var sourceName = interaction.user.username;
     var population = gameState.population;
-
+	
     var chief = population[sourceName]
-    if (!chief || !chief.isChief){
+	
+    if (!chief || !chief.chief){
         response = "You must be chief to induct a member"
-        return onError(interaction, response)
+        interaction.reply({content:response, ephemeral:true});
+        return
     }
+	console.log("message b")
 
     // check if person is in tribe
     if (targetName in population ) {
-        return onError(targetName+" is already in the tribe")
+        interaction.reply({content:targetName+" is already in the tribe", ephemeral:true});
+        return
     }
     var person = {}
 	person.gender = gender
@@ -61,26 +65,30 @@ function induct(interaction, gameState){
 	person.basket = 0
 	person.spearhead = 0
 	person.handle = targetObject
-	person.name = target
-	var strRoll = util.roll(1)
-	response = 'added '+target+' '+gender+' to the tribe. '
+	person.name = targetName
+	var strRoll = utillib.roll(1)
+	response = 'added '+targetName+' '+gender+' to the tribe. '
 	if (strRoll == 1){
 		person.strength = 'weak'
-		response+= target +' is weak.'
+		response+= targetName +' is weak.'
 	} else if (strRoll == 6){
 		person.strength = 'strong'
-		response+= target +' is strong.'
+		response+= targetName +' is strong.'
 	} 
-	gameState.population[target] = person
+    targetObject.send(sourceName+" inducts you into the tribe.")
+	gameState.population[targetName] = person
 	if (profession){
-		util.specialize(msg, target, profession, gameState)
+		helpMessage = utillib.specialize(targetName, profession, gameState)
+        targetObject.send(helpMessage)
 	}
-	util.messageChannel(response, gameState, bot)
+    console.log("message d")
+
+    interaction.reply({content:response, ephemeral:false});
 	savelib.saveTribe(gameState);
 	if (!person.strength){
-		util.messagePlayerName(target, "You are of average strength", gameState, bot)
+		targetObject.send("You are of average strength")
 	}
-	util.history(target, "Joined the tribe", gameState)
+	utillib.history(targetName, "Joined the tribe", gameState)
 
 }
 function onError(interaction, response){

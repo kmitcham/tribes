@@ -73,7 +73,7 @@ function loadJson(fileName) {
 module.exports.loadJson = loadJson;
 
 function loadTribe(tribeName){
-    fileName = './'+tribeName+".json";
+    fileName = './'+tribeName+'/'+tribeName+".json";
     if (fs.existsSync(fileName)) {
         try {
             gameState = loadJson(fileName)
@@ -125,7 +125,7 @@ async function saveGameState(gameState, fileName){
     var d = new Date();
     var saveTime = d.toISOString();
     gameState.lastSaved = saveTime;
-    saveFileName = './'+fileName+".json"
+    saveFileName = './'+fileName+'/'+fileName+".json"
 	redundantSave(saveFileName, gameState)
     try {
         checkGame = loadJson(saveFileName) 

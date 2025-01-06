@@ -1,7 +1,7 @@
 const violencelib = require("./violence.js");
 const killlib = require("./kill.js");
 const reproLib = require("./reproduction.js");
-const { EmbedBuilder } = require('discord.js');
+const { Client, EmbedBuilder } = require('discord.js');
 
 var referees = ["kevinmitcham", "@kevinmitcham"]
 module.exports.referees = referees;
@@ -176,7 +176,8 @@ async function messagePlayerName(playerName, message, gameState, bot){
 	}
 	if (player.handle && player.handle.id){
 		playerId = player.handle.id
-		playerUser =  await bot.users.fetch(playerId);
+		playerUser = await bot.users.fetch(playerId);
+		console.log("message 4 ", playerUser)
 		playerUser.send(message);
 	} else {
 		console.log(playerName+" has no handle or id- maybe a drone? ")
@@ -241,6 +242,10 @@ function round(number){
 module.exports.round = round;
 
 function removeSpecialChars(strVal){ 
+	if (! strVal){
+		console.log("empty value to remove special chars")
+		return ""
+	}
 	return strVal.replace(/[^!a-zA-Z0-9_]+/g,'');
 }
 module.exports.removeSpecialChars = removeSpecialChars;
@@ -265,10 +270,10 @@ module.exports.messageChannel = messageChannel;
 
 function ephemeralResponse(interaction, response){
     interaction.user.send(response);
-        const embed = new EmbedBuilder().setDescription(response);
-		interaction.reply({ embeds: [embed], ephemeral: true })
+    const embed = new EmbedBuilder().setDescription(response);
+	interaction.reply({ embeds: [embed], ephemeral: true })
 			.catch(console.error);
-        return
+    return
 }
 module.exports.ephemeralResponse = ephemeralResponse;
 
@@ -476,18 +481,18 @@ function consumeFoodChildren(gameState){
 }
 module.exports.consumeFoodChildren = consumeFoodChildren
 
-function specialize( msg, playerName, profession, gameState){
-	profession = bits[1]
-	helpMessage = "Welcome new hunter.  \n"
-	helpMessage+= "To hunt, do !hunt and the bot rolls 3d6.  Higher numbers are bigger animals, and very low numbers are bad - you could get injured. \n"
-	helpMessage+= "You cannot guard children while hunting. \n"
-	helpMessage+= "Before you set out, you might consider waiting for a crafter to make you a spearhead which gives you a bonus to your roll. \n"
-	helpMessage+= "You can also `!gather`, but at a penalty. If your tribe has someone who knows how to craft, you can try to learn that skill with `!train`";
+function specialize(playerName, profession, gameState){
+	helpMessage = "Welcome new tribe member.  \n"
+	helpMessage+= "You need to pick a profession to specialize in: hunter, gatherer or crafter. \n"
 
 	if (profession.startsWith('h')){
 		profession = 'hunter'
-		// use default helpMessage
-	}
+		helpMessage = "Welcome new hunter.  \n"
+		helpMessage+= "To hunt, do !hunt and the bot rolls 3d6.  Higher numbers are bigger animals, and very low numbers are bad - you could get injured. \n"
+		helpMessage+= "You cannot guard children while hunting. \n"
+		helpMessage+= "Before you set out, you might consider waiting for a crafter to make you a spearhead which gives you a bonus to your roll. \n"
+		helpMessage+= "You can also `!gather`, but at a penalty. If your tribe has someone who knows how to craft, you can try to learn that skill with `!train`";
+		}
 	if (profession.startsWith('c')){
 		profession = 'crafter';
 		helpMessage = "Welcome new crafter.  To craft, do `!craft basket` or `!craft spearhead`.  There is a 1/6 (basket) or 1/3 (spearhead) chance of failing.. \n"
@@ -502,17 +507,9 @@ function specialize( msg, playerName, profession, gameState){
 		helpMessage+= "Before you set out, you might consider waiting for a crafter to make you a basket which gives you an additional gather attempt. \n"
 		helpMessage+= "You can also `!hunt`, but at a penalty. If your tribe has someone who knows how to craft, you can try to learn that skill with `!train`";
 	}
-	if ( !profession || !professions.includes(profession)){
-		msg.author.send('usage:!'+bits[0]+' [hunter|gatherer|crafter] ')
-		return
-	}
-	var person = util.personByName(playerName, gameState)
-	if (!person){
-		msg.author.send(playerName +', you are not in this tribe.')
-		return
-	}
+
+	var person = personByName(playerName, gameState)
 	person.profession = profession
-	util.messageChannel(playerName+ ' is a skilled '+profession, gameState, bot)
 	if (person.profession == 'crafter'){
 		person.canCraft = true
 	}

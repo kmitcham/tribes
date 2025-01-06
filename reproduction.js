@@ -6,6 +6,7 @@ const allNames = require('./names.json');
 
 function eligibleMates(name, population, debug=false){
 	matcher = population[name]
+    cleanName = name;
 	var potentialMatches = []
     var response = ""
 	if (!matcher){
@@ -109,23 +110,23 @@ function checkCompleteLists(gameState, bot){
 }
 
 
-function handleReproductionList(actorName, args, listName, gameState, bot){
+function handleReproductionList(actorName, args, listName, gameState, interaction){
     console.log("Building "+listName+" for "+actorName+" args "+args)
     actor = util.personByName(actorName, gameState);
     if (!args || args.length == 0){
         delete actor[listName]
-        util.messagePlayerName(actorName,"Deleting your empty "+listName, gameState, bot);
-        return;
+        return "Deleting your empty "+listName
     }
     population = gameState.population
     errors = []
     list = []
     save = false;
     for (rawTargetName of args){
+        console.log("arg: "+rawTargetName)
         localErrors = "";   
         rawTargetName = util.removeSpecialChars(rawTargetName)     
         if (rawTargetName.toLowerCase() == "!pass"){
-            console.log("Detected pass at position "+args.indexOf(rawTargetName)+" of "+(args.length -1));
+            console.log("Detected pass at position "+(args.indexOf(rawTargetName)+1)+" of "+(args.length));
             if (listName == 'inviteList'){
                 if (args.indexOf(rawTargetName) != (args.length -1)){
                     errors.push("Values after '!pass' must be removed.\n")
@@ -163,22 +164,21 @@ function handleReproductionList(actorName, args, listName, gameState, bot){
             }
         }
     }
+    returnMessage = ""
     if (errors.length > 0){
         console.log(actorName+" "+listName+" has errors:"+errors)
         for (error of errors){
-            util.messagePlayerName(actorName, error, gameState, bot)
+            returnMessage += error+"\n"
         }
         // clean up message?
-        util.messagePlayerName(actorName,"Please try again to set the "+listName, gameState, bot)
-        return -1 * errors.length;
+        returnMessage += ("Please try again to set the "+listName +"\n")
     }
     actor[listName] = list;
-    util.messagePlayerName(actorName, "Setting your "+listName+" list to:"+list, gameState, bot)
+    returnMessage += ("Setting your "+listName+" list to:"+list+"\n")
     if (save){
-        actor.saveInviteList = [...actor.inviteList]
-        util.messagePlayerName(actorName, "Saving your "+listName+" list be used in future rounds", gameState, bot)
+        returnMessage += ("Saving your "+listName+" list be used in future rounds")
     }
-    return 0;
+    return returnMessage;
 }
 module.exports.handleReproductionList = handleReproductionList;
 
@@ -186,7 +186,7 @@ module.exports.handleReproductionList = handleReproductionList;
 function invite(interaction, gameState){
     author = interaction.user.displayName;
     console.log('author '+author)
-    actorName = util.removeSpecialChars(author.username)
+    actorName = util.removeSpecialChars(author)
     console.log('actorName:'+actorName)
     person = util.personByName(actorName, gameState)
     if (!person){
@@ -195,16 +195,18 @@ function invite(interaction, gameState){
     if (person.cannotInvite){
         message = 
              "Your invitations for this season are used up.  You will be able to edit your invites for next season after the work round starts."
-            , gameState,bot
         return message;
     }
     if (person.isPregnant && gameState.children[person.isPregnant] && gameState.children[person.isPregnant].age == -2){
-        return "You are already pregnant, and will not invite this round.", gameState,bot;
+        return "You are already pregnant, and will not invite this round.";
     }
     var rawList = interaction.options.getString('invitelist');
     let messageArray = rawList.split(" ");
-    handleReproductionList(actorName, messageArray, "inviteList",gameState, bot )
-    return globalMatingCheck(gameState, interaction);
+    console.log('got messageArray:'+messageArray)
+    message = handleReproductionList(actorName, messageArray, "inviteList",gameState,interaction )
+    message += globalMatingCheck(gameState, interaction);
+    console.log("message at end of reprolib invite:"+message)
+    return message
 }
 module.exports.invite = invite;
 

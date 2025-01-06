@@ -4,7 +4,7 @@ const util = require("../../util.js");
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('law')
-		.setDescription('Show the dead of the laws, as set down by the chief')
+		.setDescription('Show all of the laws, as set down by the chief')
         ,
     async execute(interaction, gameState) {
         doCommand(interaction, gameState)

@@ -30,6 +30,7 @@ for (const folder of commandFolders) {
 		const filePath = path.join(commandsPath, file);
 		const command = require(filePath);
 		if ('data' in command && 'execute' in command) {
+			console.log("setting command "+filePath)
 			client.commands.set(command.data.name, command);
 		} else {
 			console.log(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
@@ -56,7 +57,6 @@ client.once('disconnect', () => {
 });
 
 client.on(Events.InteractionCreate, async interaction => {
-	//console.log("got an event")
 	if (!interaction.isChatInputCommand()) return;
 
 	const command = client.commands.get(interaction.commandName);
@@ -74,19 +74,24 @@ client.on(Events.InteractionCreate, async interaction => {
             }
             allGames[channel.name] = gameState;
         }
-    }
+    } else {
+		interaction.reply("Commands need to be in tribe channels");
+		return;
+	}
 
 	try {
-		await command.execute(interaction, gameState);
+		await command.execute(interaction, gameState, client);
 	} catch (error) {
-        console.log("there was an error in that command");
+        console.log("there was an error in that command:",interaction.commandName);
 		console.error(error);
 		if (interaction.replied || interaction.deferred) {
-			await interaction.followUp({ content: 'There was an error while executing this command!', ephemeral: true });
+			await interaction.followUp({ content: 'Followup: There was an error while executing this command!', ephemeral: true });
 		} else {
-			await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+			await interaction.reply({ content: 'Reply: There was an error while executing this command!', ephemeral: true });
 		}
 	}
+	savelib.saveTribe(gameState);
+	console.log("saved game state after "+interaction.commandName+ " by "+interaction.member.displayName+" of "+channel.name)
 });
 
 client.login(token);
