@@ -112,12 +112,9 @@ function redundantSave(fileName, jsonData){
 			console.log('checked data match')
 		} else {
 			console.log('checked data did not match')
-			redundantSave(fileName, jsonData)
 		}
 	} catch (err){
 		console.log('save failed. '+err)
-		console.log('redundant save unlinking file and trying again')
-		redundantSave(fileName, jsonData)
 	}
     console.log(fileName+" saved!");
 }
@@ -125,7 +122,9 @@ async function saveGameState(gameState, fileName){
     var d = new Date();
     var saveTime = d.toISOString();
     gameState.lastSaved = saveTime;
+	console.log("trying to save "+fileName);
     saveFileName = './'+fileName+'/'+fileName+".json"
+	console.log("trying to save "+fileName+" as "+saveFileName);
 	redundantSave(saveFileName, gameState)
     try {
         checkGame = loadJson(saveFileName) 

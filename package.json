@@ -12,6 +12,7 @@
     "test": "jest"
   },
   "dependencies": {
+    "discord-api-types": "^0.37.116",
     "discord.io": "^2.5.3",
     "discord.js": "^14.12.1",
     "eslint": "^7.5.0",

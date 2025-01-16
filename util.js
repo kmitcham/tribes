@@ -177,7 +177,6 @@ async function messagePlayerName(playerName, message, gameState, bot){
 	if (player.handle && player.handle.id){
 		playerId = player.handle.id
 		playerUser = await bot.users.fetch(playerId);
-		console.log("message 4 ", playerUser)
 		playerUser.send(message);
 	} else {
 		console.log(playerName+" has no handle or id- maybe a drone? ")
