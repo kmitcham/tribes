@@ -4,7 +4,7 @@ const savelib = require("../../save.js");
 
 module.exports = {
 	data: new SlashCommandBuilder()
-		.setName('Open')
+		.setName('open')
 		.setDescription('Set the tribe so that anyone can join.')
         ,
     async execute(interaction, gameState, bot) {

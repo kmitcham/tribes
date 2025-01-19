@@ -11,18 +11,20 @@ module.exports = {
             .setName('profession')
             .setDescription('one of (hunt, gather, craft)')
             .setRequired(true)),
-    async execute(interaction, gameState) {
-        onCommand(interaction, gameState)
+    async execute(interaction, gameState, bot) {
+        const actor = interaction.member;
+        const profession = interaction.options.getString('profession')
+        message = specialize(actor, gameState, bot, profession)
+        interaction.reply(message)
 	},
 };
 
-function onCommand(interaction, gameState){
+function onCommand(joiner, gameState, bot, profession){
     var profession = 'invalid';
-    var actorName = interaction.user.displayName;
+    var actorName = joinder.displayName;
     var person = gameState.population[actorName]
 
-    if (interaction.options.getString('profession')){
-        profession = interaction.options.getString('profession');
+    if (profession ){
         if (profession.toLowerCase().startsWith('c')){
             profession = 'crafter'
         } else if (profession.toLowerCase().startsWith('h')){
@@ -30,21 +32,19 @@ function onCommand(interaction, gameState){
         } else if (profession.toLowerCase().startsWith('g')){
             profession = 'gatherer'
         } else {
-            return util.ephemeralResponse(interaction, "No such profession as "+profession+" Legal professions: hunter, gatherer, crafter")
+            return "No such profession as "+profession+" Legal professions: hunter, gatherer, crafter"
         }
     }
 
 	if (!person ){
-        util.ephemeralResponse(interaction, 'You must be in the tribe to specialize')
-		return
+        return 'You must be in the tribe to specialize'
 	}
 	if (person.profession){
-		util.ephemeralResponse(interaction, 'You already have a profession:'+person.profession)
-		return
+		return  'You already have a profession:'+person.profession
 	}
-	helpMessage = util.specialize(null, actorName, profession, gameState)
-	interaction.reply(actorName +" is a skilled "+profession);
+	helpMessage = util.specialize(actorName, profession, gameState)
+    util.messagePlayerName(actorName, helpMessage, bot)
     savelib.saveTribe(gameState);
+	return actorName +" is a skilled "+profession;
 
-    return util.ephemeralResponse(interaction, helpMessage);
 }

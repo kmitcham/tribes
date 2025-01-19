@@ -184,7 +184,7 @@ async function messagePlayerName(playerName, message, gameState, bot){
 }
 module.exports.messagePlayerName = messagePlayerName
 
-module.exports.gameStateMessage= (gameState) =>{
+module.exports.gameStateMessage = (gameState) =>{
 	var numAdults = (Object.keys(gameState.population)).length
 	var numKids = (Object.keys(gameState.children)).length
 	var message = "Year "+(gameState.seasonCounter/2)+', '
@@ -218,6 +218,52 @@ module.exports.gameStateMessage= (gameState) =>{
 	}
 	return message
 }
+
+function addToPopulation(gameState, bot, actor, gender, profession){
+    var sourceName = actor.username;
+    console.log("actor is "+actor+" actor.username:"+actor.username)
+    target = util.removeSpecialChars(sourceName)
+    if (gameState.population[target]){
+        return 'You are already in the tribe'
+    }
+    genders = ['male','female']
+    if (gender === 'm'){gender = 'male'}
+    if (gender === 'f'){gender = 'female'}
+    if ( !target || !gender || !genders.includes(gender) ){
+        actor.send('usage: jointribe [female|male] [hunter|gatherer|crafter]')
+        return
+    }
+    var person = {};
+    person.gender = gender;
+    person.food = 10;
+    person.grain = 4;
+    person.basket = 0;
+    person.spearhead = 0;
+    person.handle = actor;
+    person.name = sourceName;
+    if (profession){
+        person.profession = profession;
+    }
+    var strRoll = util.roll(1);
+    response = 'added '+target+' '+gender+' to the tribe. ';
+    if (strRoll == 1){
+        person.strength = 'weak'
+        response+= target +' is weak.'
+    } else if (strRoll == 6){
+        person.strength = 'strong';
+        response+= target +' is strong.';
+    } 
+    gameState.population[target] = person;
+    util.messageChannel(response, gameState, bot);
+    if (!person.strength){
+        util.messagePlayerName(person.name, "You are of average strength", gameState, bot);
+    }
+    util.history(person.name, "Joined the tribe", gameState);
+    savelib.archiveTribe(gameState);
+    return "The tribe accepts you"
+}
+module.exports.addToPopulation = addToPopulation;
+
 
 function capitalizeFirstLetter(string) {
 	return string.charAt(0).toUpperCase() + string.slice(1);

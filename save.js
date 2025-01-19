@@ -88,7 +88,7 @@ function loadTribe(tribeName){
 }
 module.exports.loadTribe = loadTribe;
 
-function redundantSave(fileName, jsonData){
+function actuallyWriteToDisk(fileName, jsonData){
 	jsonString = JSON.stringify(jsonData,null,2), err => { 
 		// Checking for errors 
 		if (err) {
@@ -118,14 +118,15 @@ function redundantSave(fileName, jsonData){
 	}
     console.log(fileName+" saved!");
 }
-async function saveGameState(gameState, fileName){
+async function saveGameState(gameState, tribeName){
     var d = new Date();
     var saveTime = d.toISOString();
+	saveTime = saveTime.replace(/\//g, "-");
     gameState.lastSaved = saveTime;
-	console.log("trying to save "+fileName);
-    saveFileName = './'+fileName+'/'+fileName+".json"
-	console.log("trying to save "+fileName+" as "+saveFileName);
-	redundantSave(saveFileName, gameState)
+	console.log("trying to save "+tribeName);
+    saveFileName = './'+tribeName+'/'+tribeName+".json"
+	console.log("trying to save "+tribeName+" as "+saveFileName);
+	actuallyWriteToDisk(saveFileName, gameState)
     try {
         checkGame = loadJson(saveFileName) 
     } catch(err){
@@ -143,8 +144,10 @@ module.exports.saveTribe = saveTribe;
 async function archiveTribe(gameState){
     var d = new Date();
     var saveTime = d.toISOString();
+	saveTime = saveTime.replace(/\//g, "-");
     gameState.lastSaved = saveTime
     archiveName = gameState.name+'-'+saveTime;
-    saveGameState(gameState, archiveName);
+	saveFileName = './'+gameState.name+'/'+archiveName+".json"
+	actuallyWriteToDisk(saveFileName, gameState)
 }
 module.exports.archiveTribe = archiveTribe;
