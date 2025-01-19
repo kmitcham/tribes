@@ -12,17 +12,18 @@ module.exports = {
                 .setDescription('Which tribe member to vote for')
                 .setRequired(true))
 	,
-    async execute(interaction, gameState) {
-        onCommand(interaction, gameState)
+    async execute(interaction, gameState, bot) {
+		var actorName = interaction.user.displayName
+		var candidateName = interaction.options.getMember('candidate').displayName;
+        vote(interaction, gameState, bot, actorName, candidateName)
+		interaction.reply("You support some as chief of the tribe")
 	},
 };
 
 // TODO: voting should be more public
-function onCommand(interaction, gameState){
-    var actorName = interaction.user.displayName
-    var player = gameState.population[actorName]
-	var candidateName = interaction.options.getMember('candidate').displayName;
-	var candidate = gameState.population[candidateName]
+function vote(interaction, gameState, bot, actorName, candidateName){
+    var player = util.personByName(actorName, gameState)
+	var candidate = util.personByName(candidateName, gameState)
 
     var population = gameState.population;
 
@@ -45,21 +46,22 @@ function onCommand(interaction, gameState){
 		}
 	}
 	console.log("Drone count is "+droneCount);
+	util.messageChannel(actorName+" supports "+candidateName+" as chief", gameState, bot);
+	// count all existing votes
 	if (totalVotes >= (2/3 * (tribeSize-droneCount))){
+		// clear the previous chief
 		for (personName in gameState.population){
 			person = util.personByName(personName, gameState)
-			if (person.chief && actorName != targetName){
+			if (person.chief){
 				delete person.chief
 			}
 		}
-		if (!targetPerson.chief){
-			targetPerson.chief =true
-			interaction.reply(targetName+' is the new chief', gameState, bot)
-		}
+		candidate.chief = true
+		util.history(candidateName, "became chief", gameState);
+		util.messageChannel(candidateName+' is the new chief', gameState, bot)
 	}
 	savelib.saveTribe(gameState);
 
-	util.ephemeralResponse(interaction, targetName+' is your choice for Chief')
-	return
+	return true
 
 }

@@ -71,6 +71,7 @@ function endGame(gameState){
     response += 'The tribe lost '+deadAdults+' members and banished '+banishCount+'.\n';
 	response += 'Count of surviving adults is:'+adultCount+' ('+newAdultCount+' new adults)';
 	response += '\nThe tribe was '+ scoreTribe(gameState);
+    gameState.ended = True
 	savelib.saveTribe(gameState);
 	return response
 }

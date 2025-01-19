@@ -63,14 +63,13 @@ client.on(Events.InteractionCreate, async interaction => {
     if (!command) return;
     let channel = await client.channels.fetch(interaction.channelId);
 	console.log("command "+interaction.commandName+ " by "+interaction.member.displayName+" of "+channel.name);
-    gameState = {}
     if (channel.name.endsWith('tribe')){
         gameState = allGames[channel.name];
         if (!gameState){
             gameState = savelib.loadTribe(channel.name);
-            if (!gameState){
+            if (!gameState || gameState.ended ){
                 console.log('creating game '+channel.name);
-                gameState=savelib.initGame(channel.name);
+				gameState = savelib.initGame(channel.name, client )
             }
             allGames[channel.name] = gameState;
         }
@@ -90,8 +89,9 @@ client.on(Events.InteractionCreate, async interaction => {
 			await interaction.reply({ content: 'Reply: There was an error while executing this command!', ephemeral: true });
 		}
 	}
-	savelib.saveTribe(gameState);
-	console.log("saved game state after "+interaction.commandName+ " by "+interaction.member.displayName+" of "+channel.name)
+	// I don't think I need to save after EVERY command.
+	//savelib.saveTribe(gameState);
+	//console.log("saved game state after "+interaction.commandName+ " by "+interaction.member.displayName+" of "+channel.name)
 });
 
 client.login(token);

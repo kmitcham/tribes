@@ -56,7 +56,7 @@ function addToPopulation(gameState, bot, actor, gender, profession){
         actor.send('You are already in the tribe');
         return
     }
-    genders = ['make','female']
+    genders = ['male','female']
     if (gender === 'm'){gender = 'male'}
     if (gender === 'f'){gender = 'female'}
     if ( !target || !gender || !genders.includes(gender) ){
