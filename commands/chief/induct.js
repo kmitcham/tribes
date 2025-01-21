@@ -5,7 +5,7 @@ const savelib = require("../../save.js");
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('induct')
-		.setDescription('add a person to the tribe')
+		.setDescription('add a person to the tribe. (Chief only')
         .addUserOption(option => 
             option
                 .setName('target')

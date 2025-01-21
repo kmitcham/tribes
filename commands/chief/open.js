@@ -5,7 +5,7 @@ const savelib = require("../../save.js");
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('open')
-		.setDescription('Set the tribe so that anyone can join.')
+		.setDescription('Set the tribe so that anyone can join. (Chief only')
         ,
     async execute(interaction, gameState, bot) {
         var actorName = interaction.user.displayName

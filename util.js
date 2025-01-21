@@ -1,6 +1,8 @@
 const violencelib = require("./violence.js");
 const killlib = require("./kill.js");
 const reproLib = require("./reproduction.js");
+const savelib = require("./save.js");
+
 const { Client, EmbedBuilder } = require('discord.js');
 
 var referees = ["kevinmitcham", "@kevinmitcham"]
@@ -174,9 +176,10 @@ async function messagePlayerName(playerName, message, gameState, bot){
 	if (!"users" in bot){
 		console.log('bot has no users for message :'+message)
 	}
-	if (player.handle && player.handle.id){
-		playerId = player.handle.id
+	if (player.handle && (player.handle.id || player.handle.userId)){
+		playerId = player.handle.id?player.handle.id:player.handle.userId;
 		playerUser = await bot.users.fetch(playerId);
+		console.log("got playerObject "+playerUser)
 		playerUser.send(message);
 	} else {
 		console.log(playerName+" has no handle or id- maybe a drone? ")
@@ -312,6 +315,100 @@ function messageChannel(message, gameState, argBot){
 	}
 }
 module.exports.messageChannel = messageChannel;
+
+function countChildrenOfParentUnderAge(children, parentName, age){
+	var count = 0
+	for (var childName in children){
+		var child = children[childName]
+		if (child.mother == parentName || child.father == parentName){
+			if (child.age < age){
+				count++
+			}
+		}
+	}
+	return count
+}
+module.exports.countChildrenOfParentUnderAge = countChildrenOfParentUnderAge
+
+// Side effect: if everyone has enough food, and it is foodRound, start reproduction round.
+function checkFood(gameState, bot){
+    message = ''
+    hungryAdults = []
+    happyAdults = []
+    worriedAdults = []
+    hungryChildren = []
+    satedChildren = []
+    children = gameState.children
+    population = gameState.population
+    for  (var targetName in population) {
+        person = population[targetName]
+        hunger = 4
+        if (person.gender == 'female' && countChildrenOfParentUnderAge(children, targetName, 4) > 1){
+            hunger = 6
+        }
+        if (person.food >= hunger) {
+            happyAdults.push(targetName);
+        } else if ( ((person.food+person.grain) >= hunger )){
+            worriedAdults.push(targetName);
+        } else {
+            hungryAdults.push(targetName);
+        }
+    }
+    for (var childName in children){
+        var child = children[childName]
+        if (child.newAdult && child.newAdult== true){
+            continue;
+        }
+        if (child.food >= 2 ){
+            satedChildren.push(childName)
+        }else {
+            hungryChildren.push(childName)
+        }
+    }
+    message = 'Happy People: '+happyAdults+", "+satedChildren
+    message += '\nWorried adults: '+worriedAdults
+    message += '\nHungry adults: '+hungryAdults
+    message += '\nHungry children: '+hungryChildren
+    if (!worriedAdults.length && !hungryAdults.length && !hungryChildren.length && gameState.foodRound ){
+        gameState.enoughFood = true
+        messageChannel("Everyone has enough food, starting reproduction automatically.", gameState, bot)
+        startReproduction(gameState,bot)
+    }
+    return message
+}
+module.exports.checkFood = checkFood
+
+function startReproduction(gameState, bot){
+	// actually consume food here
+	savelib.archiveTribe(gameState);
+	gameState.needChanceRoll = true  // this magic boolean prevents starting work until we did chance roll
+	gameState.workRound = false
+	gameState.foodRound = false
+	gameState.reproductionRound = true
+	delete gameState.enoughFood 
+	foodMessage = consumeFood(gameState)
+	savelib.saveTribe(gameState);
+	messageChannel(foodMessage+'\n', gameState, bot)
+	messageChannel('\n==> Starting the Reproduction round; invite other tribe members to reproduce.<==', gameState, bot)
+	messageChannel('After chance, the tribe can decide to move to a new location, but the injured and children under 2 will need 2 food', gameState, bot)
+	if (gameState.secretMating){
+		reproLib.rememberInviteLists(gameState, bot);
+		gameState.doneMating = false;
+		reproLib.globalMatingCheck(gameState, bot)
+		if (reproLib.canStillInvite(gameState)){		
+			messageChannel('(awaiting invitations or !pass from '+reproLib.canStillInvite(gameState)+')', gameState, bot)
+		}
+	} else {
+		namelist = createReproductionList(gameState)
+		messageChannel("Invitation order: "+shuffle(namelist), gameState, bot)
+		gameState.reproductionList = nameList
+		messageChannel(gameState.reproductionList[0]+ " should now !invite people to reproduce, or !pass ", gameState, bot)
+	}
+	decrementSickness(gameState.population, gameState, bot)
+	savelib.saveTribe(gameState);
+	return
+}
+module.exports.startReproduction = startReproduction
 
 function ephemeralResponse(interaction, response){
     interaction.user.send(response);

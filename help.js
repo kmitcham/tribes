@@ -7,7 +7,7 @@ function playerHelpBasic(){
 		text+=' !graveyard (list of all deceased members and children)\n'
 		text+=' !inventory <target|all>  (show inventory and character info. No arg means self)\n'
 		text+=' !laws (see the current list of laws)\n'
-		text+=' !sacrifice <amount> <type>  (place an item beyond use for religious or other reasons)\n'
+		text+=' !sacrifice <amount> <type>  (place an item beyond use for religious or other reasons) [non-standard]\n'
 		text+=' !scout <location> (examine the envionment, default is current location)\n'
 		text+=' !secrets (toggle the state of willingness to teach others to craft)\n'
 		text+=' !specialize <hunter|gatherer|crafter>(at the start of the game)\n'
@@ -56,7 +56,7 @@ function chiefHelp(){
 	text = '\n### Chief Commands ###\n'
 	text+=' !induct|banish <player> (add|remove a tribe member)\n'
 	text+=' !open|close  (toggle if people can join with "!join" or only with "!induct" by the chief)\n'
-	text+=' !drone <gender> <profession> <name>  adds a worker to the tribe that takes commands but is sterile.\n'
+	text+=' !drone <gender> <profession> <name>  adds a worker to the tribe that takes commands but is sterile. [non-standard]\n'
 	text+=' !save (Saves the game. Automatically done at the start of every round)\n'
 	text+=' !startwork (begins the work round, enabling work attempts and rolls)\n'
 	text+=' !startfood (ends the work round; subtract food/grain; birth; child age increase)\n'
@@ -66,7 +66,6 @@ function chiefHelp(){
 	text+=' !decree <law number> <law text> (record a rule for the tribe, or replace the rule of the specified number)\n'
 	text+=' !skip <person>   (end a players reproduction turn)\n'
 	text+=' !checkmating (report on status of mating attempts)\n'
-	text+=' !secretmating (toggle the state of secretmating)\n'
 	text+=' !endgame convert all the child to corpses, or new adults\n'
 
     return text;

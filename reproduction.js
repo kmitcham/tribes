@@ -110,7 +110,7 @@ function checkCompleteLists(gameState, bot){
 }
 
 
-function handleReproductionList(actorName, args, listName, gameState, interaction){
+function handleReproductionList(actorName, args, listName, gameState, bot){
     console.log("Building "+listName+" for "+actorName+" args "+args)
     actor = util.personByName(actorName, gameState);
     if (!args || args.length == 0){
@@ -178,13 +178,14 @@ function handleReproductionList(actorName, args, listName, gameState, interactio
     if (save){
         returnMessage += ("Saving your "+listName+" list be used in future rounds")
     }
+    savelib.saveTribe(gameState)
     return returnMessage;
 }
 module.exports.handleReproductionList = handleReproductionList;
 
 
-function invite(interaction, gameState){
-    author = interaction.user.displayName;
+function invite(author, invitelist, gameState, bot){
+    
     console.log('author '+author)
     actorName = util.removeSpecialChars(author)
     console.log('actorName:'+actorName)
@@ -200,12 +201,21 @@ function invite(interaction, gameState){
     if (person.isPregnant && gameState.children[person.isPregnant] && gameState.children[person.isPregnant].age == -2){
         return "You are already pregnant, and will not invite this round.";
     }
-    var rawList = interaction.options.getString('invitelist');
-    let messageArray = rawList.split(" ");
-    console.log('got messageArray:'+messageArray)
-    message = handleReproductionList(actorName, messageArray, "inviteList",gameState,interaction )
-    message += globalMatingCheck(gameState, interaction);
+    if (! invitelist){
+        console.log("No list found; return existing list")
+        message = "invitelist: "+person.inviteList;
+        return message
+    }
+    console.log('got messageArray:'+invitelist)
+    message = handleReproductionList(actorName, invitelist, "inviteList",gameState,bot )
+    message += globalMatingCheck(gameState, bot);
     console.log("message at end of reprolib invite:"+message)
+    if (person.inviteList){
+        console.log("Invitelist: "+person.inviteList.join(" "))
+    } else {
+
+    }
+    
     return message
 }
 module.exports.invite = invite;
@@ -221,36 +231,27 @@ function intersect(a, b) {
     });
 }
 
-function consent(msg, gameState, bot){
-    author = msg.author
-    actorName = util.removeSpecialChars(author.username)
-    let messageArray = msg.content.split(" ");
-    messageArray.shift();
+function consent(actorName, messageArray,  gameState, bot){
     handleReproductionList(actorName, messageArray, "consentList",gameState, bot )
     person = util.personByName(actorName, gameState);
     intersectList = intersect(person.consentList, person.declineList)
     if (intersectList && intersectList.length > 0){
-        util.messagePlayerName(actorName, "Your consent and decline lists have overlaps.  Consent is checked first.")
+        util.messagePlayerName(actorName, "Your consent and decline lists have overlaps.  Consent is checked first.", bot)
     }
     return globalMatingCheck(gameState, bot)
 }
 module.exports.consent = consent;
 
-function decline(msg, gameState, bot){
-    author = msg.author
-    actorName = util.removeSpecialChars(author.username)
-    let messageArray = msg.content.split(" ");
-    messageArray.shift();
+function decline(actorName, messageArray,  gameState, bot){
     handleReproductionList(actorName, messageArray, "declineList",gameState, bot )
     person = util.personByName(actorName, gameState);
     intersectList = intersect(person.consentList, person.declineList)
     if (intersectList && intersectList.length > 0){
-        util.messagePlayerName(actorName, "Your consent and decline lists have overlaps.  Consent is checked first.")
+        util.messagePlayerName(actorName, "Your consent and decline lists have overlaps.  Consent is checked first.", bot)
     }
     return globalMatingCheck(gameState, bot)
 }
 module.exports.decline = decline;
-   
 
 function pass(msg, gameState, bot){
     author = msg.author
@@ -284,7 +285,7 @@ function sortCommitFirst(a,b){
 }
 
 
-function globalMatingCheck(gameState, interaction){
+function globalMatingCheck(gameState, bot){
     allDone = true;
     actionableInvites = true;
     if (! gameState.reproductionRound){
@@ -379,7 +380,7 @@ function globalMatingCheck(gameState, interaction){
                     continue
                 } else {
                     // this will get spammy, if the function is called every time anyone updates.
-                    util.messagePlayerName(targetName, personName+" has invited you to mate- !consent "+personName+" or !decline "+personName, gameState, bot)
+                    util.messagePlayerName(targetName, personName+" has invited you to mate- update your romance lists to include them (consent or decline) ", gameState, bot)
                     util.messagePlayerName(personName, targetName+" considers your invitation.", gameState, bot)
                     whoNeedsToGiveAnAnswer.push(targetName)
                     doneMating.push(personName)

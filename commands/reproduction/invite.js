@@ -12,44 +12,30 @@ module.exports = {
             .setDescription('add !save to retain the list.  If list ENDS with !pass, give up if the listed players decline.')
         )
         ,
-    async execute(interaction, gameState) {
-        response = onCommand(interaction, gameState)
+    async execute(interaction, gameState, bot) {
+        response = onCommand(interaction, gameState, bot)
         console.log("invite response: "+response)
         interaction.reply({ content: response, ephemeral: true })
 	},
 };
 
-function onCommand(interaction, gameState){
+function onCommand(interaction, gameState, bot){
     var population = gameState.population;
     var sourceName = interaction.user.displayName;
 
     var player = population[sourceName]
     var message = 'error in invite, message not set';
-
-    if (gameState.secretMating){
-        message = reproLib.invite(interaction,  gameState);
-        return message;
-    }
     var rawList = interaction.options.getString('invitelist');
+    if (! rawList ) {
+        if (player.inviteList){
+            return "Current invitelist: "+player.inviteList.join(" ")
+        } else {
+            return "No current inviteList"
+        }
+        
+    }
     let messageArray = rawList.split(" ");
-    inviteMessage = '';
-    if (gameState.reproductionRound && gameState.reproductionList 
-        && gameState.reproductionList[0] && gameState.reproductionList[0].startsWith(actor)){
-    } else {
-        return 'invite is not appropriate now'
-    }
-    if (player.invite){
-        inviteMessage = "The invitation to "+player.invite+" is cancelled. \n"
-    }
-    if (messageArray[0] ){
-        target = util.removeSpecialChars(messageArray[0])
-        if (population[target] ){
-            inviteMessage += sourceName+ ' invites '+target+' to reproduce.  !pass or !consent'
-            player.invite = target
-            return inviteMessage;
-        } 
-    }
-    return ' Empty or unknown target for invite'
-    
-    //TODO msg the invitee  I think this is impossible.
+    console.log("diverting for secret mating");
+    message = reproLib.invite(sourceName, messageArray,  gameState, bot);
+    return message;
 }
