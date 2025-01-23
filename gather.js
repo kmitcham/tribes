@@ -27,7 +27,7 @@ module.exports.gather = (playername, player, rollValue, gameState) => {
 		message+= '-season '
 		modifier -= 3
     }
-	if ( player.profession != 'gatherer'){
+	if ( !player.profession.startsWith('g')){
 		message+=('(-3 skill) ')
 		modifier -= 3
 	}

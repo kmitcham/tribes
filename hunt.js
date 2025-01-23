@@ -56,7 +56,7 @@ module.exports.hunt = (playername, player, rollValue, gameState) =>{
 		message+= '-season '
 		modifier -= 1
     }
-    if (player.profession != 'hunter'){
+    if (!player.profession.startsWith('h')){
         message+= '-skill '
 		modifier -= 3
     }

@@ -13,38 +13,23 @@ module.exports = {
             .setRequired(true)),
     async execute(interaction, gameState, bot) {
         const actor = interaction.member;
+        playerName = actor.displayName?actor.displayName:actor.username
         const profession = interaction.options.getString('profession')
-        message = specialize(actor, gameState, bot, profession)
+        message = filterspecialize(playerName, profession, gameState, bot);
         interaction.reply(message)
 	},
 };
 
-function onCommand(joiner, gameState, bot, profession){
-    var profession = 'invalid';
-    var actorName = joinder.displayName;
-    var person = gameState.population[actorName]
-
-    if (profession ){
-        if (profession.toLowerCase().startsWith('c')){
-            profession = 'crafter'
-        } else if (profession.toLowerCase().startsWith('h')){
-            profession = 'hunter'
-        } else if (profession.toLowerCase().startsWith('g')){
-            profession = 'gatherer'
-        } else {
-            return "No such profession as "+profession+" Legal professions: hunter, gatherer, crafter"
-        }
+function filterspecialize(playername, profession, gameState, bot){
+    player = util.personByName(playername, gameState);
+    if (! player){
+        console.log("no player found for "+playername)
+        return "You must join the tribe to specialize"
     }
-
-	if (!person ){
-        return 'You must be in the tribe to specialize'
-	}
-	if (person.profession){
-		return  'You already have a profession:'+person.profession
-	}
-	helpMessage = util.specialize(actorName, profession, gameState)
-    util.messagePlayerName(actorName, helpMessage, bot)
+    if (player.profession){
+        return "You already have a profession"
+    }
+    message = util.specialize(playerName, profession, gameState, bot)
     savelib.saveTribe(gameState);
-	return actorName +" is a skilled "+profession;
-
+    
 }

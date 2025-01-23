@@ -120,6 +120,7 @@ function personByName(name, gameState){
 		for (match in population){
 			if ( (population[match] && population[match].handle) ){
 				if ( population[match].handle.username == name 
+					|| population[match].handle.displayName == name
 					|| population[match].handle.username == name.username
 					|| population[match].handle.id == name){
 					person = population[match]
@@ -179,7 +180,6 @@ async function messagePlayerName(playerName, message, gameState, bot){
 	if (player.handle && (player.handle.id || player.handle.userId)){
 		playerId = player.handle.id?player.handle.id:player.handle.userId;
 		playerUser = await bot.users.fetch(playerId);
-		console.log("got playerObject "+playerUser)
 		playerUser.send(message);
 	} else {
 		console.log(playerName+" has no handle or id- maybe a drone? ")

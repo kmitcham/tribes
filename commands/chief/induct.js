@@ -25,9 +25,9 @@ module.exports = {
                 .setName('profession')
                 .setDescription('one of (hunter, gatherer, crafter)')
                 .addChoices(
-                    { name: 'hunter', value: 'h' },
-                    { name: 'crafter', value: 'c' },
-                    { name: 'gatherer', value: 'g' },
+                    { name: 'hunter', value: 'hunter' },
+                    { name: 'crafter', value: 'crafter' },
+                    { name: 'gatherer', value: 'gatherer' },
                 )
                 .setRequired(false))
         ,
@@ -41,7 +41,7 @@ function induct(interaction, gameState){
     var targetName = targetObject.displayName;
     var gender = interaction.options.getString('gender')
     var profession = interaction.options.getString('profession')
-    var sourceName = interaction.user.username;
+    var sourceName = interaction.user.displayName;
     var population = gameState.population;
 	
     var chief = population[sourceName]

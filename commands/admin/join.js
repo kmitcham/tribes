@@ -20,9 +20,9 @@ module.exports = {
                 .setName('profession')
                 .setDescription('one of (hunter, gatherer, crafter)')
                 .addChoices(
-                    { name: 'hunter', value: 'h' },
-                    { name: 'crafter', value: 'c' },
-                    { name: 'gatherer', value: 'g' },
+                    { name: 'hunter', value: 'hunter' },
+                    { name: 'crafter', value: 'crafter' },
+                    { name: 'gatherer', value: 'gatherer' },
                 )
                 .setRequired(false))
         ,
