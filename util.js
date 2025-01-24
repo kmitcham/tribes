@@ -64,34 +64,6 @@ function getYear(gameState){
 	return gameState.seasonCounter/2;
 }
 
-async function updateNicknames(guild, gameState){
-	population = gameState.population
-	if (!guild){
-		return
-	}
-	members = guild.members
-	for (personName in population){
-		person = population[personName]
-		if (person && person.handle && person.handle.id){
-			try {
-				var id = person.handle.id
-				var someMember;
-				await members.fetch(id)
-					.then(function(value){
-						someMember = value
-					})
-					.catch(console.error);
-				nickname = someMember.nickname
-				gameState.population[personName].nickname = nickname
-			} catch (err){
-				console.log(personName+" failure getting nickname "+err)
-			}
-		}
-	}
-	return gameState;
-}
-module.exports.updateNicknames = updateNicknames
-
 function personByName(name, gameState){
 	if (name == null){
 		console.log('attempt to find person for null name ')
@@ -151,7 +123,8 @@ function personByName(name, gameState){
 	console.log("tribe "+gameState.name+" has no such person in population. tried "+name+" and "+name.toUpperCase())
 	return null
 }
-module.exports.history = (playerName, message, gameState)=>{
+
+function history (playerName, message, gameState){
 	player = personByName(playerName, gameState)
 	if (player && !player.history){
 		player.history = []
@@ -162,7 +135,7 @@ module.exports.history = (playerName, message, gameState)=>{
 	}
 	player.history.push(gameState.seasonCounter/2+": "+message)
 }
-
+module.exports.history = history
 
 async function messagePlayerName(playerName, message, gameState, bot){
 	player = personByName(playerName, gameState);
@@ -187,7 +160,7 @@ async function messagePlayerName(playerName, message, gameState, bot){
 }
 module.exports.messagePlayerName = messagePlayerName
 
-module.exports.gameStateMessage = (gameState) =>{
+function gameStateMessage(gameState) {
 	var numAdults = (Object.keys(gameState.population)).length
 	var numKids = (Object.keys(gameState.children)).length
 	var message = "Year "+(gameState.seasonCounter/2)+', '
@@ -221,11 +194,17 @@ module.exports.gameStateMessage = (gameState) =>{
 	}
 	return message
 }
+module.exports.gameStateMessage = gameStateMessage
+
+function getNameFromUser(actor){
+	return  actor.displayName?actor.displayName:actor.username;
+}
+module.exports.getNameFromUser = getNameFromUser;
 
 function addToPopulation(gameState, bot, actor, gender, profession){
-    var sourceName = actor.username;
+    var sourceName = getNameFromUser(actor)
     console.log("actor is "+actor+" actor.username:"+actor.username)
-    target = util.removeSpecialChars(sourceName)
+    target = removeSpecialChars(sourceName)
     if (gameState.population[target]){
         return 'You are already in the tribe'
     }
@@ -247,7 +226,7 @@ function addToPopulation(gameState, bot, actor, gender, profession){
     if (profession){
         person.profession = profession;
     }
-    var strRoll = util.roll(1);
+    var strRoll = roll(1);
     response = 'added '+target+' '+gender+' to the tribe. ';
     if (strRoll == 1){
         person.strength = 'weak'
@@ -257,12 +236,12 @@ function addToPopulation(gameState, bot, actor, gender, profession){
         response+= target +' is strong.';
     } 
     gameState.population[target] = person;
-    util.messageChannel(response, gameState, bot);
+    messageChannel(response, gameState, bot);
     if (!person.strength){
-        util.messagePlayerName(person.name, "You are of average strength", gameState, bot);
+        messagePlayerName(person.name, "You are of average strength", gameState, bot);
     }
-    util.history(person.name, "Joined the tribe", gameState);
-    savelib.archiveTribe(gameState);
+    history(person.name, "Joined the tribe", gameState);
+    savelib.saveTribe(gameState);
     return "The tribe accepts you"
 }
 module.exports.addToPopulation = addToPopulation;
@@ -315,20 +294,6 @@ function messageChannel(message, gameState, argBot){
 	}
 }
 module.exports.messageChannel = messageChannel;
-
-function countChildrenOfParentUnderAge(children, parentName, age){
-	var count = 0
-	for (var childName in children){
-		var child = children[childName]
-		if (child.mother == parentName || child.father == parentName){
-			if (child.age < age){
-				count++
-			}
-		}
-	}
-	return count
-}
-module.exports.countChildrenOfParentUnderAge = countChildrenOfParentUnderAge
 
 // Side effect: if everyone has enough food, and it is foodRound, start reproduction round.
 function checkFood(gameState, bot){
@@ -391,18 +356,11 @@ function startReproduction(gameState, bot){
 	messageChannel(foodMessage+'\n', gameState, bot)
 	messageChannel('\n==> Starting the Reproduction round; invite other tribe members to reproduce.<==', gameState, bot)
 	messageChannel('After chance, the tribe can decide to move to a new location, but the injured and children under 2 will need 2 food', gameState, bot)
-	if (gameState.secretMating){
-		reproLib.rememberInviteLists(gameState, bot);
-		gameState.doneMating = false;
-		reproLib.globalMatingCheck(gameState, bot)
-		if (reproLib.canStillInvite(gameState)){		
-			messageChannel('(awaiting invitations or !pass from '+reproLib.canStillInvite(gameState)+')', gameState, bot)
-		}
-	} else {
-		namelist = createReproductionList(gameState)
-		messageChannel("Invitation order: "+shuffle(namelist), gameState, bot)
-		gameState.reproductionList = nameList
-		messageChannel(gameState.reproductionList[0]+ " should now !invite people to reproduce, or !pass ", gameState, bot)
+	reproLib.rememberInviteLists(gameState, bot);
+	gameState.doneMating = false;
+	reproLib.globalMatingCheck(gameState, bot)
+	if (reproLib.canStillInvite(gameState)){		
+		messageChannel('(awaiting invitations or !pass from '+reproLib.canStillInvite(gameState)+')', gameState, bot)
 	}
 	decrementSickness(gameState.population, gameState, bot)
 	savelib.saveTribe(gameState);
@@ -512,6 +470,7 @@ function consumeFoodChildren(gameState){
 	response = '';
 	perishedChildren = []
 	population = gameState.population
+	children = gameState.children
 
 	console.log('children are eating')
 	for (childName in children){
@@ -519,6 +478,7 @@ function consumeFoodChildren(gameState){
 		if (child.dead){
 			continue;
 		}
+		console.log(childName+" object "+child)
 		child.age += 1
 		if (child.age < 24 ){
 			child.food -= 2
@@ -532,9 +492,9 @@ function consumeFoodChildren(gameState){
 				continue;
 			} 
 			if (child.age == 0 ){
-				birthRoll = util.roll(3)
+				birthRoll = roll(3)
 				response += '\t'+child.mother+' gives birth to a '+child.gender+'-child, '+child.name
-				util.history(child.mother,child.mother+' gives birth to a '+child.gender+'-child, '+child.name, gameState)
+				history(child.mother,child.mother+' gives birth to a '+child.gender+'-child, '+child.name, gameState)
 				if (birthRoll < 5 ){
 					response += ' but the child did not survive\n'
 					child.dead = true
@@ -555,7 +515,7 @@ function consumeFoodChildren(gameState){
 					twin = addChild(child.mother, child.father, gameState);
 					delete child.mother.isPregnant; // this gets set by addChild, but the child was just born.
 					response += child.mother+' gives birth to a twin! Meet '+twin.name+', a healthy young '+twin.gender+'-child.\n'
-					util.history(child.mother,child.mother+' gives birth to a twin! Meet '+twin.name+', a healthy young '+twin.gender+'-child', gameState)
+					history(child.mother,child.mother+' gives birth to a twin! Meet '+twin.name+', a healthy young '+twin.gender+'-child', gameState)
 					person.guarding.push(twin.name)
 					twin.age = 0
 				}

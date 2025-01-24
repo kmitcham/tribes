@@ -45,10 +45,6 @@ client.once(Events.ClientReady, () => {
 	alertChannel =  client.channels.cache.find(channel => channel.name === 'bug-reports')
 	alertChannel.send('TribesBot is alive again. '+n)
 });
-client.once(Events.ClientReady, c => {
-	console.log(`Tribes bot Ready! Logged in as ${c.user.tag}`);
-	channel = client.channels.fetch("734974092322537594"); // general
-});
 client.once('reconnecting', () => {
     console.log('Reconnecting Tribes!');
 });

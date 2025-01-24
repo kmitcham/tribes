@@ -31,13 +31,13 @@ module.exports = {
         gender = interaction.options.getString('gender');
         profession = interaction.options.getString('profession');
         message = join(joiner, gameState, bot, gender, profession)
-        interaction.reply(message)
+        utillib.ephemeralResponse(interaction, message);
 	},
 };
 
 function join(joiner, gameState, bot, gender, profession){
     if (gameState.population[joiner.displayName]){
-        return 'You are already a memeber of this tribe'
+        return 'You are already a member of this tribe'
     }
     if (! gameState.open){
         return 'You need to be inducted by the chief to join this tribe'

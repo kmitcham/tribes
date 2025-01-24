@@ -13,10 +13,10 @@ module.exports = {
                 .setRequired(true))
 	,
     async execute(interaction, gameState, bot) {
-		var actorName = interaction.user.displayName
-		var candidateName = interaction.options.getMember('candidate').displayName;
+		var actorName = util.getNameFromUser(interaction.user);
+		var candidateName = util.getNameFromUser(interaction.options.getMember('candidate'));
         vote(interaction, gameState, bot, actorName, candidateName)
-		interaction.reply("You support some as chief of the tribe")
+		interaction.reply("You support "+candidateName+" as chief of the tribe")
 	},
 };
 

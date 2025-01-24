@@ -16,6 +16,7 @@
     "discord.io": "^2.5.3",
     "discord.js": "^14.12.1",
     "eslint": "^7.5.0",
+    "node-fetch": "^3.3.2",
     "test": "^0.6.0",
     "winston": "^3.3.3"
   },
