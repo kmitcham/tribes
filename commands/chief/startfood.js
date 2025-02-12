@@ -37,13 +37,13 @@ function startFood(gameState, bot){
     population = gameState.population
     clearWorkFlags(population)
     util.decrementSickness(population, gameState, bot)
+    util.messageChannel('\n==>Starting the food and trading round.  Make sure everyone has enough to eat, or they will starve<==', gameState, bot)
     message = util.gameStateMessage(gameState)
-    console.log("2 "+gameState.population)
+    console.log("start food 2 population:"+gameState.population)
 
     util.messageChannel(message, gameState, bot)
     savelib.saveTribe(gameState);
-    foodMessage = util.checkFood(gameState, bot)
-    util.messageChannel(message+'\n==>Starting the food and trading round.  Make sure everyone has enough to eat, or they will starve<==', gameState, bot)
+    foodMessage = util.checkFood(gameState,bot)
     return foodMessage
 }
 

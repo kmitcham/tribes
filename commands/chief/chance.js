@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const util = require("../../util.js");
 const savelib = require("../../save.js");
+const guardlib = require("../../guardCode.js")
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -11,11 +12,12 @@ module.exports = {
         const roll = util.roll(3)
         response = doChance(roll, gameState, bot)
         interaction.reply("chance rolled!")
+        console.log("chance response: "+response)
         util.messageChannel(response, gameState, bot);
 	},
 };
 
-function doChance(rollValue, gameState, bot){
+function doChance(rollValue, gameState){
     population = gameState.population
     chanceRoll = Number(rollValue)
     if (!chanceRoll || chanceRoll < 3 || chanceRoll > 18 ){
@@ -169,5 +171,6 @@ function doChance(rollValue, gameState, bot){
             message = 'bug in the chance system'
     }
     gameState.needChanceRoll = false
+    savelib.saveTribe(gameState);
     return message
 }

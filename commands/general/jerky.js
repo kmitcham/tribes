@@ -13,12 +13,12 @@ module.exports = {
     async execute(interaction, gameState, bot) {
         const amount = interaction.options.getInteger('amount');
         var sourceName = interaction.user.displayName;
-        message = jerky(sourceName, amount, gameState, bot)
+        message = makeJerky(sourceName, amount, gameState, bot)
         interaction.reply(message)
 	},
 };
 
-function jerky(sourceName, amount, gameState, bot){
+function makeJerky(sourceName, amount, gameState, bot){
     if (! gameState.canJerky){
         return "Conditions are not right for making jerky now."
     }
@@ -30,6 +30,7 @@ function jerky(sourceName, amount, gameState, bot){
     jerky = amount/3;
     leftover = amount - (jerky * 3);
     player.food = actualFood - amount + leftover
+    player.grain += jerky
     message = sourceName+" converts "+(jerky * 3)+" food into "+jerky+" jerky";
     return message;
 }

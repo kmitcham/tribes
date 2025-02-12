@@ -10,8 +10,8 @@ module.exports = {
     async execute(interaction, gameState, bot) {
         var actorName = interaction.user.displayName
 
-        response =  util.startReproduction(gameState, bot)
-        interaction.reply(response)
+        response =  util.startReproduction(gameState, bot);
+        interaction.reply({content:response, ephemeral:true});
 	},
 };
 

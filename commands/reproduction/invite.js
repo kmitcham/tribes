@@ -5,11 +5,11 @@ const reproLib = require("../../reproduction.js");
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('invite')
-		.setDescription('(<partner> [second choice partner] [!pass]   Space seperated list of names to invite to mate.')
+		.setDescription('(<partner> [second choice partner] [!save] [!pass] Space seperated list of who to mate with.')
         .addStringOption(option => 
             option
             .setName('invitelist')
-            .setDescription('add !save to retain the list.  If list ENDS with !pass, give up if the listed players decline.')
+            .setDescription('!save retains it.  If it ENDS with !pass, give up if the players decline.')
         )
         ,
     async execute(interaction, gameState, bot) {
@@ -32,9 +32,11 @@ function onCommand(interaction, gameState, bot){
         } else {
             return "No current inviteList"
         }
-        
     }
     let messageArray = rawList.split(" ");
+    if (rawList.includes(",")){
+        messageArray = rawList.split(",");
+    }
     console.log("diverting for secret mating");
     message = reproLib.invite(sourceName, messageArray,  gameState, bot);
     return message;
