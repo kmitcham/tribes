@@ -56,7 +56,7 @@ function roll(count){
 		}
 		total = 0
 		for (var i = 0; i < count; i++){
-			var roll = Math.trunc( Math.random ( ) * 6)+1
+			var roll = Math.trunc( Math.random( ) * 6)+1
 			total += roll
 		}
 		return total
@@ -228,7 +228,7 @@ function addToPopulation(gameState, bot, actor, gender, profession){
         person.profession = profession;
     }
     var strRoll = roll(1);
-    response = 'added '+target+' '+gender+' to the tribe. ';
+    response = 'added '+target+' '+gender+' to the tribe.';
     if (strRoll == 1){
         person.strength = 'weak'
         response+= target +' is weak.'
@@ -237,6 +237,7 @@ function addToPopulation(gameState, bot, actor, gender, profession){
         response+= target +' is strong.';
     } 
     gameState.population[target] = person;
+	console.log( 'added '+target+' '+gender+' to the tribe.strRoll:'+strRoll);
     messageChannel(response, gameState, bot);
     if (!person.strength){
         messagePlayerName(person.name, "You are of average strength", gameState, bot);

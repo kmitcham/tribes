@@ -61,7 +61,7 @@ client.on(Events.InteractionCreate, async interaction => {
 	console.log("command "+interaction.commandName+ " by "+interaction.member.displayName+" of "+channel.name);
     if (channel.name.endsWith('tribe')){
         gameState = allGames[channel.name];
-        if (!gameState){
+        if (!gameState || gameState.ended ){
             gameState = savelib.loadTribe(channel.name);
             if (!gameState || gameState.ended ){
                 console.log('creating game '+channel.name);

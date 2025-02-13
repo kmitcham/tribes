@@ -2,7 +2,7 @@ const utillib = require("./util.js");
 const guardlib = require("./guardCode.js");
 const { child } = require("winston");
 
-module.exports.showChildren =  (children, population, filterName="", hideFathers=false ) =>{
+module.exports.showChildren =  (children, population, filterName="", hideFathers=true ) =>{
 		
 	responseMessages = []
 	childNames = Object.keys(children)
@@ -25,7 +25,6 @@ module.exports.showChildren =  (children, population, filterName="", hideFathers
 			responseMessages.push(response)
 			response = ''
 		}
-
 		var child = children[childName]
 		if ( filterName && !(child.mother == filterName || child.father == filterName) ) {
 			continue
@@ -81,6 +80,7 @@ module.exports.showChildren =  (children, population, filterName="", hideFathers
 				response += ' watching:'+child.babysitting+' '
 			}
 			response += '\n'
+			console.log(response)
 		}
 	} 
 	responseMessages.push(response)

@@ -18,7 +18,7 @@ module.exports = {
 function startFoodFilter(actorName, gameState, bot){
     var player = util.personByName(actorName, gameState)
     if ( !player.chief){
-        return "startfood requires chief priviliges"
+        return "startfood requires chief privileges"
     }
     if (gameState.foodRound == true){
         return 'already in the foodRound'
@@ -39,7 +39,7 @@ function startFood(gameState, bot){
     util.decrementSickness(population, gameState, bot)
     util.messageChannel('\n==>Starting the food and trading round.  Make sure everyone has enough to eat, or they will starve<==', gameState, bot)
     message = util.gameStateMessage(gameState)
-    console.log("start food 2 population:"+gameState.population)
+    console.log("start food population:"+gameState.population)
 
     util.messageChannel(message, gameState, bot)
     savelib.saveTribe(gameState);

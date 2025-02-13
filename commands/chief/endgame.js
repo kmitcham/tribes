@@ -1,7 +1,7 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const util = require("../../util.js");
 const savelib = require("../../save.js");
-const endLib = require("./endgame.js");
+const endLib = require("../../endgame.js");
 
 
 module.exports = {
@@ -11,7 +11,7 @@ module.exports = {
         ,
     async execute(interaction, gameState, bot) {
 
-        response = endLib.endGame(gameState)
+        response = endLib.endGame(gameState, bot)
         interaction.reply({content:response, ephemeral:false});
 	},
 };

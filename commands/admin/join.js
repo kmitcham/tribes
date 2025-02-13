@@ -42,7 +42,7 @@ function join(joiner, gameState, bot, gender, profession){
     if (! gameState.open){
         return 'You need to be inducted by the chief to join this tribe'
     }
-    console.log("joining name is "+joiner.displayName +" actor:"+joiner.username)
+    console.log("display name is "+joiner.displayName +" username:"+joiner.username)
     return utillib.addToPopulation(gameState, bot, 
         joiner, gender, profession)
     }

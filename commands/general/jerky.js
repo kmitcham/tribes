@@ -27,7 +27,8 @@ function makeJerky(sourceName, amount, gameState, bot){
     if (amount > actualFood){
         amount = actualFood;
     }
-    jerky = amount/3;
+    extra = amount%3
+    jerky = (amount-extra)/3;
     leftover = amount - (jerky * 3);
     player.food = actualFood - amount + leftover
     player.grain += jerky

@@ -6,10 +6,25 @@ const guardlib = require("../../guardCode.js")
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('chance')
-		.setDescription('Do the chance roll to end the season. (Chief only')
+		.setDescription('Do the chance roll to end the season. (Chief only)')
+        .addIntegerOption(option =>
+            option.setName('force')
+            .setDescription('referee can force a die roll value 3-18')
+            .setRequired(false)
+            )
+
         ,
     async execute(interaction, gameState, bot) {
-        const roll = util.roll(3)
+        var roll = util.roll(3)
+        var sourceName = interaction.user.displayName;
+        var forceRoll = interaction.options.getInteger('force');
+        if (util.referees.includes(sourceName) && forceRoll){
+            huntRoll = forceRoll;
+            if (huntRoll < 3 || 18 < huntRoll){
+                util.ephemeralResponse(interaction,'Roll must be 3-18')
+                return
+            }
+        }
         response = doChance(roll, gameState, bot)
         interaction.reply("chance rolled!")
         console.log("chance response: "+response)
@@ -19,6 +34,7 @@ module.exports = {
 
 function doChance(rollValue, gameState){
     population = gameState.population
+    children = gameState.children
     chanceRoll = Number(rollValue)
     if (!chanceRoll || chanceRoll < 3 || chanceRoll > 18 ){
         console.log(' invalid chance roll'+rollValue)
