@@ -440,13 +440,14 @@ module.exports.globalMatingCheck = globalMatingCheck;
 // a weak clone of the existing 'spawnFunction'  only works for secret mating
 function makeLove(name1, name2, gameState, bot, force = false){
     population = gameState.population
-    var mother = util.personByName(name1, gameState)
-    var father = util.personByName(name2, gameState)
-	console.log("mother:"+motherName+" father:"+fatherName)
-    if (mother.gender != 'female' && father.gender == 'female'){
-		var temp = mother;
-		mother = father;
-		father = temp
+    var parent1 = util.personByName(name1, gameState)
+    var parent2 = util.personByName(name2, gameState)
+	if (parent1.gender == 'female') {
+        mother = parent1
+        father = parent2
+    } else {
+        mother = parent2
+        father = parent1
     }
     motherName = mother.name
     fatherName = father.name

@@ -16,8 +16,8 @@ module.exports = {
                 .setName('gender')
                 .setDescription('one of (male, female)')
                 .addChoices(
-                    { name: 'male', value: 'm' },
-                    { name: 'female', value: 'f' },
+                    { name: 'male', value: 'male' },
+                    { name: 'female', value: 'female' },
                 )
                 .setRequired(true))
         .addStringOption(option => 
