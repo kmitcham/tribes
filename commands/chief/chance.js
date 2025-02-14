@@ -88,23 +88,27 @@ function doChance(rollValue, gameState){
             message += name +" finds a spearhead"
             break;
         case 12 : 
-            message +="The younger tribesfolk gather food. Each child over 4 years old brings 2 Food to their mother. Each New Adult brings 4 Food to their mother."
-            for (childName in children){
-                var child = children[childName]
-                if (child.age > 8 ){ // age in seasons
-                    gift = 2
-                    if (child.newAdult ){
-                        gift = 4
-                    }
-                    motherName = child.mother
-                    mother = population[motherName]
-                    if (mother){
-                        mother.food += gift
-                        message += '\n  '+motherName+' gets '+gift+' from '+childName
-                    } else {
-                        message += '\n  '+motherName+' was not around, so '+childName+' eats it out of grief.'
+            if (gameState.children){
+                message +="The younger tribesfolk gather food. Each child over 4 years old brings 2 Food to their mother. Each New Adult brings 4 Food to their mother."
+                for (childName in children){
+                    var child = children[childName]
+                    if (child.age > 8 ){ // age in seasons
+                        gift = 2
+                        if (child.newAdult ){
+                            gift = 4
+                        }
+                        motherName = child.mother
+                        mother = population[motherName]
+                        if (mother){
+                            mother.food += gift
+                            message += '\n  '+motherName+' gets '+gift+' from '+childName
+                        } else {
+                            message += '\n  '+motherName+' was not around, so '+childName+' eats it out of grief.'
+                        }
                     }
                 }
+            } else {
+                message += "If the tribe had children, they might gather food"
             }
             break;
         case 11 : 
@@ -141,6 +145,7 @@ function doChance(rollValue, gameState){
         case 7: 
             message +=  "FIRE! The hunting track moves to 20 (no game!) The tribe must move to another area immediately (Section 9). "
             if ( util.isColdSeason(gameState) && (gameState.currentLocationName == 'marsh' || gameState.currentLocationName == 'hills')){
+                console.log("rerolling winter fire in the marsh or hills")
                 message = doChance(util.roll(3), gameState)
                 return message
             } else {

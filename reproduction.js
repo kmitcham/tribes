@@ -176,7 +176,7 @@ function handleReproductionList(actorName, args, listName, gameState, bot){
     actor[listName] = list;
     returnMessage += ("Setting your "+listName+" list to:"+list+"\n")
     if (save){
-        returnMessage += ("Saving your "+listName+" list be used in future rounds")
+        returnMessage += ("Saving your "+listName+" list be used in future rounds\n")
     }
     savelib.saveTribe(gameState)
     return returnMessage;
@@ -208,7 +208,7 @@ function invite(author, invitelist, gameState, bot){
     }
     console.log('got messageArray:'+invitelist)
     message = handleReproductionList(actorName, invitelist, "inviteList",gameState,bot )
-    message += globalMatingCheck(gameState, bot);
+    globalMatingCheck(gameState, bot);
     console.log("message at end of reprolib invite:"+message)
     if (person.inviteList){
         console.log("Invitelist: "+person.inviteList.join(" "))
@@ -337,6 +337,7 @@ function globalMatingCheck(gameState, bot){
                 continue
                 
             } else if (person.inviteList && person.inviteList.length > 0) {
+             // the person is eligible to mate, and has an invitelist
                 targetName = person.inviteList[0]
                 console.log(" inviting "+targetName)
                 if (targetName == "!pass"){
@@ -441,15 +442,17 @@ function makeLove(name1, name2, gameState, bot, force = false){
     population = gameState.population
     var mother = util.personByName(name1, gameState)
     var father = util.personByName(name2, gameState)
-	if (mother.gender != 'female' && father.gender == 'female'){
+	console.log("mother:"+motherName+" father:"+fatherName)
+    if (mother.gender != 'female' && father.gender == 'female'){
 		var temp = mother;
 		mother = father;
 		father = temp
     }
     motherName = mother.name
     fatherName = father.name
+    console.log("mother:"+motherName+" father:"+fatherName)
     spawnChance = 9
-	if (population[motherName].nursing && population[motherName].nursing.length > 0){
+	if (mother.nursing && mother.nursing.length > 0){
 		spawnChance = 10
 	}
 	mroll = util.roll(1)

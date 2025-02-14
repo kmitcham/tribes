@@ -77,17 +77,19 @@ client.on(Events.InteractionCreate, async interaction => {
 	try {
 		await command.execute(interaction, gameState, client);
 	} catch (error) {
-        console.log("there was an error in that command:",interaction.commandName);
+        console.log("there was an error in that command:");
 		console.error(error);
-		if (interaction.replied || interaction.deferred) {
-			await interaction.followUp({ content: 'Followup: There was an error while executing this command!', ephemeral: true });
-		} else {
-			await interaction.reply({ content: 'Reply: There was an error while executing this command!', ephemeral: true });
+		if (interaction){
+			console.log("Command was "+interaction.commandName)
+			if (interaction.replied || interaction.deferred) {
+				await interaction.followUp({ content: 'Followup: There was an error while executing this command!', ephemeral: true });
+			} else {
+				await interaction.reply({ content: 'Reply: There was an error while executing this command!', ephemeral: true });
+			}
+ 		} else {
+			console.log("interaction is not responded to, since it seems to be gone.")
 		}
 	}
-	// I don't think I need to save after EVERY command.
-	//savelib.saveTribe(gameState);
-	//console.log("saved game state after "+interaction.commandName+ " by "+interaction.member.displayName+" of "+channel.name)
 });
 
 client.login(token);

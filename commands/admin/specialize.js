@@ -10,13 +10,19 @@ module.exports = {
             option
             .setName('profession')
             .setDescription('one of (hunt, gather, craft)')
+            .addChoices(
+                { name: 'hunter', value: 'hunt' },
+                { name: 'crafter', value: 'craft' },
+                { name: 'gatherer', value: 'gather' },
+            )
             .setRequired(true)),
     async execute(interaction, gameState, bot) {
         const actor = interaction.member;
         playerName = actor.displayName?actor.displayName:actor.username
         const profession = interaction.options.getString('profession')
         message = filterspecialize(playerName, profession, gameState, bot);
-        interaction.reply(message)
+        util.messageChannel(message, gameState, bot)
+        interaction.reply(playerName+" knows how to "+profession)
 	},
 };
 

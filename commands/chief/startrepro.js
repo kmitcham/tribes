@@ -10,7 +10,12 @@ module.exports = {
     async execute(interaction, gameState, bot) {
         var actorName = interaction.user.displayName
 
-        response =  util.startReproduction(gameState, bot);
+        util.startReproduction(gameState, bot);
+        if (response){
+            response = "Reproduction activities are complete."
+        } else {
+            response = "Reproduction activities are underway"
+        }
         interaction.reply({content:response, ephemeral:true});
 	},
 };

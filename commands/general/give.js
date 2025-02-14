@@ -64,6 +64,10 @@ function give(interaction, gameState){
         response = sourceName+" does not have "+amount+" "+item;
         return onError(interaction, response)
     }
+    if (sourcePerson.activity == 'hunt' && item == 'spearhead' && gameState.round== 'work'){
+        response = sourceName+" already hunted with a spearhead, and cannot trade spearheads during the work round";
+        return onError(interaction, response)
+    }
     sourcePerson[item] -= amount;
     targetPerson[item] += amount;
     savelib.saveTribe(gameState);

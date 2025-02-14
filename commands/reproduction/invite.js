@@ -13,10 +13,15 @@ module.exports = {
         )
         ,
     async execute(interaction, gameState, bot) {
-        response = onCommand(interaction, gameState, bot)
-        console.log("invite response: "+response)
-        interaction.reply({ content: response, ephemeral: true })
-	},
+        try {
+            response = onCommand(interaction, gameState, bot)
+            util.ephemeralResponse(interaction,response)
+            console.log('invite response was '+response)
+        } catch (error) {
+                // And of course, make sure you catch and log any errors!
+                console.error('invite error'+error);
+        }
+    },
 };
 
 function onCommand(interaction, gameState, bot){
@@ -37,7 +42,6 @@ function onCommand(interaction, gameState, bot){
     if (rawList.includes(",")){
         messageArray = rawList.split(",");
     }
-    console.log("diverting for secret mating");
     message = reproLib.invite(sourceName, messageArray,  gameState, bot);
     return message;
 }

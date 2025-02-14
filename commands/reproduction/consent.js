@@ -9,13 +9,13 @@ module.exports = {
         .addStringOption(option => 
             option
             .setName('consentlist')
-            .setDescription('add !save to retain the list. !any')
+            .setDescription('add !save to retain the list. !all is an option')
         )
         ,
     async execute(interaction, gameState, bot) {
         onCommand(interaction, gameState, bot)
         console.log("consent updated"+response)
-        interaction.reply({ content: "Consent list updated", ephemeral: true })
+        interaction.reply({ content: "Consent list updated to "+response, ephemeral: true })
 	},
 };
 

@@ -366,7 +366,7 @@ function startReproduction(gameState, bot){
 	}
 	decrementSickness(gameState.population, gameState, bot)
 	savelib.saveTribe(gameState);
-	return
+	return gameState.doneMating
 }
 module.exports.startReproduction = startReproduction
 
