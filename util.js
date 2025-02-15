@@ -3,6 +3,8 @@ const killlib = require("./kill.js");
 const reproLib = require("./reproduction.js");
 const savelib = require("./save.js");
 const locations = require('./locations.json');
+const messenger = require("./messaging.js");
+
 
 const { Client, EmbedBuilder } = require('discord.js');
 
@@ -66,13 +68,24 @@ function getYear(gameState){
 }
 
 function personByName(name, gameState){
+	console.log('personByName is deprecated.  Use memberByName')
+	return memberByName(name, gameState)
+}
+module.exports.personByName = personByName
+function playerByName(name, gameState){
+	console.log('playerByName is deprecated.  Use memberByName')
+	return memberByName(name, gameState)
+}
+module.exports.playerByName = playerByName
+
+function memberByName(name, gameState){
 	if (name == null){
-		console.log('attempt to find person for null name ')
+		console.log('attempt to find member for null name ')
 		return null
 	}
-	if (name.username != null){
-		name = name.username
-		console.log("getting username from object ")
+	if (gameState == null){
+		console.log("tried to get member when gameState was null.  probably a syntax error");
+		return null;
 	}
 	cleaned = removeSpecialChars(name)
 	if (name != cleaned ){
@@ -90,6 +103,7 @@ function personByName(name, gameState){
 	} else if (population[name.toLowerCase()] != null){
 		person = population[name.toLowerCase()]
 	} else {
+		console.log("Exhaustive search in population for "+name)
 		for (match in population){
 			if ( (population[match] && population[match].handle) ){
 				if ( population[match].handle.username == name 
@@ -104,13 +118,14 @@ function personByName(name, gameState){
 					break;
 				}
 			}
-			if (population[match].name.toUpperCase() === name.toUpperCase()){
+			if (population[match].name.toLowerCase() === name.toLowerCase()){
 				person = population[match]
 				break;
 			}
 		}
 	}
 	if (person != null){
+		// WTF is this?
 		for (var type in person) {
 			if (Object.prototype.hasOwnProperty.call( person, type)) {
 				if (person[type] && person[type].constructor === Array && person[type].length == 0){
@@ -121,9 +136,11 @@ function personByName(name, gameState){
 		}
 		return person
 	}
-	console.log("tribe "+gameState.name+" has no such person in population. tried "+name+" and "+name.toUpperCase())
+	console.log("tribe "+gameState.name+" has no such member in population. tried "+name+" and "+name.toUpperCase())
 	return null
 }
+module.exports.memberByName = memberByName
+
 
 function history (playerName, message, gameState){
 	player = personByName(playerName, gameState)
@@ -622,90 +639,4 @@ function specialize(playerName, profession, gameState){
 }
 module.exports.specialize = specialize
 
-function migrate(destination, force, gameState, bot){
-	children = gameState.children
-	population = gameState.population
-	response = ''
-	legalLocations = Object.keys(locations)
-	if (!legalLocations.includes(destination) ){
-		return destination+' not a valid location.  Valid locations:'+legalLocations
-	}
-	if (gameState.currentLocationName == destination){
-		return destination+' is where the tribe already is.'
-	}
-	// every injured person pays 2 food, or dies.
-	deceasedPeople = []
-	deceasedChildren = []
-	if (force){
-		for (personName in population){
-			var person = personByName(personName, gameState)
-			if (person.isInjured && person.isInjured > 0){
-				need = 2
-				eaten = 0
-				while (eaten < need){
-					if (person.food > 0 ){
-						person.food--
-						eaten++
-					} else if (person.grain > 0){
-						person.grain--
-						eaten++
-					} else {
-						deceasedPeople.push(personName)
-					}
-				}
-			}
-		}
-		for (childName in children){
-			var child = children[childName]
-			// child age is in seasons
-			if (child.age < 4 ){
-				if (child.food < 2){
-					deceasedChildren.push(childName)
-				} else {
-					child.food -= 2
-				}
-			}
-		}
-		if (deceasedPeople.length > 0 || deceasedChildren.length > 0){
-			response = 'The following people died along the way:'
-			// every child under 2 needs 2 food, or dies
-			// clean up the dead
-			var perishedCount = deceasedPeople.length;
-			for (var i = 0; i < perishedCount; i++) {
-				killlib.kill(deceasedPeople[i],'migration hunger',gameState)
-				response+= " "+deceasedPeople[i]
-			}
-			perishedCount = deceasedChildren.length;
-			for (var i = 0; i < perishedCount; i++) {
-				killlib.kill(deceasedChildren[i],'migration hunger',gameState)
-				response+= " "+deceasedChildren[i]
-			}
-		}
-		messageChannel('Setting the current location to '+destination, gameState, bot)
-		gameState.currentLocationName = destination
-	} else {
-		for (personName in population){
-			person = personByName(personName, gameState)
-			if (person.isInjured && person.isInjured > 0){
-				need = 2
-				eaten = 0
-				if ((person.food + person.grain) < 2 ){
-					deceasedPeople.push(personName)
-				}
-			}
-		}
-		for (childName in children){
-			var child = children[childName]
-			// child age is in seasons
-			if (child.age < 4){
-				if (child.food < 2){
-					deceasedChildren.push(childName)
-				} 
-			}
-		}
-		response += '\nThe following tribe members would die on the journey to '+destination+': '+deceasedPeople
-		response += '\nThe following children would die along the way: '+deceasedChildren
-	}
-	return response
-}
-module.exports.migrate = migrate
+

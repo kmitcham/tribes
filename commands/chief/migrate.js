@@ -1,7 +1,9 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const util = require("../../util.js");
+const migrate = require("../../migrateLib.js");
+const messenger = require("../../messaging.js");
 const locations = require('../../locations.json');
 const legalLocations = Object.keys(locations)
+
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -11,47 +13,35 @@ module.exports = {
             option
             .setName('destination')
             .setDescription('Where to migrate to: ['+legalLocations.join(' | ')+']')
+            // is there a way to do this from legalLocations dynamically?
+            .addChoices(
+                { name: 'veldt', value: 'veldt' },
+                { name: 'marsh', value: 'marsh' },
+                { name: 'hills', value: 'hills' },
+                { name: 'forest', value: 'forest'}
+            )
         )
         .addBooleanOption(option => 
             option
             .setName('force')
-            .setDescription('actually do the move, even if people might die')
+            .setDescription('when false, just show who needs food to make the trip alive')
         )
         ,
     async execute(interaction, gameState, bot) {
-        response = onCommand(interaction, gameState, bot)
-        interaction.reply({ content: response, ephemeral: true })
+        var sourceName = interaction.user.displayName;
+        var destination = interaction.options.getString('destination');
+        var force = interaction.options.getBoolean('force');
+        value = migrate.migrate(sourceName, destination, force, gameState)
+        if (value == 0){
+            messenger.addMessage(gameState, sourceName, "You lead the tribe to "+destination)
+        }
+        console.log("response to migrate was "+value)
+        //have to see if this better than the 'no response' message
+        if (gameState['messages'] && gameState['messages'][sourceName]){
+            console.log("interaction reply")
+            interaction.reply(gameState['messages'][sourceName])
+        }
+        messenger.sendMessages(bot, gameState)
 	},
 };
-
-function onCommand(interaction, gameState, bot){
-    var sourceName = interaction.user.displayName;
-    var player = util.personByName(sourceName, gameState)
-    var destination = interaction.options.getString('destination');
-    var force = interaction.options.getBoolean('force');
-    if ( !player.chief){
-        cleanUpMessage(msg);; 
-        return 'Migrate requires chief priviliges'
-    }
-    if (!destination){
-        return 'Migrate requires a destination (and force to make it happen)'
-    }
-    if ((gameState.demand || gameState.violence)){
-        return 'The game can not advance until the demand is dealt with.'
-    }
-    if (!gameState.reproductionRound){
-        return "Migration happens in the reproduction, after chance"
-    } else {
-        if (gameState.needChanceRoll){
-            return "Migration happens in the reproduction, after chance"
-        }
-    }
-    
-    message = util.migrate(destination, force,  gameState, bot)
-    console.log('migration message is: '+message)
-    if (message){
-        util.messageChannel(message, gameState, bot)
-    }
-    return "You lead the tribe to "+destination
-}
 

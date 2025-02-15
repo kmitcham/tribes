@@ -38,8 +38,8 @@ function train(interaction, gameState){
         util.ephemeralResponse(interaction, 'You can not learn crafting while guarding more than 2 children.  You are guarding '+player.guarding)
         return
     }
-    var crafters = countByType(population, 'canCraft', true)
-    var noTeachers = countByType(population, 'noTeach', true)
+    var crafters = util.countByType(population, 'canCraft', true)
+    var noTeachers = util.countByType(population, 'noTeach', true)
     if (crafters <= noTeachers){
         util.ephemeralResponse(interaction, 'No on in the tribe is able and willing to teach you crafting')
         return
