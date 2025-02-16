@@ -1,4 +1,4 @@
-var violencelib = require("./violence.js");
+var violencelib = require("../libs/violence.js");
 
 test("Happy Path Demand", () =>{
     var gameState = {

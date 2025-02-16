@@ -1,17 +1,18 @@
-const utillib = require("./util.js");
 const guardlib = require("./guardCode.js");
+const textLib = require("./textprocess.js")
+const populationLib = require("./population.js")
 
 
 module.exports.kill = (name, message, gameState) =>{
 	console.log("Killing "+name+" due to "+message+" at seasonCount "+gameState.seasonCounter);
 	population = gameState.population
 	children = gameState.children
-	childName = utillib.capitalizeFirstLetter(name)
+	childName = textLib.capitalizeFirstLetter(name)
 	if (! message || message == ''){
 		message = 'unknown causes'
 	}
 	if ("graveyard" in gameState){} else { gameState.graveyard = {} }
-	person = utillib.personByName(name, gameState)
+	person = populationLib.personByName(name, gameState)
 	if (person){
 		person.deathMessage = message
 		person.deathSeason = gameState.seasonCounter

@@ -1,4 +1,4 @@
-var util = require("./util.js");
+var util = require("../libs/util.js");
 
 test("Numbers stay in range", () =>{
     for (var i=0; i < 100; i++){

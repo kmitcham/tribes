@@ -1,7 +1,7 @@
 {
   "name": "tribesbot0.5",
   "version": "0.0.1",
-  "description": "A bot to track food and grain in Tribes",
+  "description": "A bot to handle the rules for playing Tribes",
   "main": "tribesBot.js",
   "author": {
     "name": "Kevin Mitcham",
@@ -9,19 +9,20 @@
     "url": "https://kevinmitcham.com"
   },
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+     "clear_jest": "jest --clearCache"
   },
   "dependencies": {
     "discord-api-types": "^0.37.116",
     "discord.io": "^2.5.3",
     "discord.js": "^14.12.1",
     "eslint": "^7.5.0",
-    "node-fetch": "^3.3.2",
     "test": "^0.6.0",
     "winston": "^3.3.3"
   },
   "devDependencies": {
-    "jest": "^27.5.1"
+    "jest": "^27.5.1",
+    "node-fetch": "^3.3.2"
   },
   "license": "ISC"
 }

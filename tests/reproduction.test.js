@@ -1,5 +1,5 @@
-var reproLib = require("./reproduction.js");
-const allNames = require('./names.json');
+var reproLib = require("../libs/reproduction.js");
+const allNames = require('../libs/names.json');
 
 test("excludes people", () =>{
     var gameState = {

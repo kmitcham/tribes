@@ -1,0 +1,115 @@
+WIP
+
+2025 01 11 Saturday
+looking at join, I think I added correct archive stuff
+
+So it has been a long time.
+work round->food round-> reproduction round
+
+So I think I have join.  Do I have init?
+
+++ I need to resolve the git issues with github
+Maybe github needs a password protected key?  
+<pwd>-git
+
+01-18 Saturday
+Work on init  Nope. not needed; incorporated into the bot.
+
+So join seems busted
+Typo in genders, seems resolved now.
+
+Now I need a chief.  Vote?
+++ history seems to have doubled messages?
+
+Poking along into reproduction round, foodcheck seems OK
+
+?? sockpuppet has no handle or id message?  It doesn't have an handle.it, but it does have a handle.userid
+Hmm.  I can harass sockpuppet  You harass sockpuppet420_73735
+
+So no clue what was wrong, but I duplicated the Id and userId, and that seemed to work.
+Add consent and decline, and managed a repro round
+
+++ remove all traces of secretMating; it is always on.
+++ repro lists should get player objects instead of the stupid lists
+
+Failed on getting the unit tests to work.
+So looking at the simple test over in ping, the API change will probably have broken all the command tests.
+Still, the library tests should be doable.
+
+-- force jerky to integers
+-- endgame
+++ scorechildren
+++ all of conflict
+-- can guard pregnant child?  ACtually, that is a feature
+++ child died on migration after a feed !all. (the child was unborn, and didn't get fed by feed !all) they were listed in the check though
+++ reproduction lists are busted, !save is not respected
+-- male got pregnant?  DONE
+++ without a referee, the 2 food penalty for an injury hard to apply when they have no food (but the tribe might help them)
+++ double used a spearhead; gave after a hunt
+
+-- message lib: messageTribe(bot, gamestate, message); messageMember(bot, gamestate, memberName, message) sendMessages(bot, gameState)
+    ONLY called by commands, not libs.
+    libs add items to 'messages' dict in gamestate, {'tribe':'message for tribe', 'member1':'private message to member 1'}
+-- migrate.js and migrateLib.js have a better seperation of responsibilities using message lib.
+++ unit test on migrateLib.js
+++ score game report male and female scores, sorted (for winners)
+
+W= has worked since new API
+U= untested but written
+X= busted
+m= updated to messaging library
+-=General Commands=-
+W !join
+U !babysit <adult child> <target child> (a mother can ask her adult child to watch a child)
+W !children [parent name] (shows the children ages and food status, optionally filtered to descendants)
+W !give <amt> <food|grain|spearhead|basket> <player>
+U !graveyard (list of all deceased members and children)
+W !inventory <target|all>  (show inventory and character info. No arg means self)
+W !law (see the current list of laws)
+W !sacrifice <amount> <type>  (place an item beyond use for religious or other reasons) [non-standard]
+W !scout <location> (examine the envionment, default is current location)
+ !secrets (toggle the state of willingness to teach others to craft)
+W !specialize <hunter|gatherer|crafter>(at the start of the game)
+W !status (see the current location, year, season and local game)
+W !vote <target>  (your choice for chief)
+ !obey <commands>  (things you will do if the chief commands, in case of extended AFK)
+-=Work Round Commands=-
+U !guard | !ignore <child> [<more childNames>] (take on child care responsibilities for the child)
+U !leastguarded (shows the least supervised child (ties resolved randomly))
+U !ready (list who is still available to work)
+W !craft <spearhead|basket>
+W !gather
+W !hunt
+X !train (learn crafting, if there is a willing teacher)
+U !idle (do nothing) 
+ !command <target> <command>  (order a tribe member.  They might obey)
+-=Food Round Commands=-
+W !foodcheck (examine the food situation for every adult and living child)
+W !feed <amt> <childName | @mothername | !all >  [<more childNames>]
+-=Reproduction Commands=-
+W !romance  (show your current reproduction lists)
+W !invite <target> [target !pass]   The order you would like to invite people to mate.
+    If the list ends with !pass, you will give up if they decline. !save will retain the list every season
+W !consent <target> [target] The list of people you would accept mating invitations from.
+W !decline <target> [target] The list of people whose mating invitations you would decline
+ !pass (decline to invite anyone in the mating round; can still get invitations)
+ scorechildren  count number of children by parent
+-=Conflict Commands=-
+ !demand <text of your demand>  (You want this to happen, and you are willing to kill or die about it)
+ !faction <for|against|neutral> (Where you stand on the current DEMAND before the tribe; you must choose for the game to continue)
+ !attack <target> (attempt to harm another member of the tribe during violence)
+ !defend (stand your ground against attacks during violence)
+ !run (flee the violence, conceding to the opposition during violence)
+Chief Commands
+ !induct|banish <player> (add|remove a tribe member)
+U !open|close  (toggle if people can join with "!join" or only with "!induct" by the chief)
+ !drone <gender> <profession> <name>  adds a worker to the tribe that takes commands but is sterile. [non-standard]
+W !startwork (begins the work round, enabling work attempts and rolls)
+W !startfood (ends the work round; subtract food/grain; birth; child age increase)
+W !startreproduction (Start the reproduction round. Also when migration happens)
+W !chance (after mating, chance is required to end the season)
+mW !migrate <newlocation> <force>  (without force, just checks who would perish on the journey)
+ !decree <law number> <law text> (record a rule for the tribe, or replace the rule of the specified number)
+ !skip <person>   (end a players reproduction turn)
+ !checkmating (report on status of mating attempts)
+W !endgame convert all the child to corpses, or new adults

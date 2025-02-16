@@ -1,0 +1,53 @@
+{
+  "name": "unitTest-tribe",
+  "population": {
+    "p1": {
+      "name": "p1",
+      "gender": "female",
+      "inviteList": [
+        "p2",
+        "!pass"
+      ],
+      "hiddenPregnant": "p2",
+      "history": [
+        "NaN: p2 shares good feelings with you [6]"
+      ],
+      "cannotInvite": true,
+      "isPregnant": "Unpossible"
+    },
+    "p2": {
+      "name": "p2",
+      "gender": "male",
+      "consentList": [
+        "p1"
+      ],
+      "cannotInvite": true,
+      "history": [
+        "NaN: p1 shares good feelings with you [6]"
+      ]
+    },
+    "p3": {
+      "name": "p3",
+      "gender": "male",
+      "cannotInvite": true
+    },
+    "p4": {
+      "name": "p4",
+      "gender": "male",
+      "cannotInvite": true
+    }
+  },
+  "children": {
+    "Unpossible": {
+      "mother": "p1",
+      "father": "p2",
+      "age": -2,
+      "food": 0,
+      "gender": "female",
+      "name": "Unpossible"
+    }
+  },
+  "reproductionRound": true,
+  "lastSaved": "2023-07-28T00:43:46.253Z",
+  "conceptionCounter": null
+}

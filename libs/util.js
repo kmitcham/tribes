@@ -4,7 +4,8 @@ const reproLib = require("./reproduction.js");
 const savelib = require("./save.js");
 const locations = require('./locations.json');
 const messenger = require("./messaging.js");
-
+const text = require("./textprocess.js")
+const roll = require( "./dice.js") 
 
 const { Client, EmbedBuilder } = require('discord.js');
 
@@ -25,6 +26,8 @@ function cleanUpMessage(msg){
 	}
 }
 module.exports.cleanUpMessage = cleanUpMessage;
+
+
 
 function decrementSickness(population, gameState, bot){
 	for (personName in population){
@@ -51,18 +54,6 @@ function decrementSickness(population, gameState, bot){
 }
 module.exports.decrementSickness = decrementSickness;
 
-
-function roll(count){
-		if (!count){
-			count = 3
-		}
-		total = 0
-		for (var i = 0; i < count; i++){
-			var roll = Math.trunc( Math.random( ) * 6)+1
-			total += roll
-		}
-		return total
-}
 function getYear(gameState){
 	return gameState.seasonCounter/2;
 }
@@ -244,7 +235,7 @@ function addToPopulation(gameState, bot, actor, gender, profession){
     if (profession){
         person.profession = profession;
     }
-    var strRoll = roll(1);
+    var strRoll = roll.roll(1);
     response = 'added '+target+' '+gender+' to the tribe.';
     if (strRoll == 1){
         person.strength = 'weak'
@@ -266,14 +257,11 @@ function addToPopulation(gameState, bot, actor, gender, profession){
 module.exports.addToPopulation = addToPopulation;
 
 
-function capitalizeFirstLetter(string) {
-	return string.charAt(0).toUpperCase() + string.slice(1);
-}
+
+
 module.exports.personByName = personByName;
-module.exports.roll = roll;
 module.exports.isColdSeason = isColdSeason;
 module.exports.getYear = getYear;
-module.exports.capitalizeFirstLetter = capitalizeFirstLetter;
 
 function randomMemberName(population){
 	nameList = Object.keys(population)
@@ -287,8 +275,15 @@ function round(number){
 }
 module.exports.round = round;
 
+function roll(count){
+	console.log('deprecated call to util.roll; use dice.roll')	
+	return roll.roll(count)
+}
+module.exports.roll = roll;
+
 function removeSpecialChars(strVal){ 
 	if (! strVal){
+
 		console.log("empty value to remove special chars")
 		return ""
 	}
@@ -512,7 +507,7 @@ function consumeFoodChildren(gameState){
 				continue;
 			} 
 			if (child.age == 0 ){
-				birthRoll = roll(3)
+				birthRoll = roll.roll(3)
 				response += '\t'+child.mother+' gives birth to a '+child.gender+'-child, '+child.name
 				history(child.mother,child.mother+' gives birth to a '+child.gender+'-child, '+child.name, gameState)
 				if (birthRoll < 5 ){

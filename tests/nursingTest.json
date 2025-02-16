@@ -1,0 +1,253 @@
+{
+    "bug-tribe": {
+      "seasonCounter": 1,
+      "gameTrack": {
+        "veldt": 1,
+        "forest": 0,
+        "marsh": 0,
+        "hills": 0
+      },
+      "name": "bug-tribe",
+      "open": true,
+      "populationCounter": 0,
+      "population": {
+        "dougbeal": {
+          "gender": "male",
+          "food": 21,
+          "grain": 8,
+          "basket": 0,
+          "spearhead": 0,
+          "handle": {
+            "id": "315239123420184587",
+            "bot": false,
+            "username": "dougbeal",
+            "discriminator": "1725",
+            "avatar": "17d2ed45a8d658b9faffd72b4ff87393",
+            "lastMessageChannelID": null,
+            "flags": 0,
+            "createdTimestamp": 1495229263883,
+            "defaultAvatarURL": "https://cdn.discordapp.com/embed/avatars/0.png",
+            "tag": "dougbeal#1725",
+            "avatarURL": "https://cdn.discordapp.com/avatars/315239123420184587/17d2ed45a8d658b9faffd72b4ff87393.webp",
+            "displayAvatarURL": "https://cdn.discordapp.com/avatars/315239123420184587/17d2ed45a8d658b9faffd72b4ff87393.webp"
+          },
+          "name": "dougbeal",
+          "profession": "hunter",
+          "worked": false,
+          "isInjured": false
+        },
+        "jolhoeft": {
+          "gender": "male",
+          "food": 8,
+          "grain": 4,
+          "basket": 0,
+          "spearhead": 0,
+          "handle": {
+            "id": "305565105477648384",
+            "bot": false,
+            "username": "jolhoeft",
+            "discriminator": "3868",
+            "avatar": "301ce72a9a9fd4ca783456b2232903fe",
+            "lastMessageChannelID": null,
+            "flags": 0,
+            "createdTimestamp": 1492922798271,
+            "defaultAvatarURL": "https://cdn.discordapp.com/embed/avatars/3.png",
+            "tag": "jolhoeft#3868",
+            "avatarURL": "https://cdn.discordapp.com/avatars/305565105477648384/301ce72a9a9fd4ca783456b2232903fe.webp",
+            "displayAvatarURL": "https://cdn.discordapp.com/avatars/305565105477648384/301ce72a9a9fd4ca783456b2232903fe.webp"
+          },
+          "name": "jolhoeft",
+          "profession": "crafter",
+          "canCraft": true,
+          "worked": false
+        },
+        "notlink": {
+          "gender": "male",
+          "food": 16,
+          "grain": 16,
+          "basket": 0,
+          "spearhead": 0,
+          "handle": {
+            "id": "209897135406055435",
+            "bot": false,
+            "username": "notlink",
+            "discriminator": "7518",
+            "avatar": "64d500ff02b076468975a9ec72eff0a7",
+            "lastMessageChannelID": null,
+            "flags": 0,
+            "createdTimestamp": 1470113776781,
+            "defaultAvatarURL": "https://cdn.discordapp.com/embed/avatars/3.png",
+            "tag": "notlink#7518",
+            "avatarURL": "https://cdn.discordapp.com/avatars/209897135406055435/64d500ff02b076468975a9ec72eff0a7.webp",
+            "displayAvatarURL": "https://cdn.discordapp.com/avatars/209897135406055435/64d500ff02b076468975a9ec72eff0a7.webp"
+          },
+          "name": "notlink",
+          "profession": "hunter",
+          "worked": false
+        },
+        "BethMitcham": {
+          "gender": "female",
+          "food": 4,
+          "grain": 10,
+          "basket": 1,
+          "spearhead": 0,
+          "handle": {
+            "id": "542388020725415946",
+            "bot": false,
+            "username": "BethMitcham",
+            "discriminator": "2999",
+            "avatar": "1be982bc46ae0e1dfd6ab599d030dcf5",
+            "lastMessageChannelID": null,
+            "flags": 0,
+            "createdTimestamp": 1549385781223,
+            "defaultAvatarURL": "https://cdn.discordapp.com/embed/avatars/4.png",
+            "tag": "BethMitcham#2999",
+            "avatarURL": "https://cdn.discordapp.com/avatars/542388020725415946/1be982bc46ae0e1dfd6ab599d030dcf5.webp",
+            "displayAvatarURL": "https://cdn.discordapp.com/avatars/542388020725415946/1be982bc46ae0e1dfd6ab599d030dcf5.webp"
+          },
+          "name": "BethMitcham",
+          "profession": "gatherer",
+          "worked": false,
+          "guarding": [
+            "Dell"
+          ],
+          "nursing": [
+            "Dell"
+          ]
+        },
+        "Quarrel": {
+          "gender": "female",
+          "food": 9,
+          "grain": 20,
+          "basket": 1,
+          "spearhead": 0,
+          "handle": {
+            "id": "620043296173195285",
+            "bot": false,
+            "username": "Quarrel",
+            "discriminator": "7491",
+            "avatar": "817dd52c259720d00f67f86fd7a41349",
+            "lastMessageChannelID": null,
+            "flags": 0,
+            "createdTimestamp": 1567900241655,
+            "defaultAvatarURL": "https://cdn.discordapp.com/embed/avatars/1.png",
+            "tag": "Quarrel#7491",
+            "avatarURL": "https://cdn.discordapp.com/avatars/620043296173195285/817dd52c259720d00f67f86fd7a41349.webp",
+            "displayAvatarURL": "https://cdn.discordapp.com/avatars/620043296173195285/817dd52c259720d00f67f86fd7a41349.webp"
+          },
+          "name": "Quarrel",
+          "profession": "gatherer",
+          "worked": false,
+          "nursing": [
+            "Ayo",
+            "Egg"
+          ],
+          "guarding": [
+            "Egg"
+          ],
+          "isPregnant": "Fire"
+        },
+        "LanJ": {
+          "gender": "female",
+          "food": 8,
+          "grain": 4,
+          "basket": 0,
+          "spearhead": 0,
+          "handle": {
+            "id": "489204736596115479",
+            "bot": false,
+            "username": "LanJ",
+            "discriminator": "7117",
+            "avatar": null,
+            "flags": 0,
+            "lastMessageChannelID": null,
+            "createdTimestamp": 1536705898189,
+            "defaultAvatarURL": "https://cdn.discordapp.com/embed/avatars/2.png",
+            "tag": "LanJ#7117",
+            "avatarURL": null,
+            "displayAvatarURL": "https://cdn.discordapp.com/embed/avatars/2.png"
+          },
+          "name": "LanJ",
+          "strength": "weak",
+          "profession": "crafter",
+          "canCraft": true,
+          "worked": false,
+          "guarding": [
+            "Bison"
+          ]
+        }
+      },
+      "graveyard": {
+        "Clever": {
+          "mother": "BethMitcham",
+          "father": "dougbeal",
+          "age": 0,
+          "food": 0,
+          "gender": "female",
+          "guardian": null,
+          "name": "Clever",
+          "dead": true,
+          "deathMessage": "starvation"
+        }
+      },
+      "children": {
+        "Ayo": {
+          "mother": "Quarrel",
+          "father": "dougbeal",
+          "age": 3,
+          "food": 2,
+          "gender": "female",
+          "guardian": null,
+          "name": "Ayo",
+          "deathMessage": "hyena attack"
+        },
+        "Bison": {
+          "mother": "LanJ",
+          "father": "notlink",
+          "age": 5,
+          "food": 0,
+          "gender": "female",
+          "guardian": null,
+          "name": "Bison"
+        },
+        "Dell": {
+          "mother": "BethMitcham",
+          "father": "notlink",
+          "age": 2,
+          "food": 0,
+          "gender": "female",
+          "guardian": null,
+          "name": "Dell"
+        },
+        "Egg": {
+          "mother": "Quarrel",
+          "father": "notlink",
+          "age": 1,
+          "food": 0,
+          "gender": "male",
+          "guardian": null,
+          "name": "Egg"
+        },
+        "Fire": {
+          "mother": "Quarrel",
+          "father": "dougbeal",
+          "age": -1,
+          "food": 0,
+          "gender": "female",
+          "guardian": null,
+          "name": "Fire"
+        }
+      },
+      "currentLocationName": "veldt",
+      "round": "reproduction",
+      "workRound": false,
+      "foodRound": false,
+      "reproductionRound": true,
+      "needChanceRoll": true,
+      "canJerky": false,
+      "reproductionList": [
+        "q1(female)",
+        "kevinmitcham(male)"
+      ]
+    }
+  }

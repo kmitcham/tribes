@@ -3,6 +3,7 @@ const migrate = require("../../migrateLib.js");
 const messenger = require("../../messaging.js");
 const locations = require('../../locations.json');
 const legalLocations = Object.keys(locations)
+const util = require("./util.js")
 
 
 module.exports = {
@@ -33,7 +34,7 @@ module.exports = {
         var force = interaction.options.getBoolean('force');
         value = migrate.migrate(sourceName, destination, force, gameState)
         if (value == 0){
-            messenger.addMessage(gameState, sourceName, "You lead the tribe to "+destination)
+            util.addMessage(gameState, sourceName, "You lead the tribe to "+destination)
         }
         console.log("response to migrate was "+value)
         //have to see if this better than the 'no response' message

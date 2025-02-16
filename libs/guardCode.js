@@ -1,7 +1,6 @@
-const utillib = require("./util.js");
 const locations = require('./locations.json');
+const dice = require("./dice.js")
 const killlib = require("./kill.js")
-
 
 module.exports.findGuardValueForChild = (childName, population, children) =>{
 	var guardValue = Number(0);
@@ -117,7 +116,7 @@ module.exports.hyenaAttack= (children, gameState) => {
 	}
 	guardians = child.guardians
 	for (guardName in guardians){
-		rollValue = utillib.roll(1)
+		rollValue = dice.roll(1)
 		watchValue = guardians[ guardName ]		
 		//console.log(guardName+' rollValue '+rollValue+ ' watchValue '+watchValue)
 		if (rollValue > watchValue){

@@ -22,7 +22,7 @@ async function messageTribe(bot, gameState, message){
 		console.log("Not sending empty message to channel:"+message)
 		return -2
 	}
-	channel = argBot.channels.cache.find(channel => channel.name === gameState.name)
+	channel = bot.channels.cache.find(channel => channel.name === gameState.name)
 	if (channel){
 		channel.send(message)
         return 0
@@ -54,16 +54,4 @@ async function  messageMember(bot, gameState, memberName, message) {
 }
 module.exports.messageMember = messageMember;
 
-function addMessage(gameState, address, message){
-    if (! gameState['messages'] ){
-        gameState['messages'] = {}
-    }
-    messages = gameState['messages']
-    if (messages[address]){
-        messages[address] += '\n'+message
-    } else {
-        messages[address] = message
-    }
-}
-module.exports.addMessage = addMessage;
 

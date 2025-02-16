@@ -1,0 +1,378 @@
+{
+    "flounder-tribe": {
+      "seasonCounter": 32,
+      "gameTrack": {
+        "veldt": 11,
+        "forest": 0,
+        "marsh": 2,
+        "hills": 0
+      },
+      "name": "flounder-tribe",
+      "open": true,
+      "populationCounter": 10,
+      "population": {
+        "BethMitcham": {
+          "gender": "female",
+          "food": 26,
+          "grain": 60,
+          "basket": 1,
+          "spearhead": 0,
+          "handle": {
+            "id": "542388020725415946",
+            "bot": false,
+            "username": "BethMitcham",
+            "discriminator": "2999",
+            "avatar": "1be982bc46ae0e1dfd6ab599d030dcf5",
+            "flags": 0,
+            "lastMessageChannelID": "777690196245872650",
+            "createdTimestamp": 1549385781223,
+            "defaultAvatarURL": "https://cdn.discordapp.com/embed/avatars/4.png",
+            "tag": "BethMitcham#2999",
+            "avatarURL": "https://cdn.discordapp.com/avatars/542388020725415946/1be982bc46ae0e1dfd6ab599d030dcf5.webp",
+            "displayAvatarURL": "https://cdn.discordapp.com/avatars/542388020725415946/1be982bc46ae0e1dfd6ab599d030dcf5.webp"
+          },
+          "name": "BethMitcham",
+          "profession": "gatherer",
+          "vote": "BethMitcham",
+          "chief": true,
+          "worked": false,
+          "isInjured": false,
+          "guarding": [
+            "Deer",
+            "Gray",
+            "Hazel",
+            "Bead",
+            "Ilima"
+          ],
+          "canCraft": true,
+          "nursing": [
+            "Ilima"
+          ]
+        },
+        "notlink": {
+          "gender": "male",
+          "food": 27,
+          "grain": 11,
+          "basket": 0,
+          "spearhead": 2,
+          "handle": {
+            "id": "209897135406055435",
+            "bot": false,
+            "username": "notlink",
+            "discriminator": "7518",
+            "avatar": "64d500ff02b076468975a9ec72eff0a7",
+            "flags": 0,
+            "lastMessageChannelID": "777690196245872650",
+            "createdTimestamp": 1470113776781,
+            "defaultAvatarURL": "https://cdn.discordapp.com/embed/avatars/3.png",
+            "tag": "notlink#7518",
+            "avatarURL": "https://cdn.discordapp.com/avatars/209897135406055435/64d500ff02b076468975a9ec72eff0a7.webp",
+            "displayAvatarURL": "https://cdn.discordapp.com/avatars/209897135406055435/64d500ff02b076468975a9ec72eff0a7.webp"
+          },
+          "name": "notlink",
+          "profession": "hunter",
+          "worked": false,
+          "isInjured": false,
+          "strength": "strong"
+        },
+        "webbnh": {
+          "gender": "female",
+          "food": 0,
+          "grain": 4,
+          "basket": 1,
+          "spearhead": 1,
+          "handle": {
+            "id": "582379120411934721",
+            "bot": false,
+            "username": "webbnh",
+            "discriminator": "6322",
+            "avatar": null,
+            "flags": 0,
+            "lastMessageChannelID": "777690196245872650",
+            "createdTimestamp": 1558920402387,
+            "defaultAvatarURL": "https://cdn.discordapp.com/embed/avatars/2.png",
+            "tag": "webbnh#6322",
+            "avatarURL": null,
+            "displayAvatarURL": "https://cdn.discordapp.com/embed/avatars/2.png"
+          },
+          "name": "webbnh",
+          "profession": "crafter",
+          "canCraft": true,
+          "worked": false,
+          "guarding": [
+            "Bead",
+            "Hazel"
+          ],
+          "isPregnant": "Joy"
+        },
+        "Alex Popiel": {
+          "gender": "male",
+          "food": 8,
+          "grain": 4,
+          "basket": 1,
+          "spearhead": 0,
+          "handle": {
+            "id": "428212108941852672",
+            "bot": false,
+            "username": "Alex Popiel",
+            "discriminator": "0145",
+            "avatar": "a87ade4309e0dcaf98baac4d642eace3",
+            "flags": 0,
+            "lastMessageChannelID": null,
+            "createdTimestamp": 1522164122568,
+            "defaultAvatarURL": "https://cdn.discordapp.com/embed/avatars/0.png",
+            "tag": "Alex Popiel#0145",
+            "avatarURL": "https://cdn.discordapp.com/avatars/428212108941852672/a87ade4309e0dcaf98baac4d642eace3.webp",
+            "displayAvatarURL": "https://cdn.discordapp.com/avatars/428212108941852672/a87ade4309e0dcaf98baac4d642eace3.webp"
+          },
+          "name": "Alex Popiel",
+          "profession": "gatherer",
+          "worked": false,
+          "guarding": [
+            "Deer",
+            "Fair"
+          ],
+          "canCraft": true
+        },
+        "dougbeal": {
+          "gender": "female",
+          "food": 21,
+          "grain": 10,
+          "basket": 1,
+          "spearhead": 0,
+          "handle": {
+            "id": "315239123420184587",
+            "bot": false,
+            "username": "dougbeal",
+            "discriminator": "1725",
+            "avatar": "17d2ed45a8d658b9faffd72b4ff87393",
+            "flags": 0,
+            "lastMessageChannelID": null,
+            "createdTimestamp": 1495229263883,
+            "defaultAvatarURL": "https://cdn.discordapp.com/embed/avatars/0.png",
+            "tag": "dougbeal#1725",
+            "avatarURL": "https://cdn.discordapp.com/avatars/315239123420184587/17d2ed45a8d658b9faffd72b4ff87393.webp",
+            "displayAvatarURL": "https://cdn.discordapp.com/avatars/315239123420184587/17d2ed45a8d658b9faffd72b4ff87393.webp"
+          },
+          "name": "dougbeal",
+          "strength": "weak",
+          "profession": "gatherer",
+          "worked": false,
+          "vote": "BethMitcham",
+          "guarding": [
+            "Bead",
+            "Fair",
+            "Gray"
+          ]
+        }
+      },
+      "graveyard": {
+        "Ash": {
+          "mother": "BethMitcham",
+          "father": "notlink",
+          "age": 1,
+          "food": 2,
+          "gender": "male",
+          "guardian": null,
+          "name": "Ash",
+          "deathMessage": "hyena attack"
+        },
+        "Clam": {
+          "mother": "BethMitcham",
+          "father": "notlink",
+          "age": 1,
+          "food": 2,
+          "gender": "male",
+          "guardian": null,
+          "name": "Clam",
+          "deathMessage": "hyena attack"
+        },
+        "Egg": {
+          "mother": "webbnh",
+          "father": "notlink",
+          "age": 1,
+          "food": 2,
+          "gender": "female",
+          "guardian": null,
+          "name": "Egg",
+          "deathMessage": "hyena attack"
+        }
+      },
+      "children": {
+        "Bead": {
+          "mother": "webbnh",
+          "father": "notlink",
+          "age": 23,
+          "food": 0,
+          "gender": "female",
+          "guardian": "BethMitcham",
+          "name": "Bead"
+        },
+        "Deer": {
+          "mother": "BethMitcham",
+          "father": "notlink",
+          "age": 14,
+          "food": 0,
+          "gender": "male",
+          "guardian": null,
+          "name": "Deer"
+        },
+        "Fair": {
+          "mother": "dougbeal",
+          "father": "Alex Popiel",
+          "age": 7,
+          "food": 0,
+          "gender": "female",
+          "guardian": null,
+          "name": "Fair"
+        },
+        "Gray": {
+          "mother": "BethMitcham",
+          "father": "notlink",
+          "age": 7,
+          "food": 0,
+          "gender": "female",
+          "guardian": "dougbeal",
+          "name": "Gray"
+        },
+        "Hazel": {
+          "mother": "webbnh",
+          "father": "notlink",
+          "age": 5,
+          "food": 0,
+          "gender": "male",
+          "guardian": null,
+          "name": "Hazel"
+        },
+        "Ilima": {
+          "mother": "BethMitcham",
+          "father": "Alex Popiel",
+          "age": 0,
+          "food": 0,
+          "gender": "female",
+          "guardian": null,
+          "name": "Ilima"
+        },
+        "Joy": {
+          "mother": "webbnh",
+          "father": "Alex Popiel",
+          "age": -1,
+          "food": 0,
+          "gender": "female",
+          "guardian": null,
+          "name": "Joy"
+        }
+      },
+      "currentLocationName": "marsh",
+      "round": "work",
+      "workRound": false,
+      "foodRound": false,
+      "reproductionRound": true,
+      "needChanceRoll": true,
+      "canJerky": true,
+      "reproductionList": [
+        "dougbeal(female)",
+        "BethMitcham(nursing 1)",
+        "Alex Popiel(male)",
+        "notlink(male)"
+      ]
+    },
+    "turtle-tribe": {
+      "seasonCounter": 1,
+      "gameTrack": {
+        "veldt": 0,
+        "forest": 0,
+        "marsh": 0,
+        "hills": 0
+      },
+      "name": "turtle-tribe",
+      "open": true,
+      "populationCounter": 0,
+      "population": {
+        "five": {
+          "gender": "male",
+          "food": 10,
+          "grain": 4,
+          "basket": 0,
+          "spearhead": 0,
+          "handle": {
+            "id": "777420220141928450",
+            "bot": false,
+            "username": "five",
+            "discriminator": "4115",
+            "avatar": null,
+            "flags": 0,
+            "lastMessageChannelID": null,
+            "createdTimestamp": 1605421824251,
+            "defaultAvatarURL": "https://cdn.discordapp.com/embed/avatars/0.png",
+            "tag": "five#4115",
+            "avatarURL": null,
+            "displayAvatarURL": "https://cdn.discordapp.com/embed/avatars/0.png"
+          },
+          "name": "five",
+          "vote": "five",
+          "chief": true
+        }
+      },
+      "graveyard": {},
+      "children": {},
+      "currentLocationName": "veldt",
+      "round": "work",
+      "workRound": true,
+      "foodRound": false,
+      "reproductionRound": false,
+      "needChanceRoll": true,
+      "canJerky": false
+    },
+    "bug-tribe": {
+      "seasonCounter": 1,
+      "gameTrack": {
+        "veldt": 0,
+        "forest": 0,
+        "marsh": 0,
+        "hills": 0
+      },
+      "name": "bug-tribe",
+      "open": true,
+      "populationCounter": 0,
+      "population": {
+        "kevinmitcham": {
+          "gender": "male",
+          "food": 10,
+          "grain": 4,
+          "basket": 1,
+          "spearhead": 0,
+          "handle": {
+            "id": "427681770930962435",
+            "bot": false,
+            "username": "kevinmitcham",
+            "discriminator": "9587",
+            "avatar": "590d429490ae1be623d1fe906fecdcbc",
+            "flags": 0,
+            "lastMessageChannelID": "779857354908762112",
+            "createdTimestamp": 1522037680133,
+            "defaultAvatarURL": "https://cdn.discordapp.com/embed/avatars/2.png",
+            "tag": "kevinmitcham#9587",
+            "avatarURL": "https://cdn.discordapp.com/avatars/427681770930962435/590d429490ae1be623d1fe906fecdcbc.webp",
+            "displayAvatarURL": "https://cdn.discordapp.com/avatars/427681770930962435/590d429490ae1be623d1fe906fecdcbc.webp"
+          },
+          "name": "kevinmitcham",
+          "profession": "crafter",
+          "canCraft": true,
+          "worked": false
+        }
+      },
+      "graveyard": {},
+      "children": {},
+      "currentLocationName": "veldt",
+      "round": "work",
+      "workRound": false,
+      "foodRound": true,
+      "reproductionRound": false,
+      "needChanceRoll": true,
+      "canJerky": false,
+      "reproductionList": [
+        "kevinmitcham(male)"
+      ]
+    }
+  }

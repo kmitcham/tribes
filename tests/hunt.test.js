@@ -1,4 +1,4 @@
-const lib = require("./hunt.js");
+const lib = require("../libs/hunt.js");
 
 test('injury case', () =>{
     var gameState = {

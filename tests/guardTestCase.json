@@ -1,0 +1,412 @@
+{
+    "bug-tribe": {
+      "seasonCounter": 28,
+      "gameTrack": {
+        "veldt": 17,
+        "forest": 2,
+        "marsh": 5,
+        "hills": 0
+      },
+      "name": "bug-tribe",
+      "open": true,
+      "populationCounter": 8,
+      "population": {
+        "QueenBeth": {
+          "gender": "female",
+          "food": 22,
+          "grain": 60,
+          "basket": 1,
+          "spearhead": 0,
+          "handle": {
+            "id": "542388020725415946",
+            "bot": false,
+            "username": "QueenBeth",
+            "discriminator": "2999",
+            "avatar": "1be982bc46ae0e1dfd6ab599d030dcf5",
+            "flags": 0,
+            "lastMessageChannelID": "777690196245872650",
+            "createdTimestamp": 1549385781223,
+            "defaultAvatarURL": "https://cdn.discordapp.com/embed/avatars/4.png",
+            "tag": "QueenBeth#2999",
+            "avatarURL": "https://cdn.discordapp.com/avatars/542388020725415946/1be982bc46ae0e1dfd6ab599d030dcf5.webp",
+            "displayAvatarURL": "https://cdn.discordapp.com/avatars/542388020725415946/1be982bc46ae0e1dfd6ab599d030dcf5.webp"
+          },
+          "name": "QueenBeth",
+          "profession": "gatherer",
+          "vote": "QueenBeth",
+          "chief": true,
+          "worked": false,
+          "isInjured": false,
+          "guarding": [
+            "Deer",
+            "Gray",
+            "Hazel"
+          ],
+          "nursing": [
+            "Gray"
+          ],
+          "canCraft": true
+        },
+        "neph": {
+          "gender": "male",
+          "food": 53,
+          "grain": 11,
+          "basket": 0,
+          "spearhead": 2,
+          "handle": {
+            "id": "209897135406055435",
+            "bot": false,
+            "username": "neph",
+            "discriminator": "7518",
+            "avatar": "64d500ff02b076468975a9ec72eff0a7",
+            "flags": 0,
+            "lastMessageChannelID": "777690196245872650",
+            "createdTimestamp": 1470113776781,
+            "defaultAvatarURL": "https://cdn.discordapp.com/embed/avatars/3.png",
+            "tag": "neph#7518",
+            "avatarURL": "https://cdn.discordapp.com/avatars/209897135406055435/64d500ff02b076468975a9ec72eff0a7.webp",
+            "displayAvatarURL": "https://cdn.discordapp.com/avatars/209897135406055435/64d500ff02b076468975a9ec72eff0a7.webp"
+          },
+          "name": "neph",
+          "profession": "hunter",
+          "worked": false,
+          "isInjured": false,
+          "strength": "strong"
+        },
+        "webbpt": {
+          "gender": "female",
+          "food": 4,
+          "grain": 4,
+          "basket": 2,
+          "spearhead": 0,
+          "handle": {
+            "id": "582379120411934721",
+            "bot": false,
+            "username": "webbpt",
+            "discriminator": "6322",
+            "avatar": null,
+            "flags": 0,
+            "lastMessageChannelID": "777690196245872650",
+            "createdTimestamp": 1558920402387,
+            "defaultAvatarURL": "https://cdn.discordapp.com/embed/avatars/2.png",
+            "tag": "webbpt#6322",
+            "avatarURL": null,
+            "displayAvatarURL": "https://cdn.discordapp.com/embed/avatars/2.png"
+          },
+          "name": "webbpt",
+          "profession": "crafter",
+          "canCraft": true,
+          "worked": false,
+          "guarding": [
+            "Bead",
+            "Hazel"
+          ],
+          "nursing": [
+            "Hazel"
+          ]
+        },
+        "swift": {
+          "gender": "male",
+          "food": 13,
+          "grain": 4,
+          "basket": 1,
+          "spearhead": 0,
+          "handle": {
+            "id": "428212108941852672",
+            "bot": false,
+            "username": "swift",
+            "discriminator": "0145",
+            "avatar": "a87ade4309e0dcaf98baac4d642eace3",
+            "flags": 0,
+            "lastMessageChannelID": null,
+            "createdTimestamp": 1522164122568,
+            "defaultAvatarURL": "https://cdn.discordapp.com/embed/avatars/0.png",
+            "tag": "swift#0145",
+            "avatarURL": "https://cdn.discordapp.com/avatars/428212108941852672/a87ade4309e0dcaf98baac4d642eace3.webp",
+            "displayAvatarURL": "https://cdn.discordapp.com/avatars/428212108941852672/a87ade4309e0dcaf98baac4d642eace3.webp"
+          },
+          "name": "swift",
+          "profession": "gatherer",
+          "worked": false,
+          "guarding": [
+            "Deer",
+            "Fair",
+            "Gray"
+          ],
+          "canCraft": true
+        },
+        "foolscap": {
+          "gender": "female",
+          "food": 20,
+          "grain": 10,
+          "basket": 1,
+          "spearhead": 0,
+          "handle": {
+            "id": "315239123420184587",
+            "bot": false,
+            "username": "foolscap",
+            "discriminator": "1725",
+            "avatar": "17d2ed45a8d658b9faffd72b4ff87393",
+            "flags": 0,
+            "lastMessageChannelID": null,
+            "createdTimestamp": 1495229263883,
+            "defaultAvatarURL": "https://cdn.discordapp.com/embed/avatars/0.png",
+            "tag": "foolscap#1725",
+            "avatarURL": "https://cdn.discordapp.com/avatars/315239123420184587/17d2ed45a8d658b9faffd72b4ff87393.webp",
+            "displayAvatarURL": "https://cdn.discordapp.com/avatars/315239123420184587/17d2ed45a8d658b9faffd72b4ff87393.webp"
+          },
+          "name": "foolscap",
+          "strength": "weak",
+          "profession": "gatherer",
+          "worked": false,
+          "vote": "QueenBeth",
+          "guarding": [
+            "Bead",
+            "Fair"
+          ],
+          "nursing": [
+            "Fair"
+          ]
+        }, "dougbeal": {
+          "gender": "male",
+          "food": 44,
+          "grain": 4,
+          "basket": 0,
+          "spearhead": 0,
+          "handle": {
+            "id": "315239123420184587",
+            "bot": false,
+            "username": "dougbeal",
+            "discriminator": "1725",
+            "avatar": "17d2ed45a8d658b9faffd72b4ff87393",
+            "flags": 0,
+            "lastMessageChannelID": null,
+            "createdTimestamp": 1495229263883,
+            "defaultAvatarURL": "https://cdn.discordapp.com/embed/avatars/0.png",
+            "tag": "dougbeal#1725",
+            "avatarURL": "https://cdn.discordapp.com/avatars/315239123420184587/17d2ed45a8d658b9faffd72b4ff87393.webp",
+            "displayAvatarURL": "https://cdn.discordapp.com/avatars/315239123420184587/17d2ed45a8d658b9faffd72b4ff87393.webp"
+          },
+          "name": "dougbeal",
+          "strength": "strong",
+          "worked": false
+        },
+        "kevinmitcham": {
+          "gender": "male",
+          "food": 46,
+          "grain": 4,
+          "basket": 0,
+          "spearhead": 0,
+          "handle": {
+            "id": "427681770930962435",
+            "bot": false,
+            "username": "kevinmitcham",
+            "discriminator": "9587",
+            "avatar": "590d429490ae1be623d1fe906fecdcbc",
+            "flags": 0,
+            "lastMessageChannelID": "779857354908762112",
+            "createdTimestamp": 1522037680133,
+            "defaultAvatarURL": "https://cdn.discordapp.com/embed/avatars/2.png",
+            "tag": "kevinmitcham#9587",
+            "avatarURL": "https://cdn.discordapp.com/avatars/427681770930962435/590d429490ae1be623d1fe906fecdcbc.webp",
+            "displayAvatarURL": "https://cdn.discordapp.com/avatars/427681770930962435/590d429490ae1be623d1fe906fecdcbc.webp"
+          },
+          "name": "kevinmitcham",
+          "profession": "hunter",
+          "worked": false,
+          "activity": "hunt"
+        }
+      },
+      "graveyard": {
+        "Ash": {
+          "mother": "QueenBeth",
+          "father": "neph",
+          "age": 1,
+          "food": 2,
+          "gender": "male",
+          "guardian": null,
+          "name": "Ash",
+          "deathMessage": "hyena attack"
+        },
+        "Clam": {
+          "mother": "QueenBeth",
+          "father": "neph",
+          "age": 1,
+          "food": 2,
+          "gender": "male",
+          "guardian": null,
+          "name": "Clam",
+          "deathMessage": "hyena attack"
+        },
+        "Egg": {
+          "mother": "webbpt",
+          "father": "neph",
+          "age": 1,
+          "food": 2,
+          "gender": "female",
+          "guardian": null,
+          "name": "Egg",
+          "deathMessage": "hyena attack"
+        }
+      },
+      "children": {
+        "Bead": {
+          "mother": "webbpt",
+          "father": "neph",
+          "age": 18,
+          "food": 2,
+          "gender": "female",
+          "guardian": null,
+          "name": "Bead"
+        },
+        "Deer": {
+          "mother": "QueenBeth",
+          "father": "neph",
+          "age": 9,
+          "food": 2,
+          "gender": "male",
+          "guardian": "swift",
+          "name": "Deer"
+        },
+        "Fair": {
+          "mother": "foolscap",
+          "father": "swift",
+          "age": 2,
+          "food": 2,
+          "gender": "female",
+          "guardian": "swift",
+          "name": "Fair"
+        },
+        "Gray": {
+          "mother": "QueenBeth",
+          "father": "neph",
+          "age": 2,
+          "food": 2,
+          "gender": "female",
+          "guardian": "swift",
+          "name": "Gray"
+        },
+        "Hazel": {
+          "mother": "webbpt",
+          "father": "neph",
+          "age": 0,
+          "food": 2,
+          "gender": "male",
+          "guardian": "QueenBeth",
+          "name": "Hazel"
+        }
+      },
+      "currentLocationName": "forest",
+      "round": "work",
+      "workRound": false,
+      "foodRound": true,
+      "reproductionRound": false,
+      "needChanceRoll": false,
+      "canJerky": true,
+      "reproductionList": [
+        "neph(male)",
+        "webbpt(nursing 1)",
+        "QueenBeth(nursing 1)",
+        "foolscap(nursing 1)",
+        "swift(male)"
+      ]
+    },
+    "turtle-tribe": {
+      "seasonCounter": 1,
+      "gameTrack": {
+        "veldt": 0,
+        "forest": 0,
+        "marsh": 0,
+        "hills": 0
+      },
+      "name": "turtle-tribe",
+      "open": true,
+      "populationCounter": 0,
+      "population": {
+        "five": {
+          "gender": "male",
+          "food": 10,
+          "grain": 4,
+          "basket": 0,
+          "spearhead": 0,
+          "handle": {
+            "id": "777420220141928450",
+            "bot": false,
+            "username": "five",
+            "discriminator": "4115",
+            "avatar": null,
+            "flags": 0,
+            "lastMessageChannelID": null,
+            "createdTimestamp": 1605421824251,
+            "defaultAvatarURL": "https://cdn.discordapp.com/embed/avatars/0.png",
+            "tag": "five#4115",
+            "avatarURL": null,
+            "displayAvatarURL": "https://cdn.discordapp.com/embed/avatars/0.png"
+          },
+          "name": "five",
+          "vote": "five",
+          "chief": true
+        }
+      },
+      "graveyard": {},
+      "children": {},
+      "currentLocationName": "veldt",
+      "round": "work",
+      "workRound": true,
+      "foodRound": false,
+      "reproductionRound": false,
+      "needChanceRoll": true,
+      "canJerky": false
+    },
+    "bug-tribe": {
+      "seasonCounter": 1,
+      "gameTrack": {
+        "veldt": 0,
+        "forest": 0,
+        "marsh": 0,
+        "hills": 0
+      },
+      "name": "bug-tribe",
+      "open": true,
+      "populationCounter": 0,
+      "population": {
+        "kevinmitcham": {
+          "gender": "male",
+          "food": 10,
+          "grain": 4,
+          "basket": 1,
+          "spearhead": 0,
+          "handle": {
+            "id": "427681770930962435",
+            "bot": false,
+            "username": "kevinmitcham",
+            "discriminator": "9587",
+            "avatar": "590d429490ae1be623d1fe906fecdcbc",
+            "flags": 0,
+            "lastMessageChannelID": "779857354908762112",
+            "createdTimestamp": 1522037680133,
+            "defaultAvatarURL": "https://cdn.discordapp.com/embed/avatars/2.png",
+            "tag": "kevinmitcham#9587",
+            "avatarURL": "https://cdn.discordapp.com/avatars/427681770930962435/590d429490ae1be623d1fe906fecdcbc.webp",
+            "displayAvatarURL": "https://cdn.discordapp.com/avatars/427681770930962435/590d429490ae1be623d1fe906fecdcbc.webp"
+          },
+          "name": "kevinmitcham",
+          "profession": "crafter",
+          "canCraft": true,
+          "worked": false
+        }
+      },
+      "graveyard": {},
+      "children": {},
+      "currentLocationName": "veldt",
+      "round": "work",
+      "workRound": false,
+      "foodRound": true,
+      "reproductionRound": false,
+      "needChanceRoll": true,
+      "canJerky": false,
+      "reproductionList": [
+        "kevinmitcham(male)"
+      ]
+    }
+  }
