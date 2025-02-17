@@ -12,7 +12,7 @@ module.exports.kill = (name, message, gameState) =>{
 		message = 'unknown causes'
 	}
 	if ("graveyard" in gameState){} else { gameState.graveyard = {} }
-	person = populationLib.personByName(name, gameState)
+	person = populationLib.memberByName(name, gameState)
 	if (person){
 		person.deathMessage = message
 		person.deathSeason = gameState.seasonCounter

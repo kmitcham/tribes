@@ -1,4 +1,3 @@
-const utillib = require("./util.js");
 const guardlib = require("./guardCode.js");
 const { child } = require("winston");
 
@@ -74,7 +73,7 @@ module.exports.showChildren =  (children, population, filterName="", hideFathers
 				response += ' father:'+child.father
 			}
 			if (child.age < 24 ){
-				response += ' guardValue:'+ utillib.round(guardlib.findGuardValueForChild(childName, population, children))
+				response += ' guardValue:'+ guardlib.findGuardValueForChild(childName, population, children)
 			}
 			if (child.babysitting){
 				response += ' watching:'+child.babysitting+' '
@@ -87,3 +86,4 @@ module.exports.showChildren =  (children, population, filterName="", hideFathers
 	responseMessages.push('There are '+childNames.length+' children in total. \n')
 	return responseMessages
 }
+

@@ -26,7 +26,8 @@ module.exports.findGuardValueForChild = (childName, population, children) =>{
         }
     }
 	//console.log( logMessage+'\t\t TOTAL: '+guardValue)	
-    return guardValue
+	// round to two decimals
+	return Math.round(100*guardValue)/100;
 }
 
 function findLeastGuarded (children, population){

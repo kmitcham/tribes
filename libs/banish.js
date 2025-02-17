@@ -1,21 +1,22 @@
-const util = require("./util.js");
+const populationLib = require("./population.js")
+const t = require("./textprocess")
 
 module.exports.banish = (gameState, targetName, bot) =>{
     population = gameState.population
-    person = util.personByName(targetName, gameState)
+    person = populationLib.memberByName(targetName, gameState)
     console.log("In banish lib for "+targetName)
     if (person){
         targetName = person.name
     }
 	if (population[targetName]){
-        person = util.personByName(targetName, gameState)
+        person = populationLib.memberByName(targetName, gameState)
         if (!gameState.banished){
             gameState.banished = {}
         }
         gameState.banished[targetName] = person
         // removing the player from the banish list is a pain.
         delete population[targetName]
-        util.messageChannel(targetName+' is banished from the tribe',gameState, bot)
+        t.addMessage(gameState, "tribe", targetName+' is banished from the tribe')
         for (childName in gameState.children){
             child = gameState.children[childName]
             console.log(childName+' is getting checked')
@@ -29,10 +30,10 @@ module.exports.banish = (gameState, targetName, bot) =>{
                 if (childIndex > -1) {
                     person.guarding.splice(childIndex, 1);
                 }
-                util.messageChannel(targetName+' stops guarding '+childName, gameState, bot)
+                t.addMessage(gameState, "tribe", targetName+' stops guarding '+childName)
             }
         }
-        // clean up inviteList
+        // clean up inviteLists
         for (memberName in population){
             if (memberName == targetName){
                 continue;
@@ -50,6 +51,6 @@ module.exports.banish = (gameState, targetName, bot) =>{
         return
     } else {
         console.log("Failed to get the person; banish fails")
-        util.messageChannel(targetName+" was not found in the tribe")
+        t.addMessage(gameState, "tribe", targetName+" was not found in the tribe")
     }
 }
