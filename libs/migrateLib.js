@@ -63,6 +63,7 @@ function migrate(sourceName, destination, force, gameState){
 						eaten++
 					} else {
 						deceasedPeople.push(personName)
+						break;
 					}
 				}
 			}
