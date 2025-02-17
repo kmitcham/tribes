@@ -63,3 +63,28 @@ function memberByName(name, gameState){
     return null
 }
 module.exports.memberByName = memberByName
+
+function decrementSickness(population, gameState, bot){
+	for (personName in population){
+		person = population[personName]
+		if (person.isSick && person.isSick > 0 ){
+			person.isSick = person.isSick -1;
+			console.log(person.name+" decrement sickness  "+person.isSick)
+		}
+		if (person.isInjured && person.isInjured > 0 ){
+			person.isInjured = person.isInjured -1;
+			console.log(person.name+" decrement injury  "+person.isSick)
+		}
+		if (person.isSick < 1){
+			delete person.isSick
+            text.addMessage(gameState, person.name,  "You have recovered from your illness.")
+			console.log(person.name+" recover sickness  ")
+		}
+		if (person.isInjured < 1){
+            text.addMessage(gameState, person.name, "You have recovered from your injury.")
+			delete person.isInjured
+			console.log(person.name+" recover injury  ")
+		}
+	}
+}
+module.exports.decrementSickness = decrementSickness;

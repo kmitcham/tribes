@@ -29,30 +29,7 @@ module.exports.cleanUpMessage = cleanUpMessage;
 
 
 
-function decrementSickness(population, gameState, bot){
-	for (personName in population){
-		person = population[personName]
-		if (person.isSick && person.isSick > 0 ){
-			person.isSick = person.isSick -1;
-			console.log(person.name+" decrement sickness  "+person.isSick)
-		}
-		if (person.isInjured && person.isInjured > 0 ){
-			person.isInjured = person.isInjured -1;
-			console.log(person.name+" decrement injury  "+person.isSick)
-		}
-		if (person.isSick < 1){
-			delete person.isSick
-			messagePlayerName(person.name, "You have recovered from your illness.", gameState, bot)
-			console.log(person.name+" recover sickness  ")
-		}
-		if (person.isInjured < 1){
-			messagePlayerName(person.name, "You have recovered from your injury.", gameState, bot)
-			delete person.isInjured
-			console.log(person.name+" recover injury  ")
-		}
-	}
-}
-module.exports.decrementSickness = decrementSickness;
+
 
 function getYear(gameState){
 	return gameState.seasonCounter/2;
@@ -263,12 +240,7 @@ module.exports.personByName = personByName;
 module.exports.isColdSeason = isColdSeason;
 module.exports.getYear = getYear;
 
-function randomMemberName(population){
-	nameList = Object.keys(population)
-	var random =  Math.trunc( Math.random ( ) * nameList.length )
-	return nameList[random]
-}
-module.exports.randomMemberName = randomMemberName;
+
 
 function round(number){
 	return Math.round(100*number)/100;

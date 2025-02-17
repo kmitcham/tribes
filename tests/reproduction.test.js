@@ -181,7 +181,9 @@ test("make a consentList, with pass", () =>{
   }
   //function handleReproductionList(actorName, args, listName, gameState, bot){
   response = reproLib.handleReproductionList("p1", ["p2", "p4", "!pass", "p3"],"consentList", gameState, {})
-  expect(response).toBe(-2)
+  expect(response).toContain("p1 is the same gender as p4")
+  expect(response).toContain("!pass is only valid in the inviteList")
+
 });
 test("make a invitelist, with pass and save", () =>{
   var gameState = {
@@ -208,7 +210,8 @@ test("make a invitelist, with pass and save", () =>{
   //function handleReproductionList(actorName, args, listName, gameState, bot){
   expectedList = ["p2", "p3", "!save","!pass"]
   response = reproLib.handleReproductionList("p1", expectedList ,"inviteList", gameState, {})
-  expect(response).toBe(0)
+  exp = "Setting your inviteList list to:p2,p3,!save,!pass\nSaving your inviteList list be used in future rounds\n"
+  expect(response).toBe(exp)
   expect(gameState["population"]["p1"]["inviteList"]).toStrictEqual(expectedList)
 });
 test("make a invitelist, with Pass and Save", () =>{
@@ -236,11 +239,12 @@ test("make a invitelist, with Pass and Save", () =>{
   //function handleReproductionList(actorName, args, listName, gameState, bot){
   expectedList = ["p2", "p3", "!Save","!Pass"]
   response = reproLib.handleReproductionList("p1", expectedList ,"inviteList", gameState, {})
-  expect(response).toBe(0)
+  exp = "Setting your inviteList list to:p2,p3,!Save,!Pass\nSaving your inviteList list be used in future rounds\n"
+  expect(response).toBe(exp)
   expect(gameState["population"]["p1"]["inviteList"]).toStrictEqual(expectedList)
 });
 
-test("make a inviteList, with pass", () =>{
+test("make a inviteList, with pass error", () =>{
   var gameState = {
       "population": {
           "p1":{
@@ -263,8 +267,9 @@ test("make a inviteList, with pass", () =>{
       "round": "reproduction"
   }
   //function handleReproductionList(actorName, args, listName, gameState, bot){
+  expectedResponse = "Values after '!pass' must be removed.\n\nPlease try again to set the inviteList\n"
   response = reproLib.handleReproductionList("p1", ["p2", "p4", "!pass", "p3"],"inviteList", gameState, {})
-  expect(response).toBe(-1)
+  expect(response).toBe(expectedResponse)
 });
 test("make a inviteList, with pass happypath", () =>{
   var gameState = {
@@ -290,8 +295,9 @@ test("make a inviteList, with pass happypath", () =>{
   }
   //function handleReproductionList(actorName, args, listName, gameState, bot){
   response = reproLib.handleReproductionList("p1", ["p2", "p4", "!pass"],"inviteList", gameState, {})
-  expect(response).toBe(0)
+  expect(response).toBe("Setting your inviteList list to:p2,p4,!pass\n")
 });
+
 test("trigger end of mating", () =>{
   var gameState = {
     "name": "unitTest-tribe",
@@ -430,7 +436,8 @@ test("make a invitelist, with commas, pass and save", () =>{
   expectedList = ["p2", "p3", "!save","!pass"]
   inputList = ["p2,", "p3,", "!save,","!pass"]
   response = reproLib.handleReproductionList("p1", inputList ,"inviteList", gameState, {})
-  expect(response).toBe(0)
+  exp = "Setting your inviteList list to:p2,p3,!save,!pass\nSaving your inviteList list be used in future rounds\n"
+  expect(response).toBe(exp)
   expect(gameState["population"]["p1"]["inviteList"]).toStrictEqual(expectedList)
 });
 test("make a consent list with !all", () =>{
@@ -458,6 +465,7 @@ test("make a consent list with !all", () =>{
   expectedList = ["p2", "p3", "!all"]
   inputList = ["p2,", "p3,", "!all,"]
   response = reproLib.handleReproductionList("p1", inputList ,"consentList", gameState, {})
-  expect(response).toBe(0)
+  exp = "Setting your consentList list to:p2,p3,!all\n"
+  expect(response).toBe(exp)
   expect(gameState["population"]["p1"]["consentList"]).toStrictEqual(expectedList)
 });

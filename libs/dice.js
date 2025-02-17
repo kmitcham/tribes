@@ -10,3 +10,10 @@ function roll(count){
         return total
 }
 module.exports.roll = roll;
+
+function randomMemberName(population){
+	nameList = Object.keys(population)
+	var random =  Math.trunc( Math.random ( ) * nameList.length )
+	return nameList[random]
+}
+module.exports.randomMemberName = randomMemberName;

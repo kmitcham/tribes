@@ -1,7 +1,7 @@
-const locations = require('./locations.json');
-const util = require("./util.js");
 const killlib = require("./kill.js");
-const savelib = require("./save.js");
+const dice = require("./dice.js");
+const pop = require("./population.js");
+const text = require("./textprocess.js");
 
 const childSurvivalChance = 
     [ 8, 8, 8, 8, 9, 9,10,10,10,11  // 4 years
@@ -50,7 +50,7 @@ function endGame(gameState, bot){
             var child = children[childName]
             console.log('end game scoring for '+childName+' '+child.newAdult+' '+Number(child.age)+2)
             if (!child.newAdult){
-                var roll = util.roll(3)
+                var roll = dice.roll(3)
                 response += '\t'+childName+' ['+roll+' vs '+childSurvivalChance[Number(child.age)+2]+'] '
                 if (roll <= childSurvivalChance[Number(child.age)+2]){
                     child.newAdult = true
@@ -72,7 +72,7 @@ function endGame(gameState, bot){
 	response += 'Count of surviving adults is:'+adultCount+' ('+newAdultCount+' new adults)';
 	response += '\nThe tribe was '+ scoreTribe(gameState);
     gameState.ended = true
-	savelib.saveTribe(gameState);
+    text.addMessage(gameState, "tribe", response)
 	return response
 }
 
@@ -103,7 +103,7 @@ function scoreChildrenMessage(gameState){
 	}
 	message = 'Child scores:\n'
 	for (parentName in parentScores){
-		player = util.personByName(parentName, gameState)
+		player = pop.memberByName(parentName, gameState)
 		if (player){
 			message+= '\t'+parentName+'('+player.gender.substring(0, 1)+'): '+parentScores[parentName]
 		} else {
@@ -173,7 +173,7 @@ function setReminder(gameState, bot){
 }
 
 function playReminder(message, gameState, bot){
-    util.messageChannel(message, gameState, bot)
+    text.addMessage(gameState, "tribe", message)
     setReminder(gameState, bot)
 }
 

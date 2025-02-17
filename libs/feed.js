@@ -1,11 +1,13 @@
-const util = require("./util.js");
+const dice = require("./dice.js");
+const pop = require("./population.js");
+const text = require("./textprocess.js");
 
 function feed( msg, player, amount, childList,  gameState){
         children = gameState.children;
-        message = player.name +' starts to feed children:\n';
+        let message = ""
         var showErrors = true;
         for (cName of childList){
-            childName = capitalizeFirstLetter(cName)
+            childName = text.capitalizeFirstLetter(cName)
             amount = Number(amount)
             if (!children[childName]) {
                 if (cName.toLowerCase() == "!all"){
@@ -18,7 +20,7 @@ function feed( msg, player, amount, childList,  gameState){
                     }
                     continue;
                 }
-                var parent = util.personByName(cName, gameState)
+                var parent = pop.memberByName(cName, gameState)
                 if (parent && parent.gender && parent.gender == 'female'){
                     for (var filterChildName in children){
                         var filterChild = children[filterChildName]
@@ -35,15 +37,15 @@ function feed( msg, player, amount, childList,  gameState){
             }
             child = children[childName]
             if (  Number(child.food) >= 2 ){
-                if (showErrors){util.ephemeralResponse(msg, childName+' has enough food already.')}
+                if (showErrors){text.addMessage(gameState, player.name,  childName+' has enough food already.')}
                 continue
             }
             if ( (child.food + amount) > 2 ){
-                if (showErrors){util.ephemeralResponse(msg, childName+' does not need to eat that much.')}
+                if (showErrors){text.addMessage(gameState, player.name, childName+' does not need to eat that much.')}
                 continue
             }
             if ( child.newAdult && child.newAdult == true){
-                if (showErrors){util.ephemeralResponse(msg, childName+' is all grown up and does not need food from you.')}
+                if (showErrors){text.addMessage(gameState, player.name,childName+' is all grown up and does not need food from you.')}
                 continue
             }
             var fed = 0
@@ -62,12 +64,13 @@ function feed( msg, player, amount, childList,  gameState){
                 }
                 message += '\n'
             } else {
-                util.ephemeralResponse(msg, 'You do not have enough food or grain to feed '+childName)
+                text.addMessage(gameState, player.name, 'You do not have enough food or grain to feed '+childName)
                 break;
             }
         }
         console.log("message is "+message);
-        return message;
+        text.addMessage(gameState, "tribe", message)
+        return 0
 };	
 module.exports.feed = feed;
 

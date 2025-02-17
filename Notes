@@ -53,6 +53,9 @@ Still, the library tests should be doable.
 -- migrate.js and migrateLib.js have a better seperation of responsibilities using message lib.
 ++ unit test on migrateLib.js
 ++ score game report male and female scores, sorted (for winners)
+++ reproduction messaging may be in trouble, since it is triggered from so many places
+++ history removed from reproduction, hunting.  Probably gathering
+
 
 W= has worked since new API
 U= untested but written

@@ -49,8 +49,8 @@ test("feed filtered by parent", () =>{
               }
         }
     }
-    //module.exports.feed = ( msg, player, amount, childList,  gameState) =>{
-    response = feedlib.feed(dummyMessage, gameState.population.p1, 2, ["p2"], gameState)
+    feedlib.feed(dummyMessage, gameState.population.p1, 2, ["p2"], gameState)
+    response = gameState.messages["tribe"]
     expect(response).toBe("p1 feeds 2 to C1\np1 feeds 2 to C2\n")
 });
 
@@ -103,7 +103,8 @@ test("feed !all", () =>{
               }
         }
     }
-    //module.exports.feed = ( msg, player, amount, childList,  gameState) =>{
-    response = feedlib.feed(dummyMessage, gameState.population.p1, 2, ["!all"], gameState)
+    feedlib.feed(dummyMessage, gameState.population.p1, 2, ["!all"], gameState)
+    response = gameState.messages["tribe"]
+
     expect(response).toBe("p1 feeds 2 to C1\np1 feeds 2 to C2\np1 feeds 2 to C3\n")
 });

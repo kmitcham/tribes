@@ -1,21 +1,7 @@
 const locations = require('./locations.json');
-const util = require("./util.js");
+const dice = require('./dice')
+const text = require('./textprocess')
 
-// in the ideal world, these are imports
-function roll(count){
-    if (!count){
-        count = 3
-    }
-    total = 0
-    for (var i = 0; i < count; i++){
-        var roll = Math.trunc( Math.random ( ) * 6)+1
-        total += roll
-    }
-    if (total == 0){
-        console.log(' BAD roll zero')
-    }
-    return total
-}
 
 //module.exports.hunt = (playername, player, rollValue, gameState) =>{
 //    function gather(playername, player, rollValue,gameState){
@@ -83,7 +69,7 @@ module.exports.gather = (playername, player, rollValue, gameState) => {
 	player.food += getFood
 	player.grain += getGrain
 	if (player.basket > 0){
-		var broll = roll(3)+modifier
+		var broll = dice.roll(3)+modifier
 		message+= ' basket: ['+broll+']'
 		netRoll = broll+modifier
 		console.log('modified basket roll '+netRoll)
@@ -109,11 +95,11 @@ module.exports.gather = (playername, player, rollValue, gameState) => {
 		player.grain += getGrain
 		
 		// check for basket loss
-		if (roll(1) <= 2){
+		if (dice.roll(1) <= 2){
 			message+= ' basket breaks.'
 			player.basket -= 1
 		}
 	}
-
+	text.addMessage(gameState, "tribe",message )
 	return message
 }

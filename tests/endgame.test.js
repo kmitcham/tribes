@@ -27,8 +27,8 @@ test("Count dead adults", () =>{
     
 });
 
-test("run endgame", () =>{
-    var gameState = {
+
+let endGameState = {
         "seasonCounter": 37,
         "gameTrack": {
           "veldt": 1,
@@ -100,6 +100,24 @@ test("run endgame", () =>{
             ],
             "activity": "gather"
           },
+          "jmitcham": {
+            "gender": "female",
+            "food": 12,
+            "grain": 68,
+            "basket": 1,
+            "spearhead": 0,
+            "name": "notlink",
+            "history": [
+            ],
+            "profession": "gatherer",
+            "worked": true,
+            "nickname": "jmitcham",
+            "strength": "weak",
+            "nursing": [
+              "Redhair"
+            ],
+            "activity": "gather"
+          },
           "Thor": {
             "gender": "m",
             "golem": true,
@@ -118,6 +136,42 @@ test("run endgame", () =>{
               "babysit"
             ],
             "name": "Thor",
+            "worked": true,
+            "history": [
+            ],
+            "activity": "hunt"
+          } ,          
+          "kevinmitcham": {
+            "gender": "m",
+            "golem": true,
+            "food": 4,
+            "grain": 0,
+            "basket": 0,
+            "spearhead": 1,
+            "profession": "hunter",
+            "obeyList": [
+              "hunt",
+              "gather",
+              "give",
+              "guard",
+              "ignore",
+              "feed",
+              "babysit"
+            ],
+            "name": "kevinmitcham",
+            "worked": true,
+            "history": [
+            ],
+            "activity": "hunt"
+          } ,
+          "dougbeal": {
+            "gender": "f",
+            "food": 4,
+            "grain": 0,
+            "basket": 0,
+            "spearhead": 1,
+            "profession": "hunter",
+            "name": "dougbeal",
             "worked": true,
             "history": [
             ],
@@ -625,10 +679,14 @@ test("run endgame", () =>{
           }
         }
       }
-    actualMessage = endLib.endGame(gameState)
+ test("run endgame", () =>{
+        endLib.endGame(endGameState);
+    actualMessage = endGameState.messages["tribe"]
     expect(actualMessage).toContain("The fate of the children")
     expect(actualMessage).toContain("The tribe was")
+ })
 
-    scoreMessage = endLib.scoreChildrenMessage(gameState)
+ test("run scoreChildren", ()=>{
+    scoreMessage = endLib.scoreChildrenMessage(endGameState)
     expect(scoreMessage).toContain("BethMitcham(m): 11")
 });

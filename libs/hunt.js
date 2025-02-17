@@ -1,21 +1,7 @@
 const locations = require('./locations.json');
-const util = require("./util.js");
+const dice = require("./dice")
+const text = require("./textprocess")
 
-// in the ideal world, these are imports
-function roll(count){
-    if (!count){
-        count = 3
-    }
-    total = 0
-    for (var i = 0; i < count; i++){
-        var roll = Math.trunc( Math.random ( ) * 6)+1
-        total += roll
-    }
-    if (total == 0){
-        console.log(' BAD roll zero')
-    }
-    return total
-}
 const locationDecay = [30, // arrays count from 0 so add extra item
     30,30,30,17,17,
     15,15,14,14,13,
@@ -112,7 +98,7 @@ module.exports.hunt = (playername, player, rollValue, gameState) =>{
         huntercount += Math.min(player.helpers.length,3)
     }
     // check for spearhead loss
-    if (player.spearhead > 0 && roll(1) <= 2){
+    if (player.spearhead > 0 && dice.roll(1) <= 2){
         player.spearhead -= 1
         message += ' (the spearhead broke!)'
     }
@@ -126,7 +112,7 @@ module.exports.hunt = (playername, player, rollValue, gameState) =>{
     if (player.helpers){
         delete player.helpers 
     }
-    util.history(player.name, message, gameState)
+    text.addMessage(gameState, "tribe", message)
     return message
 }
 
@@ -146,7 +132,7 @@ function getScoutMessage(otherLocation, gameState){
         locationName = otherLocation
     }
     var season = 'warm season.'
-    if (util.isColdSeason(gameState)){
+    if (gameState.seasonCounter%2 == 0){
         season = 'cold season.'
     }
     response = 'The '+locationName+' '+season+' resources are:\n'
@@ -233,7 +219,7 @@ function scoutNerd(gameTrack){
     }
     MAX = 6000
     for (var i = 0; i < MAX; i++){
-        val = util.roll(3)
+        val = dice.roll(3)
         if (val > huntlib.locationDecay[gameTrack]){
             val = huntlib.locationDecay[gameTrack]						
         }
