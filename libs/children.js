@@ -2,7 +2,6 @@ const guardlib = require("./guardCode.js");
 const { child } = require("winston");
 
 module.exports.showChildren =  (children, population, filterName="", hideFathers=true ) =>{
-		
 	responseMessages = []
 	childNames = Object.keys(children)
 	var response = ''

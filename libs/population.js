@@ -1,5 +1,5 @@
 const text = require("./textprocess.js")
-
+const dice = require("./dice")
 
 function memberByName(name, gameState){
     if (name == null){
@@ -88,3 +88,60 @@ function decrementSickness(population, gameState, bot){
 	}
 }
 module.exports.decrementSickness = decrementSickness;
+
+function history (playerName, message, gameState){
+    player = personByName(playerName, gameState)
+    if (player && !player.history){
+        player.history = []
+    }
+    if (!player){
+        console.log('trying to record history with no player record:'+playerName)
+        return;
+    }
+    player.history.push(gameState.seasonCounter/2+": "+message)
+}
+module.exports.history = history
+
+function addToPopulation(gameState, bot, actor, gender, profession){
+    var sourceName = getNameFromUser(actor)
+    console.log("actor is "+actor+" actor.username:"+actor.username)
+    target = text.removeSpecialChars(sourceName)
+    if (gameState.population[target]){
+        return 'You are already in the tribe'
+    }
+    genders = ['male','female']
+    if (gender === 'm'){gender = 'male'}
+    if (gender === 'f'){gender = 'female'}
+    if ( !target || !gender || !genders.includes(gender) ){
+        text.addMessage(gameState, sourceName, 'usage: jointribe [female|male] [hunter|gatherer|crafter]' )
+        return
+    }
+    var person = {};
+    person.gender = gender;
+    person.food = 10;
+    person.grain = 4;
+    person.basket = 0;
+    person.spearhead = 0;
+    person.handle = actor;
+    person.name = sourceName;
+    if (profession){
+        person.profession = profession;
+    }
+    var strRoll = dice.roll(1);
+    response = 'added '+target+' '+gender+' to the tribe.';
+    if (strRoll == 1){
+        person.strength = 'weak'
+        response+= target +' is weak.'
+    } else if (strRoll == 6){
+        person.strength = 'strong';
+        response+= target +' is strong.';
+    } 
+    gameState.population[target] = person;
+    console.log( 'added '+target+' '+gender+' to the tribe. strRoll:'+strRoll);
+    text.addMessage(gameState, "tribe", response )
+    if (!person.strength){
+        text.addMessage(gameState, person.name,"You are of average strength" )
+    }
+    return "The tribe accepts you"
+}
+module.exports.addToPopulation = addToPopulation;

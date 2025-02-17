@@ -66,7 +66,6 @@ function endGame(gameState, bot){
             }
         }
     }
-
 	adultCount += Object.keys(population).length
     response += 'The tribe lost '+deadAdults+' members and banished '+banishCount+'.\n';
 	response += 'Count of surviving adults is:'+adultCount+' ('+newAdultCount+' new adults)';

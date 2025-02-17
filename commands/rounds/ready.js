@@ -34,9 +34,6 @@ function onCommand(interaction, gameState){
                 } 
             }
         }
-        if (gameState.secretMating){
-            
-        }
     }
     util.ephemeralResponse(interaction, message)
     return

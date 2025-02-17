@@ -1,5 +1,7 @@
 const killlib = require("./kill.js");
-const util = require("./util.js");
+const text = require('./textprocess.js')
+const pop = require('./population.js')
+const dice = require('./dice.js')
 
 module.exports.demand = (playerName, demandText, gameState) => {
     // fail if already has a demand in place
@@ -220,7 +222,6 @@ const resolveSingleAttack = ( attacker, defender, roll, gameState) =>{
     gameState.population[defender.name] = defender
     if (defender.hits >= 3){
         response += defender.name+' is killed!'
-        util.history(defender.name, 'killed by '+attacker.name+' over '+gameState.violence, gameState)
         killlib.kill(defender.name, 'killed by '+attacker.name+' over '+gameState.violence, gameState)
     }
     return response+'\n';
@@ -278,23 +279,23 @@ const resolveViolence = (gameState, bot) =>{
         var randomIndex =  Math.trunc( Math.random ( ) * attackers.length )
         targetName = attackers[randomIndex]
         //console.log('defender first strike vs '+attackerName)
-        attacker = util.personByName(defenderName, gameState);
+        attacker = pop.memberByName(defenderName, gameState);
         if (attacker && attacker.strategy == "defend"){
-            defender = util.personByName(targetName, gameState);
-            roll = util.roll(2)
+            defender = pop.memberByName(targetName, gameState);
+            roll = dice.roll(2)
             response += resolveSingleAttack(attacker, defender, roll, gameState);
         }
     }
     for (attackerName of attackers){
-        attacker = util.personByName(attackerName, gameState);
+        attacker = pop.memberByName(attackerName, gameState);
         if (!attacker){
             // Defender first strike wins
             continue
         }
         targetName = attacker.attack_target
-        defender = util.personByName(targetName, gameState);
+        defender = pop.memberByName(targetName, gameState);
         //console.log(attackerName+' attacks '+targetName)
-        roll = util.roll(2)
+        roll = dice.roll(2)
         response += resolveSingleAttack(attacker, defender, roll, gameState)
     }
     for (playerName of runners){
@@ -313,7 +314,7 @@ const resolveViolence = (gameState, bot) =>{
         delete player.attack_target
         response += '\nA round of combat has ended.  Everyone who has not escaped needs to choose a strategy'
     }
-    util.messageChannel(response, gameState, bot)
+    text.addMessage(gameState, "tribe", response)
     return response
 }
 module.exports.resolveViolence = resolveViolence

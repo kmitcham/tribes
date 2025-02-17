@@ -29,8 +29,6 @@ Hmm.  I can harass sockpuppet  You harass sockpuppet420_73735
 So no clue what was wrong, but I duplicated the Id and userId, and that seemed to work.
 Add consent and decline, and managed a repro round
 
-++ remove all traces of secretMating; it is always on.
-++ repro lists should get player objects instead of the stupid lists
 
 Failed on getting the unit tests to work.
 So looking at the simple test over in ping, the API change will probably have broken all the command tests.
@@ -55,6 +53,7 @@ Still, the library tests should be doable.
 ++ score game report male and female scores, sorted (for winners)
 ++ reproduction messaging may be in trouble, since it is triggered from so many places
 ++ history removed from reproduction, hunting.  Probably gathering
+
 
 
 W= has worked since new API

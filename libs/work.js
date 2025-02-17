@@ -112,7 +112,9 @@ function assist(playername, player, helpedPlayer){
 	}
 	return ' goes hunting to assist '
 }
+// this should be deleted?
 function hunt(playername, player, rollValue){
+	console.error("deprecated hunting in work.js called")
 	player.worked = true
 	mods = 0
 	message = ' goes hunting. '
@@ -233,10 +235,11 @@ function gatherDataFor(locationName, roll){
 	console.log('error looking up resourceData for '+locationName+' '+type+' '+roll)
 }
 
-function listReadyToWork(tribe){
+// this is used by Ready
+function listReadyToWork(population){
 	var unworked = []
-	for (playerName in tribe){
-		person = tribe[playerName]
+	for (playerName in population){
+		person = population[playerName]
 		// edit can leave isinjured as the string 'false'
 		if (person.worked || (person.isInjured && person.isInjured > 0)
 			||(person.isSick && person.isSick > 0 )){
