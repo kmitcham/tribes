@@ -1,6 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const util = require("../../util.js");
-const savelib = require("../../save.js");
+const prof = require("../../libs/profession")
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -17,25 +16,11 @@ module.exports = {
             )
             .setRequired(true)),
     async execute(interaction, gameState, bot) {
-        const actor = interaction.member;
-        playerName = actor.displayName?actor.displayName:actor.username
-        const profession = interaction.options.getString('profession')
-        message = filterspecialize(playerName, profession, gameState, bot);
-        util.messageChannel(message, gameState, bot)
+        var playerName = interaction.user.displayName;
+        var profession = interaction.options.getString('profession')
+        prof.specialize(playerName, profession, gameState, bot)
         interaction.reply(playerName+" knows how to "+profession)
+        gameState.saveRequired = true;
 	},
 };
 
-function filterspecialize(playername, profession, gameState, bot){
-    player = util.personByName(playername, gameState);
-    if (! player){
-        console.log("no player found for "+playername)
-        return "You must join the tribe to specialize"
-    }
-    if (player.profession){
-        return "You already have a profession"
-    }
-    message = util.specialize(playerName, profession, gameState, bot)
-    savelib.saveTribe(gameState);
-    
-}

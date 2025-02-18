@@ -1,7 +1,7 @@
-const util= require( './util.js')
+const pop = require('./population.js')
 
 function sendMessages(bot, gameState){
-    messagesDict = gameState.messages;
+    messagesDict = gameState['messages'];
    for (const [address, message] of Object.entries(messagesDict)){
         if (address == 'tribe'){
             messageTribe(bot, gameState, messagesDict[address])
@@ -34,7 +34,7 @@ async function messageTribe(bot, gameState, message){
 module.exports.messageTribe = messageTribe;
 
 async function  messageMember(bot, gameState, memberName, message) {
-    member = util.memberByName(memberName, gameState);
+    member = pop.memberByName(memberName, gameState);
     if ( !member){
         console.log("No member for name "+memberName)
         return -1

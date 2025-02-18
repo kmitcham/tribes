@@ -1,7 +1,10 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const util = require("../../util.js");
-const savelib = require("../../save.js");
-const guardlib = require("../../guardCode.js");
+const worklib = require("../../libs/work.js")
+const text = require("../../libs/textprocess.js")
+const pop = require("../../libs/population.js")
+const dice = require("../../libs/dice.js")
+const referees = require("../../libs/referees.json")
+const guardlib = require("../../libs/guardCode.js");
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -29,21 +32,20 @@ module.exports = {
             .setRequired(false))
         ,
     async execute(interaction, gameState) {
-        onCommand(interaction, gameState)
+        onCommand(interaction, gameState);
 	},
 };
 
 function onCommand(interaction, gameState){
-	var cName = interaction.options.getString('child');
     var actorName = interaction.user.displayName;
     var person = gameState.population[actorName];
 	if (person.worked == true){
-        util.ephemeralResponse(interaction,'You can not change guard status after having worked.')
+        text.addMessage(gameState, sourceName, 'You can not change guard status after having worked.')
 		return
 	}
 	if (gameState.workRound == false){
-        util.ephemeralResponse(interaction,'You can not change guard status outside the work round')
-		return
+        text.addMessage(gameState, sourceName, 'You can not change guard status outside the work round')
+        return
 	}
     var c1Name  = interaction.options.getString('child1');
     response = ""
@@ -62,15 +64,15 @@ function onCommand(interaction, gameState){
         response += guardChild(interaction, gameState, c4Name)+"\n";
     }
     if (response.includes("FAIL")){
-        util.ephemeralResponse(interaction, response);
+        text.addMessage(gameState, sourceName, response)
     } else {
         if (person.guarding){
-            interaction.reply(actorName+' starts guarding '+person.guarding);
+            text.addMessage(gameState, sourceName,actorName+' starts guarding '+person.guarding )
         } else {
-            interaction.reply(actorName+ ' is not guarding any children');
+            text.addMessage(gameState, sourceName,actorName+ ' is not guarding any children' )
         }
         console.log("Saving gameState");
-        savelib.saveTribe(gameState);
+        gameState.saveRequired = true;
     }
 }
 
@@ -98,7 +100,7 @@ function guardChild(interaction, gameState, cName){
     if (person.isSick && person.isSick > 0 ){
         return 'FAIL You are too sick to watch children';
     }
-    childName = util.capitalizeFirstLetter(cName)
+    childName = text.capitalizeFirstLetter(cName)
     console.log("checking "+childName );
     child = children[childName]
     if (!child ){

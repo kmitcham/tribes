@@ -3,6 +3,7 @@ const allNames = require('./names.json');
 const text = require("./textprocess")
 const dice = require("./dice")
 const pop = require("./population")
+const feed = require("./feed")
 
 function eligibleMates(name, population, debug=false){
 	matcher = population[name]
@@ -97,7 +98,7 @@ function canStillInvite(gameState){
 }
 module.exports.canStillInvite = canStillInvite ;
 
-function checkCompleteLists(gameState, bot){
+function checkCompleteLists(gameState){
     // unresolvable = []
     // malelist = getPlayersByKeyValue("gender","male")
     // femaleList = getPlayersByKeyValue("gender","female")
@@ -110,7 +111,7 @@ function checkCompleteLists(gameState, bot){
 }
 
 
-function handleReproductionList(actorName, args, listName, gameState, bot){
+function handleReproductionList(actorName, args, listName, gameState){
     console.log("Building "+listName+" for "+actorName+" args "+args)
     actor = pop.memberByName(actorName, gameState);
     if (!args || args.length == 0){
@@ -184,7 +185,7 @@ function handleReproductionList(actorName, args, listName, gameState, bot){
 module.exports.handleReproductionList = handleReproductionList;
 
 
-function invite(author, invitelist, gameState, bot){
+function invite(author, invitelist, gameState){
     
     console.log('author '+author)
     actorName = text.removeSpecialChars(author)
@@ -207,8 +208,8 @@ function invite(author, invitelist, gameState, bot){
         return message
     }
     console.log('got messageArray:'+invitelist)
-    message = handleReproductionList(actorName, invitelist, "inviteList",gameState,bot )
-    globalMatingCheck(gameState, bot);
+    message = handleReproductionList(actorName, invitelist, "inviteList",gameState )
+    globalMatingCheck(gameState);
     console.log("message at end of reprolib invite:"+message)
     if (person.inviteList){
         console.log("Invitelist: "+person.inviteList.join(" "))
@@ -231,40 +232,40 @@ function intersect(a, b) {
     });
 }
 
-function consent(actorName, messageArray,  gameState, bot){
-    handleReproductionList(actorName, messageArray, "consentList",gameState, bot )
+function consent(actorName, messageArray,  gameState){
+    handleReproductionList(actorName, messageArray, "consentList",gameState )
     person = pop.memberByName(actorName, gameState);
     intersectList = intersect(person.consentList, person.declineList)
     if (intersectList && intersectList.length > 0){
         text.addMessage(gameState, actorName, "Your consent and decline lists have overlaps.  Consent is checked first.")
     }
-    return globalMatingCheck(gameState, bot)
+    return globalMatingCheck(gameState)
 }
 module.exports.consent = consent;
 
-function decline(actorName, messageArray,  gameState, bot){
-    handleReproductionList(actorName, messageArray, "declineList",gameState, bot )
+function decline(actorName, messageArray,  gameState){
+    handleReproductionList(actorName, messageArray, "declineList",gameState )
     person = pop.memberByName(actorName, gameState);
     intersectList = intersect(person.consentList, person.declineList)
     if (intersectList && intersectList.length > 0){
         text.addMessage(gameState, actorName, "Your consent and decline lists have overlaps.  Consent is checked first.")
     }
-    return globalMatingCheck(gameState, bot)
+    return globalMatingCheck(gameState)
 }
 module.exports.decline = decline;
 
-function pass(msg, gameState, bot){
+function pass(msg, gameState){
     author = msg.author
     actor = pop.memberByName(author.username, gameState);
     actor.cannotInvite = true;
     delete actor.inviteList;
     text.addMessage(gameState, "tribe", author.username+" passes on mating this turn.")
-    globalMatingCheck(gameState, bot);
+    globalMatingCheck(gameState);
     return;
 }
 module.exports.pass = pass;
 
-function clearReproduction(gameState, bot){
+function clearReproduction(gameState){
     population = gameState.population;
 	for (var personName in population){
 		person = population[personName]
@@ -285,7 +286,7 @@ function sortCommitFirst(a,b){
 }
 
 
-function globalMatingCheck(gameState, bot){
+function globalMatingCheck(gameState){
     allDone = true;
     actionableInvites = true;
     if (! gameState.reproductionRound){
@@ -374,7 +375,7 @@ function globalMatingCheck(gameState, bot){
                     text.addMessage(gameState, personName, targetName+" is impressed by your flirtation.")
                     text.addMessage(gameState, targetName, personName+" flirts with you, and you are interested.")
                     // makeLove should message the people
-                    makeLove(targetName, personName, gameState, bot)
+                    makeLove(targetName, personName, gameState)
                     person.cannotInvite = true
                     doneMating.push(personName)
                     console.log("\t consents ")
@@ -437,7 +438,7 @@ function globalMatingCheck(gameState, bot){
 module.exports.globalMatingCheck = globalMatingCheck;
 
 // a weak clone of the existing 'spawnFunction'  only works for secret mating
-function makeLove(name1, name2, gameState, bot, force = false){
+function makeLove(name1, name2, gameState, force = false){
     population = gameState.population
     var parent1 = pop.memberByName(name1, gameState)
     var parent2 = pop.memberByName(name2, gameState)
@@ -469,12 +470,12 @@ function makeLove(name1, name2, gameState, bot, force = false){
     fatherMessage = motherName +' shares good feelings with you ['+droll+']'
     text.addMessage(gameState, motherName, motherMessage)
     text.addMessage(gameState, fatherName, fatherMessage)
-    detection(mother, father, (mroll+droll), gameState, bot)
+    detection(mother, father, (mroll+droll), gameState)
 	return
 }
 module.exports.makeLove = makeLove;
 
-function detection(mother,father, reproRoll, gameState, bot){
+function detection(mother,father, reproRoll, gameState){
     observerName = dice.randomMemberName(gameState.population)
     observer = pop.memberByName(observerName, gameState)
     var netRoll;
@@ -550,7 +551,7 @@ function addChild(mother, father, gameState){
 }
 module.exports.addChild = addChild;
 
-function rememberInviteLists(gameState, bot){
+function rememberInviteLists(gameState){
     population = gameState.population
     for (personName in population){
         person = population[personName]
@@ -566,7 +567,7 @@ function rememberInviteLists(gameState, bot){
 }
 module.exports.rememberInviteLists = rememberInviteLists;
 
-function restoreSaveLists(gameState, bot){
+function restoreSaveLists(gameState){
     population = gameState.population
     for (personName in population){
         person = population[personName]
@@ -580,7 +581,7 @@ function restoreSaveLists(gameState, bot){
 }
 module.exports.restoreSaveLists = restoreSaveLists;
 
-function validateDrone(gameState, actorName, args, bot){
+function validateDrone(gameState, actorName, args){
     population = gameState.population
     // is actorname Chief
     player = population[actorName]
@@ -648,7 +649,7 @@ function validateDrone(gameState, actorName, args, bot){
 }
 module.exports.validateDrone = validateDrone;
 
-function addDrone(gameState, bot, gender, profession, droneName){
+function addDrone(gameState, gender, profession, droneName){
     // 
     droneData =  {
         "gender": gender,
@@ -690,14 +691,15 @@ function startReproduction(gameState, client){
     foodMessage += 'After chance, the tribe can decide to move to a new location, but the injured and children under 2 will need 2 food'
     text.addMessage(gameState, "tribe",foodMessage)
 
-		reproLib.rememberInviteLists(gameState, bot);
+		rememberInviteLists(gameState);
 		gameState.doneMating = false;
-		reproLib.globalMatingCheck(gameState, bot)
-		if (reproLib.canStillInvite(gameState)){	
+		globalMatingCheck(gameState)
+		if (canStillInvite(gameState)){	
             text.addMessage(gameState, "tribe",'(awaiting invitations or !pass from '+reproLib.canStillInvite(gameState)+')' )	
 		}
-	pop.decrementSickness(gameState.population, gameState, bot)
-	allGames[gameState.name] = gameState;
-	return
+	pop.decrementSickness(gameState.population, gameState);
+    gameState.saveRequired = true;
+    gameState.archiveRequired = true;
+    return
 }
 module.exports.startReproduction = startReproduction;

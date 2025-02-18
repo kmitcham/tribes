@@ -1,8 +1,9 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const util = require("../../util.js");
-const savelib = require("../../save.js");
-const worklib = require("../../work.js")
-const huntlib = require("../../hunt.js")
+const worklib = require("../../libs/work.js")
+const text = require("../../libs/textprocess.js")
+const pop = require("../../libs/population.js")
+const dice = require("../../libs/dice.js")
+const referees = require("../../libs/referees.json")
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -27,28 +28,28 @@ function train(interaction, gameState){
     msg = worklib.canWork(gameState, player);
 
     if (msg) {
-        util.ephemeralResponse(interaction, msg);
+        text.addMessage(gameState, sourceName,msg )
         return
     }
     if (player.canCraft){
-        util.ephemeralResponse(interaction, 'You already know how to craft')
+        text.addMessage(gameState, sourceName,'You already know how to craft' )
         return
     }
     if (player.guarding && player.guarding.length > 2){
-        util.ephemeralResponse(interaction, 'You can not learn crafting while guarding more than 2 children.  You are guarding '+player.guarding)
+        text.addMessage(gameState, sourceName,'You can not learn crafting while guarding more than 2 children.  You are guarding '+player.guarding )
         return
     }
-    var crafters = util.countByType(population, 'canCraft', true)
-    var noTeachers = util.countByType(population, 'noTeach', true)
+    var crafters = pop.countByType(population, 'canCraft', true)
+    var noTeachers = pop.countByType(population, 'noTeach', true)
     if (crafters <= noTeachers){
-        util.ephemeralResponse(interaction, 'No on in the tribe is able and willing to teach you crafting')
+        text.addMessage(gameState, sourceName,'No on in the tribe is able and willing to teach you crafting' )
         return
     }
-    learnRoll = util.roll(2)
-    if (util.referees.includes(sourceName) && forceRoll){
+    learnRoll = dice.roll(2)
+    if (referees.includes(sourceName) && forceRoll){
         learnRoll = forceRoll;
         if (learnRoll < 2 || 12 < learnRoll){
-            util.ephemeralResponse(interaction,'Roll must be 2-12')
+            text.addMessage(gameState, sourceName,'Roll must be 2-12' )
             return
         }
     }
@@ -60,11 +61,12 @@ function train(interaction, gameState){
     }
     player.activity = 'training'
     player.worked = true;
-	util.history(sourceName, message, gameState);
-    savelib.saveTribe(gameState);
-
-    interaction.reply(message);
+	pop.history(sourceName, message, gameState);
+    gameState.required = true;
+    text.addMessage(gameState, "tribe", message );
+    return;
 }
+
 function onError(interaction, response){
     interaction.user.send(response);
         const embed = new EmbedBuilder().setDescription(response);

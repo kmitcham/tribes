@@ -1,8 +1,9 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const util = require("../../util.js");
-const savelib = require("../../save.js");
-const worklib = require("../../work.js")
-const huntlib = require("../../hunt.js")
+const worklib = require("../../libs/work.js")
+const text = require("../../libs/textprocess.js")
+const pop = require("../../libs/population.js")
+const dice = require("../../libs/dice.js")
+const referees = require("../../libs/referees.json")
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -21,17 +22,17 @@ function idle(interaction, gameState){
     msg = worklib.canWork(gameState, player);
 
     if (msg) {
-        util.ephemeralResponse(interaction, msg);
+        text.addMessage(gameState, sourceName,msg )
         return
     }
     player.activity = 'idle'
 	message = player.playerName +' does nothing for a whole season.'
-	util.history(player.name, " does nothing for a season.", gameState)
+	pop.history(player.name, " does nothing for a season.", gameState)
     player.worked = true;
-    savelib.saveTribe(gameState);
-
-    interaction.reply(message);
+    gameState.saveRequired = true;
+    text.addMessage(gameState, "tribe",message )
 }
+
 function onError(interaction, response){
     interaction.user.send(response);
         const embed = new EmbedBuilder().setDescription(response);

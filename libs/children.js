@@ -86,3 +86,17 @@ module.exports.showChildren =  (children, population, filterName="", hideFathers
 	return responseMessages
 }
 
+function countChildrenOfParentUnderAge(children, parentName, age){
+	var count = 0
+	for (var childName in children){
+		var child = children[childName]
+		if (child.mother == parentName || child.father == parentName){
+			if (child.age < age){
+				count++
+			}
+		}
+	}
+	return count
+}
+module.exports.countChildrenOfParentUnderAge = countChildrenOfParentUnderAge;
+

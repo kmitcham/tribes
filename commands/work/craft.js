@@ -1,7 +1,9 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const util = require("../../util.js");
-const savelib = require("../../save.js");
-const worklib = require("../../work.js")
+const worklib = require("../../libs/work.js")
+const text = require("../../libs/textprocess.js")
+const pop = require("../../libs/population.js")
+const dice = require("../../libs/dice.js")
+const referees = require("../../libs/referees.json")
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -36,15 +38,15 @@ function craft(interaction, gameState){
     msg = worklib.canWork(gameState, player);
 
     if (msg) {
-        util.ephemeralResponse(interaction, msg);
+        text.addMessage(gameState, sourceName, msg)
         return
     }
     if (player.canCraft == false){
-        util.ephemeralResponse(interaction, 'You do not know how to craft');
+        text.addMessage(gameState, sourceName, 'You do not know how to craft')
         return
     }
     if (player.guarding && player.guarding.length > 2){
-        util.ephemeralResponse(interaction, 'You can not craft while guarding more than 2 children.  You are guarding '+player.guarding);
+        text.addMessage(gameState, sourceName,  'You can not craft while guarding more than 2 children.  You are guarding '+player.guarding)
         return
     }
 
@@ -57,11 +59,11 @@ function craft(interaction, gameState){
         return onError(interaction, response);
     }
     
-    var craftRoll = util.roll(1)
-	if (util.referees.includes(sourceName) && forceRoll){
+    var craftRoll = dice.roll(1)
+	if (referees.includes(sourceName) && forceRoll){
 		craftRoll = forceRoll
         if (craftRoll < 1 || 6 < craftRoll){
-            util.ephemeralResponse(interaction, "forceRoll must be 1-6");
+            text.addMessage(gameState, sourceName, "forceRoll must be 1-6")
 		    return
 		}
 	}
@@ -79,12 +81,13 @@ function craft(interaction, gameState){
 	} else {
 		message =  sourceName+ ' creates something['+craftRoll+'], but it is not a '+item
 	}
-	util.history(sourceName,message, gameState)
+	pop.history(sourceName,message, gameState)
 	player.activity = 'craft'    
     player.worked = true;
-    savelib.saveTribe(gameState);
+    gameState.saveRequired=true;
 
-    interaction.reply(message);
+    text.addMessage(gameState, "tribe", message)
+
 }
 function onError(interaction, response){
     interaction.user.send(response);

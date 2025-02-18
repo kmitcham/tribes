@@ -1,6 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const utillib = require("../../util.js");
-const savelib = require("../../save.js");
+const pop = require("../../libs/population.js");
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -27,25 +26,25 @@ module.exports = {
                 .setRequired(false))
         ,
     async execute(interaction, gameState, bot) {
-        const joiner = interaction.member;
+        var actorName = interaction.user.displayName;      
         gender = interaction.options.getString('gender');
         profession = interaction.options.getString('profession');
-        message = join(joiner, gameState, bot, gender, profession)
-        utillib.ephemeralResponse(interaction, message);
+        response = join(actorName, gameState, gender, profession, interaction.user)
+        //interaction.reply(response)
+        gameState.saveRequired = true;
 	},
 };
 
-function join(joiner, gameState, bot, gender, profession){
-    if (gameState.population[joiner.displayName]){
+function join(joiner, gameState, gender, profession, handle){
+    if (gameState.population[joiner]){
         return 'You are already a member of this tribe'
     }
     if (! gameState.open){
         return 'You need to be inducted by the chief to join this tribe'
     }
-    console.log("display name is "+joiner.displayName +" username:"+joiner.username)
-    return utillib.addToPopulation(gameState, bot, 
-        joiner, gender, profession)
-    }
+    console.log("display name is "+joiner +" username:"+joiner.username)
+    return pop.addToPopulation(gameState, joiner, gender, profession, handle)
+}
 
 
 function onError(interaction, response){

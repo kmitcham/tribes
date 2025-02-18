@@ -12,14 +12,13 @@ const { ConsoleTransportOptions } = require('winston/lib/winston/transports');
 const { spawn } = require('child_process');
 
 const savelib = require("./libs/save.js");
-
+const messaging = require("./libs/messaging.js")
 
 client.commands = new Collection();
 const foldersPath = path.join(__dirname, 'commands');
 const commandFolders = fs.readdirSync(foldersPath);
 var referees = ["kevinmitcham", "@kevinmitcham"]
 
-var testDictionary = {"start": "value", "number": 10};
 var allGames = {}
 var alertChannel = {};
 
@@ -67,15 +66,24 @@ client.on(Events.InteractionCreate, async interaction => {
                 console.log('creating game '+channel.name);
 				gameState = savelib.initGame(channel.name, client )
             }
-            allGames[channel.name] = gameState;
         }
+		allGames[channel.name] = gameState;
     } else {
 		interaction.reply("Commands need to be in tribe channels");
 		return;
 	}
-
+	// if no errors, and we are sure we have a gameState
 	try {
 		await command.execute(interaction, gameState, client);
+		messaging.sendMessages(client, gameState);
+		if (gameState.saveRequired){
+			savelib.saveTribe(gameState);
+			gameState.saveRequired = false;
+		}
+		if (gameState.archiveRequired){
+			savelib.archiveTribe(gameState);
+			gameState.archiveRequired = false;
+		}
 	} catch (error) {
         console.log("there was an error in that command:");
 		console.error(error);

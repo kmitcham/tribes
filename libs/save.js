@@ -24,6 +24,7 @@ function initGame(gameName){
 	gameState.population = {}
 	gameState.graveyard = {}
 	gameState.children = {}
+	messages = {}
 	for (locationName in locations){
 		gameState.gameTrack[locationName] = 1
 	}

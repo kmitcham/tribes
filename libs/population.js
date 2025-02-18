@@ -90,7 +90,7 @@ function decrementSickness(population, gameState, bot){
 module.exports.decrementSickness = decrementSickness;
 
 function history (playerName, message, gameState){
-    player = personByName(playerName, gameState)
+    player = memberByName(playerName, gameState)
     if (player && !player.history){
         player.history = []
     }
@@ -102,16 +102,17 @@ function history (playerName, message, gameState){
 }
 module.exports.history = history
 
-function addToPopulation(gameState, bot, actor, gender, profession){
-    var sourceName = getNameFromUser(actor)
-    console.log("actor is "+actor+" actor.username:"+actor.username)
+// handle is the discord player object which we like to store for messaging with them later
+// possibly could just grab the id or something and find them in the channel for messaging
+function addToPopulation(gameState, sourceName, gender, profession, handle){
+    console.log("joining tribe with sourceName:"+sourceName)
     target = text.removeSpecialChars(sourceName)
     if (gameState.population[target]){
         return 'You are already in the tribe'
     }
     genders = ['male','female']
-    if (gender === 'm'){gender = 'male'}
-    if (gender === 'f'){gender = 'female'}
+    if (gender.startsWith('m') ){gender = 'male'}
+    if (gender.startsWith('f')){gender = 'female'}
     if ( !target || !gender || !genders.includes(gender) ){
         text.addMessage(gameState, sourceName, 'usage: jointribe [female|male] [hunter|gatherer|crafter]' )
         return
@@ -122,19 +123,19 @@ function addToPopulation(gameState, bot, actor, gender, profession){
     person.grain = 4;
     person.basket = 0;
     person.spearhead = 0;
-    person.handle = actor;
+    person.handle = handle;
     person.name = sourceName;
     if (profession){
         person.profession = profession;
     }
+    response = target+' '+gender+' joined the tribe.';
     var strRoll = dice.roll(1);
-    response = 'added '+target+' '+gender+' to the tribe.';
     if (strRoll == 1){
         person.strength = 'weak'
-        response+= target +' is weak.'
+        response+= "  "+target +' is weak.'
     } else if (strRoll == 6){
         person.strength = 'strong';
-        response+= target +' is strong.';
+        response+= "  "+target +' is strong.';
     } 
     gameState.population[target] = person;
     console.log( 'added '+target+' '+gender+' to the tribe. strRoll:'+strRoll);
@@ -145,3 +146,60 @@ function addToPopulation(gameState, bot, actor, gender, profession){
     return "The tribe accepts you"
 }
 module.exports.addToPopulation = addToPopulation;
+
+function vote(gameState,  actorName, candidateName){
+    var player = memberByName(actorName, gameState)
+	var candidate = memberByName(candidateName, gameState)
+
+    var population = gameState.population;
+
+	if (!candidate){
+		text.addMessage(gameState, actorName,  candidateName+' not found in the tribe')
+		return
+	}
+	if (!player){
+		text.addMessage(gameState, actorName,  'You are not a member of the tribe yet.')
+
+		return
+	}
+	player.vote = candidateName
+	totalVotes = countByType(gameState.population, 'vote', candidateName)
+	tribeSize = Object.keys(gameState.population).length
+	droneCount = 0;
+	for (memberName in gameState.population){
+		temp = population[memberName]
+		if (temp.golem) {
+			droneCount = droneCount+1
+		}
+	}
+	console.log("Drone count is "+droneCount);
+	text.addMessage(gameState, "tribe",  actorName+" supports "+candidateName+" as chief")
+	// count all existing votes
+	if (totalVotes >= (2/3 * (tribeSize-droneCount))){
+		// clear the previous chief
+		for (personName in gameState.population){
+			person = memberByName(personName, gameState)
+			if (person.chief){
+				delete person.chief
+			}
+		}
+		candidate.chief = true
+		history(candidateName, "became chief", gameState);
+		text.addMessage(gameState, "tribe", candidateName+' is the new chief')
+	}
+	gameState.saveRequired = true
+
+	return true
+}
+module.exports.vote = vote;
+
+
+function countByType(dictionary, key, value){
+	count = 0
+	for (elementName in dictionary){
+		element = dictionary[elementName]
+		if (element[key] && element[key] == value){ count++}
+	}
+	return count
+}
+module.exports.countByType = countByType;

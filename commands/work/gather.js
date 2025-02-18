@@ -1,8 +1,10 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const util = require("../../util.js");
-const savelib = require("../../save.js");
-const worklib = require("../../work.js")
-const gatherlib = require("../../gather.js")
+const worklib = require("../../libs/work.js")
+const gatherlib = require("../../libs/gather.js")
+const referees = require("../../libs/referees.json")
+const text = require("../../libs/textprocess.js")
+const pop = require("../../libs/population.js")
+const dice = require("../../libs/dice.js")
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -27,30 +29,30 @@ function gather(interaction, gameState){
     msg = worklib.canWork(gameState, player);
 
     if (msg) {
-        util.ephemeralResponse(interaction, msg);
+        text.addMessage(gameState, sourceName, msg)
         return
     }
     if (player.guarding && player.guarding.length >= 5){
-        util.ephemeralResponse(interaction, 'You can not gather while guarding more than 4 children.  You are guarding '+player.guarding)
-        cleanUpMessage(msg);
+        text.addMessage(gameState, sourceName, 'You can not gather while guarding more than 4 children.  You are guarding '+player.guarding )
         return
     }
-    var gatherRoll = util.roll(3)
-    if (util.referees.includes(sourceName) && forceRoll){
+    var gatherRoll = dice.roll(3)
+    if (referees.includes(sourceName) && forceRoll){
         gatherRoll = forceRoll;
         if (gatherRoll < 3 || 18 < gatherRoll){
-            util.ephemeralResponse(interaction,'Roll must be 3-18')
+            text.addMessage(gameState, sourceName,'Roll must be 3-18' )
             return
         }
     }
     message = gatherlib.gather( sourceName, player, gatherRoll, gameState)
     player.activity = 'gather'    
     player.worked = true;
-	util.history(sourceName, message, gameState);
-    savelib.saveTribe(gameState);
+	pop.history(sourceName, message, gameState);
+    gameState.saveRequired = true;
+    text.addMessage(gameState, "tribe", message)
 
-    interaction.reply(message);
 }
+
 function onError(interaction, response){
     interaction.user.send(response);
         const embed = new EmbedBuilder().setDescription(response);

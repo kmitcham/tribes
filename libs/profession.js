@@ -1,6 +1,15 @@
-function specialize( msg, playerName, profession, gameState){
-	playerName = msg.author.username
-	profession = bits[1]
+const pop = require("./population");
+const text = require("./textprocess");
+
+const professions= ['hunter','gatherer', 'crafter']
+
+function specialize(playerName, profession, gameState){
+
+	if ( !profession || !professions.includes(profession)){
+		text.addMessage(gameState, playerName, 'usage:specialize [hunter|gatherer|crafter]')
+		return 'usage:specialize [hunter|gatherer|crafter] '
+	}
+
 	helpMessage = "Welcome new hunter.  \n"
 	helpMessage+= "To hunt, do !hunt and the bot rolls 3d6.  Higher numbers are bigger animals, and very low numbers are bad - you could get injured. \n"
 	helpMessage+= "You cannot guard children while hunting. \n"
@@ -25,20 +34,19 @@ function specialize( msg, playerName, profession, gameState){
 		helpMessage+= "Before you set out, you might consider waiting for a crafter to make you a basket which gives you an additional gather attempt. \n"
 		helpMessage+= "You can also `!hunt`, but at a penalty. If your tribe has someone who knows how to craft, you can try to learn that skill with `!train`";
 	}
-	if ( !profession || !professions.includes(profession)){
-		msg.author.send('usage:!'+bits[0]+' [hunter|gatherer|crafter] ')
-		return
-	}
-	var person = util.personByName(playerName, gameState)
+
+	var person = pop.memberByName(playerName, gameState)
 	if (!person){
-		msg.author.send(playerName +', you are not in this tribe.')
-		return
+		text.addMessage(gameState, playerName, playerName +', you are not in this tribe.');
+		return playerName +', you are not in this tribe.'
 	}
 	person.profession = profession
-	util.messageChannel(playerName+ ' is a skilled '+profession, gameState, bot)
+	text.addMessage(gameState, "tribe", playerName+ ' is a skilled '+profession);
+
 	if (person.profession == 'crafter'){
 		person.canCraft = true
 	}
-	msg.author.send(helpMessage);
-	return
+	text.addMessage(gameState, playerName, helpMessage);
+	return helpMessage;
 }
+module.exports.specialize = specialize

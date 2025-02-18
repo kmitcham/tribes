@@ -1,8 +1,10 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const util = require("../../util.js");
-const savelib = require("../../save.js");
-const worklib = require("../../work.js")
-const huntlib = require("../../hunt.js")
+const worklib = require("../../libs/work.js")
+const text = require("../../libs/textprocess.js")
+const pop = require("../../libs/population.js")
+const dice = require("../../libs/dice.js")
+const referees = require("../../libs/referees.json")
+const huntlib = require("../../libs/hunt.js")
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -28,22 +30,22 @@ function hunt(interaction, gameState){
     msg = worklib.canWork(gameState, player);
 
     if (msg) {
-        util.ephemeralResponse(interaction, msg);
+        text.addMessage(gameState, sourceName,msg )
         return
     }
     if (player.guarding && player.guarding.length > 0){
-        util.ephemeralResponse(interaction,'You can not go hunting while guarding '+player.guarding)
+        text.addMessage(gameState, sourceName, 'You can not go hunting while guarding '+player.guarding )
         return
     }
     if (player.isPregnant && player.isPregnant != 'false'){
-        util.ephemeralResponse(interaction,'You can not hunt while pregnant')
+        text.addMessage(gameState, sourceName,'You can not hunt while pregnant' )
         return
     }
-    var huntRoll = util.roll(3)
-    if (util.referees.includes(sourceName) && forceRoll){
+    var huntRoll = dice.roll(3)
+    if (referees.includes(sourceName) && forceRoll){
         huntRoll = forceRoll;
         if (huntRoll < 3 || 18 < huntRoll){
-            util.ephemeralResponse(interaction,'Roll must be 3-18')
+            text.addMessage(gameState, sourceName,'Roll must be 3-18' )
             return
         }
     }
@@ -52,9 +54,8 @@ function hunt(interaction, gameState){
     player.activity = 'hunt'
 
     player.worked = true;
-    savelib.saveTribe(gameState);
-
-    interaction.reply(message);
+    gameState.saveRequired= true;
+    text.addMessage(gameState, sourceName,message )
 }
 function onError(interaction, response){
     interaction.user.send(response);
