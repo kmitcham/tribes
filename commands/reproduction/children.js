@@ -1,6 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const util = require("../../util.js");
-const childlib = require("../../children.js");
+const text = require("../../libs/textprocess");
+const childlib = require("../../libs/children.js");
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -26,6 +26,7 @@ function children(interaction, gameState){
     var parentMember = interaction.options.getString('parent');
     var onlyHungry = interaction.options.getString('hungry');
     var population = gameState.population;
+    var displayName = interaction.user.displayName;
     var children = gameState.children;
 
     if (onlyHungry){
@@ -35,7 +36,7 @@ function children(interaction, gameState){
             var parentName = interaction.options.getMember('parent').displayName;
             var parentPerson = population[parentName];
             if (!parentPerson ){
-                util.ephemeralResponse('Could not find '+parentName)
+                text.addMessage(gameState, displayName, 'Could not find '+parentName )
             } else {
                 response = ['The descendants of '+parentName+' are:\n']
                 response.push.apply(response, childlib.showChildren(children, population, parentName, gameState.secretMating))
@@ -47,6 +48,6 @@ function children(interaction, gameState){
     for (part of response){
         compiledResponse = compiledResponse+"\n"+part;
     }
-    
-    return util.ephemeralResponse(interaction, compiledResponse)
+    text.addMessage(gameState, "tribe", compiledResponse);
+    return 
 }

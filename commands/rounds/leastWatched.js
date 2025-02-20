@@ -1,6 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const util = require("../../util.js");
-const guardlib = require("../../guardCode.js")
+const text = require("../../libs/textprocess.js")
+const guardlib = require("../../libs/guardCode.js")
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -14,6 +14,8 @@ module.exports = {
 
 function onCommand(interaction, gameState){
     children = gameState.children;
+    var displayName = interaction.user.displayName;
     response  = guardlib.findLeastGuarded(children, gameState.population)
-    return util.ephemeralResponse(interaction, response)
+    text.addMessage(gameState, displayName,response);
+    return 
 }

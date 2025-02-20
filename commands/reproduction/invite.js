@@ -1,6 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const util = require("../../util.js");
-const reproLib = require("../../reproduction.js");
+const reproLib = require("../../libs/reproduction.js");
+const text = require("../../libs/textprocess");
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -14,8 +14,9 @@ module.exports = {
         ,
     async execute(interaction, gameState, bot) {
         try {
+            var displayName = interaction.user.displayName;
             response = onCommand(interaction, gameState, bot)
-            util.ephemeralResponse(interaction,response)
+            text.addMessage(gameState, displayName, response );
             console.log('invite response was '+response)
         } catch (error) {
                 // And of course, make sure you catch and log any errors!

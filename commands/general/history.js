@@ -1,6 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const util = require("../../util.js");
-const helplib = require("../../help.js")
+const text = require("../../libs/textprocess.js")
+const pop = require("../../libs/population.js")
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -14,12 +14,10 @@ module.exports = {
 
 function onCommand(interaction, gameState){
     var playerName = interaction.user.displayName;
-    var player = util.personByName(playerName, gameState)
-    util.ephemeralResponse(interaction, "Your history will be messaged to you.");
+    var player = pop.memberByName(playerName, gameState)
     messages = player.history
-    // might be better to batch these?
     array.forEach(function (message, index) {
-        util.messagePlayerName(playerName, message, gameState, bot)
+        text.addMessage(gameState, playerName, message)
     })
     return
 }

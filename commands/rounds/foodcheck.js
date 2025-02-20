@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const util = require("../../util.js");
+const text = require("../../libs/textprocess")
+const feed = require("../../libs/feed")
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -12,7 +13,8 @@ module.exports = {
 };
 
 function onCommand(interaction, gameState, bot){
-	message = util.checkFood(gameState, bot)
-    util.ephemeralResponse(interaction, message)
+	var message = feed.checkFood(gameState, bot);
+    var displayName = interaction.user.displayName;
+    text.addMessage(gameState, displayName, message);
     return
 }

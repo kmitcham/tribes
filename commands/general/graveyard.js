@@ -1,5 +1,4 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const util = require("../../util.js");
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -34,5 +33,5 @@ function graveyard(interaction, gameState){
             response += ' gender:'+person.gender
         }
     }
-    return util.ephemeralResponse(interaction, response)
+    return interaction.reply(response)
 }

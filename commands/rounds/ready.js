@@ -1,7 +1,7 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const util = require("../../util.js");
-const reproLib = require("../../reproduction.js");
-const worklib = require("../../work.js");
+const reproLib = require("../../libs/reproduction.js");
+const worklib = require("../../libs/work.js");
+const text = require("../../libs/textprocess.js");
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -15,6 +15,7 @@ module.exports = {
 
 function onCommand(interaction, gameState){
     var population = gameState.population;
+    var displayName = interaction.user.displayName;
     var message = 'Nobody seems ready for much of anything right now.'
     if (gameState.workRound){
         message = "People available to work: "+worklib.listReadyToWork(population)
@@ -35,6 +36,6 @@ function onCommand(interaction, gameState){
             }
         }
     }
-    util.ephemeralResponse(interaction, message)
+    text.addMessage(gameState, displayName, message );
     return
 }

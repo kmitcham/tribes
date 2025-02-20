@@ -1,6 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const util = require("../../util.js");
-const helplib = require("../../help.js")
+const helplib = require("../../libs/help.js")
+const text = require("../../libs/textprocess.js")
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -17,12 +17,13 @@ function onCommand(interaction, gameState){
     var population = gameState.population;
     var player = population[playerName]
     
-    util.ephemeralResponse(interaction, helplib.playerHelpBasic());
-    util.ephemeralResponse(interaction, helplib.playerHelpRounds());
-    util.ephemeralResponse(interaction, helplib.playerHelpConflict());
+    
+    text.addMessage(gameState,playerName,helplib.playerHelpBasic());
+    text.addMessage(gameState,playerName, helplib.playerHelpRounds());
+    text.addMessage(gameState,playerName,helplib.playerHelpConflict());
     
     if ((player && player.chief) ){
-        util.ephemeralResponse(interaction, helplib.chiefHelp());
+        text.addMessage(gameState,playerName, helplib.chiefHelp());
     }
     
     return

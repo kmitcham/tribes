@@ -24,7 +24,6 @@ module.exports.locationDecay = locationDecay
 	// @webbnh, yes, strong is applied before checking for injury, but weakness, season, non-hunter, etc are not.
 
 module.exports.hunt = (playername, player, rollValue, gameState) =>{
-	player.worked = true
 	mods = 0
 	message = playername+' goes hunting. ['+rollValue+']'
 	// injury check
@@ -60,7 +59,9 @@ module.exports.hunt = (playername, player, rollValue, gameState) =>{
         message+= '+spearhead '
     }
     netRoll = Number(rollValue)+modifier
+    var oldTrack = gameState.gameTrack[gameState.currentLocationName]
     gameTrack = gameState.gameTrack[gameState.currentLocationName]
+    message += ' The game track goes from '+oldTrack+' to '+gameState.gameTrack[gameState.currentLocationName]
     hunt_cap = locationDecay[gameTrack]
     huntData = locations[gameState.currentLocationName]['hunt']
     if (netRoll > hunt_cap){
@@ -92,7 +93,6 @@ module.exports.hunt = (playername, player, rollValue, gameState) =>{
         message += huntRow[2] + ' +'+huntRow[1]+' food'
         player.food += huntRow[1]
     }
-    // update the game track
     var huntercount = 1
     if (player.helpers ){
         huntercount += Math.min(player.helpers.length,3)
@@ -102,9 +102,11 @@ module.exports.hunt = (playername, player, rollValue, gameState) =>{
         player.spearhead -= 1
         message += ' (the spearhead broke!)'
     }
-    var oldTrack = gameState.gameTrack[gameState.currentLocationName]
+
+    player.worked = true
+    // update the game track
     gameState.gameTrack[gameState.currentLocationName] += huntercount
-    message += ' The game track goes from '+oldTrack+' to '+gameState.gameTrack[gameState.currentLocationName]
+
     // clear the stuff for group hunting
     if (player.bonus){
         delete player.bonus

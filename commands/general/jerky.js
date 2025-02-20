@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const util = require("../../util.js");
+const pop = require("../../libs/population.js")
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -22,7 +22,7 @@ function makeJerky(sourceName, amount, gameState, bot){
     if (! gameState.canJerky){
         return "Conditions are not right for making jerky now."
     }
-    player = util.personByName(sourceName, gameState);
+    player = pop.memberByName(sourceName, gameState);
     actualFood = player.food
     if (amount > actualFood){
         amount = actualFood;

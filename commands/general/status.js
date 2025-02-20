@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const util = require("../../util.js");
+const util = require("../../libs/util.js");
+const text = require("../../libs/textprocess.js")
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -12,9 +13,12 @@ module.exports = {
 };
 
 function onCommand(interaction, gameState){
+	var displayName = interaction.user.displayName;
 	if (!gameState){
-		return util.ephemeralResponse(interaction, "Not in a tribe")
+		text.addMessage(gameState, displayName, "Not in a tribe");
+		return
 	}
-    var response = util.gameStateMessage(gameState)
-	return util.ephemeralResponse(interaction, response)
+    var response = util.gameStateMessage(gameState);
+	text.addMessage(gameState, displayName, response);
+	return 
 }

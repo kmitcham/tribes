@@ -1,6 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const util = require("../../util.js");
-const reproLib = require("../../reproduction.js");
+const reproLib = require("../../libs/reproduction.js");
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -16,6 +15,7 @@ module.exports = {
         onCommand(interaction, gameState, bot)
         console.log("consent updated"+response)
         interaction.reply({ content: "Consent list updated to "+response, ephemeral: true })
+        gameState.saveRequired;
 	},
 };
 

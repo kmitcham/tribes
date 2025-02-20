@@ -1,6 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const util = require("../../util.js");
-const savelib = require("../../save.js");
+const text = require("../../libs/textprocess.js")
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -70,10 +69,10 @@ function give(interaction, gameState){
     }
     sourcePerson[item] -= amount;
     targetPerson[item] += amount;
-    savelib.saveTribe(gameState);
+    gameState.saveRequired = true
 
     response = sourceName + " gives "+targetName+" "+amount+" "+item;
-    interaction.reply(response);
+    text.addMessage(gameState, "tribe", response)
 }
 function onError(interaction, response){
     interaction.user.send(response);

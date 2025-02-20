@@ -10,16 +10,16 @@ module.exports = {
             .setName('profession')
             .setDescription('one of (hunt, gather, craft)')
             .addChoices(
-                { name: 'hunter', value: 'hunt' },
-                { name: 'crafter', value: 'craft' },
-                { name: 'gatherer', value: 'gather' },
+                { name: 'hunter', value: 'hunter' },
+                { name: 'crafter', value: 'crafter' },
+                { name: 'gatherer', value: 'gatherer' },
             )
             .setRequired(true)),
     async execute(interaction, gameState, bot) {
         var playerName = interaction.user.displayName;
         var profession = interaction.options.getString('profession')
         prof.specialize(playerName, profession, gameState, bot)
-        interaction.reply(playerName+" knows how to "+profession)
+        interaction.reply(playerName+" becomes a "+profession)
         gameState.saveRequired = true;
 	},
 };

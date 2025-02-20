@@ -12,12 +12,11 @@ const { ConsoleTransportOptions } = require('winston/lib/winston/transports');
 const { spawn } = require('child_process');
 
 const savelib = require("./libs/save.js");
-const messaging = require("./libs/messaging.js")
+const pop = require("./libs/population.js")
 
 client.commands = new Collection();
 const foldersPath = path.join(__dirname, 'commands');
 const commandFolders = fs.readdirSync(foldersPath);
-var referees = ["kevinmitcham", "@kevinmitcham"]
 
 var allGames = {}
 var alertChannel = {};
@@ -75,7 +74,7 @@ client.on(Events.InteractionCreate, async interaction => {
 	// if no errors, and we are sure we have a gameState
 	try {
 		await command.execute(interaction, gameState, client);
-		messaging.sendMessages(client, gameState);
+		sendMessages(client, gameState, channel);
 		if (gameState.saveRequired){
 			savelib.saveTribe(gameState);
 			gameState.saveRequired = false;
@@ -100,4 +99,50 @@ client.on(Events.InteractionCreate, async interaction => {
 	}
 });
 
+function sendMessages(bot, gameState, channel){
+    messagesDict = gameState['messages'];
+   for (const [address, message] of Object.entries(messagesDict)){
+        if (address == 'tribe'){
+            messageTribe(channel, gameState, messagesDict[address])
+        } else {
+            messageMember(bot, gameState, address, messagesDict[address] )
+        }
+        delete messagesDict[address]
+    }
+}
+async function  messageMember(bot, gameState, memberName, message) {
+    member = pop.memberByName(memberName, gameState);
+    if ( !member){
+        console.log("No member for name "+memberName)
+        return -1
+    }
+    if (!message){
+        console.log("Not sending empty message to "+memberName)
+        return -2
+    }
+    userHandle = member.handle
+    if (userHandle && userHandle.id){
+        user = await bot.users.fetch(userHandle.id);
+        user.send(message)
+        return 0
+    }
+    console.log(memberName+" has no handle or id- maybe a drone? ")
+    return -3
+}
+async function messageTribe(channel, gameState, message){
+	if (!message || message.length == 0 ){
+		console.log("Not sending empty message to channel:"+message)
+		return -2
+	}
+	if (channel){
+		channel.send(message)
+        return 0
+	} else {
+		console.log('no channel found for '+gameState.name)
+        return -3
+	}
+}
+
+
 client.login(token);
+

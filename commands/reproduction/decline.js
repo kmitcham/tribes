@@ -1,6 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const util = require("../../util.js");
-const reproLib = require("../../reproduction.js");
+const reproLib = require("../../libs/reproduction.js");
 
 module.exports = {
 	data: new SlashCommandBuilder()

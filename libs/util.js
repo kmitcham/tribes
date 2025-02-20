@@ -3,7 +3,6 @@ const killlib = require("./kill.js");
 const reproLib = require("./reproduction.js");
 const savelib = require("./save.js");
 const locations = require('./locations.json');
-const messenger = require("./messaging.js");
 const text = require("./textprocess.js")
 const roll = require( "./dice.js") 
 

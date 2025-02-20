@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const util = require("../../util.js");
+const text = require("../../libs/textprocess")
+const pop = require("../../libs/population.js")
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -12,7 +13,7 @@ module.exports = {
 };
 
 function doCommand(interaction, gameState){
-
+    var displayName = interaction.user.displayName
     var response = 'There are no laws.';
     laws = gameState.laws
     if (laws){
@@ -21,5 +22,5 @@ function doCommand(interaction, gameState){
     for (number in laws){
         response += '\n\t'+number+'\t'+laws[number]
     }
-    return util.ephemeralResponse(interaction, response)
+    text.addMessage(gameState,displayName, response)
 }

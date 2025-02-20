@@ -1,8 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const util = require("../../util.js");
-const savelib = require("../../save.js");
-const worklib = require("../../work.js")
-const feedlib = require("../../feed.js");
+const worklib = require("../../libs/work.js")
+const feedlib = require("../../libs/feed.js");
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -49,7 +47,7 @@ function feed(interaction, gameState){
     message = feedlib.feed(interaction, player, amount, childList, gameState);
     console.log('return '+message);
     interaction.reply(message);
-    savelib.saveTribe(gameState);
+    gameState.saveRequired=true
     return
 }
 function onError(interaction, response){

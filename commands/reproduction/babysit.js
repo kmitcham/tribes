@@ -1,6 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const util = require("../../util.js");
-const savelib = require("../../save.js");
+const text = require("../../libs/textprocess.js")
+
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -34,25 +34,25 @@ function babysit(interaction, gameState){
     if ((babysitterName in children ) && (babysitterName in children)){
         babysitter = children[babysitterName];
     } else {
-        util.ephemeralResponse(interaction, "Did not recognize babysitter "+babysitterName);
+        text.addMessage(gameState, actorName, "Did not recognize babysitter "+babysitterName);
         return
     }
     if ((childName in children ) && (childName in children)){
         child = children[childName];
     } else {
-        util.ephemeralResponse(interaction, "Did not recognize child "+childName);
+        text.addMessage(gameState, actorName,  "Did not recognize child "+childName );
         return
     }
 
     if (babysitter.mother != actorName){
-        util.ephemeralResponse(interaction,'You are not the mother of '+babysitterName)
+        text.addMessage(gameState, actorName,  'You are not the mother of '+babysitterName );
         return
     }
     var response = "";
     console.log(" babysitter age:"+babysitter.age+" reproductionRound:"+gameState.reproductionRound)
     if (babysitter.newAdult || ( babysitter.age == 23 && !gameState.reproductionRound )){
         if (targetChild.newAdult){
-            util.ephemeralResponse(interaction,targetChildName+' does not need watching');
+            text.addMessage(gameState, actorName,  targetChildName+' does not need watching' );
             return
         }
         if (babysitter.babysitting){
@@ -61,10 +61,11 @@ function babysit(interaction, gameState){
         babysitter.babysitting = targetChildName;
         response += babysitterName + " starts watching "+targetChildName;
     } else {
-        util.ephemeralResponse(interaction,babysitterName+' is not old enough to watch children'); 
+        text.addMessage(gameState, actorName,  babysitterName+' is not old enough to watch children' );
         return
     }
-    interaction.reply(response);
+    text.addMessage(gameState, "tribe", response );
+    gameState.saveRequired = true;
     return;
 
 }

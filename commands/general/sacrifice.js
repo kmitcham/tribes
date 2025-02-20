@@ -1,6 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const util = require("../../util.js");
-const savelib = require("../../save.js");
+const dice = require("../../libs/dice.js");
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -75,8 +74,8 @@ function doCommand(interaction, gameState){
             ,'You feel warm and satisfied.' 				// 14
             ,'You feel content.'		   					// 15
         ]
-        random = util.roll(2) - 2;// 0-10
-        net = random +Math.trunc(Math.log(amount)) ;
+        random = dice.roll(2) - 2;// 0-10
+        net = random + Math.trunc(Math.log(amount)) ;
         console.log(sourceName+' sacrifice roll was '+random+ '  plus bonus = '+net)
         rndMsg = ritualResults[net] || 'The ritual is clearly wrong.' 
         sourcePerson[item] -= Number(amount)
@@ -84,6 +83,6 @@ function doCommand(interaction, gameState){
         response = 'You do not have that many '+item+': '+ population[actor][item]
         return util.ephemeralResponse(interaction, response)
     }
-    savelib.saveTribe(gameState);
+    gameState.saveRequired = true;
     interaction.reply(sourceName+' deliberately destroys '+amount+' '+item+' as part of a ritual.\n'+rndMsg+"\n")    
 }

@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const util = require("../../util.js");
+const pop = require("../../libs/population.js")
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -26,7 +26,7 @@ function inventory(interaction, gameState ){
     if (!target ){
         response = 'Whole Tribe Inventory:'
         for (var personName in gameState.population){
-            person = util.personByName(personName, gameState)
+            person = pop.memberByName(personName, gameState)
             response += '\n  '+inventoryMessage(person)
         }
     }else {
