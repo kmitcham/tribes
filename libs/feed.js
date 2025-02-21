@@ -1,7 +1,10 @@
 const dice = require("./dice.js");
 const pop = require("./population.js");
+const childLib = require("./children.js");
 const text = require("./textprocess.js");
+const reproLib = require("./reproduction.js");
 
+// msg is deprecated
 function feed( msg, player, amount, childList,  gameState){
         children = gameState.children;
         let message = ""
@@ -32,8 +35,7 @@ function feed( msg, player, amount, childList,  gameState){
                     }
                     continue;
                 }
-                msg.author.send('no such child as '+childName)
-                continue    
+				text.addMessage(gameState, player.name,'no such child as '+childName);
             }
             child = children[childName]
             if (  Number(child.food) >= 2 ){
@@ -91,7 +93,7 @@ function checkFood(gameState, bot){
     for  (var targetName in population) {
         person = population[targetName]
         hunger = 4
-        if (person.gender == 'female' && countChildrenOfParentUnderAge(children, targetName, 4) > 1){
+        if (person.gender == 'female' && childLib.countChildrenOfParentUnderAge(children, targetName, 4) > 1){
             hunger = 6
         }
         if (person.food >= hunger) {
@@ -121,7 +123,7 @@ function checkFood(gameState, bot){
         gameState.enoughFood = true
         text.addMessage(gameState, "tribe", "Everyone has enough food, starting reproduction automatically.")
         // TODO handle this
-        //startReproduction(gameState,bot)
+        reproLib.startReproduction(gameState)
     }
     return message
 }
@@ -279,7 +281,7 @@ function consumeFoodPlayers(gameState){
 				perished.push(target)
 			}
 		}
-		if (population[target].gender == 'female' && countChildrenOfParentUnderAge(children, target, 4 ) > 1 ){
+		if (population[target].gender == 'female' && childLib.countChildrenOfParentUnderAge(children, target, 4 ) > 1 ){
 			// extra food issues here; mom needs 2 more food, or the child will die.
 			console.log(target+' needs extra food due to underage children. ')
 			population[target].food -= 2

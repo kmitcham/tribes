@@ -1,5 +1,7 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const reproLib = require("../../libs/reproduction.js");
+const text = require("../../libs/textprocess.js");
+const pop = require("../../libs/population.js");
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -13,28 +15,26 @@ module.exports = {
         ,
     async execute(interaction, gameState, bot) {
         onCommand(interaction, gameState, bot)
-        console.log("decline response: "+response)
-        interaction.reply({ content: "decline updated", ephemeral: true })
 	},
 };
 
 function onCommand(interaction, gameState, bot){
-    var population = gameState.population;
     var sourceName = interaction.user.displayName;
-
-    var player = population[sourceName]
-    var message = 'error in invite, message not set';
     var rawList = interaction.options.getString('declinelist');
+
+    var player = pop.memberByName(sourceName, gameState);
     if (! rawList ) {
         if (player.declinelist){
-            return "Current declinelist: "+player.declinelist.join(" ")
+            text.addMessage(gameState, sourceName, "Current declinelist: "+player.declinelist.join(" "));
+            return;
         } else {
-            return "No current declinelist"
+            text.addMessage(gameState, sourceName, "No current declinelist");
+            return 
         }
         
     }
     let messageArray = rawList.split(" ");
-    console.log("diverting for secret mating");
+    console.log("applying decline list to mating for "+sourceName);
     reproLib.decline(sourceName, messageArray,  gameState, bot);
     return 
 }

@@ -92,7 +92,7 @@ function craft(interaction, gameState){
 function onError(interaction, response){
     interaction.user.send(response);
         const embed = new EmbedBuilder().setDescription(response);
-		interaction.reply({ embeds: [embed], ephemeral: true })
+		interaction.reply({ embeds: [embed], ephemeral: true }) // error message
 			.catch(console.error);
         return
 }

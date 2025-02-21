@@ -1,36 +1,41 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const reproLib = require("../../libs/reproduction.js");
 const locations = require('../../libs/locations.json');
+const text = require("../../libs/textprocess.js");
+const utils = require("../../libs/util.js");
+const pop = require("../../libs/population.js");
 
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('startwork')
 		.setDescription('Start the work round. (Chief only)')
         ,
-    async execute(interaction, gameState, bot) {
+    async execute(interaction, gameState) {
         var actorName = interaction.user.displayName
-        response = startFilter(actorName, gameState, bot)
-        interaction.reply(response)
+        response = startFilter(actorName, gameState)
 	},
 };
 
-function startFilter(actorName, gameState, bot){
-    var player = util.personByName(actorName, gameState)
+function startFilter(actorName, gameState){
+    var player = pop.memberByName(actorName, gameState)
     if ( !player.chief){
-        return "startfood requires chief priviliges"
+        text.addMessage(gameState, actorName,  "startfood requires chief priviliges")
+        return
     }
     if (gameState.workRound == true){
-        return 'already in the workRound'
+        text.addMessage(gameState, actorName,  'already in the workRound')
+        return 
     }
     if(gameState.reproductionRound == false){
-        return 'Can only go to work round from reproduction round'
+        text.addMessage(gameState, actorName, 'Can only go to work round from reproduction round')
+        return
     }
-    return startWork(gameState, bot)
+    return startWork(gameState, actorName)
 }
 
-function startWork(gameState, bot){
-    reproLib.restoreSaveLists(gameState, bot);
-    savelib.archiveTribe(gameState);
+function startWork(gameState, actorName){
+    reproLib.restoreSaveLists(gameState);
+    gameState.archiveRequired = true;
     // advance the calendar; the if should only skip on the 0->1 transition
     if (gameState.workRound == false){
         nextSeason(gameState)
@@ -40,21 +45,21 @@ function startWork(gameState, bot){
         person = population[personName]
         delete person.activity
     }
-    util.decrementSickness(gameState.population, gameState, bot)
+    pop.decrementSickness(gameState.population, gameState);
     gameState.workRound = true;
     gameState.foodRound = false;
     gameState.reproductionRound = false;
     gameState.doneMating = false;
     gameState.canJerky = false;
-    reproLib.clearReproduction(gameState, bot)
-    util.messageChannel(util.gameStateMessage(gameState, bot), gameState, bot)
-    util.messageChannel('\n==>Starting the work round.  Guard (or ignore) your children, then craft, gather, hunt, assist or train.<==', gameState, bot)
-    savelib.saveTribe(gameState);
-    return "Started the work round"
+    reproLib.clearReproduction(gameState);
+    text.addMessage(gameState, actorName, (utils.gameStateMessage(gameState)));
+    text.addMessage(gameState, "tribe", '\n==>Starting the work round.  Guard (or ignore) your children, then craft, gather, hunt, assist or train.<==');
+    gameState.saveRequired = true;
+    return
 }
 
 function nextSeason(gameState){
-	if (util.isColdSeason(gameState)){
+	if (utils.isColdSeason(gameState)){
 		for (locationName in locations){
 			modifier = locations[locationName]['game_track_recover']
 			oldTrack = gameState.gameTrack[locationName]

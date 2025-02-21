@@ -1,5 +1,7 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const reproLib = require("../../libs/reproduction.js");
+const pop = require("../../libs/population.js");
+const text = require("../../libs/textprocess.js");
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -8,32 +10,29 @@ module.exports = {
         .addStringOption(option => 
             option
             .setName('consentlist')
-            .setDescription('add !save to retain the list. !all is an option')
+            .setDescription('list of names.  !all is an option for the less discriminating')
         )
         ,
     async execute(interaction, gameState, bot) {
-        onCommand(interaction, gameState, bot)
-        console.log("consent updated"+response)
-        interaction.reply({ content: "Consent list updated to "+response, ephemeral: true })
+        var sourceName = interaction.user.displayName;
+        var rawList = interaction.options.getString('consentlist');
+        var response = onCommand(gameState, sourceName, rawList);
+        console.log("consent updated: "+response)
         gameState.saveRequired;
 	},
 };
 
-function onCommand(interaction, gameState, bot){
-    var population = gameState.population;
-    var sourceName = interaction.user.displayName;
+function onCommand(gameState, sourceName, rawList){
+    var member = pop.memberByName(gameState, sourceName);
 
-    var player = population[sourceName]
-    var rawList = interaction.options.getString('consentlist');
     if (! rawList ) {
-        if (player.consentList){
-            return "Current consentList: "+player.consentList.join(" ")
+        if (member.consentList){
+            return "Current consentList: "+member.consentList.join(" ")
         } else {
             return "No current consentList"
         }   
     }
     let messageArray = rawList.split(" ");
-    console.log("updating consentlist");
-    reproLib.consent(sourceName, messageArray,  gameState, bot);
-    return 
+    console.log("updating consentlist: "+messageArray);
+    reproLib.consent(sourceName, messageArray,  gameState);
 }

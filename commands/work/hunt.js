@@ -51,16 +51,12 @@ function hunt(interaction, gameState){
     }
     //message = hunt(actor, player, huntRoll, gameState)
     message = huntlib.hunt(sourceName, player, huntRoll, gameState);
-    player.activity = 'hunt'
-
-    player.worked = true;
-    gameState.saveRequired= true;
-    text.addMessage(gameState, sourceName,message )
+    return;
 }
 function onError(interaction, response){
     interaction.user.send(response);
         const embed = new EmbedBuilder().setDescription(response);
-		interaction.reply({ embeds: [embed], ephemeral: true })
+		interaction.reply({ embeds: [embed], ephemeral: true }) // error message
 			.catch(console.error);
         return
 }

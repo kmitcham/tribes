@@ -13,9 +13,9 @@ module.exports = {
 
         response = close(actorName, gameState, bot)
         if (gameState.open){
-            interaction.reply("The tribe is open")
+            text.addMessage(gameState, "tribe", "The tribe is open")
         } else {
-            interaction.reply("The tribe is closed")
+           text.addMessage(gameState, "tribe", "The tribe is closed")
         }
         gameState.saveRequired = true;
 

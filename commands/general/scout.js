@@ -102,7 +102,7 @@ function getNerdData(gameTrackValue){
             + '\thunt:'+totals[locationName][HUNT]
             + '\tspear:'+totals[locationName][SPEAR]
     }
-    msg.author.send(response)
+    response += "\n"+response;
     totals = {
         'veldt':[0,0,0,0,0,0],
         'hills':[0,0,0,0,0,0],

@@ -3,7 +3,7 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const guardlib = require("../../libs/guardCode.js")
 const dice = require("../../libs/dice.js")
 const util = require("../../libs/util.js")
-const ref = require("../../libs/referees.json")
+const referees = require("../../libs/referees.json")
 const text = require("../../libs/textprocess")
 const pop = require("../../libs/population")
 
@@ -22,15 +22,24 @@ module.exports = {
         var roll = dice.roll(3)
         var sourceName = interaction.user.displayName;
         var forceRoll = interaction.options.getInteger('force');
-        if (ref.referees.includes(sourceName) && forceRoll){
+        if (referees.includes(sourceName) && forceRoll){
             huntRoll = forceRoll;
             if (huntRoll < 3 || 18 < huntRoll){
                 text.addMessage(gameState, sourceName, 'Roll must be 3-18')
                 return
             }
         }
+        var player = pop.memberByName(sourceName, gameState)
+        if ( !player.chief){
+            text.addMessage(gameState, actorName,"chance requires chief privileges");
+            return 
+        }
+        if(gameState.reproductionRound == false || gameState.needChanceRoll == false){
+            text.addMessage(gameState, actorName,'Can only do chance during the reproduction round, after reproduction activites are complete.');
+            return 
+        }
+        
         response = doChance(roll, gameState, bot)
-        interaction.reply("chance rolled!")
         console.log("chance response: "+response);
         text.addMessage(gameState, "tribe", response);
 	},
@@ -39,6 +48,7 @@ module.exports = {
 function doChance(rollValue, gameState){
     population = gameState.population
     children = gameState.children
+    
     chanceRoll = Number(rollValue)
     if (!chanceRoll || chanceRoll < 3 || chanceRoll > 18 ){
         console.log(' invalid chance roll'+rollValue)

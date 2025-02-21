@@ -19,6 +19,12 @@ function getYear(gameState){
 }
 module.exports.getYear = getYear;
 
+function isColdSeason(gameState){
+	return (gameState.seasonCounter%2 == 0);
+}
+module.exports.isColdSeason = isColdSeason;
+
+
 function gameStateMessage(gameState) {
 	var numAdults = (Object.keys(gameState.population)).length
 	var numKids = (Object.keys(gameState.children)).length

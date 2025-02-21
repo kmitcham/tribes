@@ -61,13 +61,13 @@ module.exports.hunt = (playername, player, rollValue, gameState) =>{
     netRoll = Number(rollValue)+modifier
     var oldTrack = gameState.gameTrack[gameState.currentLocationName]
     gameTrack = gameState.gameTrack[gameState.currentLocationName]
-    message += ' The game track goes from '+oldTrack+' to '+gameState.gameTrack[gameState.currentLocationName]
+    message += '\nThe game track goes from '+oldTrack+' to '+gameState.gameTrack[gameState.currentLocationName]
     hunt_cap = locationDecay[gameTrack]
     huntData = locations[gameState.currentLocationName]['hunt']
     if (netRoll > hunt_cap){
         netRoll = hunt_cap
         message += ' -game track '
-        console.log('hunt with netRoll '+netRoll+' capped at '+hunt_cap+' since the gameTrack was '+gameTrack)
+        console.log(' hunt with netRoll '+netRoll+' capped at '+hunt_cap+' since the gameTrack was '+gameTrack)
     }
     if (netRoll > 18){
         netRoll = 18
@@ -90,7 +90,7 @@ module.exports.hunt = (playername, player, rollValue, gameState) =>{
         message += "  No game."
     } else {
         huntRow = huntDataFor(huntData, netRoll);
-        message += huntRow[2] + ' +'+huntRow[1]+' food'
+        message += "\n\t"+huntRow[2] + ' +'+huntRow[1]+' food'
         player.food += huntRow[1]
     }
     var huntercount = 1
@@ -114,7 +114,10 @@ module.exports.hunt = (playername, player, rollValue, gameState) =>{
     if (player.helpers){
         delete player.helpers 
     }
-    text.addMessage(gameState, "tribe", message)
+    player.activity = 'hunt'
+    player.worked = true;
+    gameState.saveRequired= true;
+    text.addMessage(gameState, "tribe", message);
     return message
 }
 

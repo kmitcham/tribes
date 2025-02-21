@@ -18,8 +18,7 @@ module.exports = {
     async execute(interaction, gameState, bot) {
         var playerName = interaction.user.displayName;
         var profession = interaction.options.getString('profession')
-        prof.specialize(playerName, profession, gameState, bot)
-        interaction.reply(playerName+" becomes a "+profession)
+        prof.specialize(playerName, profession, gameState)
         gameState.saveRequired = true;
 	},
 };

@@ -11,7 +11,6 @@ module.exports = {
     async execute(interaction, gameState, bot) {
 
         response = endLib.endGame(gameState, bot)
-        interaction.reply({content:response, ephemeral:false});
         gameState.saveRequired = true;
         gameState.archiveRequired = true;
 	},

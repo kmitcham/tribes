@@ -1,6 +1,6 @@
 const fs = require('node:fs');
 const path = require('node:path');
-const { Client, Collection, Events, GatewayIntentBits } = require('discord.js');
+const { Client, Collection, Events, GatewayIntentBits, MessageFlags} = require('discord.js');
 const { token } = require('./config.json');
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
@@ -74,7 +74,7 @@ client.on(Events.InteractionCreate, async interaction => {
 	// if no errors, and we are sure we have a gameState
 	try {
 		await command.execute(interaction, gameState, client);
-		sendMessages(client, gameState, channel);
+		sendMessages(client, gameState, interaction);
 		if (gameState.saveRequired){
 			savelib.saveTribe(gameState);
 			gameState.saveRequired = false;
@@ -99,50 +99,102 @@ client.on(Events.InteractionCreate, async interaction => {
 	}
 });
 
-function sendMessages(bot, gameState, channel){
-    messagesDict = gameState['messages'];
-   for (const [address, message] of Object.entries(messagesDict)){
-        if (address == 'tribe'){
-            messageTribe(channel, gameState, messagesDict[address])
-        } else {
-            messageMember(bot, gameState, address, messagesDict[address] )
-        }
+async function sendMessages(bot, gameState, interaction){
+	messagesDict = gameState['messages'];
+	if (! messagesDict){
+		console.log("sendMessages on empty");
+		return;
+	}
+	actorName = interaction.user.displayName;
+	//console.log("in send messages  1 "+actorName+ " "+Object.keys(messagesDict));
+	needsReply = true;
+	// if exists message for the tribe, use interaction.reply
+	// else if exists message for interaction actor, use interaction.reply({ephermal:true})
+	// else {
+	//		interaction.reply("acknowledged")
+	//		for each message{
+	//			sendMessage using channel  TODO: resolve this magic
+	//		}
+	//}
+	if ("tribe" in messagesDict ){
+		console.log("in send messages tribe:"+messagesDict["tribe"]);
+		message = messagesDict["tribe"];
+		needsReply = false;
+		if (message){
+			if (interaction ){
+				await interaction.reply({ content: message });
+			} else {
+				const channel = await bot.channels.cache.find(channel => channel.name === gameState.name);
+				channel.send({content: message});
+			}
+		}
+		delete messagesDict["tribe"];
+	}
+	if (actorName in messagesDict && needsReply){
+		// only reply here if reply is still needed; otherwise handle with other messages below
+		const message = messagesDict[actorName];
+		if (message){
+			console.log("in send messages send to actor: "+message);
+			needsReply = false;
+			user = interaction.user;
+			await interaction.reply({ content: message, flags: MessageFlags.Ephemeral })
+			// double tap user so they have a DM of content as well.  TODO: confirm this is correct?
+			await user.send(message);
+			delete messagesDict[actorName];
+			//console.log("in send messages finish send to actor >>>>>>>>>"+message+"<<<<<<");
+		} else {
+			console.log("null message for "+actorName+ " seasonCounter:"+gameState.seasonCounter)
+		}
+	}
+    for (const [address, message] of Object.entries(messagesDict)){
+		channel = interaction.channel;
+		member = pop.memberByName(address, gameState);
+		console.log("in send messages 4 "+address);
+		if ( !member){
+			console.log("No member for name "+address);
+			continue;
+		}
+		if (!message){
+			console.log("Not sending empty message to "+address);
+			continue;
+		}
+		userHandle = member.handle
+		if (userHandle && userHandle.id){
+			console.log("in send messages 4.5 "+message);
+			const user = bot.users.cache.get(userHandle.id);
+			if (! user){
+				console.log("not finding user for "+address)
+			} else {
+				console.log("in send messages 4.9 "+user.displayName+" "+message);
+				await user.send(message)
+			}
+			console.log("in send messages 5");
+		}
         delete messagesDict[address]
     }
+	if (needsReply){
+		console.log(" no reply to "+interaction.commandName);
+		interaction.reply({ content: "Not sure I understand that.", flags: MessageFlags.Ephemeral });
+		needsReply = false
+	}
+	return 0;
 }
 async function  messageMember(bot, gameState, memberName, message) {
-    member = pop.memberByName(memberName, gameState);
-    if ( !member){
-        console.log("No member for name "+memberName)
-        return -1
-    }
-    if (!message){
-        console.log("Not sending empty message to "+memberName)
-        return -2
-    }
-    userHandle = member.handle
-    if (userHandle && userHandle.id){
-        user = await bot.users.fetch(userHandle.id);
-        user.send(message)
-        return 0
-    }
     console.log(memberName+" has no handle or id- maybe a drone? ")
     return -3
 }
-async function messageTribe(channel, gameState, message){
-	if (!message || message.length == 0 ){
-		console.log("Not sending empty message to channel:"+message)
-		return -2
-	}
-	if (channel){
-		channel.send(message)
-        return 0
-	} else {
-		console.log('no channel found for '+gameState.name)
-        return -3
-	}
-}
 
+function getChannelForTribe(bot, gameState){
+	const tribeName = gameState.name;
+	const channels = bot.channels;
+	for (channel in channels){
+		if (channel.name = tribeName){
+			return channel;
+		}
+	}
+	console.log("Could not find channel for "+tribeName);
+	return null;
+}
 
 client.login(token);
 

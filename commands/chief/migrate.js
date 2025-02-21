@@ -36,11 +36,6 @@ module.exports = {
             text.addMessage(gameState, sourceName, "You lead the tribe to "+destination)
         }
         console.log("response to migrate was "+value)
-        //have to see if this better than the 'no response' message
-        if (gameState['messages'] && gameState['messages'][sourceName]){
-            console.log("interaction reply")
-            interaction.reply(gameState['messages'][sourceName])
-        }
         gameState.saveRequired = true;
 	},
 };

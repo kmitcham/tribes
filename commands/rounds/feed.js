@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const worklib = require("../../libs/work.js")
 const feedlib = require("../../libs/feed.js");
+const text = require("../../libs/textprocess.js")
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -29,31 +30,29 @@ function feed(interaction, gameState){
     player = population[sourceName]
 
     if (amount < 0 &&  !util.referees.includes(sourceName) ){
-        msg.author.send('Only the referee can reduce amounts')
-        cleanUpMessage(msg);; 
+        text.addMessage(gameState, sourceName, 'Only the referee can reduce amounts');
         return
     }
     if (!player ){
         // this makes sure the author is in the tribe
-        console.log("Children do not take food from strangers")
+        text.addMessage(gameState, sourceName,"Children do not take food from strangers");
         return
     }
     if (gameState.reproductionRound  && gameState.needChanceRoll){
-        util.ephemeralResponse(interaction, "Must wait until after chance to feed the children.")
+        text.addMessage(gameState, sourceName, "Must wait until after chance to feed the children.")
         return
     }
     childList = rawList.split(' ');
-    //module.exports.feed = ( msg, player, amount, childList,  gameState) =>{
     message = feedlib.feed(interaction, player, amount, childList, gameState);
     console.log('return '+message);
-    interaction.reply(message);
     gameState.saveRequired=true
     return
 }
+
 function onError(interaction, response){
     interaction.user.send(response);
         const embed = new EmbedBuilder().setDescription(response);
-		interaction.reply({ embeds: [embed], ephemeral: true })
+		interaction.reply({ embeds: [embed], ephemeral: true })  // error message
 			.catch(console.error);
         return
 }

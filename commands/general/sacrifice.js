@@ -1,5 +1,7 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const dice = require("../../libs/dice.js");
+const pop = require("../../libs/population.js");
+const text = require("../../libs/textprocess.js")
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -16,14 +18,15 @@ module.exports = {
             .setRequired(true))
         ,
     async execute(interaction, gameState) {
-        doCommand(interaction, gameState)
+        var sourceName = interaction.user.displayName;
+        var amount = interaction.options.getInteger('amount');
+        var item = interaction.options.getString('item');
+        doCommand(gameState, sourceName, item, amount);
 	},
 };
 
-function doCommand(interaction, gameState){
-    var sourceName = interaction.user.displayName;
-    var amount = interaction.options.getInteger('amount');
-    var item = interaction.options.getString('item');
+function doCommand(gameState, sourceName, item, amount){
+
     var population = gameState.population;
 
     if (item.startsWith('g')){
@@ -36,23 +39,26 @@ function doCommand(interaction, gameState){
         item = 'spearhead'
     } else {
         response = "Unrecognized item "+item;
-        return onError(interaction, response);
+        text.addMessage(gameState,sourceName, response);
+        return
     }
 
     if (amount <= 0  ){
-        return onError('Can not sacrifice negative amounts')
+        response = 'Must sacrifice at least one item';
+        text.addMessage(gameState,sourceName, response);
+        return;
     }
-    var sourcePerson = {}
+    var sourcePerson = pop.memberByName(sourceName);
     // check if person is in tribe
-    if ( (sourceName in population)){
-        sourcePerson = population[sourceName];
-    } else {
+    if (!sourcePerson){
         response = sourceName+" not found in tribe";
-        return onError(interaction, response)
+        text.addMessage(gameState,sourceName, response);
+        return 
     }
     if (!sourcePerson[item] || sourcePerson[item] < amount){
         response = sourceName+" does not have "+amount+" "+item;
-        return onError(interaction, response)
+        text.addMessage(gameState,sourceName, response);
+        return 
     }
 
     if (  sourcePerson[item] >= amount){
@@ -81,8 +87,9 @@ function doCommand(interaction, gameState){
         sourcePerson[item] -= Number(amount)
     } else {
         response = 'You do not have that many '+item+': '+ population[actor][item]
-        return util.ephemeralResponse(interaction, response)
+        text.addMessage(gameState,sourceName, response);
+        return;
     }
     gameState.saveRequired = true;
-    interaction.reply(sourceName+' deliberately destroys '+amount+' '+item+' as part of a ritual.\n'+rndMsg+"\n")    
+    text.addMessage(gameState, "tribe", sourceName+' deliberately destroys '+amount+' '+item+' as part of a ritual.\n'+rndMsg+"\n")
 }

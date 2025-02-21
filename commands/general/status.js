@@ -19,6 +19,7 @@ function onCommand(interaction, gameState){
 		return
 	}
     var response = util.gameStateMessage(gameState);
+	console.log("status response:"+response);
 	text.addMessage(gameState, displayName, response);
 	return 
 }

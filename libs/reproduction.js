@@ -307,7 +307,7 @@ function globalMatingCheck(gameState){
             console.log("working "+personName)
             person = pop.memberByName(personName, gameState)
             if (!person){
-                console.log(" No person found for "+personName +" sexList "+nextList)
+                console.log(" No person found for "+personName +" sexList "+sexList)
                 continue;
             }
             index = sexList.indexOf(personName)
@@ -402,7 +402,7 @@ function globalMatingCheck(gameState){
             } else {
                 // person has no invites pending
                 allDone = false
-                console.log("\t No invites found so allDone is false")
+                console.log("\t No invites found for "+personName+" so allDone is false")
             }
         }
     }
@@ -679,14 +679,14 @@ function addDrone(gameState, gender, profession, droneName){
 }
 module.exports.addDrone = addDrone;
 
-function startReproduction(gameState, client){
+function startReproduction(gameState){
 	// actually consume food here
 	gameState.needChanceRoll = true  // this magic boolean prevents starting work until we did chance roll
 	gameState.workRound = false
 	gameState.foodRound = false
 	gameState.reproductionRound = true
 	delete gameState.enoughFood 
-	foodMessage = consumeFood(gameState)
+	foodMessage = feed.consumeFood(gameState)
     foodMessage += '\n==> Starting the Reproduction round; invite other tribe members to reproduce.<=='
     foodMessage += 'After chance, the tribe can decide to move to a new location, but the injured and children under 2 will need 2 food'
     text.addMessage(gameState, "tribe",foodMessage)
@@ -695,7 +695,7 @@ function startReproduction(gameState, client){
 		gameState.doneMating = false;
 		globalMatingCheck(gameState)
 		if (canStillInvite(gameState)){	
-            text.addMessage(gameState, "tribe",'(awaiting invitations or !pass from '+reproLib.canStillInvite(gameState)+')' )	
+            text.addMessage(gameState, "tribe",'(awaiting invitations or !pass from '+canStillInvite(gameState)+')' )	
 		}
 	pop.decrementSickness(gameState.population, gameState);
     gameState.saveRequired = true;

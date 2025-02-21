@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const pop = require("../../libs/population.js")
+const text = require("../../libs/textprocess.js")
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -14,7 +15,6 @@ module.exports = {
         const amount = interaction.options.getInteger('amount');
         var sourceName = interaction.user.displayName;
         message = makeJerky(sourceName, amount, gameState, bot)
-        interaction.reply(message)
 	},
 };
 
@@ -33,5 +33,6 @@ function makeJerky(sourceName, amount, gameState, bot){
     player.food = actualFood - amount + leftover
     player.grain += jerky
     message = sourceName+" converts "+(jerky * 3)+" food into "+jerky+" jerky";
-    return message;
+    text.addMessage(gameState, "tribe", message);
+    return;
 }

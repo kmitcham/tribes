@@ -1,7 +1,7 @@
 
 function removeSpecialChars(strVal){ 
-	if (! strVal){
-		console.log("empty value to remove special chars")
+	if (!strVal || !(typeof strVal === 'string' || strVal instanceof String) ){
+		console.log("empty or nonstring value to remove special chars:"+strVal)
 		return ""
 	}
 	return strVal.replace(/[^!a-zA-Z0-9_]+/g,'');

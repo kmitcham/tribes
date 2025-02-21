@@ -2,6 +2,7 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 
 const guardlib = require("../../libs/guardCode.js");
 const text = require("../../libs/textprocess.js")
+const pop = require("../../libs/population.js")
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -24,14 +25,17 @@ module.exports = {
             .setRequired(false))
         ,
     async execute(interaction, gameState) {
-        onCommand(interaction, gameState)
+        var actorName = interaction.user.displayName;
+        var cName = interaction.options.getString('child1');
+        var cName2  = interaction.options.getString('child2');
+        var cName3  = interaction.options.getString('child3');
+        ignoreChildren(gameState, actorName, cName, cName2, cName3);
 	},
 };
 
-function onCommand(interaction, gameState){
-	var cName = interaction.options.getString('child1');
-    var actorName = interaction.user.displayName;
-    var person = gameState.population[actorName];
+function ignoreChildren(gameState, actorName, cName, cName2, cName3 ){
+
+    var person = pop.memberByName(actorName, gameState);
 
 	if (person.worked == true){
         text.addMessage(gameState, actorName, 'You can not change guard status after having worked.');
@@ -42,29 +46,26 @@ function onCommand(interaction, gameState){
 		return
 	}
     response = ""
-    response += ignoreChild(interaction, gameState, cName)+"\n";
-    var cName2  = interaction.options.getString('child2');
+    response += ignoreChild(gameState, actorName, cName)+"\n";
     if (cName2){
-        response += ignoreChild(interaction, gameState, cName2)+"\n";
+        response += ignoreChild(gameState, actorName, cName2)+"\n";
     }
-    var cName3  = interaction.options.getString('child3');
-    if (cName){
-        response += ignoreChild(interaction, gameState, cName3)+"\n";
+    if (cName3){
+        response += ignoreChild(gameState, actorName, cName3)+"\n";
     }
     if (response.includes("FAIL")){
         text.addMessage(gameState, actorName, response);
     } else {
-        interaction.reply(response);
+        text.addMessage(gameState, actorName, response);
         gameState.saveRequired = true
     }
 }
 
-function ignoreChild(interaction, gameState, cName){
-    var actorName = interaction.user.displayName;
-    var person = gameState.population[actorName];
+function ignoreChild( gameState, actorName, cName){
+    var person = pop.memberByName(actorName, gameState);
     children = gameState.children;
     var response = "";
-    console.log("inside ignore cName "+util.capitalizeFirstLetter(cName)+" actorName "+actorName);
+    console.log("inside ignore cName "+text.capitalizeFirstLetter(cName)+" actorName "+actorName);
     if ("all" == cName.toLowerCase() && person.guarding && person.guarding.length > 0){
         response = actorName+' stops guarding '+person.guarding +"\n";
         delete person.guarding;
@@ -83,6 +84,4 @@ function ignoreChild(interaction, gameState, cName){
         }
         return actorName+' stops guarding '+childName +"\n";
     }
-
-
 }

@@ -64,7 +64,7 @@ function memberByName(name, gameState){
 }
 module.exports.memberByName = memberByName
 
-function decrementSickness(population, gameState, bot){
+function decrementSickness(population, gameState){
 	for (personName in population){
 		person = population[personName]
 		if (person.isSick && person.isSick > 0 ){
@@ -107,16 +107,14 @@ module.exports.history = history
 function addToPopulation(gameState, sourceName, gender, profession, handle){
     console.log("joining tribe with sourceName:"+sourceName)
     target = text.removeSpecialChars(sourceName)
+
     if (gameState.population[target]){
-        return 'You are already in the tribe'
+        text.addMessage(gameState, sourceName, target+ ' is already in the tribe' )
+        return 
     }
     genders = ['male','female']
     if (gender.startsWith('m') ){gender = 'male'}
     if (gender.startsWith('f')){gender = 'female'}
-    if ( !target || !gender || !genders.includes(gender) ){
-        text.addMessage(gameState, sourceName, 'usage: jointribe [female|male] [hunter|gatherer|crafter]' )
-        return
-    }
     var person = {};
     person.gender = gender;
     person.food = 10;
@@ -143,7 +141,9 @@ function addToPopulation(gameState, sourceName, gender, profession, handle){
     if (!person.strength){
         text.addMessage(gameState, person.name,"You are of average strength" )
     }
-    return "The tribe accepts you"
+    history(person.name, response, gameState)
+    gameState.saveRequired = true;
+    return 
 }
 module.exports.addToPopulation = addToPopulation;
 
@@ -203,3 +203,10 @@ function countByType(dictionary, key, value){
 	return count
 }
 module.exports.countByType = countByType;
+
+function randomMemberName(population){
+	nameList = Object.keys(population)
+	var random =  Math.trunc( Math.random ( ) * nameList.length )
+	return nameList[random]
+}
+module.exports.randomMemberName = randomMemberName;

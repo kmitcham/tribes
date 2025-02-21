@@ -30,27 +30,29 @@ module.exports = {
         gender = interaction.options.getString('gender');
         profession = interaction.options.getString('profession');
         response = join(actorName, gameState, gender, profession, interaction.user)
-        //interaction.reply(response)
-        gameState.saveRequired = true;
 	},
 };
 
-function join(joiner, gameState, gender, profession, handle){
-    if (gameState.population[joiner]){
+function join(actorName, gameState, gender, profession, handle){
+    if (gameState.population[actorName]){
         return 'You are already a member of this tribe'
     }
     if (! gameState.open){
         return 'You need to be inducted by the chief to join this tribe'
     }
-    console.log("display name is "+joiner +" username:"+joiner.username)
-    return pop.addToPopulation(gameState, joiner, gender, profession, handle)
+    console.log("display name is "+actorName +" username:"+actorName.username)
+    response = pop.addToPopulation(gameState, actorName, gender, profession, handle)
+    pop.history(targetName, response, gameState)
+    
+    gameState.saveRequired = true;
+
 }
 
 
 function onError(interaction, response){
     interaction.user.send(response);
         const embed = new EmbedBuilder().setDescription(response);
-		interaction.reply({ embeds: [embed], ephemeral: true })
+		interaction.reply({ embeds: [embed], ephemeral: true }) // error message
 			.catch(console.error);
         return
 }

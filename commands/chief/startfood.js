@@ -4,8 +4,6 @@ const util = require("../../libs/util");
 const feed = require("../../libs/feed");
 const text = require("../../libs/textprocess")
 
-
-
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('startfood')
@@ -15,7 +13,6 @@ module.exports = {
         var actorName = interaction.user.displayName
 
         response = startFoodFilter(actorName, gameState, bot)
-        interaction.reply(response);
         gameState.saveRequired = true;
 	},
 };
@@ -23,13 +20,16 @@ module.exports = {
 function startFoodFilter(actorName, gameState, bot){
     var player = pop.memberByName(actorName, gameState)
     if ( !player.chief){
-        return "startfood requires chief privileges"
+        text.addMessage(gameState, actorName,"startfood requires chief privileges");
+        return 
     }
     if (gameState.foodRound == true){
-        return 'already in the foodRound'
+        text.addMessage(gameState, actorName,'already in the foodRound');
+        return 
     }
     if(gameState.workRound == false){
-        return 'Can only go to food round from work round'
+        text.addMessage(gameState, actorName,'Can only go to food round from work round');
+        return 
     }
     return startFood(gameState, bot)
 }
@@ -46,7 +46,7 @@ function startFood(gameState, bot){
     console.log("start food population:"+gameState.population)
     text.addMessage(gameState, "tribe", message);
 
-    foodMessage = feed.checkFood(gameState,bot)
+    foodMessage = feed.checkFood(gameState,bot);
     return foodMessage
 }
 
@@ -63,12 +63,12 @@ function clearWorkFlags(population){
         if (person.isInjured && person.isInjured > 0 && person.worked == false){
             // did not work means rested
             person.activity = 'recovery'
-            util.history(person.name, "recovered from injury", gameState)
+            pop.history(person.name, "recovered from injury", gameState)
         }
         if (person.isSick && person.isSick > 0 && person.worked == false){
             // did not work means rested
             person.activity = 'recovery'
-            util.history(person.name, "recovered from illness", gameState)
+            pop.history(person.name, "recovered from illness", gameState)
         }
         person.worked = false
     }

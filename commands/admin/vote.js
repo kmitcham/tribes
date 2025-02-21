@@ -16,7 +16,6 @@ module.exports = {
 		var actorName = interaction.user.displayName;
 		var candidateName = interaction.options.getMember('candidate').displayName;
         pop.vote(gameState, actorName, candidateName)
-		interaction.reply("You support "+candidateName+" as chief of the tribe")
 		gameState.saveRequired = true;
 	},
 };

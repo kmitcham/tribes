@@ -1,4 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const text = require('../../libs/textprocess');
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -6,11 +7,13 @@ module.exports = {
 		.setDescription('Show the dead of the tribe')
         ,
     async execute(interaction, gameState) {
-        graveyard(interaction, gameState)
+        var displayName = interaction.user.displayName;
+        graveyard(displayName, gameState)
 	},
 };
 
-function graveyard(interaction, gameState){
+function graveyard(displayName, gameState){
+    
     var response = "Graveyard:";
     if ( Object.keys(gameState.graveyard ).length == 0){
         response += ' is empty'
@@ -33,5 +36,6 @@ function graveyard(interaction, gameState){
             response += ' gender:'+person.gender
         }
     }
-    return interaction.reply(response)
+    text.addMessage(gameState, displayName, response);
+    return;
 }

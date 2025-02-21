@@ -1,5 +1,8 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-
+const text = require("../../libs/textprocess")
+const prof = require("../../libs/profession")
+const pop = require("../../libs/population")
+const dice = require("../../libs/dice")
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -47,53 +50,13 @@ function induct(interaction, gameState){
 	
     if (!chief || !chief.chief){
         response = "You must be chief to induct a member"
-        interaction.reply({content:response, ephemeral:true});
+        text.addMessage(gameState, "tribe", response);
         return
     }
 	console.log("message b")
 
-    // check if person is in tribe
-    if (targetName in population ) {
-        interaction.reply({content:targetName+" is already in the tribe", ephemeral:true});
-        return
-    }
-    var person = {}
-	person.gender = gender
-	person.food = 10
-	person.grain = 4
-	person.basket = 0
-	person.spearhead = 0
-	person.handle = targetObject
-	person.name = targetName
-	var strRoll = utillib.roll(1)
-	response = 'added '+targetName+' '+gender+' to the tribe. '
-	if (strRoll == 1){
-		person.strength = 'weak'
-		response+= targetName +' is weak.'
-	} else if (strRoll == 6){
-		person.strength = 'strong'
-		response+= targetName +' is strong.'
-	} 
-    targetObject.send(sourceName+" inducts you into the tribe.")
-	gameState.population[targetName] = person
-	if (profession){
-		helpMessage = utillib.specialize(targetName, profession, gameState)
-        targetObject.send(helpMessage)
-	}
-    console.log("message d")
+    pop.addToPopulation(gameState, targetName, gender, profession, targetObject)
+    text.addMessage(gameState, "tribe",  response)
+    
 
-    interaction.reply({content:response, ephemeral:false});
-	savelib.saveTribe(gameState);
-	if (!person.strength){
-		targetObject.send("You are of average strength")
-	}
-	utillib.history(targetName, "Joined the tribe", gameState)
-
-}
-function onError(interaction, response){
-    interaction.user.send(response);
-        const embed = new EmbedBuilder().setDescription(response);
-		interaction.reply({ embeds: [embed], ephemeral: true })
-			.catch(console.error);
-        return
 }

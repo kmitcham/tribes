@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const pop = require("../../libs/population.js")
+const text = require("../../libs/textprocess.js")
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -11,27 +12,23 @@ module.exports = {
                 .setDescription('Which tribe member to display')
                 .setRequired(false)),
     async execute(interaction, gameState) {
-        var response = inventory(interaction, gameState)
-        //console.log(response)
-		interaction.user.send(response);
-		const embed = new EmbedBuilder().setDescription(response);
-		interaction.reply({ embeds: [embed], ephemeral: true })
-			.catch(console.error);
+		var targetUser = interaction.options.getMember('target')
+		var actorName = interaction.user.displayName;
+		var response = inventory(gameState, targetUser, actorName )
+        console.log("inventory response:"+response)
 	},
 };
 
-function inventory(interaction, gameState ){
-    var target = interaction.options.getMember('target')
-    
+function inventory( gameState, target, actorName ){
     if (!target ){
         response = 'Whole Tribe Inventory:'
         for (var personName in gameState.population){
             person = pop.memberByName(personName, gameState)
             response += '\n  '+inventoryMessage(person)
         }
-    }else {
+    } else {
         var targetName = target.displayName;
-        person = util.personByName(targetName, gameState)
+        person = pop.memberByName(targetName, gameState)
 
         if (!person || person == null){
             response = targetName +' does not seem to be a person';
@@ -39,6 +36,7 @@ function inventory(interaction, gameState ){
         }
         response = inventoryMessage(person)
     }
+	text.addMessage(gameState, actorName, response );
     return response;
 }
 
