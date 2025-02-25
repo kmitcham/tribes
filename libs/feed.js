@@ -15,15 +15,22 @@ function feed( msg, player, amount, childList,  gameState){
             if (!children[childName]) {
                 if (cName.toLowerCase() == "!all"){
                     showErrors = false;
+					feedAtLeastOneChild = false;
                     for (var childName in children){
                         var child = children[childName]
                         if (!( child.newAdult && child.newAdult == true) || child.food < 2){
                             childList.push(childName)
+							feedAtLeastOneChild = true;
                         }
                     }
+					if (!feedAtLeastOneChild){
+						text.addMessage(gameState, player.name,'no children need food');
+						return;
+					}
                     continue;
                 }
-                var parent = pop.memberByName(cName, gameState)
+                // this seems to be code handling if a newAdult has a child?
+				var parent = pop.memberByName(cName, gameState)
                 if (parent && parent.gender && parent.gender == 'female'){
                     for (var filterChildName in children){
                         var filterChild = children[filterChildName]
@@ -36,6 +43,7 @@ function feed( msg, player, amount, childList,  gameState){
                     continue;
                 }
 				text.addMessage(gameState, player.name,'no such child as '+childName);
+				continue;
             }
             child = children[childName]
             if (  Number(child.food) >= 2 ){
@@ -155,9 +163,9 @@ function consumeFoodChildren(gameState){
 				continue;
 			} 
 			if (child.age == 0 ){
-				birthRoll = roll.roll(3)
+				birthRoll = dice.roll(3)
 				response += '\t'+child.mother+' gives birth to a '+child.gender+'-child, '+child.name
-				history(child.mother,child.mother+' gives birth to a '+child.gender+'-child, '+child.name, gameState)
+				pop.history(child.mother,child.mother+' gives birth to a '+child.gender+'-child, '+child.name, gameState)
 				if (birthRoll < 5 ){
 					response += ' but the child did not survive\n'
 					child.dead = true
@@ -168,7 +176,7 @@ function consumeFoodChildren(gameState){
 					response += '\n'
 				}
 				//Mothers start guarding their newborns
-				person = personByName(child.mother, gameState)
+				person = pop.memberByName(child.mother, gameState)
 				if (!person.guarding){
 					person.guarding = [child.name]
 				} else if (person.guarding.indexOf(child.name) == -1){
@@ -178,7 +186,7 @@ function consumeFoodChildren(gameState){
 					twin = addChild(child.mother, child.father, gameState);
 					delete child.mother.isPregnant; // this gets set by addChild, but the child was just born.
 					response += child.mother+' gives birth to a twin! Meet '+twin.name+', a healthy young '+twin.gender+'-child.\n'
-					history(child.mother,child.mother+' gives birth to a twin! Meet '+twin.name+', a healthy young '+twin.gender+'-child', gameState)
+					pop.history(child.mother,child.mother+' gives birth to a twin! Meet '+twin.name+', a healthy young '+twin.gender+'-child', gameState)
 					person.guarding.push(twin.name)
 					twin.age = 0
 				}

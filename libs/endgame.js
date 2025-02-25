@@ -102,15 +102,20 @@ function scoreChildrenMessage(gameState){
 	}
 	message = 'Child scores:\n'
 	for (parentName in parentScores){
-		player = pop.memberByName(parentName, gameState)
-		if (player){
-			message+= '\t'+parentName+'('+player.gender.substring(0, 1)+'): '+parentScores[parentName]
+		member = pop.memberByName(parentName, gameState)
+		if (member){
+            if (member.gender == 'female'){
+			    message+= '\t'+parentName+'('+member.gender.substring(0, 1)+'): '+parentScores[parentName]
+            } else if (gameState.ended){
+                message+= '\t'+parentName+'('+member.gender.substring(0, 1)+'): '+parentScores[parentName]
+            }
 		} else {
-			console.log('Cound not find parent '+[parentName]+'with score '+parentScores[parentName])
+			console.log('Banished or dead: '+[parentName]+' with score '+parentScores[parentName])
 		}
 	}
 	return message
 }
+
 module.exports.countDeadAdults = countDeadAdults
 function countDeadAdults( gameState){
     graveyard = gameState.graveyard

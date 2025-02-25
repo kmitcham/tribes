@@ -6,10 +6,11 @@ const dice = require('./dice.js')
 module.exports.demand = (playerName, demandText, gameState) => {
     // fail if already has a demand in place
     // fail if player not in tribe
-    response = playerName+' DEMANDS: '+demandText
+    response = 
     player = gameState["population"][playerName]
     gameState["demand"] = demandText
     player['faction'] = 'for'
+    text.addMessage(gameState, "tribe", playerName+' DEMANDS: '+demandText )
     return response;
 }
 
@@ -85,7 +86,7 @@ function factionHasCrafter(faction){
     return false;
 }
 
-const getFactionResult = (gameState, bot) =>{
+const getFactionResult = (gameState) =>{
     response = ''
     gameFactions = getGameFactions(gameState)
     demand = gameState['demand']
@@ -149,7 +150,7 @@ const getFactionResult = (gameState, bot) =>{
         }
         console.log("Deleted: "+gameState.demand)
     }
-    return response
+    text.addMessage(gameState, "tribe",  response)
 }
 module.exports.getFactionResult = getFactionResult
 
@@ -228,7 +229,7 @@ const resolveSingleAttack = ( attacker, defender, roll, gameState) =>{
 }
 module.exports.resolveSingleAttack = resolveSingleAttack;
 
-const resolveViolence = (gameState, bot) =>{
+const resolveViolence = (gameState) =>{
     attackers = []
     undecided = []
     runners = []

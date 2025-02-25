@@ -74,7 +74,8 @@ client.on(Events.InteractionCreate, async interaction => {
 	// if no errors, and we are sure we have a gameState
 	try {
 		await command.execute(interaction, gameState, client);
-		sendMessages(client, gameState, interaction);
+		// send responses to the messages
+		await sendMessages(client, gameState, interaction);
 		if (gameState.saveRequired){
 			savelib.saveTribe(gameState);
 			gameState.saveRequired = false;
@@ -106,40 +107,43 @@ async function sendMessages(bot, gameState, interaction){
 		return;
 	}
 	actorName = interaction.user.displayName;
-	//console.log("in send messages  1 "+actorName+ " "+Object.keys(messagesDict));
-	needsReply = true;
-	// if exists message for the tribe, use interaction.reply
-	// else if exists message for interaction actor, use interaction.reply({ephermal:true})
-	// else {
-	//		interaction.reply("acknowledged")
-	//		for each message{
-	//			sendMessage using channel  TODO: resolve this magic
-	//		}
-	//}
+	MAX_LENGTH = 1900; //docs say 2000 is max; better safe than sorry
+	// regext [\S\s] is any chacter that is either a space or not a space; eg, any character
+	needsReply = interaction.isRepliable();
 	if ("tribe" in messagesDict ){
 		console.log("in send messages tribe:"+messagesDict["tribe"]);
 		message = messagesDict["tribe"];
-		needsReply = false;
+		const chunks = message.match(/[\S\s]{1,1900}/g);
+		chunksSent = 0;
+		const channel = await bot.channels.cache.find(channel => channel.name === gameState.name);
 		if (message){
-			if (interaction ){
-				await interaction.reply({ content: message });
+			if (needsReply ){
+				await interaction.reply({ content: chunks[0] });
+				chunksSent = 1;
 			} else {
-				const channel = await bot.channels.cache.find(channel => channel.name === gameState.name);
-				channel.send({content: message});
+				channel.send({content: chunks[chunksSent++] });
 			}
+			needsReply = false;
+		}
+		while (chunksSent < chunks.length){
+			console.log("sending bonus chunks to tribe");
+			channel.send({content: chunks[chunksSent++] });
 		}
 		delete messagesDict["tribe"];
 	}
 	if (actorName in messagesDict && needsReply){
 		// only reply here if reply is still needed; otherwise handle with other messages below
 		const message = messagesDict[actorName];
-		if (message){
-			console.log("in send messages send to actor: "+message);
+		const chunks = message.match(/[\S\s]{1,1900}/g);
+		console.log("message was split in chunks:"+chunks.length);
+		if (message && interaction.isRepliable() ){
 			needsReply = false;
 			user = interaction.user;
-			await interaction.reply({ content: message, flags: MessageFlags.Ephemeral })
+			await interaction.reply({ content: chunks[0], flags: MessageFlags.Ephemeral })
 			// double tap user so they have a DM of content as well.  TODO: confirm this is correct?
-			await user.send(message);
+			chunksSent = 0;
+			await user.send(chunks[chunksSent++]);
+			sendRemainingMessagesToUser(user, chunks, chunksSent);
 			delete messagesDict[actorName];
 			//console.log("in send messages finish send to actor >>>>>>>>>"+message+"<<<<<<");
 		} else {
@@ -149,8 +153,10 @@ async function sendMessages(bot, gameState, interaction){
     for (const [address, message] of Object.entries(messagesDict)){
 		channel = interaction.channel;
 		member = pop.memberByName(address, gameState);
+		const chunks = message.match(/[\S\s]{1,1900}/g);
+		console.log("message was split in chunks:"+chunks.length);
 		console.log("in send messages 4 "+address);
-		if ( !member){
+		if (!member){
 			console.log("No member for name "+address);
 			continue;
 		}
@@ -158,17 +164,29 @@ async function sendMessages(bot, gameState, interaction){
 			console.log("Not sending empty message to "+address);
 			continue;
 		}
-		userHandle = member.handle
-		if (userHandle && userHandle.id){
-			console.log("in send messages 4.5 "+message);
-			const user = bot.users.cache.get(userHandle.id);
-			if (! user){
-				console.log("not finding user for "+address)
+		userHandle = member["handle"]
+		if (userHandle){
+			var userId = "";
+			// different clients call it different things
+			if ("id" in userHandle){
+				userId = userHandle["id"];
+			} else if ( "userId" in userHandle){
+				userId = userHandle["userId"];
 			} else {
-				console.log("in send messages 4.9 "+user.displayName+" "+message);
-				await user.send(message)
+				console.log("Could not get an ID for "+address);
+				continue;
+			}
+			const user = bot.users.cache.get(userId);
+			if (! user){
+				console.log("not finding user for "+address+" userId="+userId)
+			} else {
+				console.log("in send messages 4.9 "+user.displayName);
+				chunksSent = 0;
+				sendRemainingMessagesToUser(user, chunks, chunksSent);
 			}
 			console.log("in send messages 5");
+		} else {
+			console.log("no handle.id for "+address+" handle:"+userHandle);
 		}
         delete messagesDict[address]
     }
@@ -179,21 +197,22 @@ async function sendMessages(bot, gameState, interaction){
 	}
 	return 0;
 }
-async function  messageMember(bot, gameState, memberName, message) {
-    console.log(memberName+" has no handle or id- maybe a drone? ")
-    return -3
-}
 
-function getChannelForTribe(bot, gameState){
-	const tribeName = gameState.name;
-	const channels = bot.channels;
-	for (channel in channels){
-		if (channel.name = tribeName){
-			return channel;
+function sendRemainingMessagesToUser(user, messageArray, chunksSent){
+	if (! user || !messageArray || (chunksSent > messageArray.length)){
+		console.error("bad call to send remaining messages ");
+		return;
+	}
+	while (chunksSent < messageArray.length){
+		if (messageArray[chunksSent]){
+			user.send({content: messageArray[chunksSent++] });
+		} else {
+			console.log("empty chunk?  chunkSent:"+chunksSent);
+			chunksSent++; //increment to avoid infinite loops
 		}
 	}
-	console.log("Could not find channel for "+tribeName);
-	return null;
+	console.log("messages sent.  chunksSent = "+chunksSent);
+	return;
 }
 
 client.login(token);

@@ -47,15 +47,15 @@ function gameStateMessage(gameState) {
 	if (gameState.workRound ) {message += '  (work round)'}
 	if (gameState.foodRound ) {message += '  (food round)'}
 	if (gameState.reproductionRound){
-		if (gameState.secretMating){
-			if (reproLib.canStillInvite(gameState)){
-				message += ' (reproduction round: awaiting invitations or !pass from '+reproLib.canStillInvite(gameState)+')'
-			} else {
-				message += ' (reproduction round, awaiting chance and/or migration )'
-			}
-		} else {
-			message += ' (reproduction invitation order:'+gameState.reproductionList+')'
+		if (reproLib.canStillInvite(gameState)){
+			message += ' (reproduction round: awaiting invitations or !pass from '+reproLib.canStillInvite(gameState)+')'
 		}
+		if (gameState.needChanceRoll ){
+			message += ' (reproduction round, awaiting chance)'
+		} else {
+			message += ' (reproduction round, awaiting migration or not.)'
+		}
+		
 	}
 	return message
 }

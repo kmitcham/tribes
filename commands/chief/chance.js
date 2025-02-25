@@ -34,8 +34,12 @@ module.exports = {
             text.addMessage(gameState, actorName,"chance requires chief privileges");
             return 
         }
-        if(gameState.reproductionRound == false || gameState.needChanceRoll == false){
+        if(gameState.reproductionRound == false ){
             text.addMessage(gameState, actorName,'Can only do chance during the reproduction round, after reproduction activites are complete.');
+            return 
+        }
+        if (gameState.needChanceRoll == false){
+            text.addMessage(gameState, actorName,'Chance was already done this round.');
             return 
         }
         
@@ -57,12 +61,12 @@ function doChance(rollValue, gameState){
     message = 'Chance '+chanceRoll+': '
     switch 	(chanceRoll){
         case 18: case 17: case 16:
-            name = pop.memberByName(population)
-            person = population[name]
-            safety = 0;
+            name = pop.randomMemberName(population);
+            person = pop.memberByName(gameState, name);
+            safety = 0; // infinite loop protection
             while (person.strength == 'strong' && safety < Object.keys(population).length) {
                 name = pop.randomMemberName(population);
-                person = population[name];
+                person = pop.memberByName(gameState, name);
                 safety = safety + 1;
             }
             message +=  name +" grows stronger.";
@@ -197,7 +201,9 @@ function doChance(rollValue, gameState){
             if (person.strength && person.strength == 'strong'){
                 delete person.strength
                 message += ' is reduced to average strength.'
-            } else {
+            } else if (person.strength && person.strength == 'weak'){
+                message += ' is already weak, so less of a problem.'
+            }else {
                 person.strength = 'weak'
                 message+= ' becomes weak.'
             }

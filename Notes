@@ -36,7 +36,8 @@ Still, the library tests should be doable.
 
 -- force jerky to integers
 -- endgame
-++ scorechildren
+-- gather double message?
+-- scorechildren
 ++ all of conflict
 -- can guard pregnant child?  ACtually, that is a feature
 ++ child died on migration after a feed !all. (the child was unborn, and didn't get fed by feed !all) they were listed in the check though
@@ -49,11 +50,19 @@ Still, the library tests should be doable.
     ONLY called by commands, not libs.
     libs add items to 'messages' dict in gamestate, {'tribe':'message for tribe', 'member1':'private message to member 1'}
 -- migrate.js and migrateLib.js have a better seperation of responsibilities using message lib.
-++ unit test on migrateLib.js
-++ score game report male and female scores, sorted (for winners)
-++ reproduction messaging may be in trouble, since it is triggered from so many places
-++ history removed from reproduction, hunting.  Probably gathering
+-- scout nerd is broken
+++ canCraft not set on a crafter?
+-- reproduction messaging may be in trouble, since it is triggered from so many places  SEEMS FINE
 
+-- unit test on migrateLib.js
+++ unit test on feed lib
+++ score game report male and female scores, sorted (for winners)
+++ history removed from reproduction, hunting.  Probably gathering
+++ endgame needs to check banished and graveyard
+++ history isn't working?
+++ feed !all when no children need food is weird.
+++ sockpuppet didn't get mating messages?
+-- chance result 5, sickness, check food?  NEEDs ref unless someone saves them.
 
 
 W= has worked since new API
@@ -70,11 +79,11 @@ W !inventory <target|all>  (show inventory and character info. No arg means self
 W !law (see the current list of laws)
 W !sacrifice <amount> <type>  (place an item beyond use for religious or other reasons) [non-standard]
 W !scout <location> (examine the envionment, default is current location)
- !secrets (toggle the state of willingness to teach others to craft)
+X !secrets (toggle the state of willingness to teach others to craft)
 W !specialize <hunter|gatherer|crafter>(at the start of the game)
 W !status (see the current location, year, season and local game)
 W !vote <target>  (your choice for chief)
- !obey <commands>  (things you will do if the chief commands, in case of extended AFK)
+U !obey <commands>  (things you will do if the chief commands, in case of extended AFK)
 -=Work Round Commands=-
 U !guard | !ignore <child> [<more childNames>] (take on child care responsibilities for the child)
 U !leastguarded (shows the least supervised child (ties resolved randomly))
@@ -95,15 +104,15 @@ W !invite <target> [target !pass]   The order you would like to invite people to
 W !consent <target> [target] The list of people you would accept mating invitations from.
 W !decline <target> [target] The list of people whose mating invitations you would decline
  !pass (decline to invite anyone in the mating round; can still get invitations)
- scorechildren  count number of children by parent
+U scorechildren  count number of children by parent
 -=Conflict Commands=-
- !demand <text of your demand>  (You want this to happen, and you are willing to kill or die about it)
- !faction <for|against|neutral> (Where you stand on the current DEMAND before the tribe; you must choose for the game to continue)
- !attack <target> (attempt to harm another member of the tribe during violence)
- !defend (stand your ground against attacks during violence)
- !run (flee the violence, conceding to the opposition during violence)
+U !demand <text of your demand>  (You want this to happen, and you are willing to kill or die about it)
+U !faction <for|against|neutral> (Where you stand on the current DEMAND before the tribe; you must choose for the game to continue)
+U !attack <target> (attempt to harm another member of the tribe during violence)
+U !defend (stand your ground against attacks during violence)
+U !run (flee the violence, conceding to the opposition during violence)
 Chief Commands
- !induct|banish <player> (add|remove a tribe member)
+W !induct|banish <player> (add|remove a tribe member)
 U !open|close  (toggle if people can join with "!join" or only with "!induct" by the chief)
  !drone <gender> <profession> <name>  adds a worker to the tribe that takes commands but is sterile. [non-standard]
 W !startwork (begins the work round, enabling work attempts and rolls)
@@ -111,7 +120,7 @@ W !startfood (ends the work round; subtract food/grain; birth; child age increas
 W !startreproduction (Start the reproduction round. Also when migration happens)
 W !chance (after mating, chance is required to end the season)
 mW !migrate <newlocation> <force>  (without force, just checks who would perish on the journey)
- !decree <law number> <law text> (record a rule for the tribe, or replace the rule of the specified number)
- !skip <person>   (end a players reproduction turn)
- !checkmating (report on status of mating attempts)
+U !decree <law number> <law text> (record a rule for the tribe, or replace the rule of the specified number)
+U !skip <person>   (end a players reproduction turn)
+U!checkmating (report on status of mating attempts)
 W !endgame convert all the child to corpses, or new adults

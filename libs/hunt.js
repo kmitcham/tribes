@@ -74,7 +74,7 @@ module.exports.hunt = (playername, player, rollValue, gameState) =>{
     }
     if ( (rollValue+strMod < 6) || (rollValue+strMod < 7 && player.profession != 'hunter') ){
 		if ((rollValue+strMod) == 3){
-            message += 'Severe Injury!'
+            message += '\nSevere Injury!\n'
             if (player.strength && player.strength == 'strong'){
 				delete person.strength
 				message += player.name+ ' is reduced to average strength.'
@@ -83,11 +83,11 @@ module.exports.hunt = (playername, player, rollValue, gameState) =>{
 				message+= player.name +' becomes weak.'
 			}
         } else {
-            message += ' Injury!'
+            message += '\nInjury!'
         }
 		player.isInjured = 4
 	} else if (netRoll <= 8){
-        message += "  No game."
+        message += "\nNo game."
     } else {
         huntRow = huntDataFor(huntData, netRoll);
         message += "\n\t"+huntRow[2] + ' +'+huntRow[1]+' food'
@@ -100,7 +100,7 @@ module.exports.hunt = (playername, player, rollValue, gameState) =>{
     // check for spearhead loss
     if (player.spearhead > 0 && dice.roll(1) <= 2){
         player.spearhead -= 1
-        message += ' (the spearhead broke!)'
+        message += '\n The spearhead broke!'
     }
 
     player.worked = true

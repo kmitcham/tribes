@@ -432,6 +432,7 @@ function globalMatingCheck(gameState){
         }
         text.addMessage(gameState, "tribe", "Time for chance.")
         gameState.doneMating = true;
+        gameState.saveRequired = true;
     }
     return doneMating.length
 }
@@ -703,3 +704,12 @@ function startReproduction(gameState){
     return
 }
 module.exports.startReproduction = startReproduction;
+
+function checkMating(gameState, displayName){
+            if (!gameState.reproductionRound ){
+                text.addMessage(gameState, displayName, "checkMating is only relevant in the reproduction round.")
+            }
+            globalMatingCheck(gameState)
+            return
+}
+module.exports.checkMating = checkMating;

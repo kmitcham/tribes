@@ -22,5 +22,7 @@ function doCommand(interaction, gameState){
     for (number in laws){
         response += '\n\t'+number+'\t'+laws[number]
     }
-    text.addMessage(gameState,displayName, response)
+    text.addMessage(gameState,displayName, response);
+    gameState.saveRequired = true;
+    return;
 }

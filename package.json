@@ -10,7 +10,7 @@
   },
   "scripts": {
     "test": "jest",
-     "clear_jest": "jest --clearCache"
+    "clear_jest": "jest --clearCache"
   },
   "dependencies": {
     "discord-api-types": "^0.37.116",

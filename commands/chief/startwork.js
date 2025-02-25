@@ -19,7 +19,7 @@ module.exports = {
 function startFilter(actorName, gameState){
     var player = pop.memberByName(actorName, gameState)
     if ( !player.chief){
-        text.addMessage(gameState, actorName,  "startfood requires chief priviliges")
+        text.addMessage(gameState, actorName,  "startwork requires chief priviliges")
         return
     }
     if (gameState.workRound == true){

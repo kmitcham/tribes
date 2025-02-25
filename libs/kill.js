@@ -3,7 +3,7 @@ const textLib = require("./textprocess.js")
 const populationLib = require("./population.js")
 
 
-module.exports.kill = (name, message, gameState) =>{
+function kill(name, message, gameState){
 	console.log("Killing "+name+" due to "+message+" at seasonCount "+gameState.seasonCounter);
 	population = gameState.population
 	children = gameState.children
@@ -33,10 +33,13 @@ module.exports.kill = (name, message, gameState) =>{
 		gameState.graveyard[childName] = child
 		delete children[childName]
 	} else {
-		console.log('Tried to kill '+name+' but could not find them')
+		console.log('Tried to kill '+name+' but could not find them');
+		return;
 	}
+	textLib.addMessage(gameState, "tribe", message);
 	return 
 }
+module.exports.kill = kill
 
 function clearNursingPregnant(childName, population){
 	for (personName in population){

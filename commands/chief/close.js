@@ -6,7 +6,7 @@ const text = require("../../libs/textprocess")
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('close')
-		.setDescription('Set the tribe so that only the chief can induct new members. (Chief only')
+		.setDescription('Set the tribe so that only the chief can induct new members. (Chief only)')
         ,
     async execute(interaction, gameState, bot) {
         var actorName = interaction.user.displayName

@@ -38,46 +38,46 @@ module.exports = {
 
 function onCommand(interaction, gameState){
     var actorName = interaction.user.displayName;
-    var person = gameState.population[actorName];
+    var c1Name  = interaction.options.getString('child1');
+    var c2Name  = interaction.options.getString('child2');
+    var c3Name  = interaction.options.getString('child3');
+    var c4Name  = interaction.options.getString('child4');
+
+    var person = pop.memberByName(actorName, gameState);
 	if (person.worked == true){
-        text.addMessage(gameState, sourceName, 'You can not change guard status after having worked.')
+        text.addMessage(gameState, actorName, 'You can not change guard status after having worked.')
 		return
 	}
 	if (gameState.workRound == false){
-        text.addMessage(gameState, sourceName, 'You can not change guard status outside the work round')
+        text.addMessage(gameState, actorName, 'You can not change guard status outside the work round')
         return
 	}
-    var c1Name  = interaction.options.getString('child1');
     response = ""
-    response += guardChild(interaction, gameState, c1Name)+"\n";
+    response += guardChild(actorName, gameState, c1Name)+"\n";
 
-    var c2Name  = interaction.options.getString('child2');
     if (c2Name){
-        response += guardChild(interaction, gameState, c2Name)+"\n";
+        response += guardChild(actorName, gameState, c2Name)+"\n";
     }
-    var c3Name  = interaction.options.getString('child3');
     if (c3Name){
-        response += guardChild(interaction, gameState, c3Name)+"\n";
+        response += guardChild(actorName, gameState, c3Name)+"\n";
     }
-    var c4Name  = interaction.options.getString('child4');
     if (c4Name){
-        response += guardChild(interaction, gameState, c4Name)+"\n";
+        response += guardChild(actorName, gameState, c4Name)+"\n";
     }
     if (response.includes("FAIL")){
-        text.addMessage(gameState, sourceName, response)
+        text.addMessage(gameState, actorName, response)
     } else {
         if (person.guarding){
-            text.addMessage(gameState, sourceName,actorName+' starts guarding '+person.guarding )
+            text.addMessage(gameState, actorName, actorName+' starts guarding '+person.guarding )
         } else {
-            text.addMessage(gameState, sourceName,actorName+ ' is not guarding any children' )
+            text.addMessage(gameState, actorName, actorName+ ' is not guarding any children' )
         }
         console.log("Saving gameState");
         gameState.saveRequired = true;
     }
 }
 
-function guardChild(interaction, gameState, cName){
-    var actorName = interaction.user.displayName;
+function guardChild(actorName, gameState, cName){
     var person = gameState.population[actorName];
     children = gameState.children;
     var response = "";
@@ -87,7 +87,7 @@ function guardChild(interaction, gameState, cName){
     if (person.worked == true|| gameState.workRound == false){
         return 'FAIL You can not change guard status after having worked, or outside the work round';
     }
-    if (util.capitalizeFirstLetter(cName) == "None"){
+    if (text.capitalizeFirstLetter(cName) == "None"){
         if (person.guarding){
             response += actorName+" stops watching "+person.guarding
         }

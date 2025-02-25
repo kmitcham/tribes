@@ -36,7 +36,8 @@ function playerHelpRounds(){
 		text+=' invite <target> [target !pass]   The order you would like to invite people to mate.  \n\tIf the list ends with !pass, you will give up if they decline. !save will retain the list every season\n'
 		text+=' consent <target> [target] The list of people you would accept mating invitations from.\n'
 		text+=' decline <target> [target] The list of people whose mating invitations you would decline\n'
-		text+=' pass (decline to invite anyone in the mating round; can still get invitations)\n'
+		// pass is not needed due to mandatory secret mating
+		//text+=' pass (decline to invite anyone in the mating round; can still get invitations)\n'
 		text+=' scorechildren  count number of children by parent'
 		return text;
 }
@@ -56,7 +57,7 @@ function chiefHelp(){
 	text = '\n### Chief Commands ###\n'
 	text+=' induct|banish <player> (add|remove a tribe member)\n'
 	text+=' open|close  (toggle if people can join with "!join" or only with "!induct" by the chief)\n'
-	text+=' drone <gender> <profession> <name>  adds a worker to the tribe that takes commands but is sterile. [non-standard]\n'
+	//text+=' drone <gender> <profession> <name>  adds a worker to the tribe that takes commands but is sterile. [non-standard]\n'
 	text+=' startwork (begins the work round, enabling work attempts and rolls)\n'
 	text+=' startfood (ends the work round; subtract food/grain; birth; child age increase)\n'
 	text+=' startreproduction (Start the reproduction round. Also when migration happens)\n'

@@ -45,11 +45,8 @@ function gather(interaction, gameState){
         }
     }
     message = gatherlib.gather( sourceName, player, gatherRoll, gameState)
-    player.activity = 'gather'    
-    player.worked = true;
 	pop.history(sourceName, message, gameState);
     gameState.saveRequired = true;
-    text.addMessage(gameState, "tribe", message)
 
 }
 

@@ -93,13 +93,14 @@ module.exports.gather = (playername, player, rollValue, gameState) => {
 		message += get_message
 		player.food += getFood
 		player.grain += getGrain
-		
+		player.activity = 'gather'    
+		player.worked = true;
 		// check for basket loss
 		if (dice.roll(1) <= 2){
 			message+= ' basket breaks.'
 			player.basket -= 1
 		}
 	}
-	text.addMessage(gameState, "tribe",message )
+	text.addMessage(gameState, "tribe", message )
 	return message
 }
