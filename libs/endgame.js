@@ -72,6 +72,9 @@ function endGame(gameState, bot){
 	response += '\nThe tribe was '+ scoreTribe(gameState);
     gameState.ended = true
     text.addMessage(gameState, "tribe", response)
+    childrenMessage  = scoreChildrenMessage(gameState);
+    text.addMessage(gameState, "tribe", childrenMessage)
+
 	return response
 }
 

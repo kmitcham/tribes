@@ -87,16 +87,7 @@ client.on(Events.InteractionCreate, async interaction => {
 	} catch (error) {
         console.log("there was an error in that command:");
 		console.error(error);
-		if (interaction){
-			console.log("Command was "+interaction.commandName)
-			if (interaction.replied || interaction.deferred) {
-				await interaction.followUp({ content: 'Followup: There was an error while executing this command!', ephemeral: true });
-			} else {
-				await interaction.reply({ content: 'Reply: There was an error while executing this command!', ephemeral: true });
-			}
- 		} else {
-			console.log("interaction is not responded to, since it seems to be gone.")
-		}
+		channel.send("TribesBot had a problem with the last command.")
 	}
 });
 
@@ -111,7 +102,7 @@ async function sendMessages(bot, gameState, interaction){
 	// regext [\S\s] is any chacter that is either a space or not a space; eg, any character
 	needsReply = interaction.isRepliable();
 	if ("tribe" in messagesDict ){
-		console.log("in send messages tribe:"+messagesDict["tribe"]);
+		console.log("in send messages tribe >>"+messagesDict["tribe"]+"<<");
 		message = messagesDict["tribe"];
 		const chunks = message.match(/[\S\s]{1,1900}/g);
 		chunksSent = 0;
@@ -125,7 +116,7 @@ async function sendMessages(bot, gameState, interaction){
 			}
 			needsReply = false;
 		}
-		while (chunksSent < chunks.length){
+		while (chunks && chunksSent < chunks.length){
 			console.log("sending bonus chunks to tribe");
 			channel.send({content: chunks[chunksSent++] });
 		}
@@ -192,7 +183,9 @@ async function sendMessages(bot, gameState, interaction){
     }
 	if (needsReply){
 		console.log(" no reply to "+interaction.commandName);
-		interaction.reply({ content: "Not sure I understand that.", flags: MessageFlags.Ephemeral });
+		if (interaction && interaction.isRepliable()){
+			interaction.reply({ content: "Tribesbot might have messed up that command.", flags: MessageFlags.Ephemeral });
+		}
 		needsReply = false
 	}
 	return 0;

@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const pop = require("../../libs/population.js");
+const text = require("../../libs/textprocess");
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -29,22 +30,23 @@ module.exports = {
         var actorName = interaction.user.displayName;      
         gender = interaction.options.getString('gender');
         profession = interaction.options.getString('profession');
-        response = join(actorName, gameState, gender, profession, interaction.user)
+        join(actorName, gameState, gender, profession, interaction.user)
 	},
 };
 
 function join(actorName, gameState, gender, profession, handle){
     if (gameState.population[actorName]){
-        return 'You are already a member of this tribe'
+        text.addMessage(gameState, actorName, 'You are already a member of this tribe');
+        return 
     }
     if (! gameState.open){
-        return 'You need to be inducted by the chief to join this tribe'
+        text.addMessage(gameState, actorName, 'You need to be inducted by the chief to join this tribe');
+        return 
     }
     console.log("display name is "+actorName +" username:"+actorName.username)
-    response = pop.addToPopulation(gameState, actorName, gender, profession, handle)
-    pop.history(targetName, response, gameState)
-    
+    pop.addToPopulation(gameState, actorName, gender, profession, handle)
     gameState.saveRequired = true;
+    return 
 
 }
 

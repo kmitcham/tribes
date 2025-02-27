@@ -679,10 +679,11 @@ test("Count dead adults", () =>{
       }
     }
   }
-        endLib.endGame(endGameState);
+    endLib.endGame(endGameState);
     actualMessage = endGameState.messages["tribe"]
     expect(actualMessage).toContain("The fate of the children")
     expect(actualMessage).toContain("The tribe was")
+    expect(actualMessage).toContain("banished")
  })
 
  test("run scoreChildren", ()=>{
@@ -836,6 +837,7 @@ test("Count dead adults", () =>{
     "workRound": true,
     "foodRound": false,
     "reproductionRound": false,
+    "ended": true,
     "doneMating": false,
     "banished": {
       "ginny": {
@@ -957,6 +959,7 @@ test("run scoreChildren simple", ()=>{
         "babysitting": "Ilex"
       }
     },
+    "ended":true,
     "banished": {
       "ginny": {
         "gender": "male",
@@ -1280,6 +1283,7 @@ test("run scoreChildren trivial", ()=>{
         "newAdult": true
         }
       },
+      "ended":true,
     "banished": {
     }
   }

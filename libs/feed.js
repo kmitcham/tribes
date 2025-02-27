@@ -5,11 +5,11 @@ const text = require("./textprocess.js");
 const reproLib = require("./reproduction.js");
 
 // msg is deprecated
-function feed( msg, player, amount, childList,  gameState){
+function feed(unused, player, amount, inputChildList, gameState){
         children = gameState.children;
         let message = ""
         var showErrors = true;
-        for (cName of childList){
+        for (cName of inputChildList){
             childName = text.capitalizeFirstLetter(cName)
             amount = Number(amount)
             if (!children[childName]) {
@@ -19,7 +19,7 @@ function feed( msg, player, amount, childList,  gameState){
                     for (var childName in children){
                         var child = children[childName]
                         if (!( child.newAdult && child.newAdult == true) || child.food < 2){
-                            childList.push(childName)
+                            inputChildList.push(childName)
 							feedAtLeastOneChild = true;
                         }
                     }
@@ -36,7 +36,7 @@ function feed( msg, player, amount, childList,  gameState){
                         var filterChild = children[filterChildName]
                         if (filterChild.mother == parent.name){
                             if (! (filterChild.newAdult && filterChild.newAdult == true) || filterChild.food < 2){
-                                childList.push(filterChildName)
+                                inputChildList.push(filterChildName)
                             }
                         }
                     }

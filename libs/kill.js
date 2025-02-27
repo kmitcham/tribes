@@ -36,7 +36,7 @@ function kill(name, message, gameState){
 		console.log('Tried to kill '+name+' but could not find them');
 		return;
 	}
-	textLib.addMessage(gameState, "tribe", message);
+	textLib.addMessage(gameState, "tribe", name+" killed by "+message);
 	return 
 }
 module.exports.kill = kill

@@ -12,7 +12,8 @@ test("Happy Path Demand", () =>{
     var playername = "gather1"
     var message = 'all tests pass'
     expectedMessage ="gather1 DEMANDS: all tests pass"
-    actualMessage = violencelib.demand(playername, message, gameState)
+    violencelib.demand(playername, message, gameState)
+    actualMessage = gameState.messages["tribe"];
     expect(actualMessage).toBe(expectedMessage)
     expect(gameState['population'][playername]["faction"]).toEqual("for") 
     expect(gameState['demand']).toEqual(message) 
@@ -171,6 +172,7 @@ test("Faction Voting -> balanced", () =>{
     }
     var message = 'Tribal society breaks down as VIOLENCE is required to settle the issue of some demand'
     result = violencelib.getFactionResult(gameState)
+    result = gameState.messages["tribe"];
     expect(result).toBe(message)
 });
 
@@ -209,6 +211,7 @@ test("Faction Voting -> Overwhelmning For", () =>{
     }
     var message = 'The Demand faction has overwhelming support (10).  The demand to some demand should be done immediately.'
     result = violencelib.getFactionResult(gameState)
+    result = gameState.messages["tribe"];
     expect(result).toBe(message)
 });
 test("Faction Voting -> against", () =>{
@@ -240,6 +243,8 @@ test("Faction Voting -> against", () =>{
     }
     var message = 'The Oppostion faction has overwhelming support (6). The demand to some demand should be ignored.'
     result = violencelib.getFactionResult(gameState)
+    result = gameState.messages["tribe"];
+
     expect(result).toBe(message)
 });
 
@@ -267,6 +272,7 @@ test("Faction Voting -> marginal For", () =>{
     }
     var message = 'The Demand faction has overwhelming support (4).  The demand to some demand should be done immediately.'
     result = violencelib.getFactionResult(gameState)
+    result = gameState.messages["tribe"];
     expect(result).toBe(message)
 });
 test("Display faction -> basic test", () =>{
@@ -297,6 +303,8 @@ test("Display faction -> basic test", () =>{
         "demand":"some demand"
     }
     result = violencelib.getFactionResult(gameState)
+    result = gameState.messages["tribe"];
+
     expect(result).toContain('und1, und2, und3 are not yet declared (for, against, neutral)')
     expect(result).toContain('demander, pro1 are for the demand')
     expect(result).toContain('con1 is against the demand')
@@ -347,6 +355,8 @@ test("ResolveViolence first test", () =>{
   }  
   expected = "Some violence output";
   var actual = violencelib.resolveViolence(gameState)
+  actual = gameState.messages["tribe"];
+
   expect(gameState.population["con2"].escaped).toBeTruthy();
   expect(actual).toContain("pro1 attacks con1")
   expect(actual).toContain("demander attacks con1")
@@ -400,6 +410,8 @@ test("ResolveViolence for fatality", () =>{
       "demand":"some demand"
   }  
   var actual = violencelib.resolveViolence(gameState)
+  actual = gameState.messages["tribe"];
+
   expect(actual).toContain("pro1 attacks con1")
   expect(actual).toContain("demander attacks con1")
   //expect(actual).toContain("dump")

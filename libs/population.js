@@ -1,5 +1,6 @@
 const text = require("./textprocess.js")
 const dice = require("./dice")
+const prof = require("./profession")
 
 function memberByName(name, gameState){
     if (name == null){
@@ -124,6 +125,7 @@ function addToPopulation(gameState, sourceName, gender, profession, handle){
     person.handle = handle;
     person.name = sourceName;
     if (profession){
+        prof.specialize(sourceName, profession, gameState)
         person.profession = profession;
     }
     response = target+' '+gender+' joined the tribe.';
@@ -139,7 +141,7 @@ function addToPopulation(gameState, sourceName, gender, profession, handle){
     console.log( 'added '+target+' '+gender+' to the tribe. strRoll:'+strRoll);
     text.addMessage(gameState, "tribe", response )
     if (!person.strength){
-        text.addMessage(gameState, person.name,"You are of average strength" )
+        text.addMessage(gameState, sourceName ,"You are of average strength" )
     }
     history(person.name, response, gameState)
     gameState.saveRequired = true;
@@ -210,3 +212,33 @@ function randomMemberName(population){
 	return nameList[random]
 }
 module.exports.randomMemberName = randomMemberName;
+
+function graveyard(displayName, gameState){
+    
+    var response = "Graveyard:";
+    if ( Object.keys(gameState.graveyard ).length == 0){
+        response += ' is empty'
+    } else {
+        for (var name in gameState.graveyard){
+            // TODO flesh this out
+            person = gameState.graveyard[name]
+            response += '\n '+name+' died of '+person.deathMessage
+            if (person.mother){
+                response += ' parents:'+person.mother 
+                if (gameState.secretMating && !gameState.ended){
+                    response += '-???'
+                } else {
+                    response += '-'+person.father
+                }
+                response += ' age:'+person.age/2
+            } else {
+                response += ' profession:'+person.profession
+            }
+            response += ' gender:'+person.gender
+        }
+    }
+    text.addMessage(gameState, displayName, response);
+    return;
+}
+module.exports.graveyard = graveyard;
+
