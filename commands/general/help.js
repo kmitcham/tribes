@@ -20,7 +20,7 @@ function onCommand(interaction, gameState){
     
     text.addMessage(gameState,playerName,helplib.playerHelpBasic());
     text.addMessage(gameState,playerName, helplib.playerHelpRounds());
-    text.addMessage(gameState,playerName,helplib.playerHelpConflict());
+    text.addMessage(gameState,playerName, helplib.playerHelpConflict());
     
     if ((player && player.chief) ){
         text.addMessage(gameState,playerName, helplib.chiefHelp());

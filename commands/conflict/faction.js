@@ -9,7 +9,7 @@ module.exports = {
 		.setDescription('Your stance on the demand: fight FOR, fight AGAINST, or not worth fighting over')
         .addStringOption(option => 
             option
-            .setName('location')
+            .setName('faction')
             .setDescription('<for|against|neutral>')
             .addChoices(
                 { name: 'for', value: 'for' },
@@ -21,18 +21,16 @@ module.exports = {
     async execute(interaction, gameState) {
         var actorName = interaction.user.displayName
         var faction = interaction.options.getString('faction');
+        console.log(actorName+" faction "+faction);
         setFaction(gameState, actorName, faction);
 	},
 };
 
 function setFaction(gameState, actorName, side){
     player = pop.memberByName(actorName, gameState);
-    if (!side){
-        text.addMessage(gameState, actorName, 'faction syntax is !faction <for|against|neutral>')
-        return
-    }
+
     if (side != 'for' && side != 'against' && side != 'neutral'){
-        text.addMessage(gameState, actorName, 'faction syntax is !faction <for|against|neutral>')
+        text.addMessage(gameState, actorName, 'faction syntax is /faction <for|against|neutral>')
         return
     }
     if (gameState['violence']){
@@ -44,7 +42,7 @@ function setFaction(gameState, actorName, side){
         return
     }
     player.faction = side;
-    violencelib.getFactionResult(gameState,bot)
+    violencelib.getFactionResult(gameState)
     gameState.saveRequired = true;
     return
     

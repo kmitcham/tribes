@@ -18,7 +18,7 @@ module.exports = {
 };
 
 function defend(gameState, actorName){
-    var player = pop.personByName(actorName, gameState);
+    var player = pop.memberByName(actorName, gameState);
     if (!player){
         text.addMessage(gameState, actorName, "Not in the tribe");
         return;
@@ -26,6 +26,6 @@ function defend(gameState, actorName){
     text.addMessage(gameState, actorName, 'If a fight happens, you will try to run away.');
     player.strategy = 'run'
     delete player.attack_target 
-    violence.resolveViolence(gameState, bot)
+    violence.resolveViolence(gameState)
     return;
 }

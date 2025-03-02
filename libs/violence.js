@@ -14,7 +14,7 @@ module.exports.demand = (playerName, demandText, gameState) => {
     return response;
 }
 
-const getGameFactions= (gameState) =>{
+function getGameFactions(gameState){
     var proList =[]
     var conList= [] 
     var neutralList =[];  
@@ -44,6 +44,36 @@ const getGameFactions= (gameState) =>{
     }
 }
 module.exports.getGameFactions = getGameFactions
+
+// see if any factions members are all escaped or dead.
+// returns true if violence is still in order
+function moreFactionViolenceRequired(gameState){
+    var proList =[];
+    var conList= [];
+    population = gameState["population"]
+    // dead people are in the graveyard
+    for (playerName in population){
+        player = population[playerName]
+        if (player['faction'] == 'for' && !player['escaped']){
+            proList.push(player)
+        } else if (player['faction'] == 'against' && !player['escaped']){
+            conList.push(player)
+        }
+    }
+    if (conList.length == 0 && proList.length == 0){
+        text.addMessage(gameState, "tribe", "There is no one left from either faction that wants to fight about it.");
+        return false;
+    } else if (proList.length == 0 ){
+        text.addMessage(gameState, "tribe", "There is no one left favor of the demand that wants to fight about it.");
+        return false;
+    } else if (conList.length == 0 ) {
+        text.addMessage(gameState, "tribe", "There is no one left against the demand that wants to fight about it.");
+        return false;
+    } else {
+        text.addMessage(gameState, "tribe", "The factions still feel strongly about the issue.");
+        return true;
+    }
+}
 
 function getFactionBaseScore(faction){
     var score = 0
@@ -141,7 +171,7 @@ const getFactionResult = (gameState) =>{
             response = 'The Oppostion faction has enough support ('+againstScore+'). The demand to '+gameState.demand+' should be ignored.'
         } else {
             gameState.violence = gameState.demand
-            response = "Tribal society breaks down as VIOLENCE is required to settle the issue of "+gameState.demand
+            response = "Tribal society breaks down as VIOLENCE is required to settle the issue of "+gameState.demand+"\n The demand is lost in the conflict."
         }
         console.log("The demand has been resolved.  Deleting: "+gameState.demand)
         delete gameState['demand']
@@ -313,9 +343,14 @@ const resolveViolence = (gameState) =>{
         player = population[playerName]
         delete player.strategy
         delete player.attack_target
-        response += '\nA round of combat has ended.  Everyone who has not escaped needs to choose a strategy'
     }
+    response += '\nA round of combat has ended.  Everyone who has not escaped needs to choose a strategy'
+
     text.addMessage(gameState, "tribe", response)
-    return response
+    if (moreFactionViolenceRequired(gameState)){
+        // this should stop recursing if nobody wants to fight anymore.  I hope.
+        resolveViolence(gameState);
+    }
 }
 module.exports.resolveViolence = resolveViolence
+

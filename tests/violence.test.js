@@ -173,7 +173,7 @@ test("Faction Voting -> balanced", () =>{
     var message = 'Tribal society breaks down as VIOLENCE is required to settle the issue of some demand'
     result = violencelib.getFactionResult(gameState)
     result = gameState.messages["tribe"];
-    expect(result).toBe(message)
+    expect(result).toContain(message)
 });
 
 test("Faction Voting -> Overwhelmning For", () =>{

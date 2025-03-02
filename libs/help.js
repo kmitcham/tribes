@@ -13,7 +13,7 @@ function playerHelpBasic(){
 		text+=' specialize <hunter|gatherer|crafter>(at the start of the game)\n'
 		text+=' status (see the current location, year, season and local game)\n'
 		text+=' vote <target>  (your choice for chief)\n'
-		text+=' obey <commands>  (things you will do if the chief commands, in case of extended AFK)\n'
+		//text+=' obey <commands>  (things you will do if the chief commands, in case of extended AFK)\n'
 		return text;
 }
 function playerHelpRounds(){

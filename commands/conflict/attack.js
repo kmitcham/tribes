@@ -26,9 +26,9 @@ module.exports = {
 };
 
 function attack(gameState, actorName, targetName){
-    var player = pop.personByName(actorName, gameState);
+    var player = pop.memberByName(actorName, gameState);
     targetPlayer = pop.memberByName(targetName, gameState);
-    if (! target){
+    if (! targetPlayer ){
         text.addMessage(gameState, actorName,targetName+' was not found in the tribe' )
         return
     }
@@ -39,7 +39,7 @@ function attack(gameState, actorName, targetName){
     text.addMessage(gameState, actorName,'If a fight happens, you will try to kill '+targetPlayer.name)
     player.attack_target = targetPlayer.name
     player.strategy = 'attack'
-    violence.resolveViolence(gameState, bot);
+    violence.resolveViolence(gameState);
     gameState.saveRequired = true;
 
     return;

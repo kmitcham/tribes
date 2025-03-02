@@ -9,7 +9,7 @@ module.exports = {
 		.setName('defend')
 		.setDescription('If a fight happens, you will try to defend yourself with deadly force.')
         ,
-    async execute(interaction, gameState, bot) {
+    async execute(interaction, gameState) {
         var actorName = interaction.user.displayName
 
         defend( gameState, actorName);
@@ -18,7 +18,7 @@ module.exports = {
 };
 
 function defend(gameState, actorName){
-    var player = pop.personByName(actorName, gameState);
+    var player = pop.memberByName(actorName, gameState);
     if (!player){
         text.addMessage(gameState, actorName, "Not in the tribe");
         return;

@@ -63,6 +63,8 @@ Still, the library tests should be doable.
 ++ feed !all when no children need food is weird.
 ++ sockpuppet didn't get mating messages?
 -- chance result 5, sickness, check food?  NEEDs ref unless someone saves them.
+++ long messages get split between channel and DMs, not obvious
+++ faction for/against/neutral isn't working
 
 
 W= has worked since new API
