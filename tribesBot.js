@@ -130,9 +130,13 @@ async function sendMessages(bot, gameState, interaction){
 		if (message && interaction.isRepliable() ){
 			needsReply = false;
 			user = interaction.user;
-			await interaction.reply({ content: chunks[0], flags: MessageFlags.Ephemeral })
-			// double tap user so they have a DM of content as well.  TODO: confirm this is correct?
+			response = chunks[0];
 			chunksSent = 0;
+			if (chunks.length > 1){
+				response += " \n(check DMS for more info)"
+			}
+			await interaction.reply({ content: response, flags: MessageFlags.Ephemeral })
+			// double tap user so they have a DM of content as well.  TODO: confirm this is correct?
 			await user.send(chunks[chunksSent++]);
 			sendRemainingMessagesToUser(user, chunks, chunksSent);
 			delete messagesDict[actorName];
