@@ -130,13 +130,14 @@ function addToPopulation(gameState, sourceName, gender, profession, handle){
     }
     response = target+' '+gender+' joined the tribe.';
     var strRoll = dice.roll(1);
+    person.strength = 'average';
     if (strRoll == 1){
-        person.strength = 'weak'
-        response+= "  "+target +' is weak.'
+        person.strength = 'weak';
+        response+= "  "+target +' is weak.';
     } else if (strRoll == 6){
         person.strength = 'strong';
         response+= "  "+target +' is strong.';
-    } 
+    }
     gameState.population[target] = person;
     console.log( 'added '+target+' '+gender+' to the tribe. strRoll:'+strRoll);
     text.addMessage(gameState, "tribe", response )

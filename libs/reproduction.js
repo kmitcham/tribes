@@ -239,6 +239,7 @@ function consent(actorName, messageArray,  gameState){
     if (intersectList && intersectList.length > 0){
         text.addMessage(gameState, actorName, "Your consent and decline lists have overlaps.  Consent is checked first.")
     }
+    text.addMessage(gameState, actorName, "Updated consentlist to "+person.consentList);
     return globalMatingCheck(gameState)
 }
 module.exports.consent = consent;

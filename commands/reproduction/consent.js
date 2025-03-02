@@ -18,7 +18,6 @@ module.exports = {
         var rawList = interaction.options.getString('consentlist');
         var response = onCommand(gameState, sourceName, rawList);
         console.log("consent updated: "+response)
-        gameState.saveRequired;
 	},
 };
 
@@ -26,7 +25,7 @@ function onCommand(gameState, sourceName, rawList){
     var member = pop.memberByName(gameState, sourceName);
 
     if (! rawList ) {
-        if (member.consentList){
+        if (member.hasOwnProperty('consentList')){
             return "Current consentList: "+member.consentList.join(" ")
         } else {
             return "No current consentList"
@@ -35,4 +34,5 @@ function onCommand(gameState, sourceName, rawList){
     let messageArray = rawList.split(" ");
     console.log("updating consentlist: "+messageArray);
     reproLib.consent(sourceName, messageArray,  gameState);
+    gameState.saveRequired;
 }

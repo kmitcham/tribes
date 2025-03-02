@@ -3,6 +3,7 @@ const pop = require("./population.js");
 const childLib = require("./children.js");
 const text = require("./textprocess.js");
 const reproLib = require("./reproduction.js");
+const killlib = require("./kill.js");
 
 // msg is deprecated
 function feed(unused, player, amount, inputChildList, gameState){
@@ -183,7 +184,7 @@ function consumeFoodChildren(gameState){
 					person.guarding.push(child.name)
 				}
 				if (birthRoll == 17){
-					twin = addChild(child.mother, child.father, gameState);
+					twin = pop.addChild(child.mother, child.father, gameState);
 					delete child.mother.isPregnant; // this gets set by addChild, but the child was just born.
 					response += child.mother+' gives birth to a twin! Meet '+twin.name+', a healthy young '+twin.gender+'-child.\n'
 					pop.history(child.mother,child.mother+' gives birth to a twin! Meet '+twin.name+', a healthy young '+twin.gender+'-child', gameState)
