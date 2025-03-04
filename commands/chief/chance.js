@@ -18,11 +18,14 @@ module.exports = {
             )
 
         ,
-    async execute(interaction, gameState, bot) {
+    async execute(interaction, gameState) {
         var roll = dice.roll(3)
         var sourceName = interaction.user.displayName;
         var forceRoll = interaction.options.getInteger('force');
-        if (chief.isChanceLegal(gameState, sourceName)){
+        if (chief.isChanceLegal(gameState, sourceName, forceRoll)){
+            if (forceRoll){
+                roll = forceRoll;
+            }
             chief.doChance(roll, gameState);
         }
     }

@@ -12,7 +12,7 @@ module.exports = {
             option
             .setName('demand')
             .setDescription('Write the demand as the arguement')
-            .setRequired(true)
+            .setRequired(false)
         )
         ,
     async execute(interaction, gameState, bot) {
@@ -26,18 +26,24 @@ module.exports = {
 
 function demand(gameState, actorName, demandText){
     var player = pop.memberByName(actorName, gameState)
+    var currentDemand = "";
+    if (gameState.hasOwnProperty('demand')) {
+        currentDemand = gameState["demand"];
+    }
     if (!player){
         text.addMessage(gameState, actorName, 'Only tribe members can make demands')
         return
     }
+    if (currentDemand || gameState.violence){
+        text.addMessage(gameState, actorName, "The current demand is : "+currentDemand)
+        return
+    }
+    // only get here if there is NOT a current demand
     if (!demandText || demandText.length < 1 ){
         text.addMessage(gameState, actorName,'Syntax: !demand <text of your demand here>');
         return
     }
-    if (gameState.demand || gameState.violence){
-        text.addMessage(gameState, actorName,'There is already a demand to be dealt with.')
-        return
-    }
+
     response = violencelib.demand(actorName, demandText, gameState)
 
     return

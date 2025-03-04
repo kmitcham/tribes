@@ -6,16 +6,16 @@ const text = require("./textprocess")
 const pop = require("./population")
 
 
-function isChanceLegal(gameState, actorName){
-    isRef = referees.includes(sourceName);
+function isChanceLegal(gameState, actorName, forceRoll){
+    isRef = referees.includes(actorName);
     if ( isRef && forceRoll){
-        huntRoll = forceRoll;
-        if (huntRoll < 3 || 18 < huntRoll){
-            text.addMessage(gameState, sourceName, 'Roll must be 3-18')
+        chanceRoll = forceRoll;
+        if (chanceRoll < 3 || 18 < chanceRoll){
+            text.addMessage(gameState, actorName, 'Roll must be 3-18')
             return false;
         }
     }
-    var player = pop.memberByName(sourceName, gameState)
+    var player = pop.memberByName(actorName, gameState)
     if ( !player.chief && !isRef){
         text.addMessage(gameState, actorName,"chance requires chief privileges");
         return false;
@@ -28,11 +28,9 @@ function isChanceLegal(gameState, actorName){
         text.addMessage(gameState, actorName,'Chance was already done this round.');
         return false;
     }
-    
-    response = doChance(roll, gameState)
-    console.log("chance response: "+response);
-    text.addMessage(gameState, "tribe", response);
+    return true;    
 }
+module.exports.isChanceLegal = isChanceLegal;
 
 function doChance(rollValue, gameState){
     population = gameState.population
