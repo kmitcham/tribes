@@ -16,8 +16,8 @@ function onCommand(interaction, gameState){
     var playerName = interaction.user.displayName;
     var player = pop.memberByName(playerName, gameState)
     messages = player.history
-    array.forEach(function (message, index) {
+    for (const message of messages){
         text.addMessage(gameState, playerName, message)
-    })
+    }
     return
 }

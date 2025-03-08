@@ -144,7 +144,7 @@ function doChance(rollValue, gameState){
             message += name + " loses "+amount+" food to weevils."
             break;
         case 8: 
-            message +=  "Favorable weather conditions allow the tribe to make “jerky,” which keeps very well. Each person may trade Food counters for Grain counters (representing the jerky), at a rate of 3 Food for 1 Grain.  Syntax: jerk <amount of food>"
+            message +=  "Favorable weather conditions allow the tribe to make “jerky,” which keeps very well. Each person may trade Food counters for Grain counters (representing the jerky), at a rate of 3 Food for 1 Grain.  Syntax: /jerky <amount of food>"
             gameState.canJerky = true
             break;
         case 7: 

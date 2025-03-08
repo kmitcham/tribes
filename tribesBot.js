@@ -138,7 +138,9 @@ async function sendMessages(bot, gameState, interaction){
 			await interaction.reply({ content: response, flags: MessageFlags.Ephemeral })
 			// double tap user so they have a DM of content as well.  TODO: confirm this is correct?
 			await user.send(chunks[chunksSent++]);
-			sendRemainingMessagesToUser(user, chunks, chunksSent);
+			if (chunksSent < chunks.length){
+				sendRemainingMessageChunksToUser(user, chunks, chunksSent);
+			}
 			delete messagesDict[actorName];
 			//console.log("in send messages finish send to actor >>>>>>>>>"+message+"<<<<<<");
 		} else {
@@ -177,7 +179,7 @@ async function sendMessages(bot, gameState, interaction){
 			} else {
 				console.log("in send messages 4.9 "+user.displayName);
 				chunksSent = 0;
-				sendRemainingMessagesToUser(user, chunks, chunksSent);
+				sendRemainingMessageChunksToUser(user, chunks, chunksSent);
 			}
 			console.log("in send messages 5");
 		} else {
@@ -195,7 +197,7 @@ async function sendMessages(bot, gameState, interaction){
 	return 0;
 }
 
-function sendRemainingMessagesToUser(user, messageArray, chunksSent){
+function sendRemainingMessageChunksToUser(user, messageArray, chunksSent){
 	if (! user || !messageArray || (chunksSent > messageArray.length)){
 		console.error("bad call to send remaining messages ");
 		return;

@@ -38,33 +38,37 @@ Still, the library tests should be doable.
 -- endgame
 -- gather double message?
 -- scorechildren
-++ all of conflict
+-- all of conflict
 -- can guard pregnant child?  ACtually, that is a feature
-++ child died on migration after a feed !all. (the child was unborn, and didn't get fed by feed !all) they were listed in the check though
-++ reproduction lists are busted, !save is not respected
+-- reproduction lists are busted, !save is not respected on update after reproduction round
 -- male got pregnant?  DONE
-++ without a referee, the 2 food penalty for an injury hard to apply when they have no food (but the tribe might help them)
-++ double used a spearhead; gave after a hunt
 
 -- message lib: messageTribe(bot, gamestate, message); messageMember(bot, gamestate, memberName, message) sendMessages(bot, gameState)
     ONLY called by commands, not libs.
     libs add items to 'messages' dict in gamestate, {'tribe':'message for tribe', 'member1':'private message to member 1'}
 -- migrate.js and migrateLib.js have a better seperation of responsibilities using message lib.
 -- scout nerd is broken
-++ canCraft not set on a crafter?
+-- canCraft not set on a crafter?
 -- reproduction messaging may be in trouble, since it is triggered from so many places  SEEMS FINE
 
 -- unit test on migrateLib.js
-++ unit test on feed lib
-++ score game report male and female scores, sorted (for winners)
-++ history removed from reproduction, hunting.  Probably gathering
-++ endgame needs to check banished and graveyard
-++ history isn't working?
-++ feed !all when no children need food is weird.
-++ sockpuppet didn't get mating messages?
+-- unit test on feed lib
+-- score game report male and female scores, sorted (for winners)
+-- sockpuppet didn't get mating messages?
 -- chance result 5, sickness, check food?  NEEDs ref unless someone saves them.
 -- long messages get split between channel and DMs, not obvious
 -- faction for/against/neutral isn't working
+++ section titles to help page
+++ NOTE FOR KEVIN: I can tap on arguments types like “destination” but not on the choices like “marsh”. This makes me sad @kevinmitcham .
+++ deal with servernames
+++ changes to romance during reproduction aren't saved correctly
+++ without a referee, the 2 food penalty for an injury hard to apply when they have no food (but the tribe might help them)
+++ double used a spearhead; gave after a hunt
+++ history removed from reproduction, hunting.  Probably gathering
+++ child died on migration after a feed !all. (the child was unborn, and didn't get fed by feed !all) they were listed in the check though
+++ endgame needs to check banished and graveyard
+++ history isn't working?
+++ feed !all when no children need food is weird.
 
 
 W= has worked since new API
