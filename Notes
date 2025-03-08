@@ -70,6 +70,13 @@ Still, the library tests should be doable.
 ++ history isn't working?
 ++ feed !all when no children need food is weird.
 
+	console.log("user is:"+interaction.member);
+	userId = interaction.member.id;
+	var elephant = interaction.member;  << this has 'nickname' field >>
+	const rhino = client.users.cache.get(userId);  << this does NOT have nickname >>
+
+
+
 
 W= has worked since new API
 U= untested but written
@@ -80,7 +87,7 @@ W !join
 U !babysit <adult child> <target child> (a mother can ask her adult child to watch a child)
 W !children [parent name] (shows the children ages and food status, optionally filtered to descendants)
 W !give <amt> <food|grain|spearhead|basket> <player>
-U !graveyard (list of all deceased members and children)
+W !graveyard (list of all deceased members and children)
 W !inventory <target|all>  (show inventory and character info. No arg means self)
 W !law (see the current list of laws)
 W !sacrifice <amount> <type>  (place an item beyond use for religious or other reasons) [non-standard]

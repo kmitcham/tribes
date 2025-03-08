@@ -26,17 +26,23 @@ module.exports = {
             )
             .setRequired(true)),
     async execute(interaction, gameState) {
-        await give(interaction, gameState)
+        var targetName = interaction.options.getMember('target').displayName;
+        var sourceName = interaction.user.displayName;
+        var amount = interaction.options.getInteger('amount');
+        var item = interaction.options.getString('item');
+        await give( gameState, sourceName, targetName, amount, item);
 	},
 };
 
-function give(interaction, gameState){
-    var targetName = interaction.options.getMember('target').displayName;
-    var sourceName = interaction.user.displayName;
-    var amount = interaction.options.getInteger('amount');
-    var item = interaction.options.getString('item');
+function give(gameState, sourceName, targetName, amount, item){
     var population = gameState.population;
 
+    if (targetName == sourceName){
+        response = "Giving things to yourself is useful self-care.  Nobody loves you like you love you.";
+        console.log("self give: "+targetName +" "+sourceName);
+        text.addMessage(gameState, "tribe", response);
+        return;
+    }
     if (item.startsWith('g')){
         item = 'grain'
     } else if ( item.startsWith('f')){
@@ -47,7 +53,8 @@ function give(interaction, gameState){
         item = 'spearhead'
     } else {
         response = "Unrecognized item "+item;
-        return onError(interaction, response);
+        text.addMessage(gameState, "tribe", response)
+        return ;
     }
     var targetPerson = {}
     var sourcePerson = {}
@@ -57,15 +64,18 @@ function give(interaction, gameState){
         sourcePerson = population[sourceName];
     } else {
         response = "Source or target "+sourceName+":"+targetName+" not found in tribe";
-        return onError(interaction, response)
+        text.addMessage(gameState, "tribe", response)
+        return ;
     }
     if (!sourcePerson[item] || sourcePerson[item] < amount){
         response = sourceName+" does not have "+amount+" "+item;
-        return onError(interaction, response)
+        text.addMessage(gameState, "tribe", response)
+        return ;
     }
     if (sourcePerson.activity == 'hunt' && item == 'spearhead' && gameState.round== 'work'){
         response = sourceName+" already hunted with a spearhead, and cannot trade spearheads during the work round";
-        return onError(interaction, response)
+        text.addMessage(gameState, "tribe", response)
+        return ;
     }
     sourcePerson[item] -= amount;
     targetPerson[item] += amount;
@@ -73,11 +83,4 @@ function give(interaction, gameState){
 
     response = sourceName + " gives "+targetName+" "+amount+" "+item;
     text.addMessage(gameState, "tribe", response)
-}
-function onError(interaction, response){
-    interaction.user.send(response);
-        const embed = new EmbedBuilder().setDescription(response);
-		interaction.reply({ embeds: [embed], ephemeral: true }) //error message
-			.catch(console.error);
-        return
 }

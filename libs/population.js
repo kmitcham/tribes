@@ -116,6 +116,7 @@ function addToPopulation(gameState, sourceName, gender, profession, handle){
     genders = ['male','female']
     if (gender.startsWith('m') ){gender = 'male'}
     if (gender.startsWith('f')){gender = 'female'}
+    response = target+' '+gender+' joined the tribe.';
     var person = {};
     person.gender = gender;
     person.food = 10;
@@ -124,11 +125,6 @@ function addToPopulation(gameState, sourceName, gender, profession, handle){
     person.spearhead = 0;
     person.handle = handle;
     person.name = sourceName;
-    if (profession){
-        prof.specialize(sourceName, profession, gameState)
-        person.profession = profession;
-    }
-    response = target+' '+gender+' joined the tribe.';
     var strRoll = dice.roll(1);
     person.strength = 'average';
     if (strRoll == 1){
@@ -143,6 +139,10 @@ function addToPopulation(gameState, sourceName, gender, profession, handle){
     text.addMessage(gameState, "tribe", response )
     if (!person.strength){
         text.addMessage(gameState, sourceName ,"You are of average strength" )
+    }
+    if (profession){
+        prof.specialize(sourceName, profession, gameState)
+        person.profession = profession;
     }
     history(person.name, response, gameState)
     gameState.saveRequired = true;

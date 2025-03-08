@@ -59,3 +59,38 @@ test("person by ignoresCase", ()=>{
     actualName = player.name;
     expect(actualName).toEqual(expectName);
   })
+
+test("person with gender", ()=>{
+  var gameState = {
+    "population": {
+     },
+  }
+  memberName = "Steve";
+  pop.addToPopulation(gameState,memberName, "female", null, null);
+  player = pop.memberByName(memberName, gameState);
+  actualName = player.name;
+  expect(actualName).toEqual(memberName);
+  tribeMessage = gameState.messages["tribe"]
+  expect(tribeMessage).toContain("female")
+  expect(tribeMessage).toContain(memberName);
+  playerMessage = gameState.messages[memberName]
+  
+})
+
+test("person with gender and profession", ()=>{
+  var gameState = {
+    "population": {
+     },
+  }
+  memberName = "Chris";
+  pop.addToPopulation(gameState,memberName, "female", "hunter", null);
+  player = pop.memberByName(memberName, gameState);
+  actualName = player.name;
+  expect(actualName).toEqual(memberName);
+  tribeMessage = gameState.messages["tribe"]
+  expect(tribeMessage).toContain("female")
+  expect(tribeMessage).toContain(memberName);
+  expect(tribeMessage).toContain("hunter");
+  playerMessage = gameState.messages[memberName]
+  
+})
