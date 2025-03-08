@@ -26,11 +26,11 @@ module.exports = {
                 )
                 .setRequired(false))
         ,
-    async execute(interaction, gameState, bot) {
-        var actorName = interaction.user.displayName;      
+    async execute(interaction, gameState) {
+        var nickName = interaction.nickName;      
         gender = interaction.options.getString('gender');
         profession = interaction.options.getString('profession');
-        join(actorName, gameState, gender, profession, interaction.user)
+        join(nickName, gameState, gender, profession, interaction.user)
 	},
 };
 

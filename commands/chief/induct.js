@@ -43,7 +43,7 @@ function induct(interaction, gameState){
     var targetName = targetObject.displayName;
     var gender = interaction.options.getString('gender')
     var profession = interaction.options.getString('profession')
-    var sourceName = interaction.user.displayName;
+    var sourceName = interaction.nickName;
     var population = gameState.population;
 	
     var chief = population[sourceName]

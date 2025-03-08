@@ -3,10 +3,12 @@ const path = require('node:path');
 const { Client, Collection, Events, GatewayIntentBits, MessageFlags} = require('discord.js');
 const { token } = require('./config.json');
 
-const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers] });
 
+// Not sure what this is; it probably came with my example?
 var logger = require('winston');
 const { ExceptionHandler, child } = require('winston');
+// Not sure what this is; it probably came with my example?
 const { ConsoleTransportOptions } = require('winston/lib/winston/transports');
 // Not sure what this is; it probably came with my example?
 const { spawn } = require('child_process');
@@ -56,6 +58,7 @@ client.on(Events.InteractionCreate, async interaction => {
 	const command = client.commands.get(interaction.commandName);
     if (!command) return;
     let channel = await client.channels.fetch(interaction.channelId);
+	let guildId = await channel.guildId;
 	console.log("command "+interaction.commandName+ " by "+interaction.member.displayName+" of "+channel.name);
     if (channel.name.endsWith('tribe')){
         gameState = allGames[channel.name];
@@ -71,8 +74,10 @@ client.on(Events.InteractionCreate, async interaction => {
 		interaction.reply("Commands need to be in tribe channels");
 		return;
 	}
+	nickName = await getUserNickname(client, "427681770930962435", guildId) 
 	// if no errors, and we are sure we have a gameState
 	try {
+		interaction.nickName = nickName?nickName:interaction.user.displayName;
 		await command.execute(interaction, gameState, client);
 		// send responses to the messages
 		await sendMessages(client, gameState, interaction);
@@ -214,5 +219,26 @@ function sendRemainingMessageChunksToUser(user, messageArray, chunksSent){
 	return;
 }
 
+
+// Assuming you have a Discord.js client set up and authenticated
+// and you have a user object and guild ID
+
+async function getUserNickname(client, userId, guildId) {
+	try {
+	  // Get the guild object
+	  const guild = await client.guilds.fetch(guildId);
+	  
+	  // Get the GuildMember object for the user in this specific guild
+	  const guildMember = await guild.members.fetch(userId);
+	  
+	  // Get the nickname (or username if no nickname is set)
+	  const nickname = guildMember.nickname || guildMember.user.username;
+	  
+	  return nickname;
+	} catch (error) {
+	  console.error('Error fetching nickname:', error);
+	  return null;
+	}
+  }
 client.login(token);
 
