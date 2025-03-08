@@ -75,7 +75,10 @@ Still, the library tests should be doable.
 	var elephant = interaction.member;  << this has 'nickname' field >>
 	const rhino = client.users.cache.get(userId);  << this does NOT have nickname >>
 
-
+So I have a function to get the nickname, but it reqiures the client.
+BUT... if I capture the nickName at join/induct, I can add it to the member object.
+then population can look for them that way.
+So how does that interact with targeting?  
 
 
 W= has worked since new API
@@ -92,15 +95,15 @@ W !inventory <target|all>  (show inventory and character info. No arg means self
 W !law (see the current list of laws)
 W !sacrifice <amount> <type>  (place an item beyond use for religious or other reasons) [non-standard]
 W !scout <location> (examine the envionment, default is current location)
-X !secrets (toggle the state of willingness to teach others to craft)
+W !secrets (toggle the state of willingness to teach others to craft)
 W !specialize <hunter|gatherer|crafter>(at the start of the game)
 W !status (see the current location, year, season and local game)
 W !vote <target>  (your choice for chief)
 U !obey <commands>  (things you will do if the chief commands, in case of extended AFK)
 -=Work Round Commands=-
-U !guard | !ignore <child> [<more childNames>] (take on child care responsibilities for the child)
-U !leastguarded (shows the least supervised child (ties resolved randomly))
-U !ready (list who is still available to work)
+W !guard | !ignore <child> [<more childNames>] (take on child care responsibilities for the child)
+W !leastguarded (shows the least supervised child (ties resolved randomly))
+W !ready (list who is still available to work)
 W !craft <spearhead|basket>
 W !gather
 W !hunt
@@ -117,23 +120,22 @@ W !invite <target> [target !pass]   The order you would like to invite people to
 W !consent <target> [target] The list of people you would accept mating invitations from.
 W !decline <target> [target] The list of people whose mating invitations you would decline
  !pass (decline to invite anyone in the mating round; can still get invitations)
-U scorechildren  count number of children by parent
+W scorechildren  count number of children by parent
 -=Conflict Commands=-
-U !demand <text of your demand>  (You want this to happen, and you are willing to kill or die about it)
-U !faction <for|against|neutral> (Where you stand on the current DEMAND before the tribe; you must choose for the game to continue)
-U !attack <target> (attempt to harm another member of the tribe during violence)
-U !defend (stand your ground against attacks during violence)
-U !run (flee the violence, conceding to the opposition during violence)
+W !faction <for|against|neutral> (Where you stand on the current DEMAND before the tribe; you must choose for the game to continue)
+W !attack <target> (attempt to harm another member of the tribe during violence)
+W !defend (stand your ground against attacks during violence)
+W !run (flee the violence, conceding to the opposition during violence)
 Chief Commands
 W !induct|banish <player> (add|remove a tribe member)
-U !open|close  (toggle if people can join with "!join" or only with "!induct" by the chief)
+W !open|close  (toggle if people can join with "!join" or only with "!induct" by the chief)
  !drone <gender> <profession> <name>  adds a worker to the tribe that takes commands but is sterile. [non-standard]
 W !startwork (begins the work round, enabling work attempts and rolls)
 W !startfood (ends the work round; subtract food/grain; birth; child age increase)
 W !startreproduction (Start the reproduction round. Also when migration happens)
 W !chance (after mating, chance is required to end the season)
 mW !migrate <newlocation> <force>  (without force, just checks who would perish on the journey)
-U !decree <law number> <law text> (record a rule for the tribe, or replace the rule of the specified number)
-U !skip <person>   (end a players reproduction turn)
-U!checkmating (report on status of mating attempts)
+W !decree <law number> <law text> (record a rule for the tribe, or replace the rule of the specified number)
+W !skip <person>   (end a players reproduction turn)
+U !checkmating (report on status of mating attempts)
 W !endgame convert all the child to corpses, or new adults

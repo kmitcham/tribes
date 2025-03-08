@@ -7,30 +7,68 @@ test("Name with @", ()=>{
                 "name": "demander",
                 "faction":"for"
               },
-              "pro1": {
-                "name": "pro1",
-                "faction":"for"
-              },
-              "con1": {
-                "name": "con1",
-                "faction":"against"
-              },
-              "abstain": {
-                "name": "abstain"
-              },
-              "illegal": {
-                "name": "illegal",
-                "faction":"elephant"
-              },
               "neutral1": {
                 "name": "neutral1",
                 "faction":"neutral"
-              }
+              }, 
+              "testNick": {
+                "name":"testNick",
+                "handle":{
+                  "displayName":"nick"
+                }
+              },
+              "kevinmitcham22": {
+                "gender": "male",
+                "food": 10,
+                "grain": 4,
+                "basket": 0,
+                "spearhead": 0,
+                "handle": {
+                  "id": "427681770930962435",
+                  "bot": false,
+                  "system": false,
+                  "flags": 0,
+                  "username": "kevinmitcham",
+                  "globalName": "kevinmitcham",
+                  "discriminator": "0",
+                  "avatar": "590d429490ae1be623d1fe906fecdcbc",
+                  "banner": null,
+                  "accentColor": null,
+                  "avatarDecoration": null,
+                  "createdTimestamp": 1522037680133,
+                  "defaultAvatarURL": "https://cdn.discordapp.com/embed/avatars/5.png",
+                  "hexAccentColor": null,
+                  "tag": "kevinmitcham",
+                  "avatarURL": "https://cdn.discordapp.com/avatars/427681770930962435/590d429490ae1be623d1fe906fecdcbc.webp",
+                  "displayAvatarURL": "https://cdn.discordapp.com/avatars/427681770930962435/590d429490ae1be623d1fe906fecdcbc.webp",
+                  "bannerURL": null
+                },
+                "name": "kevinmitcham22",
+                "strength": "weak",
+                "profession": "hunter",
+                "history": [
+                  "0.5: kevinmitcham22 male joined the tribe.  kevinmitcham22 is weak.",
+                  "0.5: became chief"
+                ],
+                "vote": "kevinmitcham22",
+                "chief": true
+              },
+          
                         },
         "round": "work"
     }
     expectName = 'demander'
     player = pop.memberByName('@demander', gameState);
+    expect(player).toBeTruthy();
+    actualName = player.name;
+    expect(actualName).toEqual(expectName);
+    expectName = 'testNick'
+    player = pop.memberByName('nick', gameState);
+    expect(player).toBeTruthy();
+    actualName = player.name;
+    expect(actualName).toEqual(expectName);
+    expectName = 'kevinmitcham22'
+    player = pop.memberByName('kevinmitcham', gameState);
     expect(player).toBeTruthy();
     actualName = player.name;
     expect(actualName).toEqual(expectName);

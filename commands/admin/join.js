@@ -27,7 +27,7 @@ module.exports = {
                 .setRequired(false))
         ,
     async execute(interaction, gameState) {
-        var nickName = interaction.nickName;      
+        var nickName = interaction.member.displayName;      
         gender = interaction.options.getString('gender');
         profession = interaction.options.getString('profession');
         join(nickName, gameState, gender, profession, interaction.user)
@@ -35,7 +35,8 @@ module.exports = {
 };
 
 function join(actorName, gameState, gender, profession, handle){
-    if (gameState.population[actorName]){
+    member = pop.memberByName(actorName, gameState);
+    if (member){
         text.addMessage(gameState, actorName, 'You are already a member of this tribe');
         return 
     }

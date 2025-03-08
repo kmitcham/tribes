@@ -9,7 +9,7 @@ module.exports = {
 		.setDescription('Report the number of children for each mother (and father, after game ends)')
         ,
     async execute(interaction, gameState, bot) {
-        var actorName = interaction.user.displayName
+        var actorName = interaction.member.displayName
         scoreChildren(actorName, gameState)
 	},
 };

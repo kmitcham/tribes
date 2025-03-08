@@ -13,7 +13,7 @@ module.exports = {
 };
 
 function onCommand(interaction, gameState){
-	var displayName = interaction.user.displayName;
+	var displayName = interaction.member.displayName;
 	if (!gameState){
 		text.addMessage(gameState, displayName, "Not in a tribe");
 		return

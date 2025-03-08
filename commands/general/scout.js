@@ -36,7 +36,7 @@ module.exports = {
 
 function onCommand(interaction, gameState){
     targetLocation = gameState.locationName;
-    var displayName = interaction.user.displayName;
+    var displayName = interaction.member.displayName;
     var nerdOption = interaction.options.getString('nerd');
     var selectedLocation = interaction.options.getString('location');
     if (selectedLocation){

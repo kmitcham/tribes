@@ -2,6 +2,7 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const reproLib = require("../../libs/reproduction.js");
 const worklib = require("../../libs/work.js");
 const text = require("../../libs/textprocess.js");
+const pop = require("../../libs/population.js")
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -9,17 +10,17 @@ module.exports = {
 		.setDescription('Show which tribe members are ready to work')
         ,
     async execute(interaction, gameState) {
-        onCommand(interaction, gameState)
+        var displayName = interaction.member.displayName;
+        onCommand(displayName, gameState)
 	},
 };
 
-function onCommand(interaction, gameState){
-    var population = gameState.population;
-    var displayName = interaction.user.displayName;
+function onCommand(displayName, gameState){
     var message = 'Nobody seems ready for much of anything right now.'
     if (gameState.workRound){
         message = "People available to work: "+worklib.listReadyToWork(population)
     }	
+    // this may just be an artifact of non-secret mating?
     if (gameState.reproductionRound){ 
         if (gameState.reproductionList && gameState.reproductionList[0] ){
             message = "The mating invitation order is "+gameState.reproductionList.join(", ")+"\n"
@@ -30,8 +31,9 @@ function onCommand(interaction, gameState){
             }
             message += "Available partners: "+reproLib.eligibleMates(cleanName, gameState.population)
             for (personName in population){
-                if (population[personName].invite){
-                    message += '\n'+personName+' is awaiting a response from '+population[personName].invite;
+                member = pop.memberByName(personName, gameState);
+                if (member.invite){
+                    message += '\n'+personName+' is awaiting a response from '+member.invite;
                 } 
             }
         }

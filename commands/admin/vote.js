@@ -13,7 +13,7 @@ module.exports = {
                 .setRequired(true))
 	,
     async execute(interaction, gameState, bot) {
-		var actorName = interaction.user.displayName;
+		var actorName = interaction.member.displayName;
 		var candidateName = interaction.options.getMember('candidate').displayName;
         pop.vote(gameState, actorName, candidateName)
 		gameState.saveRequired = true;

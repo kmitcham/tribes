@@ -10,7 +10,7 @@ module.exports = {
 		.setDescription('If a fight happens, you will try to run away.')
         ,
     async execute(interaction, gameState) {
-        var actorName = interaction.user.displayName
+        var actorName = interaction.member.displayName
 
         defend( gameState, actorName);
 

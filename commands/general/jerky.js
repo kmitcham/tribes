@@ -13,7 +13,7 @@ module.exports = {
             ,
     async execute(interaction, gameState, bot) {
         const amount = interaction.options.getInteger('amount');
-        var sourceName = interaction.user.displayName;
+        var sourceName = interaction.member.displayName;
         message = makeJerky(sourceName, amount, gameState, bot)
 	},
 };

@@ -26,7 +26,7 @@ function babysit(interaction, gameState){
     babysitterName = babysitterName.charAt(0).toUpperCase()+ babysitterName.slice(1)
     var childName = interaction.options.getString('child');
     childName = childName.charAt(0).toUpperCase()+ childName.slice(1)
-    var actorName = interaction.user.displayName;
+    var actorName = interaction.member.displayName;
 
     var children = gameState.children;
     var babysitter, child;

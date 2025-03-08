@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const reproLib = require("../../libs/reproduction.js");
 const text = require("../../libs/textprocess");
+const pop = require("../../libs/population.js");
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -14,7 +15,7 @@ module.exports = {
         ,
     async execute(interaction, gameState, bot) {
         try {
-            var displayName = interaction.user.displayName;
+            var displayName = interaction.member.displayName;
             response = onCommand(interaction, gameState, bot)
             text.addMessage(gameState, displayName, response );
             console.log('invite response was '+response)
@@ -27,9 +28,9 @@ module.exports = {
 
 function onCommand(interaction, gameState, bot){
     var population = gameState.population;
-    var sourceName = interaction.user.displayName;
+    var sourceName = interaction.member.displayName;
 
-    var player = population[sourceName]
+    var player = pop.memberByName(sourceName, gameState);
     var message = 'error in invite, message not set';
     var rawList = interaction.options.getString('invitelist');
     if (! rawList ) {

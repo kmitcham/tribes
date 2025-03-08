@@ -29,11 +29,15 @@ function memberByName(name, gameState){
     } else {
         console.log("Exhaustive search in population for "+name)
         for (match in population){
-            if ( (population[match] && population[match].handle) ){
-                if ( population[match].handle.username == name 
-                    || population[match].handle.displayName == name
-                    || (name.username && population[match].handle.username == name.username )
-                    || population[match].handle.id == name){
+            if (population[match].name.toLowerCase() === name.toLowerCase()){
+                person = population[match]
+                break;
+            }
+            if ( (population[match] && population[match]["handle"]) ){
+                if ( population[match]["handle"]["username"] == name 
+                    || population[match]["handle"]["displayName"] == name  
+                    || population[match]["handle"]["globalName"] == name
+                   ){
                     person = population[match]
                     break;
                 }
@@ -41,10 +45,6 @@ function memberByName(name, gameState){
                     person = population[match]
                     break;
                 }
-            }
-            if (population[match].name.toLowerCase() === name.toLowerCase()){
-                person = population[match]
-                break;
             }
         }
     }

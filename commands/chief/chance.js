@@ -20,7 +20,7 @@ module.exports = {
         ,
     async execute(interaction, gameState) {
         var roll = dice.roll(3)
-        var sourceName = interaction.user.displayName;
+        var sourceName = interaction.member.displayName;
         var forceRoll = interaction.options.getInteger('force');
         if (chief.isChanceLegal(gameState, sourceName, forceRoll)){
             if (forceRoll){

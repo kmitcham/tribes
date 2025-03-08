@@ -14,7 +14,7 @@ module.exports = {
 
 function onCommand(interaction, gameState){
     children = gameState.children;
-    var displayName = interaction.user.displayName;
+    var displayName = interaction.member.displayName;
     response  = guardlib.findLeastGuarded(children, gameState.population)
     text.addMessage(gameState, displayName,response);
     return 

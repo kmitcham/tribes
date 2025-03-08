@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const text = require("../../libs/textprocess");
 const childlib = require("../../libs/children.js");
+const pop = require("../../libs/population.js");
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -26,7 +27,7 @@ function children(interaction, gameState){
     var parentMember = interaction.options.getString('parent');
     var onlyHungry = interaction.options.getString('hungry');
     var population = gameState.population;
-    var displayName = interaction.user.displayName;
+    var displayName = interaction.member.displayName;
     var children = gameState.children;
 
     if (onlyHungry){
@@ -34,7 +35,7 @@ function children(interaction, gameState){
         response.push(childlib.showChildren(children, population, '!hungry', gameState.secretMating))
     } else if (parentMember){
             var parentName = interaction.options.getMember('parent').displayName;
-            var parentPerson = population[parentName];
+            var parentPerson = pop.memberByName( parentName, gameState);
             if (!parentPerson ){
                 text.addMessage(gameState, displayName, 'Could not find '+parentName )
             } else {

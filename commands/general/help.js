@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const helplib = require("../../libs/help.js")
-const text = require("../../libs/textprocess.js")
+const text = require("../../libs/textprocess.js");
+const pop = require("../../libs/population.js");
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -13,9 +14,8 @@ module.exports = {
 };
 
 function onCommand(interaction, gameState){
-    var playerName = interaction.user.displayName;
-    var population = gameState.population;
-    var player = population[playerName]
+    var playerName = interaction.member.displayName;
+    var player = pop.memberByName(playerName, gameState);
     
     
     text.addMessage(gameState,playerName,helplib.playerHelpBasic());

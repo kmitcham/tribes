@@ -43,10 +43,10 @@ function induct(interaction, gameState){
     var targetName = targetObject.displayName;
     var gender = interaction.options.getString('gender')
     var profession = interaction.options.getString('profession')
-    var sourceName = interaction.nickName;
+    var sourceName = interaction.member.displayName;
     var population = gameState.population;
 	
-    var chief = population[sourceName]
+    var chief = pop.memberByName(sourceName, gameState)
 	
     if (!chief || !chief.chief){
         response = "You must be chief to induct a member"

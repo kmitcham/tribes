@@ -13,7 +13,7 @@ module.exports = {
 };
 
 function onCommand(interaction, gameState){
-    var playerName = interaction.user.displayName;
+    var playerName = interaction.member.displayName;
     var player = pop.memberByName(playerName, gameState)
     if (!player){
         text.addMessage(gameState, playerName, "You have no history with this tribe");

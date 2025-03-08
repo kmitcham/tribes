@@ -13,7 +13,7 @@ module.exports = {
 };
 
 function doCommand(interaction, gameState){
-    var displayName = interaction.user.displayName
+    var displayName = interaction.member.displayName
     var response = 'There are no laws.';
     laws = gameState.laws
     if (laws){

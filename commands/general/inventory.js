@@ -13,7 +13,7 @@ module.exports = {
                 .setRequired(false)),
     async execute(interaction, gameState) {
 		var targetUser = interaction.options.getMember('target')
-		var actorName = interaction.user.displayName;
+		var actorName = interaction.member.displayName;
 		var response = inventory(gameState, targetUser, actorName )
         console.log("inventory response:"+response)
 	},

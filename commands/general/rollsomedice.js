@@ -16,6 +16,6 @@ module.exports = {
         var count  = interaction.options.getInteger('number') || 1;
         console.log("number of dice = "+count)
         message = "the result of rolling "+count+" dice was "+dice.roll(count)
-        text.addMessage(gameState, interaction.user.displayName, message);
+        text.addMessage(gameState, interaction.member.displayName, message);
 	},
 };

@@ -22,7 +22,7 @@ module.exports = {
     async execute(interaction, gameState, bot) {
         targetObject = interaction.options.getMember('target')
         var targetName = targetObject.displayName;
-        var sourceName = interaction.user.displayName;
+        var sourceName = interaction.member.displayName;
         var reason = interaction.options.getString('reason');
         await banishAdmin(gameState, sourceName, targetName);
 

@@ -8,7 +8,7 @@ module.exports = {
 		.setDescription('(show your current reproduction lists)')
         ,
     async execute(interaction, gameState, bot) {
-        var sourceName = interaction.user.displayName;
+        var sourceName = interaction.member.displayName;
         response = onCommand(sourceName, gameState, bot)
 	},
 };

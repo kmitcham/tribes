@@ -48,7 +48,7 @@ function migrate(sourceName, destination, force, gameState){
 	// actually do the move if force is set
 	response = "Finding a route to "+destination
 	if (force){
-		// this code is mostly duplicated, but feed eating is complex to repeat the iteration
+		// this code is mostly duplicated, but feed eating is too complex to repeat the iteration
 		for (personName in population){
 			var person = populationLib.memberByName(personName, gameState)
 			if (person.isInjured && person.isInjured > 0){
@@ -95,7 +95,7 @@ function migrate(sourceName, destination, force, gameState){
 			}
 		}
 		text.addMessage(gameState, "tribe", response)
-		text.addMessage(gameState,"tribe",'Setting the current location to '+destination )
+		text.addMessage(gameState,"tribe",'The tribe migrates to the '+destination )
 		gameState.currentLocationName = destination
 		return 0
 	} else {

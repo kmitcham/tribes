@@ -71,10 +71,10 @@ client.on(Events.InteractionCreate, async interaction => {
         }
 		allGames[channel.name] = gameState;
     } else {
-		interaction.reply("Commands need to be in tribe channels");
+		interaction.reply("Tribes commands need to be in a tribe channel");
 		return;
 	}
-	nickName = await getUserNickname(client, "427681770930962435", guildId) 
+	nickName = interaction.member.displayName;
 	// if no errors, and we are sure we have a gameState
 	try {
 		interaction.nickName = nickName?nickName:interaction.user.displayName;
@@ -102,7 +102,7 @@ async function sendMessages(bot, gameState, interaction){
 		console.log("sendMessages on empty");
 		return;
 	}
-	actorName = interaction.user.displayName;
+	actorName = interaction.nickName;
 	MAX_LENGTH = 1900; //docs say 2000 is max; better safe than sorry
 	// regext [\S\s] is any chacter that is either a space or not a space; eg, any character
 	needsReply = interaction.isRepliable();

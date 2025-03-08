@@ -22,10 +22,10 @@ module.exports = {
 };
 
 function hunt(interaction, gameState){
-    var sourceName = interaction.user.displayName;
+    var sourceName = interaction.member.displayName;
     var forceRoll = interaction.options.getInteger('force');
     var population = gameState.population;
-    player = population[sourceName]
+    player = pop.memberByName(sourceName, gameState);
     // if this is null, the player can NOT work
     msg = worklib.canWork(gameState, player);
 

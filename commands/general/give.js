@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const text = require("../../libs/textprocess.js")
+const pop = require("../../libs/population.js");
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -27,7 +28,7 @@ module.exports = {
             .setRequired(true)),
     async execute(interaction, gameState) {
         var targetName = interaction.options.getMember('target').displayName;
-        var sourceName = interaction.user.displayName;
+        var sourceName = interaction.member.displayName;
         var amount = interaction.options.getInteger('amount');
         var item = interaction.options.getString('item');
         await give( gameState, sourceName, targetName, amount, item);
@@ -59,10 +60,9 @@ function give(gameState, sourceName, targetName, amount, item){
     var targetPerson = {}
     var sourcePerson = {}
     // check if person is in tribe
-    if ((targetName in population ) && (sourceName in population)){
-        targetPerson = population[targetName];
-        sourcePerson = population[sourceName];
-    } else {
+    targetPerson = pop.memberByName(targetName,gameState);
+    sourcePerson = pop.memberByName(sourceName,gameState);
+    if (!targetPerson || sourcePerson){
         response = "Source or target "+sourceName+":"+targetName+" not found in tribe";
         text.addMessage(gameState, "tribe", response)
         return ;

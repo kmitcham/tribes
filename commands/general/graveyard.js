@@ -8,7 +8,7 @@ module.exports = {
 		.setDescription('Show the dead of the tribe')
         ,
     async execute(interaction, gameState) {
-        var displayName = interaction.user.displayName;
+        var displayName = interaction.member.displayName;
         pop.graveyard(displayName, gameState)
 	},
 };

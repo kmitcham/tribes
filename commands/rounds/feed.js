@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const worklib = require("../../libs/work.js")
+const pop = require("../../libs/population.js")
 const feedlib = require("../../libs/feed.js");
 const text = require("../../libs/textprocess.js")
 
@@ -23,11 +23,10 @@ module.exports = {
 };
 
 function feed(interaction, gameState){
-    var sourceName = interaction.user.displayName;
+    var sourceName = interaction.member.displayName;
     var amount = interaction.options.getInteger('amount') || 2;
     var rawList = interaction.options.getString('child');    
-    var population = gameState.population;
-    player = population[sourceName]
+    player = pop.memberByName(sourceName, gameState);
 
     if (amount < 0 &&  !util.referees.includes(sourceName) ){
         text.addMessage(gameState, sourceName, 'Only the referee can reduce amounts');

@@ -25,7 +25,7 @@ module.exports = {
             .setRequired(false))
         ,
     async execute(interaction, gameState) {
-        var actorName = interaction.user.displayName;
+        var actorName = interaction.member.displayName;
         var cName = interaction.options.getString('child1');
         var cName2  = interaction.options.getString('child2');
         var cName3  = interaction.options.getString('child3');

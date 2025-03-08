@@ -11,7 +11,7 @@ module.exports = {
 		.setDescription('Start the work round. (Chief only)')
         ,
     async execute(interaction, gameState) {
-        var actorName = interaction.user.displayName
+        var actorName = interaction.member.displayName
         response = startFilter(actorName, gameState)
 	},
 };
@@ -42,7 +42,7 @@ function startWork(gameState, actorName){
     }
     // clear out old activities
     for (personName in gameState.population){
-        person = population[personName]
+        person = pop.memberByName(personName, gameState)
         delete person.activity
     }
     pop.decrementSickness(gameState.population, gameState);

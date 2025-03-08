@@ -13,7 +13,7 @@ module.exports = {
             .setRequired(true),
         ),
     async execute(interaction, gameState, bot) {
-		var actorName = interaction.user.displayName;
+		var actorName = interaction.member.displayName;
 		var willTrain = interaction.options.getBoolean('willTrain');
         setSecrets(gameState, actorName, willTrain);
 	},

@@ -19,7 +19,7 @@ module.exports = {
 };
 
 function onCommand(interaction, gameState, bot){
-    var sourceName = interaction.user.displayName;
+    var sourceName = interaction.member.displayName;
     var rawList = interaction.options.getString('declinelist');
 
     var player = pop.memberByName(sourceName, gameState);

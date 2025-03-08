@@ -9,7 +9,7 @@ module.exports = {
 		.setDescription('Start the reproduction round. (Chief only)')
         ,
     async execute(interaction, gameState, bot) {
-        var actorName = interaction.user.displayName
+        var actorName = interaction.member.displayName
 
         var player = pop.memberByName(actorName, gameState)
         if ( !player.chief){

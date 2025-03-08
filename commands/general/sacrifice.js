@@ -18,7 +18,7 @@ module.exports = {
             .setRequired(true))
         ,
     async execute(interaction, gameState) {
-        var sourceName = interaction.user.displayName;
+        var sourceName = interaction.member.displayName;
         var amount = interaction.options.getInteger('amount');
         var item = interaction.options.getString('item');
         doCommand(gameState, sourceName, item, amount);
@@ -27,7 +27,6 @@ module.exports = {
 
 function doCommand(gameState, sourceName, item, amount){
 
-    var population = gameState.population;
 
     if (item.startsWith('g')){
         item = 'grain'
@@ -39,7 +38,7 @@ function doCommand(gameState, sourceName, item, amount){
         item = 'spearhead'
     } else {
         response = "Unrecognized item "+item;
-        text.addMessage(gameState,sourceName, response);
+        text.addMessage(gameState, sourceName, response);
         return
     }
 
@@ -86,7 +85,7 @@ function doCommand(gameState, sourceName, item, amount){
         rndMsg = ritualResults[net] || 'The ritual is clearly wrong.' 
         sourcePerson[item] -= Number(amount)
     } else {
-        response = 'You do not have that many '+item+': '+ population[actor][item]
+        response = 'You do not have that many '+item+': '+ sourcePerson[item]
         text.addMessage(gameState,sourceName, response);
         return;
     }

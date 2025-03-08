@@ -15,7 +15,7 @@ module.exports = {
 
         ,
     async execute(interaction, gameState, bot) {
-        var actorName = interaction.user.displayName
+        var actorName = interaction.member.displayName
         var targetObject = interaction.options.getMember('target')
         var targetName = targetObject.displayName;
 

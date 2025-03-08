@@ -9,7 +9,7 @@ module.exports = {
 		.setDescription('Set the tribe so that only the chief can induct new members. (Chief only)')
         ,
     async execute(interaction, gameState, bot) {
-        var actorName = interaction.user.displayName
+        var actorName = interaction.member.displayName
 
         response = close(actorName, gameState, bot)
         if (gameState.open){

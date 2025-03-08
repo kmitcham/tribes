@@ -14,7 +14,7 @@ module.exports = {
         )
         ,
     async execute(interaction, gameState, bot) {
-        var sourceName = interaction.user.displayName;
+        var sourceName = interaction.member.displayName;
         var rawList = interaction.options.getString('consentlist');
         var response = onCommand(gameState, sourceName, rawList);
         console.log("consent updated: "+response)

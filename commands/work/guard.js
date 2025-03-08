@@ -37,7 +37,7 @@ module.exports = {
 };
 
 function onCommand(interaction, gameState){
-    var actorName = interaction.user.displayName;
+    var actorName = interaction.member.displayName;
     var c1Name  = interaction.options.getString('child1');
     var c2Name  = interaction.options.getString('child2');
     var c3Name  = interaction.options.getString('child3');
@@ -78,7 +78,7 @@ function onCommand(interaction, gameState){
 }
 
 function guardChild(actorName, gameState, cName){
-    var person = gameState.population[actorName];
+    var person = pop.memberByName(actorName, gameState);
     children = gameState.children;
     var response = "";
     if (!person){

@@ -10,7 +10,7 @@ module.exports = {
 		.setDescription('Start the food round. (Chief only)')
         ,
     async execute(interaction, gameState, bot) {
-        var actorName = interaction.user.displayName
+        var actorName = interaction.member.displayName
 
         response = startFoodFilter(actorName, gameState, bot)
         gameState.saveRequired = true;
@@ -55,7 +55,7 @@ function clearWorkFlags(population){
     // if injured and !worked, injured = false
     // worked = false
     for  (var targetName in population) {
-        person = population[targetName]
+        person = pop.memberByName(targetName, gameState)
         if (! person){
             console.log('null person for name '+targetName)
             continue

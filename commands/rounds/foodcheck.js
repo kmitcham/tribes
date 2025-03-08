@@ -14,7 +14,7 @@ module.exports = {
 
 function onCommand(interaction, gameState, bot){
 	var message = feed.checkFood(gameState, bot);
-    var displayName = interaction.user.displayName;
+    var displayName = interaction.member.displayName;
     text.addMessage(gameState, displayName, message);
     return
 }

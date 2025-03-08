@@ -19,7 +19,7 @@ module.exports = {
             .setRequired(true)
         ),
     async execute(interaction, gameState) {
-        var actorName = interaction.user.displayName
+        var actorName = interaction.member.displayName
         var faction = interaction.options.getString('faction');
         console.log(actorName+" faction "+faction);
         setFaction(gameState, actorName, faction);

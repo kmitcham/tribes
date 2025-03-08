@@ -16,7 +16,7 @@ module.exports = {
         )
         ,
     async execute(interaction, gameState, bot) {
-        var actorName = interaction.user.displayName
+        var actorName = interaction.member.displayName
         var demandText = interaction.options.getString('demand');
 
         demand(gameState, actorName, demandText);

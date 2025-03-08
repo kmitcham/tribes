@@ -23,14 +23,14 @@ module.exports = {
         )
         .addBooleanOption(option => 
             option
-            .setName('force')
+            .setName('go')
             .setDescription('when false, just show who needs food to make the trip alive')
         )
         ,
     async execute(interaction, gameState, bot) {
-        var sourceName = interaction.user.displayName;
+        var sourceName = interaction.member.displayName;
         var destination = interaction.options.getString('destination');
-        var force = interaction.options.getBoolean('force');
+        var force = interaction.options.getBoolean('go');
         value = migrate.migrate(sourceName, destination, force, gameState)
         if (value == 0){
             text.addMessage(gameState, sourceName, "You lead the tribe to "+destination)

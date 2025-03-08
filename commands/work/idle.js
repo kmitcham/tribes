@@ -14,7 +14,7 @@ module.exports = {
 };
 
 function idle(interaction, gameState){
-    var sourceName = interaction.user.displayName;
+    var sourceName = interaction.member.displayName;
     player = pop.memberByName(sourceName, gameState);
     msg = worklib.canWork(gameState, player);
 

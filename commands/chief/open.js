@@ -8,7 +8,7 @@ module.exports = {
 		.setDescription('Set the tribe so that anyone can join. (Chief only')
         ,
     async execute(interaction, gameState, bot) {
-        var actorName = interaction.user.displayName
+        var actorName = interaction.member.displayName
 
         response = close(actorName, gameState, bot)
 	},
