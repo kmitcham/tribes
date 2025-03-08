@@ -16,13 +16,13 @@ module.exports = {
             )
         ,
     async execute(interaction, gameState) {
-        await train(interaction, gameState)
+        var sourceName = interaction.user.displayName;
+        var forceRoll = interaction.options.getInteger('force');
+        await train(gameState, sourceName, forceRoll);
 	},
 };
 
-function train(interaction, gameState){
-    var sourceName = interaction.user.displayName;
-    var forceRoll = interaction.options.getInteger('force');
+function train(gameState, sourceName, forceRoll){
     var population = gameState.population;
     player = population[sourceName]
     msg = worklib.canWork(gameState, player);

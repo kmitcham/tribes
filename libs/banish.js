@@ -1,19 +1,15 @@
 const populationLib = require("./population.js")
 const t = require("./textprocess")
 
-module.exports.banish = (gameState, targetName, bot) =>{
-    population = gameState.population
-    person = populationLib.memberByName(targetName, gameState)
+module.exports.banish = (gameState, targetName, reason) =>{
+    population = gameState.population    
     console.log("In banish lib for "+targetName)
-    if (person){
-        targetName = person.name
-    }
-	if (population[targetName]){
-        person = populationLib.memberByName(targetName, gameState)
+    person = populationLib.memberByName(targetName, gameState)
+	if (person){
         if (!gameState.banished){
             gameState.banished = {}
         }
-        gameState.banished[targetName] = person
+        gameState.banished[targetName] = [person, reason]
         // removing the player from the banish list is a pain.
         delete population[targetName]
         t.addMessage(gameState, "tribe", targetName+' is banished from the tribe')
@@ -22,7 +18,7 @@ module.exports.banish = (gameState, targetName, bot) =>{
             console.log(childName+' is getting checked')
             // remove the unborn children
             if (child.mother == targetName && child.age < 4 ){
-                gameState.banished[childName] = child;
+                gameState.banished[childName] = [child, 'banished in the womb'];
                 delete gameState.children[childName]
             }
             if (person.guarding && person.guarding.indexOf(childName) > -1 ){
@@ -46,8 +42,7 @@ module.exports.banish = (gameState, targetName, bot) =>{
                 }
             }
         }
-        const name = person.name
-        gameState.banished[targetName] = person
+        gameState.banished[targetName] = [person, reason]
         return
     } else {
         console.log("Failed to get the person; banish fails")
