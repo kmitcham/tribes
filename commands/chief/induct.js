@@ -44,7 +44,6 @@ function induct(interaction, gameState){
     var gender = interaction.options.getString('gender')
     var profession = interaction.options.getString('profession')
     var sourceName = interaction.member.displayName;
-    var population = gameState.population;
 	
     var chief = pop.memberByName(sourceName, gameState)
 	
@@ -55,8 +54,5 @@ function induct(interaction, gameState){
     }
 	console.log("message b")
 
-    pop.addToPopulation(gameState, targetName, gender, profession, targetObject)
-    text.addMessage(gameState, "tribe",  response)
-    
-
+    pop.addToPopulation(gameState, targetName, gender, profession, targetObject)    
 }

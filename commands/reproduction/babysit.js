@@ -17,21 +17,21 @@ module.exports = {
             .setDescription('name of the child to be watched')
             .setRequired(true)),
         async execute(interaction, gameState) {
-        await babysit(interaction, gameState)
+            var babysitterName = interaction.options.getString('babysitter');
+            var childName = interaction.options.getString('child');
+            var actorName = interaction.member.displayName;
+            await babysit(gameState, actorName, babysitterName, childName)
 	},
 };
 
-function babysit(interaction, gameState){
-    var babysitterName = interaction.options.getString('babysitter');
+function babysit(gameState, actorName, babysitterName, childName){
     babysitterName = babysitterName.charAt(0).toUpperCase()+ babysitterName.slice(1)
-    var childName = interaction.options.getString('child');
     childName = childName.charAt(0).toUpperCase()+ childName.slice(1)
-    var actorName = interaction.member.displayName;
 
     var children = gameState.children;
     var babysitter, child;
 
-    if ((babysitterName in children ) && (babysitterName in children)){
+    if (babysitterName in children ){
         babysitter = children[babysitterName];
     } else {
         text.addMessage(gameState, actorName, "Did not recognize babysitter "+babysitterName);
@@ -43,28 +43,28 @@ function babysit(interaction, gameState){
         text.addMessage(gameState, actorName,  "Did not recognize child "+childName );
         return
     }
-
     if (babysitter.mother != actorName){
         text.addMessage(gameState, actorName,  'You are not the mother of '+babysitterName );
         return
     }
-    var response = "";
+    
     console.log(" babysitter age:"+babysitter.age+" reproductionRound:"+gameState.reproductionRound)
     if (babysitter.newAdult || ( babysitter.age == 23 && !gameState.reproductionRound )){
-        if (targetChild.newAdult){
+        if (child.newAdult){
             text.addMessage(gameState, actorName,  targetChildName+' does not need watching' );
             return
         }
+        var response = "";
         if (babysitter.babysitting){
             response += babysitterName+" stops watching "+babysitter.babysitting+".  \n";
         }
-        babysitter.babysitting = targetChildName;
-        response += babysitterName + " starts watching "+targetChildName;
+        babysitter.babysitting = childName;
+        response += babysitterName + " starts watching "+childName;
+        text.addMessage(gameState, "tribe", response );
     } else {
         text.addMessage(gameState, actorName,  babysitterName+' is not old enough to watch children' );
         return
     }
-    text.addMessage(gameState, "tribe", response );
     gameState.saveRequired = true;
     return;
 

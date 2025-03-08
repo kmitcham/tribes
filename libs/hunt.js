@@ -148,9 +148,9 @@ function getScoutMessage(otherLocation, gameState){
     response += '\tGather:\n'
     for (var index in locationData['gather']){
         entry = locationData['gather'][index]
-        response += '\t\t'+entry[3]+'('+(Number(entry[1])+Number(entry[2]))+') roll '+entry[0]+'\n'
+        response += '\t\t'+entry[3]+'('+(Number(entry[1])+Number(entry[2]))+') \t\t(roll '+entry[0]+')\n'
     }
-    response += '\tHunt:  Game Track:'+gameState.gameTrack[locationName]+'\n'
+    response += '\tHunt:  Game Track: '+gameState.gameTrack[locationName]+'\n'
     for (var index in locationData['hunt']){
         entry = locationData['hunt'][index]
         capValue = locationDecay[gameState.gameTrack[locationName]]
@@ -159,7 +159,7 @@ function getScoutMessage(otherLocation, gameState){
             response += '\t\t (game track capped)\n'
             break;
         }
-        response += '\t\t'+entry[2]+'('+entry[1]+')\n'
+        response += '\t\t'+entry[2]+'('+entry[1]+') \t\t(roll '+entry[0]+')\n'
     }
     return response
 }
@@ -208,12 +208,13 @@ function scoutNerd(gameTrack){
     }
     response = '216 totals:'
     for (locationName in totals){
-        response += '\n'+locationName+' food:'+totals[locationName][GATHER]
-            + '\tgrain:'+totals[locationName][GRAIN]
-            + '\tsf:'+totals[locationName][GATHER_STRONG] 
-            + '\tsg:'+totals[locationName][GRAIN_STRONG] 
-            + '\thunt:'+totals[locationName][HUNT]
-            + '\tspear:'+totals[locationName][SPEAR]
+        response += '\n'+locationName
+            + '      food:\t' +totals[locationName][GATHER]
+            + '\t   grain:\t' +totals[locationName][GRAIN]
+            + '\tstrong.f:\t' +totals[locationName][GATHER_STRONG] 
+            + '\tstrong.g:\t' +totals[locationName][GRAIN_STRONG] 
+            + '\t    hunt:\t' +totals[locationName][HUNT]
+            + '\t   spear:\t' +totals[locationName][SPEAR]
     }
     msg.author.send(response)
     totals = {
@@ -245,12 +246,13 @@ function scoutNerd(gameTrack){
     }
     response = MAX+'x Random avg:'
     for (locationName in totals){
-        response += '\n'+locationName+'food:'+Math.round(10*totals[locationName][GATHER]/MAX)
-                                    +'\tgrain:'+Math.round(10*totals[locationName][GRAIN]/MAX)
-                                    +'\tsf:'  +Math.round(10*totals[locationName][GATHER_STRONG]/MAX)
-                                    +'\tsg:'  +Math.round(10*totals[locationName][GRAIN_STRONG]/MAX)
-                                    +'\thunt:'+Math.round(10* totals[locationName][HUNT]/MAX)
-                                    +'\tspear:'+Math.round(10* totals[locationName][SPEAR]/MAX)
+        response += '\n'+locationName
+            +'      food:' +Math.round(10*totals[locationName][GATHER]/MAX)
+            +'\t   grain:' +Math.round(10*totals[locationName][GRAIN]/MAX)
+            +'\tstrong f:' +Math.round(10*totals[locationName][GATHER_STRONG]/MAX)
+            +'\tstrong g:' +Math.round(10*totals[locationName][GRAIN_STRONG]/MAX)
+            +'\t    hunt:' +Math.round(10* totals[locationName][HUNT]/MAX)
+            +'\t   spear:' +Math.round(10* totals[locationName][SPEAR]/MAX)
     }
 }
 module.exports.getScoutNerd = scoutNerd;

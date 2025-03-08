@@ -29,12 +29,12 @@ module.exports = {
 };
 
 function banishAdmin(gameState, actorName, targetName, reason){
-    player = pop.memberByName(actorName);
-    targetPlayer = pop.memberByName(targetName);
+    player = pop.memberByName(actorName, gameState);
+    targetPlayer = pop.memberByName(targetName, gameState);
 
     if (!player || !player.chief ) {
-            text.addMessage(gameState, actorName, 'banish requires chief priviliges');
-            return
+        text.addMessage(gameState, actorName, 'banish requires chief priviliges');
+        return;
     }
     if (gameState.demand || gameState.violence){
         text.addMessage(gameState, actorName,'banish can not be used during a conflict')

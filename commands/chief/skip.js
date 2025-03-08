@@ -25,7 +25,7 @@ module.exports = {
 };
 
 function skip(gameState, actorName, targetName){
-    var actor = pop.personByName(actorName, gameState)
+    var actor = pop.memberByName(actorName, gameState)
     if ( !actor.chief){
         text.addMessage(gameState, actorName,command+' requires chief priviliges' )
         return

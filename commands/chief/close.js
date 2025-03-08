@@ -11,24 +11,23 @@ module.exports = {
     async execute(interaction, gameState, bot) {
         var actorName = interaction.member.displayName
 
-        response = close(actorName, gameState, bot)
-        if (gameState.open){
-            text.addMessage(gameState, "tribe", "The tribe is open")
-        } else {
-           text.addMessage(gameState, "tribe", "The tribe is closed")
-        }
-        gameState.saveRequired = true;
-
+        response = close(actorName, gameState)
 	},
 };
 
-function close(actorName, gameState, bot){
-    var player = pop.personByName(actorName, gameState)
+function close(actorName, gameState){
+    var player = pop.memberByName(actorName, gameState)
     if ( !player.chief){
-        text.addMessage(gameState, actorName,command+' requires chief priviliges' )
+        text.addMessage(gameState, actorName,'close requires chief priviliges' )
         return
     }
     gameState.open = false
-    text.addMessage(gameState, "tribe",'The tribe is only open to those the chief inducts' )
+    if (gameState.open){
+        text.addMessage(gameState, "tribe", "The tribe is open")
+    } else {
+       text.addMessage(gameState, "tribe", "The tribe is closed")
+    }
+    gameState.saveRequired = true;
+
     return
 }

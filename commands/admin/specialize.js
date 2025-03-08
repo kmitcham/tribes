@@ -4,11 +4,11 @@ const prof = require("../../libs/profession")
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('specialize')
-		.setDescription('Choose a profession: Hunt, Gather, Craft')
+		.setDescription('Choose a profession: Hunter, Gatherer, Crafter')
         .addStringOption(option => 
             option
             .setName('profession')
-            .setDescription('one of (hunt, gather, craft)')
+            .setDescription('one of (hunter, gatherer, crafter)')
             .addChoices(
                 { name: 'hunter', value: 'hunter' },
                 { name: 'crafter', value: 'crafter' },

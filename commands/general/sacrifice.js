@@ -47,7 +47,7 @@ function doCommand(gameState, sourceName, item, amount){
         text.addMessage(gameState,sourceName, response);
         return;
     }
-    var sourcePerson = pop.memberByName(sourceName);
+    var sourcePerson = pop.memberByName(sourceName, gameState);
     // check if person is in tribe
     if (!sourcePerson){
         response = sourceName+" not found in tribe";

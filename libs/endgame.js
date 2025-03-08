@@ -104,7 +104,7 @@ function scoreChildrenMessage(gameState){
 		}
 	}
 	if (Object.keys(parentScores).length == 0) {
-        return  "No children were conceived, so all individual scores are zero.";;
+        return  "No children were conceived, so all individual scores are zero.";
     }
     var message = 'Child scores:\n'
 

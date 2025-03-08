@@ -107,16 +107,17 @@ function getNerdData(gameTrackValue, nerdOption){
             }
         }
     }
-    response = "";
+    response = "Nerd Values\n";
     if (nerdOption === 'all'){
-        response = '216 totals:'
+        response = 'Sum of all 216 possible die rolls:'
         for (locationName in totals){
-            response += '\n'+locationName+' food:'+totals[locationName][GATHER]
-                + '\tgrain:'+totals[locationName][GRAIN]
-                + '\tstrongfoof:'+totals[locationName][GATHER_STRONG] 
-                + '\tstrongg:'+totals[locationName][GRAIN_STRONG] 
-                + '\thunt:'+totals[locationName][HUNT]
-                + '\tspear:'+totals[locationName][SPEAR]
+            response += '\n'+locationName
+                +' food: '+totals[locationName][GATHER]
+                + '\tgrain: '+totals[locationName][GRAIN]
+                + '\tstrong  food:'+totals[locationName][GATHER_STRONG] 
+                + '\tstrong grain:'+totals[locationName][GRAIN_STRONG] 
+                + '\thunt: '+totals[locationName][HUNT]
+                + '\thunt with spear: '+totals[locationName][SPEAR]
         }
     } else {
         MAX = 6000
@@ -140,14 +141,15 @@ function getNerdData(gameTrackValue, nerdOption){
                 totals[locationName][GRAIN_STRONG]+= dataStrong[2]
             }
         }
-        response = MAX+'x Random avg:'
+        response = 'Average value after '+MAX+' rolls:'
         for (locationName in totals){
-            response += '\n'+locationName+'food:'+Math.round(10*totals[locationName][GATHER]/MAX)
-                                        +'\tgrain:'+Math.round(10*totals[locationName][GRAIN]/MAX)
-                                        +'\tsf:'  +Math.round(10*totals[locationName][GATHER_STRONG]/MAX)
-                                        +'\tsg:'  +Math.round(10*totals[locationName][GRAIN_STRONG]/MAX)
-                                        +'\thunt:'+Math.round(10* totals[locationName][HUNT]/MAX)
-                                        +'\tspear:'+Math.round(10* totals[locationName][SPEAR]/MAX)
+            response += '\n'+locationName
+                +'\t food:'+Math.round(totals[locationName][GATHER]/MAX)
+                +'\t grain:'+Math.round(totals[locationName][GRAIN]/MAX)
+                +'\t strong f:'  +Math.round(totals[locationName][GATHER_STRONG]/MAX)
+                +'\t strong g:'  +Math.round(totals[locationName][GRAIN_STRONG]/MAX)
+                +'\t hunt:'+Math.round(totals[locationName][HUNT]/MAX)
+                +'\t hunt with spear:'+Math.round(totals[locationName][SPEAR]/MAX)
         }
     }
     return response
