@@ -62,9 +62,9 @@ function give(gameState, sourceName, targetName, amount, item){
     // check if person is in tribe
     targetPerson = pop.memberByName(targetName,gameState);
     sourcePerson = pop.memberByName(sourceName,gameState);
-    if (!targetPerson || sourcePerson){
+    if (!targetPerson || !sourcePerson){
         response = "Source or target "+sourceName+":"+targetName+" not found in tribe";
-        text.addMessage(gameState, "tribe", response)
+        text.addMessage(gameState, sourceName, response)
         return ;
     }
     if (!sourcePerson[item] || sourcePerson[item] < amount){

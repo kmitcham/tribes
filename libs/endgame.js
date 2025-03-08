@@ -103,7 +103,11 @@ function scoreChildrenMessage(gameState){
 			parentScores[child.father] = 1
 		}
 	}
-	message = 'Child scores:\n'
+	if (Object.keys(parentScores).length == 0) {
+        return  "No children were conceived, so all individual scores are zero.";;
+    }
+    var message = 'Child scores:\n'
+
 	for (parentName in parentScores){
 		member = pop.memberByName(parentName, gameState)
 		if (member){

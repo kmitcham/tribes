@@ -24,16 +24,16 @@ module.exports = {
         var targetName = targetObject.displayName;
         var sourceName = interaction.member.displayName;
         var reason = interaction.options.getString('reason');
-        await banishAdmin(gameState, sourceName, targetName);
-
+        banishAdmin(gameState, sourceName, targetName, reason);
 	},
 };
 
 function banishAdmin(gameState, actorName, targetName, reason){
     player = pop.memberByName(actorName);
     targetPlayer = pop.memberByName(targetName);
-    if (!referees.includes(actor) && !player.chief){
-            text.addMessage(gameState, actorName,'banish requires referee or chief priviliges');
+
+    if (!player || !player.chief ) {
+            text.addMessage(gameState, actorName, 'banish requires chief priviliges');
             return
     }
     if (gameState.demand || gameState.violence){
