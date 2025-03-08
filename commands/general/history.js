@@ -15,7 +15,16 @@ module.exports = {
 function onCommand(interaction, gameState){
     var playerName = interaction.user.displayName;
     var player = pop.memberByName(playerName, gameState)
+    if (!player){
+        text.addMessage(gameState, playerName, "You have no history with this tribe");
+        return;
+    }
     messages = player.history
+    if (!messages){
+        text.addMessage(gameState, playerName, "You have no history.  How did you get in the tribe?");
+        console.log(playerName+" was in tribe but had no history");
+        return; 
+    }
     for (const message of messages){
         text.addMessage(gameState, playerName, message)
     }
