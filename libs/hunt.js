@@ -98,9 +98,10 @@ module.exports.hunt = (playername, player, rollValue, gameState) =>{
         huntercount += Math.min(player.helpers.length,3)
     }
     // check for spearhead loss
-    if (player.spearhead > 0 && dice.roll(1) <= 2){
+    const breakRoll = dice.roll(1);
+    if (player.spearhead > 0 && breakRoll <= 2){
         player.spearhead -= 1
-        message += '\n The spearhead broke!'
+        message += '\n The spearhead broke! (roll '+breakRoll+')'
     }
 
     player.worked = true

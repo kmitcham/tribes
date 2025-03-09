@@ -47,8 +47,13 @@ function induct(interaction, gameState){
 	
     var chief = pop.memberByName(sourceName, gameState)
 	
-    if (!chief || !chief.chief){
-        response = "You must be chief to induct a member"
+    if (!chief ){
+        response = "You must be in the tribe to do that";
+        text.addMessage(gameState, "tribe", response);
+        return
+    }
+    if (!chief.chief){
+        response = "You must be chief to induct a member";
         text.addMessage(gameState, "tribe", response);
         return
     }

@@ -32,7 +32,11 @@ function banishAdmin(gameState, actorName, targetName, reason){
     player = pop.memberByName(actorName, gameState);
     targetPlayer = pop.memberByName(targetName, gameState);
 
-    if (!player || !player.chief ) {
+    if (!player ) {
+        text.addMessage(gameState, actorName, 'Is '+actorName+' even in the tribe?');
+        return;
+    }
+    if (!player.chief ) {
         text.addMessage(gameState, actorName, 'banish requires chief priviliges');
         return;
     }
