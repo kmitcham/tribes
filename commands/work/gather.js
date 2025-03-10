@@ -24,7 +24,6 @@ module.exports = {
 function gather(interaction, gameState){
     var sourceName = interaction.member.displayName;
     var forceRoll = interaction.options.getInteger('force');
-    var population = gameState.population;
     player = pop.memberByName(sourceName, gameState);
     msg = worklib.canWork(gameState, player);
 

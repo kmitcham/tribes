@@ -36,6 +36,7 @@ function findLeastGuarded (children, population){
 	var guardChildSort = []
 	var leastGuarded = []
 	if (Object.keys(children).length == 0){
+		console.log(Object.keys(children).length+ " count.  No children found: "+children)
 		return 'No children to sort'
 	}
 	for (var childName in children){

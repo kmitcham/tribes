@@ -5,7 +5,7 @@ const text = require("./textprocess.js");
 const reproLib = require("./reproduction.js");
 const killlib = require("./kill.js");
 
-// msg is deprecated
+// unused is deprecated
 function feed(unused, player, amount, inputChildList, gameState){
         children = gameState.children;
         let message = ""
@@ -26,7 +26,8 @@ function feed(unused, player, amount, inputChildList, gameState){
                     }
 					if (!feedAtLeastOneChild){
 						text.addMessage(gameState, player.name,'no children need food');
-						return;
+						console.log("message is "+'no children need food');
+						return 1; 
 					}
                     continue;
                 }
@@ -60,7 +61,7 @@ function feed(unused, player, amount, inputChildList, gameState){
                 continue
             }
             var fed = 0
-            if ( ( player['food']+player['grain'] ) >= amount){
+            if ( ( player['food']+ player['grain'] ) >= amount){
                 if (player['food'] >= amount){
                     player.food -= Number(amount)
                 } else {
@@ -184,7 +185,7 @@ function consumeFoodChildren(gameState){
 					person.guarding.push(child.name)
 				}
 				if (birthRoll == 17){
-					twin = pop.addChild(child.mother, child.father, gameState);
+					twin = reproLib.addChild(child.mother, child.father, gameState);
 					delete child.mother.isPregnant; // this gets set by addChild, but the child was just born.
 					response += child.mother+' gives birth to a twin! Meet '+twin.name+', a healthy young '+twin.gender+'-child.\n'
 					pop.history(child.mother,child.mother+' gives birth to a twin! Meet '+twin.name+', a healthy young '+twin.gender+'-child', gameState)

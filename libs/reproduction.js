@@ -178,6 +178,9 @@ function handleReproductionList(actorName, args, listName, gameState){
         returnMessage += ("Setting your "+listName+" list to:"+list+"\n")
         if (save){
             returnMessage += ("Saving your "+listName+" list be used in future rounds\n")
+            if (gameState.reproductionRound){
+                returnMessage += "Changing your list during the reproduction means changes will not be saved, sorry.\n"
+            }
         }
     }
     return returnMessage;
@@ -186,7 +189,6 @@ module.exports.handleReproductionList = handleReproductionList;
 
 
 function invite(author, invitelist, gameState){
-    
     console.log('author '+author)
     actorName = text.removeSpecialChars(author)
     console.log('actorName:'+actorName)
@@ -689,7 +691,7 @@ function startReproduction(gameState){
 	gameState.reproductionRound = true
 	delete gameState.enoughFood 
 	foodMessage = feed.consumeFood(gameState)
-    foodMessage += '\n==> Starting the Reproduction round; invite other tribe members to reproduce.<=='
+    foodMessage += '\n==> Starting the Reproduction round; invite other tribe members to reproduce.<==\n'
     foodMessage += 'After chance, the tribe can decide to move to a new location, but the injured and children under 2 will need 2 food'
     text.addMessage(gameState, "tribe",foodMessage)
 

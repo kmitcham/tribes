@@ -60,7 +60,7 @@ Still, the library tests should be doable.
 -- faction for/against/neutral isn't working
 ++ section titles to help page
 ++ NOTE FOR KEVIN: I can tap on arguments types like “destination” but not on the choices like “marsh”. This makes me sad @kevinmitcham .
-++ deal with servernames
+-- deal with servernames  DONE?
 ++ changes to romance during reproduction aren't saved correctly
 ++ without a referee, the 2 food penalty for an injury hard to apply when they have no food (but the tribe might help them)
 ++ double used a spearhead; gave after a hunt

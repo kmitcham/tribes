@@ -18,7 +18,7 @@ module.exports = {
 function onCommand(displayName, gameState){
     var message = 'Nobody seems ready for much of anything right now.'
     if (gameState.workRound){
-        message = "People available to work: "+worklib.listReadyToWork(population)
+        message = "People available to work: "+worklib.listReadyToWork(gameState.population)
     }	
     // this may just be an artifact of non-secret mating?
     if (gameState.reproductionRound){ 

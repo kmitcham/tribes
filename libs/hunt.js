@@ -93,10 +93,6 @@ module.exports.hunt = (playername, player, rollValue, gameState) =>{
         message += "\n\t"+huntRow[2] + ' +'+huntRow[1]+' food'
         player.food += huntRow[1]
     }
-    var huntercount = 1
-    if (player.helpers ){
-        huntercount += Math.min(player.helpers.length,3)
-    }
     // check for spearhead loss
     const breakRoll = dice.roll(1);
     if (player.spearhead > 0 && breakRoll <= 2){
@@ -106,7 +102,7 @@ module.exports.hunt = (playername, player, rollValue, gameState) =>{
 
     player.worked = true
     // update the game track
-    gameState.gameTrack[gameState.currentLocationName] += huntercount
+    gameState.gameTrack[gameState.currentLocationName] += 1
 
     // clear the stuff for group hunting
     if (player.bonus){
