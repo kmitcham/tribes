@@ -194,9 +194,6 @@ async function sendMessages(bot, gameState, interaction){
     }
 	if (needsReply){
 		console.log(" no reply to "+interaction.commandName);
-		if (interaction && interaction.isRepliable()){
-			interaction.reply({ content: "Tribesbot might have messed up that command.", flags: MessageFlags.Ephemeral });
-		}
 		needsReply = false
 	}
 	return 0;

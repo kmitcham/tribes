@@ -62,7 +62,8 @@ function doChance(rollValue, gameState){
         case 15 : 
             message +="Fungus! All stored food in the whole tribe, except grain, spoils and is lost."
             for (var name in population){
-                person = population[name]
+                person = population[name];
+                gameState.spoiled += person.food;
                 person.food = 0
             }
             break;
@@ -70,12 +71,14 @@ function doChance(rollValue, gameState){
             name = pop.randomMemberName(population)
             person= population[name]
             message +="Rats! All "+name+"'s food ["+person.food+"], except for grain, spoils and is lost.  "
+            gameState.spoiled += person.food;
             person.food = 0
             if (Object.keys(population).length >= 8){
                 name2 = pop.randomMemberName(population)
                 if (name != name2){
                     person2 = population[name2]
                     message+= name2+"'s ["+person2.food+"] food is also spoiled, in a strange coincidence."
+                    gameState.spoiled += person2.food;
                     person2.food = 0
                 }
             } else {
@@ -124,6 +127,7 @@ function doChance(rollValue, gameState){
                 if (amount > person.food){
                     amount = person.food
                 }
+                gameState.spoiled += amount;
                 person.food -= amount
                 message += "\n "+name+" loses "+amount
                 if (person.food < 0) { person.food = 0}
@@ -142,6 +146,7 @@ function doChance(rollValue, gameState){
             person.food -= amount
             if (person.food < 0) { person.food = 0}
             message += name + " loses "+amount+" food to weevils."
+            gameState.spoiled += amount;
             break;
         case 8: 
             message +=  "Favorable weather conditions allow the tribe to make “jerky,” which keeps very well. Each person may trade Food counters for Grain counters (representing the jerky), at a rate of 3 Food for 1 Grain.  Syntax: /jerky <amount of food>"
