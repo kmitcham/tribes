@@ -10,31 +10,31 @@ module.exports = {
         .addUserOption(option => 
             option
                 .setName('parent')
-                .setDescription('Only show children with a given parent.')
+                .setDescription('Only show children with a given parent. (parent and hungry are exclusive)')
                 .setRequired(false))
-        .addStringOption( option => 
+        .addBooleanOption( option => 
             option
             .setName('hungry')
             .setDescription('only show hungry children; any value will trigger the filter')
             .setRequired(false))
         ,
     async execute(interaction, gameState) {
-        children(interaction, gameState)
+        var parentMember = interaction.options.getMember('parent');
+        var onlyHungry = interaction.options.getBoolean('hungry');
+        var displayName = interaction.member.displayName;
+        children( gameState, displayName, onlyHungry, parentMember);
 	},
 };
 
-function children(interaction, gameState){
-    var parentMember = interaction.options.getString('parent');
-    var onlyHungry = interaction.options.getString('hungry');
+function children(gameState, displayName, onlyHungry, parentMember ){
     var population = gameState.population;
-    var displayName = interaction.member.displayName;
     var children = gameState.children;
 
     if (onlyHungry){
        response = ['These children need food:\n']
-        response.push(childlib.showChildren(children, population, '!hungry', gameState.secretMating))
+        response.push(childlib.showChildren(children, population, 'hungry', gameState.secretMating))
     } else if (parentMember){
-            var parentName = interaction.options.getMember('parent').displayName;
+            var parentName = parentMember.displayName;
             var parentPerson = pop.memberByName( parentName, gameState);
             if (!parentPerson ){
                 text.addMessage(gameState, displayName, 'Could not find '+parentName )
@@ -49,6 +49,6 @@ function children(interaction, gameState){
     for (part of response){
         compiledResponse = compiledResponse+"\n"+part;
     }
-    text.addMessage(gameState, "tribe", compiledResponse);
+    text.addMessage(gameState, displayName, compiledResponse);
     return 
 }

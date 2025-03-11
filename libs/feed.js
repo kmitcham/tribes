@@ -31,7 +31,7 @@ function feed(unused, player, amount, inputChildList, gameState){
 					}
                     continue;
                 }
-                // this seems to be code handling if a newAdult has a child?
+                // this seems to be feeding based on mother?
 				var parent = pop.memberByName(cName, gameState)
                 if (parent && parent.gender && parent.gender == 'female'){
                     for (var filterChildName in children){
@@ -44,6 +44,7 @@ function feed(unused, player, amount, inputChildList, gameState){
                     }
                     continue;
                 }
+				console.log("Feed did not find child "+childName);
 				text.addMessage(gameState, player.name,'no such child as '+childName);
 				continue;
             }
@@ -85,10 +86,6 @@ function feed(unused, player, amount, inputChildList, gameState){
         return 0
 };	
 module.exports.feed = feed;
-
-function capitalizeFirstLetter(string) {
-        return string.charAt(0).toUpperCase() + string.slice(1);
-}
 
 // Side effect: if everyone has enough food, and it is foodRound, start reproduction round.
 function checkFood(gameState, bot){

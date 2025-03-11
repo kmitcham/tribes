@@ -32,7 +32,7 @@ module.exports.showChildren =  (children, population, filterName="", hideFathers
 				// do nothing
 			} else if (filterName == child.father && !hideFathers){
 				// also do nothing
-			} else if (filterName == "!hungry") {
+			} else if (filterName == "hungry") {
 				if (child.food >= 2){
 					continue;
 				}
