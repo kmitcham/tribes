@@ -1,6 +1,7 @@
 const locations = require('./locations.json');
 const dice = require("./dice")
 const text = require("./textprocess")
+const pop = require("./population");
 
 const locationDecay = [30, // arrays count from 0 so add extra item
     30,30,30,17,17,
@@ -59,9 +60,7 @@ module.exports.hunt = (playername, player, rollValue, gameState) =>{
         message+= '+spearhead '
     }
     netRoll = Number(rollValue)+modifier
-    var oldTrack = gameState.gameTrack[gameState.currentLocationName]
     gameTrack = gameState.gameTrack[gameState.currentLocationName]
-    message += '\nThe game track goes from '+oldTrack+' to '+gameState.gameTrack[gameState.currentLocationName]
     hunt_cap = locationDecay[gameTrack]
     huntData = locations[gameState.currentLocationName]['hunt']
     if (netRoll > hunt_cap){
@@ -103,6 +102,7 @@ module.exports.hunt = (playername, player, rollValue, gameState) =>{
     player.worked = true
     // update the game track
     gameState.gameTrack[gameState.currentLocationName] += 1
+    message += '\nThe game track goes from '+gameTrack+' to '+gameState.gameTrack[gameState.currentLocationName]
 
     // clear the stuff for group hunting
     if (player.bonus){
