@@ -55,8 +55,8 @@ function startWork(actorName, gameState){
 function recoverGameTracks(gameState){
 	if (utils.isColdSeason(gameState)){
 		for (locationName in locations){
-			modifier = locations[locationName]['game_track_recover']
-			oldTrack = gameState.gameTrack[locationName]
+			const modifier = locations[locationName]['game_track_recover']
+			const oldTrack = gameState.gameTrack[locationName]
 			gameState.gameTrack[locationName]  -= modifier
 			if (gameState.gameTrack[locationName]< 1){
 				gameState.gameTrack[locationName] = 1

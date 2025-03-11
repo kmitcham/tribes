@@ -42,7 +42,7 @@ client.once(Events.ClientReady, () => {
 	console.log('Tribes Ready!');
     var d = new Date();
 	var n = d.toISOString();
-	alertChannel =  client.channels.cache.find(channel => channel.name === 'bug-reports')
+	alertChannel =  client.channels.cache.find(channel => channel.name === 'server-restarted')
 	alertChannel.send('TribesBot is alive again. '+n)
 });
 client.once('reconnecting', () => {

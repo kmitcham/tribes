@@ -115,6 +115,7 @@ module.exports.hunt = (playername, player, rollValue, gameState) =>{
     player.worked = true;
     gameState.saveRequired= true;
     text.addMessage(gameState, "tribe", message);
+    pop.history(player.name, message, gameState)
     return message
 }
 

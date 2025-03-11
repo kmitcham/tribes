@@ -61,13 +61,13 @@ function chiefHelp(){
 	//text+=' drone <gender> <profession> <name>  adds a worker to the tribe that takes commands but is sterile. [non-standard]\n'
 	text+=' startwork begins the work round, enabling work attempts and rolls\n'
 	text+=' startfood ends the work round; subtract food/grain; birth; child age increase\n'
-	text+=' startreproduction Start the reproduction round. Also when migration happens\n'
+	text+=' startreproduction  start the reproduction round. Also when migration happens\n'
 	text+=' chance after mating, chance is required to end the season\n'
-	text+=' migrate <newlocation> <force>  without force, just checks who would perish on the journey\n'
+	text+=' migrate <newlocation> <go>  without go, just checks who would perish on the journey\n'
 	text+=' decree <law number> <law text> record a rule for the tribe, or replace the rule of the specified number\n'
 	text+=' skip <person>   end a players reproduction turn\n'
 	text+=' checkmating report on status of mating attempts\n'
-	text+=' endgame convert all the child to corpses, or new adults\n'
+	text+=' endgame convert all the children to new adults or corpses.  Twenty years is often considered a good duration for a game.\n'
     return text;
 }
 

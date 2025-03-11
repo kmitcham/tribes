@@ -41,7 +41,7 @@ function decree(gameState, actorName, number, lawText){
         gameState.laws = {};
         console.log("Initializing laws");
     }
-    if ( number  === undefined ){
+    if ( !number ){
         number = Object.keys(gameState.laws).length
         console.log("defauting law number "+number);
     } 

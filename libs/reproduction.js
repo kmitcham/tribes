@@ -472,6 +472,8 @@ function makeLove(name1, name2, gameState, force = false){
 	} 
     motherMessage = fatherName +' shares good feelings with you ['+mroll+']'
     fatherMessage = motherName +' shares good feelings with you ['+droll+']'
+    pop.history(motherName, motherMessage, gameState)
+    pop.history(fatherName, fatherMessage, gameState)
     text.addMessage(gameState, motherName, motherMessage)
     text.addMessage(gameState, fatherName, fatherMessage)
     detection(mother, father, (mroll+droll), gameState)
@@ -695,12 +697,12 @@ function startReproduction(gameState){
     foodMessage += 'After chance, the tribe can decide to move to a new location, but the injured and children under 2 will need 2 food'
     text.addMessage(gameState, "tribe",foodMessage)
 
-		rememberInviteLists(gameState);
-		gameState.doneMating = false;
-		globalMatingCheck(gameState)
-		if (canStillInvite(gameState)){	
-            text.addMessage(gameState, "tribe",'(awaiting invitations or !pass from '+canStillInvite(gameState)+')' )	
-		}
+    rememberInviteLists(gameState);
+    gameState.doneMating = false;
+    globalMatingCheck(gameState)
+    if (canStillInvite(gameState)){	
+        text.addMessage(gameState, "tribe",'(awaiting invitations or !pass from '+canStillInvite(gameState)+')' )	
+    }
 	pop.decrementSickness(gameState.population, gameState);
     gameState.saveRequired = true;
     gameState.archiveRequired = true;

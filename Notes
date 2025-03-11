@@ -58,15 +58,16 @@ Still, the library tests should be doable.
 -- chance result 5, sickness, check food?  NEEDs ref unless someone saves them.
 -- long messages get split between channel and DMs, not obvious
 -- faction for/against/neutral isn't working
-++ section titles to help page
-++ NOTE FOR KEVIN: I can tap on arguments types like “destination” but not on the choices like “marsh”. This makes me sad @kevinmitcham .
+-- section titles to help page
 -- deal with servernames  DONE?
-++ changes to romance during reproduction aren't saved correctly
+-- changes to romance during reproduction aren't saved correctly
+-- child died on migration after a feed !all. (the child was unborn, and didn't get fed by feed !all) they were listed in the check though
 ++ without a referee, the 2 food penalty for an injury hard to apply when they have no food (but the tribe might help them)
 ++ double used a spearhead; gave after a hunt
 ++ history removed from reproduction, hunting.  Probably gathering
-++ child died on migration after a feed !all. (the child was unborn, and didn't get fed by feed !all) they were listed in the check though
+-- child died on migration after a feed !all. (the child was unborn, and didn't get fed by feed !all) they were listed in the check though
 ++ endgame needs to check banished and graveyard
+++ NOTE FOR KEVIN: I can tap on arguments types like “destination” but not on the choices like “marsh”. This makes me sad @kevinmitcham .
 ++ history isn't working?
 ++ feed !all when no children need food is weird.
 
@@ -139,3 +140,19 @@ W !decree <law number> <law text> (record a rule for the tribe, or replace the r
 W !skip <person>   (end a players reproduction turn)
 U !checkmating (report on status of mating attempts)
 W !endgame convert all the child to corpses, or new adults
+
+
+
+Come test my Tribes server!
+Tribes is a simple game, and all the really cool parts of the game come from the interaction with the other players.  
+A fairly simple program can handle all the rules and inventory system, freeing the players to spend their time and attention on each other.
+I've implemented such a program on a discord server.   
+I'm looking for some playtesters to play a few sessions of a few hours each to help smooth the documentation and game flow (and shake out the remaining 
+bugs) before I open it to the general public.
+Please contact me at kmitcham@gmail.com, or just dive in at <DISCORD LINK HERE> if you want to try it.  
+I'm around most nights after 6 Seattle time, but in theory players can read the help text and get started without any handholding.
+Tribes is best with 4-6 players, but as few as 2 can succeed.  A solo player can not reproduce, and probably can not survive very long.
+Players with no tribes experience (ie, most humans) are the intended audience, but Tribes experience is a plus for understanding what is a bug and what is rules-based suffering.  When in doubt, mention it.
+I am interested in feedback on my help text, command descriptions, rules implementations, and of course, bugs.  
+I realize discord isn't the best environment to do this, but unless someone wants to team up and work on a cooler, stand-alone tool, it is what I have.
+
