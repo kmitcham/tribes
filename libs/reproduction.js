@@ -127,16 +127,19 @@ function handleReproductionList(actorName, args, listName, gameState){
         localErrors = "";   
         rawTargetName = text.removeSpecialChars(rawTargetName)     
         if (rawTargetName.toLowerCase() == "!pass"){
-            console.log("Detected pass at position "+(args.indexOf(rawTargetName)+1)+" of "+(args.length));
             if (listName == 'inviteList'){
                 if (args.indexOf(rawTargetName) != (args.length -1)){
                     errors.push("Values after '!pass' must be removed.\n")
                 }
-                list.push(rawTargetName)
+                list.push(rawTargetName);
                 break;
             } else {
                 errors.push("!pass is only valid in the inviteList.")
             }
+        } else if (rawTargetName.toLowerCase() == '!none'){
+            list = [];
+            save = true
+            break;
         } else if (rawTargetName.toLowerCase() == '!save'){
             if (listName == 'inviteList'){
                 list.push(rawTargetName)
@@ -247,11 +250,25 @@ function consent(actorName, messageArray,  gameState){
 module.exports.consent = consent;
 
 function decline(actorName, messageArray,  gameState){
-    handleReproductionList(actorName, messageArray, "declineList",gameState )
     person = pop.memberByName(actorName, gameState);
-    intersectList = intersect(person.consentList, person.declineList)
-    if (intersectList && intersectList.length > 0){
-        text.addMessage(gameState, actorName, "Your consent and decline lists have overlaps.  Consent is checked first.")
+    if (messageArray.includes("!none")){
+        person.declineList = [];
+        text.addMessage(gameState, actorName, "Emptying your declineList");
+    } else if (messageArray.includes("!all")){
+        var matchGender = "male";
+        if (person.gender == "male"){
+            matchGender = "female";
+        }
+        declineArray = pop.getAllNamesByGender(gameState.population, matchGender);
+        person.declineList = declineArray.join(" ");
+        console.log("declineList set to "+person.declineList);
+        text.addMessage(gameState, actorName, "Setting your declineList to "+person.declineList);
+    } else {
+        handleReproductionList(actorName, messageArray, "declineList",gameState )
+        intersectList = intersect(person.consentList, person.declineList)
+        if (intersectList && intersectList.length > 0){
+            text.addMessage(gameState, actorName, "Your consent and decline lists have overlaps.  Consent is checked first.")
+        }    
     }
     return globalMatingCheck(gameState)
 }

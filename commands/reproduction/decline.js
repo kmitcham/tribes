@@ -6,11 +6,11 @@ const pop = require("../../libs/population.js");
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('decline')
-		.setDescription('Space seperated list of names of people you would NOT mate with.')
+		.setDescription('Space seperated list of names of people you would NOT mate with. ')
         .addStringOption(option => 
             option
             .setName('declinelist')
-            .setDescription('add !save to retain the list. ')
+            .setDescription('takes !none and !all, or names ')
         )
         ,
     async execute(interaction, gameState, bot) {
@@ -24,7 +24,7 @@ function onCommand(interaction, gameState, bot){
 
     var player = pop.memberByName(sourceName, gameState);
     if (! rawList ) {
-        if (player.declinelist){
+        if (player.declineList){
             text.addMessage(gameState, sourceName, "Current declinelist: "+player.declinelist.join(" "));
             return;
         } else {

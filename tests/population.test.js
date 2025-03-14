@@ -132,3 +132,40 @@ test("person with gender and profession", ()=>{
   playerMessage = gameState.messages[memberName]
   
 })
+
+test("list names by gender", ()=>{
+  var gameState = {
+    "population": {
+        "male1": {
+            "name": "male1",
+            "gender":"male"
+
+          },
+          "genderless": {
+            "name": "genderless",
+          },
+          "male2": {
+            "name": "male2",
+            "gender":"male",
+          },
+          "female1": {
+            "name": "female1",
+            "gender":"female",
+          },
+          "female2": {
+            "name": "female2",
+            "gender":"female",
+          },
+    },
+  }
+  expectMale = ["male1", "male1"];
+  expectFemale = ["female1", "female1"];
+  actualMale = pop.getAllNamesByGender(gameState.population, "male");
+  actualFemale = pop.getAllNamesByGender(gameState.population, "female");
+  expect(expectMale.includes("male1"));
+  expect(expectMale.includes("male2"));
+  expect(2).toEqual(actualMale.length)
+  expect(expectFemale.includes("female1"));
+  expect(expectFemale.includes("female2"));
+  expect(2).toEqual(actualMale.length)
+})

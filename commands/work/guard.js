@@ -68,7 +68,7 @@ function onCommand(interaction, gameState){
         text.addMessage(gameState, actorName, response)
     } else {
         if (person.guarding){
-            text.addMessage(gameState, actorName, actorName+' starts guarding '+person.guarding )
+            text.addMessage(gameState, "tribe", actorName+' starts guarding '+person.guarding )
         } else {
             text.addMessage(gameState, actorName, actorName+ ' is not guarding any children' )
         }

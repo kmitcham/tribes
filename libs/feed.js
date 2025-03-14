@@ -8,15 +8,15 @@ const killlib = require("./kill.js");
 // unused is deprecated
 function feed(unused, player, amount, inputChildList, gameState){
         children = gameState.children;
-        let message = ""
+        let message = player["name"]+" goes to feed the children.  \n";
         var showErrors = true;
+		feedAtLeastOneChild = false;
         for (cName of inputChildList){
             childName = text.capitalizeFirstLetter(cName)
             amount = Number(amount)
             if (!children[childName]) {
                 if (cName.toLowerCase() == "!all"){
                     showErrors = false;
-					feedAtLeastOneChild = false;
                     for (var childName in children){
                         var child = children[childName]
                         if (!( child.newAdult && child.newAdult == true) || child.food < 2){
@@ -65,10 +65,12 @@ function feed(unused, player, amount, inputChildList, gameState){
             if ( ( player['food']+ player['grain'] ) >= amount){
                 if (player['food'] >= amount){
                     player.food -= Number(amount)
+					feedAtLeastOneChild = true;
                 } else {
                     fed = player.food
                     player.food = 0
                     player['grain'] -= (amount-fed)
+					feedAtLeastOneChild = true;
                 }
                 message += player.name+' feeds '+amount+' to '+childName;
                 children[childName].food += Number(amount)
@@ -81,6 +83,9 @@ function feed(unused, player, amount, inputChildList, gameState){
                 break;
             }
         }
+		if (!feedAtLeastOneChild){
+			message = "No children required food.";
+		}
         console.log("message is "+message);
         text.addMessage(gameState, "tribe", message)
         return 0
@@ -218,7 +223,7 @@ function consumeFoodChildren(gameState){
 		}
 		if (child.age >= 24 && ! child.newAdult ){
 			child.newAdult = true
-			response += child.name+' has reached adulthood!\n'
+			response += ">> "+child.name+' has reached adulthood!\n'
 			// clear all guardians
 			for  (var name in population) {
 				player = population[name]

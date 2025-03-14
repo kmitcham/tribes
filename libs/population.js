@@ -207,6 +207,18 @@ function countByType(dictionary, key, value){
 }
 module.exports.countByType = countByType;
 
+function getAllNamesByGender(population, gender){
+	var genderedNameList = [];
+	for (memberName in population){
+        member = population[memberName];
+		if (member.gender == gender){
+            genderedNameList.push(memberName);
+        }
+	}
+	return genderedNameList;
+}
+module.exports.getAllNamesByGender = getAllNamesByGender;
+
 function randomMemberName(population){
 	nameList = Object.keys(population)
 	var random =  Math.trunc( Math.random ( ) * nameList.length )
