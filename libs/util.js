@@ -50,7 +50,9 @@ function gameStateMessage(gameState) {
 		} else {
 			message += ' (reproduction round, awaiting migration or not.)'
 		}
-		
+	} else {
+		// if not the reproduction round
+		message += "  You may update your invite/consent/decline lists.\n";
 	}
 	return message
 }

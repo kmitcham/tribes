@@ -10,7 +10,7 @@ module.exports = {
         .addStringOption(option => 
             option
             .setName('consentlist')
-            .setDescription('list of names.  !all is an option for the less discriminating')
+            .setDescription('list of names.  !all is an option for the less discriminating, !none is also available')
         )
         ,
     async execute(interaction, gameState, bot) {
@@ -22,16 +22,23 @@ module.exports = {
 };
 
 function onCommand(gameState, sourceName, rawList){
-    var member = pop.memberByName(gameState, sourceName);
+    var member = pop.memberByName(sourceName, gameState);
 
     if (! rawList ) {
-        if (member.hasOwnProperty('consentList')){
-            return "Current consentList: "+member.consentList.join(" ")
+        console.log("no rawList for consent");
+        if (member.hasOwnProperty('consentList') && member.consentList.length > 0){
+            text.addMessage(gameState, sourceName, "Current consentList: "+member.consentList.join(" ") )
+            return ;
         } else {
-            return "No current consentList"
+            text.addMessage(gameState, sourceName,  "No current consentList.");
+            return;
         }   
     }
     let messageArray = rawList.split(" ");
+    if (messageArray.length < 1){
+        text.addMessage(gameState, sourceName, "No values parsed from that consentList: "+rawList );
+        return ;
+    }
     console.log("updating consentlist: "+messageArray);
     reproLib.consent(sourceName, messageArray,  gameState);
     gameState.saveRequired;
