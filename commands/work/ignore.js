@@ -56,7 +56,7 @@ function ignoreChildren(gameState, actorName, cName, cName2, cName3 ){
     if (response.includes("FAIL")){
         text.addMessage(gameState, actorName, response);
     } else {
-        text.addMessage(gameState, actorName, response);
+        text.addMessage(gameState, "tribe", response);
         gameState.saveRequired = true
     }
 }

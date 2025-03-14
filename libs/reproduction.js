@@ -111,24 +111,26 @@ function checkCompleteLists(gameState){
 }
 
 
-function handleReproductionList(actorName, args, listName, gameState){
-    console.log("Building "+listName+" for "+actorName+" args "+args)
+function handleReproductionList(actorName, inputList, listName, gameState){
+    console.log("Building "+listName+" for "+actorName+" args "+inputList)
     actor = pop.memberByName(actorName, gameState);
-    if (!args || args.length == 0){
+    if (!inputList || inputList.length == 0){
         delete actor[listName]
+        // this may be dead code with the new discord API.
+        console.log("DELETE in handle list actually called.  SURPRISE!");
         return "Deleting your empty "+listName
     }
     population = gameState.population
     errors = []
     list = []
     save = false;
-    for (rawTargetName of args){
+    for (rawTargetName of inputList){
         console.log("arg: "+rawTargetName)
         localErrors = "";   
-        rawTargetName = text.removeSpecialChars(rawTargetName)     
-        if (rawTargetName.toLowerCase() == "!pass"){
+        targetName = text.removeSpecialChars(rawTargetName)
+        if (targetName.toLowerCase() == "!pass"){
             if (listName == 'inviteList'){
-                if (args.indexOf(rawTargetName) != (args.length -1)){
+                if (inputList.indexOf(rawTargetName) != (inputList.length -1)){
                     errors.push("Values after '!pass' must be removed.\n")
                 }
                 list.push(rawTargetName);
@@ -136,25 +138,24 @@ function handleReproductionList(actorName, args, listName, gameState){
             } else {
                 errors.push("!pass is only valid in the inviteList.")
             }
-        } else if (rawTargetName.toLowerCase() == '!none'){
+        } else if (targetName.toLowerCase() == '!none'){
             list = [];
             save = true
             break;
-        } else if (rawTargetName.toLowerCase() == '!save'){
+        } else if (targetName.toLowerCase() == '!save'){
             if (listName == 'inviteList'){
-                list.push(rawTargetName)
+                list.push(targetName)
                 save = true
             } else {
                 errors.push("!save is only valid in the inviteList.")
             }
-        } else if (rawTargetName.toLowerCase() == '!all'){
+        } else if (targetName.toLowerCase() == '!all'){
             if (listName != 'inviteList'){
-                list.push(rawTargetName)
+                list.push(targetName)
             } else {
                 errors.push("!all is only valid in the consentList and declineList.")
             }
         } else {
-            targetName = text.removeSpecialChars(rawTargetName)
             target = pop.memberByName(targetName, gameState);
             if (target){
                 localErrors+= matingObjections(actor, target)
@@ -164,7 +165,7 @@ function handleReproductionList(actorName, args, listName, gameState){
             if (localErrors != ""){
                 errors.push(localErrors)
             } else {
-                list.push(target.name)
+                list.push(targetName)
             }
         }
     }
@@ -238,14 +239,14 @@ function intersect(a, b) {
 }
 
 function consent(actorName, messageArray,  gameState){
-    handleReproductionList(actorName, messageArray, "consentList",gameState )
+    handleReproductionList(actorName, messageArray, "consentList", gameState );
     person = pop.memberByName(actorName, gameState);
-    intersectList = intersect(person.consentList, person.declineList)
+    intersectList = intersect(person.consentList, person.declineList);
     if (intersectList && intersectList.length > 0){
-        text.addMessage(gameState, actorName, "Your consent and decline lists have overlaps.  Consent is checked first.")
+        text.addMessage(gameState, actorName, "Your consent and decline lists have overlaps.  Consent is checked first.");
     }
     text.addMessage(gameState, actorName, "Updated consentlist to "+person.consentList);
-    return globalMatingCheck(gameState)
+    return globalMatingCheck(gameState);
 }
 module.exports.consent = consent;
 
