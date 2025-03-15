@@ -894,12 +894,15 @@ test("run scoreChildren simple", ()=>{
       },
       "notlink": {
         "gender": "female",
+        "name": "notlink"
       },
       "otherMale": {
-        "gender": "male"
+        "gender": "male",
+        "name": "otherMale",
       },
       "otherFemale":{
-        "gender":"female"
+        "gender":"female",
+        "name": "otherFemale",
       }
     },
     "graveyard": {
