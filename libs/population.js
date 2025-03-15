@@ -65,6 +65,49 @@ function memberByName(name, gameState){
 }
 module.exports.memberByName = memberByName
 
+function deadOrBanishedByName(name, gameState){
+    var member = null;
+    if (gameState.banished){
+        member = memberByNameFromDictionary(name, gameState.banished);
+        if (member){
+            return member;
+        }
+    }
+    if (gameState.graveyard){
+        member = memberByNameFromDictionary(name, gameState.graveyard);
+    }
+    console.log(name+" was neither dead nor banished");
+    return member;
+}
+module.exports.deadOrBanishedByName = deadOrBanishedByName
+
+function memberByNameFromDictionary(name, dictionary){
+    if (name == null){
+        console.log('attempt to find member for null name ')
+        return null
+    }
+    if (dictionary == null){
+        console.log("tried to get member when dictionary was null.  probably a syntax error");
+        return null;
+    }
+    cleaned = text.removeSpecialChars(name)
+    if (name != cleaned ){
+        console.log(name + " cleaned into "+cleaned)
+        name = cleaned
+    }
+    if (name in dictionary){
+        return dictionary[name];
+    }
+    for (var key in dictionary) {
+        possible = dictionary[key];
+        if (("name" in possible)  && name == possible.name){
+            return possible;
+        }
+    }
+    return null;
+}
+
+
 function decrementSickness(population, gameState){
 	for (personName in population){
 		person = population[personName]

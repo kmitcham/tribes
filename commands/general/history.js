@@ -16,8 +16,13 @@ function onCommand(interaction, gameState){
     var playerName = interaction.member.displayName;
     var player = pop.memberByName(playerName, gameState)
     if (!player){
-        text.addMessage(gameState, playerName, "You have no history with this tribe");
-        return;
+        var player = pop.deadOrBanishedByName(playerName, gameState);
+        if (player){
+            text.addMessage(gameState, playerName, "Before you left the tribe, these things happened:");
+        } else {
+            text.addMessage(gameState, playerName, "You have no history with this tribe");
+            return;
+        }
     }
     messages = player.history
     if (!messages){

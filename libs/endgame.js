@@ -83,7 +83,7 @@ function endGame(gameState, bot){
 module.exports.scoreMessage = scoreMessage;
 function scoreMessage(gameState, bot){
     tribeResult = scoreTribe(gameState)
-    messageText = "---> Score for the tribe:"+tribeResul+" <---\n"
+    messageText = "---> Score for the tribe:"+tribeResult+" <---\n"
         + scoreChildrenMessage(gameState)
     return messageText
 }
@@ -189,6 +189,11 @@ function setReminder(gameState, bot){
 function playReminder(message, gameState, bot){
     text.addMessage(gameState, "tribe", message)
     setReminder(gameState, bot)
+}
+
+function dumpHistory(gameState){
+    // for each player, alive, dead or banished:
+    // message their full history to them
 }
 
 module.exports.setEndTime = (gameState, bot, args) =>{
