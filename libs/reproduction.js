@@ -238,6 +238,31 @@ function intersect(a, b) {
     });
 }
 
+function consentPrep(gameState, sourceName, rawList){
+    var member = pop.memberByName(sourceName, gameState);
+
+    if (! rawList ) {
+        console.log("no rawList for consent");
+        if (member.hasOwnProperty('consentList') && member.consentList.length > 0){
+            text.addMessage(gameState, sourceName, "Current consentList: "+member.consentList.join(" ") )
+            return "Current consentList: "+member.consentList.join(" ") ;
+        } else {
+            text.addMessage(gameState, sourceName,  "No current consentList.");
+            return "No current consentList.";
+        }   
+    }
+    let messageArray = rawList.split(" ");
+    if (messageArray.length < 1){
+        text.addMessage(gameState, sourceName, "No values parsed from that consentList: "+rawList );
+        return  "No values parsed from that consentList: "+rawList;
+    }
+    console.log("updating consentlist: "+messageArray);
+    var value = consent(sourceName, messageArray,  gameState);
+    gameState.saveRequired;
+    return value;
+}
+module.exports.consentPrep = consentPrep;
+
 function consent(actorName, messageArray,  gameState){
     handleReproductionList(actorName, messageArray, "consentList", gameState );
     person = pop.memberByName(actorName, gameState);
@@ -245,7 +270,11 @@ function consent(actorName, messageArray,  gameState){
     if (intersectList && intersectList.length > 0){
         text.addMessage(gameState, actorName, "Your consent and decline lists have overlaps.  Consent is checked first.");
     }
-    text.addMessage(gameState, actorName, "Updated consentlist to "+person.consentList);
+    if ("consentList" in person){
+        text.addMessage(gameState, actorName, "Updated consentlist to "+person.consentList);        
+    } else {
+        text.addMessage(gameState, actorName, "You stop consenting to anyone.");
+    }
     return globalMatingCheck(gameState);
 }
 module.exports.consent = consent;
@@ -318,52 +347,50 @@ function globalMatingCheck(gameState){
     }
     while (actionableInvites){
         actionableInvites = false;
-        var sexList = Object.keys(population)
-        sexList.sort(function(){return Math.random()-.5});
+        var listMemberNamesForSex = Object.keys(population)
+        listMemberNamesForSex.sort(function(){return Math.random()-.5});
         doneMating = []
         whoNeedsToGiveAnAnswer = []
-        console.log("a sexlist "+sexList)
+        console.log("a sexlist "+listMemberNamesForSex)
         counter = 0
-        for (personName of sexList){
-            console.log("working "+personName)
-            person = pop.memberByName(personName, gameState)
-            if (!person){
-                console.log(" No person found for "+personName +" sexList "+sexList)
+        for (personName of listMemberNamesForSex){
+            var member = pop.memberByName(personName, gameState)
+            console.log("working "+personName +" "+member.name)
+            index = listMemberNamesForSex.indexOf(personName)
+            if (!member){
+                console.log(" No person found for "+personName +" sexList "+listMemberNamesForSex)
                 continue;
-            }
-            index = sexList.indexOf(personName)
-            if (person.cannotInvite  ) {
+            } else if (member.cannotInvite  ) {
                 doneMating.push(personName)
-                console.log("\t cannotInvite.  ")
+                console.log("\t cannotInvite. "+member.name)
                 continue
-            } else if ( person.golem){
-                person.cannotInvite = true;
-                console.log("Skipping golem "+personName)
-            } else if (person.isPregnant){
+            } else if ( member.golem){
+                member.cannotInvite = true;
+                console.log("Skipping golem "+member.name)
+            } else if (member.isPregnant){
                 console.log("\t inviter was pregnant")
-                text.addMessage(gameState,person.name, "Your pregnancy prevents you from mating.")
-                text.addMessage(gameState, "tribe", personName+" is too pregnant for mating this round.")
-                person.cannotInvite = true;
+                text.addMessage(gameState, member.name, "Your pregnancy prevents you from mating.")
+                text.addMessage(gameState, "tribe", member.name+" is too pregnant for mating this round.")
+                member.cannotInvite = true;
                 continue;
-            } else if (person.isInjured && person.isInjured > 0){
+            } else if (member.isInjured && member.isInjured > 0){
                 console.log("\t inviter is injured")
-                text.addMessage(gameState,person.name, "Your injury prevents you from mating.")
-                text.addMessage(gameState, "tribe", personName+" is too injured for mating this round.")
-                person.cannotInvite = true;
+                text.addMessage(gameState,member.name, "Your injury prevents you from mating.")
+                text.addMessage(gameState, "tribe", member.name+" is too injured for mating this round.")
+                member.cannotInvite = true;
                 continue
-            } else if (person.isSick && person.isSick > 0){
+            } else if (member.isSick && member.isSick > 0){
                 console.log("\t inviter is sick")
-                text.addMessage(gameState,person.name, "Your illness prevents you from mating.")
-                text.addMessage(gameState, "tribe", personName+" is too sick for mating this round.")
-                person.cannotInvite = true;
+                text.addMessage(gameState, member.name, "Your illness prevents you from mating.")
+                text.addMessage(gameState, "tribe", member.name+" is too sick for mating this round.")
+                member.cannotInvite = true;
                 continue
-                
-            } else if (person.inviteList && person.inviteList.length > 0) {
+            } else if (member.inviteList && member.inviteList.length > 0) {
              // the person is eligible to mate, and has an invitelist
-                targetName = person.inviteList[0]
+                targetName = member.inviteList[0]
                 console.log(" inviting "+targetName)
                 if (targetName == "!pass"){
-                    person.cannotInvite = true
+                    member.cannotInvite = true
                     text.addMessage(gameState, "tribe", personName+" is passing on mating this round.")
                     doneMating.push(personName)
                     continue
@@ -373,31 +400,30 @@ function globalMatingCheck(gameState){
                     continue
                 }
                 var attemptFailed = false
-                target = pop.memberByName(targetName, gameState)
-                if (target.declineList && (target.declineList.includes(personName) || target.declineList.includes("!all")) ){
+                const targetMember = pop.memberByName(targetName, gameState)
+                if (targetMember.declineList && (targetMember.declineList.includes(personName) || targetMember.declineList.includes("!all")) ){
                     text.addMessage(gameState, personName, targetName+" declines your invitation.")
                     text.addMessage(gameState, targetName, personName+" flirts with you, but you decline.")
                     console.log("\t declines  ")
-                    person.inviteList.shift()
+                    member.inviteList.shift()
                     attemptFailed = true;
-                } else if (target.isPregnant){
+                } else if (targetMember.isPregnant){
                     text.addMessage(gameState, personName, targetName+" is visibly pregnant.")
                     text.addMessage(gameState, targetName, personName+" flirts with you, but you are pregnant.")
                     console.log("\t is pregnant  ")
-                    person.inviteList.shift()
+                    member.inviteList.shift()
                     attemptFailed = true;
-                } else if (target.isSick || target.isInjured){
+                } else if (targetMember.isSick || targetMember.isInjured){
                     text.addMessage(gameState, targetName, personName+" flirts with you, but you are not healthy enough to respond.")
                     text.addMessage(gameState, personName, targetName+" is not healthy enough to enjoy your attention.")
                     console.log("\t sick or injured")
-                    person.inviteList.shift()
+                    member.inviteList.shift()
                     attemptFailed = true;
-                } else if (target.consentList && (target.consentList.includes(personName) || target.consentList.includes("!all"))){
+                } else if (targetMember.consentList && (targetMember.consentList.includes(personName) || targetMember.consentList.includes("!all"))){
                     text.addMessage(gameState, personName, targetName+" is impressed by your flirtation.")
                     text.addMessage(gameState, targetName, personName+" flirts with you, and you are interested.")
-                    // makeLove should message the people
                     makeLove(targetName, personName, gameState)
-                    person.cannotInvite = true
+                    member.cannotInvite = true
                     doneMating.push(personName)
                     console.log("\t consents ")
                     continue
@@ -412,7 +438,7 @@ function globalMatingCheck(gameState){
                 }
                 if (attemptFailed){
                     // can't lose your invite power just because of rejection
-                    if (person.inviteList.length > 0) {
+                    if (member.inviteList.length > 0) {
                         actionableInvites = true
                         console.log("\t more invitations exist")
                     } else {
@@ -436,17 +462,17 @@ function globalMatingCheck(gameState){
         text.addMessage(gameState, "tribe", "---> Reproductive activites are complete for the season <---")
         noPregnancies = true
         for (personName in population){
-            person = population[personName]
+            member = population[personName]
             text.addMessage(gameState, personName, "Reproduction round activities are over.")
-            if (person.hiddenPregnant){
-                fatherName = person.hiddenPregnant
-                var child = addChild(person.name, fatherName, gameState)
-                delete person.hiddenPregnant
+            if (member.hiddenPregnant){
+                fatherName = member.hiddenPregnant
+                var child = addChild(member.name, fatherName, gameState)
+                delete member.hiddenPregnant
                 noPregnancies = false
-                text.addMessage(gameState, "tribe",person.name+ " has been blessed with a child: "+person.isPregnant)
-                text.addMessage(gameState, personName, "You have been blessed with the child "+person.isPregnant)
+                text.addMessage(gameState, "tribe",member.name+ " has been blessed with a child: "+member.isPregnant)
+                text.addMessage(gameState, personName, "You have been blessed with the child "+member.isPregnant)
             }
-            delete person.inviteList
+            delete member.inviteList
         }
         if (noPregnancies){
             text.addMessage(gameState, "tribe", "No one has become pregnant this season.")
@@ -461,18 +487,17 @@ module.exports.globalMatingCheck = globalMatingCheck;
 
 // a weak clone of the existing 'spawnFunction'  only works for secret mating
 function makeLove(name1, name2, gameState, force = false){
-    population = gameState.population
-    var parent1 = pop.memberByName(name1, gameState)
-    var parent2 = pop.memberByName(name2, gameState)
+    const population = gameState.population;
+    var parent1 = pop.memberByName(name1, gameState);
+    var parent2 = pop.memberByName(name2, gameState);
+    var mother = parent2
+    var father = parent1
 	if (parent1.gender == 'female') {
         mother = parent1
         father = parent2
-    } else {
-        mother = parent2
-        father = parent1
     }
-    motherName = mother.name
-    fatherName = father.name
+    const motherName = mother.name
+    const fatherName = father.name
     console.log("mother:"+motherName+" father:"+fatherName)
     spawnChance = 9
 	if (mother.nursing && mother.nursing.length > 0){
@@ -500,21 +525,24 @@ function makeLove(name1, name2, gameState, force = false){
 module.exports.makeLove = makeLove;
 
 function detection(mother,father, reproRoll, gameState){
+    const OBSERVER_THRESHOLD = 17;
     observerName = dice.randomMemberName(gameState.population)
     observer = pop.memberByName(observerName, gameState)
+    if (observer.name == mother.name || observer.name == father.name){
+        console.log("self observation is discarded")
+        return false;
+    }
     var netRoll;
     baseRoll = dice.roll(2)
     netRoll = baseRoll+reproRoll;
+    // if the observer has more in common with either parent, harder to avoid observation
     if (observer.profession == mother.profession || observer.profession == father.profession){
         netRoll = netRoll + 1
     }
     console.log("Detection: obv:"+observerName+" base:"+baseRoll+" net:"+netRoll)
-    if (netRoll >= 17){
+    if (netRoll >= OBSERVER_THRESHOLD){
         console.log("should send a message to "+observerName)
-        if (observerName == mother.name || observerName == father.name){
-            console.log("self observation is discarded")
-            return false;
-        }
+        
         text.addMessage(gameState, observerName, "You observe "+mother.name+" and "+father.name+" sharing good feelings.")
         return true
     }

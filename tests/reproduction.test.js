@@ -214,6 +214,7 @@ test("make a invitelist, with pass and save", () =>{
   expect(response).toBe(exp)
   expect(gameState["population"]["p1"]["inviteList"]).toStrictEqual(expectedList)
 });
+
 test("make a invitelist, with Pass and Save", () =>{
   var gameState = {
       "population": {
@@ -271,6 +272,7 @@ test("make a inviteList, with pass error", () =>{
   response = reproLib.handleReproductionList("p1", ["p2", "p4", "!pass", "p3"],"inviteList", gameState, {})
   expect(response).toBe(expectedResponse)
 });
+
 test("make a inviteList, with pass happypath", () =>{
   var gameState = {
       "population": {
@@ -410,6 +412,7 @@ test("matingList tests", () =>{
   canResponse = reproLib.canStillInvite(gameState)
   expect(canResponse).toBe("p1")
 });
+
 test("make a invitelist, with commas, pass and save", () =>{
   var gameState = {
       "population": {
@@ -440,6 +443,7 @@ test("make a invitelist, with commas, pass and save", () =>{
   expect(response).toBe(exp)
   expect(gameState["population"]["p1"]["inviteList"]).toStrictEqual(expectedList)
 });
+
 test("make a consent list with !all", () =>{
   var gameState = {
       "population": {
@@ -468,4 +472,35 @@ test("make a consent list with !all", () =>{
   exp = "Setting your consentList list to:p2,p3,!all\n"
   expect(response).toBe(exp)
   expect(gameState["population"]["p1"]["consentList"]).toStrictEqual(expectedList)
+});
+
+test("make a consent list with !none", () =>{
+  var gameState = {
+      "population": {
+          "p1":{
+              "name": "p1",
+              "gender": "female",
+              "consentList": ["p2"]
+          },
+          "p2":{
+            "name": "p2",
+            "gender": "male",
+            "consentList": ["!all"]
+          }
+          , "p3":{
+            "name": "p3",
+            "gender": "male"
+          }
+          , "p4":{
+              "name": "p4",
+              "gender": "female"
+            }
+       },
+      "round": "reproduction"
+  }
+  inputList = "!none"
+  response = reproLib.consentPrep( gameState, "p1", inputList);
+  member = gameState["population"]["p1"]
+  hasList = ("consentList" in member);
+  expect(!hasList);
 });

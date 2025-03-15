@@ -80,6 +80,10 @@ So I have a function to get the nickname, but it reqiures the client.
 BUT... if I capture the nickName at join/induct, I can add it to the member object.
 then population can look for them that way.
 So how does that interact with targeting?  
+so trying to fix how to null out reproduction lists.
+distracted since I broke migrate test
+++ did I fix names with spaces in reproduction?  Add to unit test
+
 
 
 W= has worked since new API
@@ -142,17 +146,22 @@ U !checkmating (report on status of mating attempts)
 W !endgame convert all the child to corpses, or new adults
 
 
+link 2025 03 10 https://discord.gg/Fn8Ygsvh
 
 Come test my Tribes server!
-Tribes is a simple game, and all the really cool parts of the game come from the interaction with the other players.  
-A fairly simple program can handle all the rules and inventory system, freeing the players to spend their time and attention on each other.
-I've implemented such a program on a discord server.   
-I'm looking for some playtesters to play a few sessions of a few hours each to help smooth the documentation and game flow (and shake out the remaining 
-bugs) before I open it to the general public.
-Please contact me at kmitcham@gmail.com, or just dive in at <DISCORD LINK HERE> if you want to try it.  
-I'm around most nights after 6 Seattle time, but in theory players can read the help text and get started without any handholding.
-Tribes is best with 4-6 players, but as few as 2 can succeed.  A solo player can not reproduce, and probably can not survive very long.
-Players with no tribes experience (ie, most humans) are the intended audience, but Tribes experience is a plus for understanding what is a bug and what is rules-based suffering.  When in doubt, mention it.
-I am interested in feedback on my help text, command descriptions, rules implementations, and of course, bugs.  
-I realize discord isn't the best environment to do this, but unless someone wants to team up and work on a cooler, stand-alone tool, it is what I have.
+
+Tribes is a game with simple mechanics but really cool emergent properties that come from the players' interactions.
+I've implemented a program on a Discord server to handle the rules and inventory system, freeing the players to spend their time and attention on each other.
+
+I'm looking for playtesters to play a few sessions of a few hours each to help smooth the documentation and game flow and to shake out the remaining bugs before I open it to the general public.
+Please contact me at kmitcham@gmail.com or just dive in at https://discord.gg/Fn8Ygsvh if you want to try it.
+Most players will be able to read the help text and get started without any handholding, but I'm around most evenings after 6 Seattle time for questions.
+
+Tribes is best with 4-6 players, but as few as 2 can succeed.
+While players with no Tribes experience are the intended audience, Tribes experience is a plus for understanding what is a bug and what is rules-based suffering. When in doubt, mention it.
+I am interested in feedback on the help text, command descriptions, rules implementations, and of course bugs.
+
+I realize that Discord isn't the best environment to do this, but until someone wants to team up to work on a cooler, stand-alone tool, this is what we have.
+
+SENT!
 

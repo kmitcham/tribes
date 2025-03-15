@@ -16,30 +16,8 @@ module.exports = {
     async execute(interaction, gameState, bot) {
         var sourceName = interaction.member.displayName;
         var rawList = interaction.options.getString('consentlist');
-        var response = onCommand(gameState, sourceName, rawList);
+        var response = reproLib.consentPrep(gameState, sourceName, rawList);
         console.log("consent updated: "+response)
 	},
 };
 
-function onCommand(gameState, sourceName, rawList){
-    var member = pop.memberByName(sourceName, gameState);
-
-    if (! rawList ) {
-        console.log("no rawList for consent");
-        if (member.hasOwnProperty('consentList') && member.consentList.length > 0){
-            text.addMessage(gameState, sourceName, "Current consentList: "+member.consentList.join(" ") )
-            return ;
-        } else {
-            text.addMessage(gameState, sourceName,  "No current consentList.");
-            return;
-        }   
-    }
-    let messageArray = rawList.split(" ");
-    if (messageArray.length < 1){
-        text.addMessage(gameState, sourceName, "No values parsed from that consentList: "+rawList );
-        return ;
-    }
-    console.log("updating consentlist: "+messageArray);
-    reproLib.consent(sourceName, messageArray,  gameState);
-    gameState.saveRequired;
-}
