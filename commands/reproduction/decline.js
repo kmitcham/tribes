@@ -13,12 +13,12 @@ module.exports = {
             .setDescription('takes !none and !all, or names ')
         )
         ,
-    async execute(interaction, gameState, bot) {
-        onCommand(interaction, gameState, bot)
+    async execute(interaction, gameState) {
+        declinePrep(interaction, gameState)
 	},
 };
 
-function onCommand(interaction, gameState, bot){
+function declinePrep(interaction, gameState){
     var sourceName = interaction.member.displayName;
     var rawList = interaction.options.getString('declinelist');
 
@@ -26,15 +26,15 @@ function onCommand(interaction, gameState, bot){
     if (! rawList ) {
         if (player.declineList){
             text.addMessage(gameState, sourceName, "Current declinelist: "+player.declinelist.join(" "));
-            return;
+            return "Current declinelist: "+player.declinelist.join(" ");
         } else {
             text.addMessage(gameState, sourceName, "No current declinelist");
-            return 
+            return  "No current declinelist";
         }
         
     }
-    let messageArray = rawList.split(" ");
+    let listAsArray = rawList.split(" ");
     console.log("applying decline list to mating for "+sourceName);
-    reproLib.decline(sourceName, messageArray,  gameState, bot);
+    reproLib.decline(sourceName, listAsArray,  gameState);
     return 
 }

@@ -504,3 +504,57 @@ test("make a consent list with !none", () =>{
   hasList = ("consentList" in member);
   expect(!hasList);
 });
+test("make a consent list with !none", () =>{
+  var gameState = {
+      "population": {
+          "p1":{
+              "name": "p1",
+              "gender": "female",
+              "consentList": ["p2"]
+          },
+          "p2":{
+            "name": "p2",
+            "gender": "male",
+            "consentList": ["!all"]
+          }
+          , "p3":{
+            "name": "p3",
+            "gender": "male"
+          }
+          , "p4":{
+              "name": "p4",
+              "gender": "female"
+            }
+       },
+      "round": "reproduction"
+  }
+  inputList = "!none"
+  response = reproLib.consentPrep( gameState, "p1", inputList);
+  member = gameState["population"]["p1"]
+  hasList = ("consentList" in member);
+  expect(!hasList);
+});
+
+test("consent and decline collisions on all", () =>{
+  var gameState = {
+      "population": {
+          "p1":{
+              "name": "p1",
+              "gender": "female",
+              "consentList": ["!all"],
+              "declineList": ["!all"]
+          },
+          "p2":{
+              "name": "p2",
+              "gender": "male",
+              "consentList": ["!all"]
+          }
+       },
+      "round": "reproduction"
+  }
+  inputList = "!all"
+  //function decline(actorName, messageArray,  gameState){
+  response = reproLib.decline(  "p1", inputList, gameState);
+  member = gameState["population"]["p1"]
+  expect(["p2"]).toStrictEqual(member.declineList);
+});

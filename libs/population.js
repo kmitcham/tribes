@@ -212,7 +212,7 @@ function getAllNamesByGender(population, gender){
 	for (memberName in population){
         member = population[memberName];
 		if (member.gender == gender){
-            genderedNameList.push(memberName);
+            genderedNameList.push(member.name);
         }
 	}
 	return genderedNameList;

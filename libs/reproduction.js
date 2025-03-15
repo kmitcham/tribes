@@ -290,15 +290,18 @@ function decline(actorName, messageArray,  gameState){
             matchGender = "female";
         }
         declineArray = pop.getAllNamesByGender(gameState.population, matchGender);
-        person.declineList = declineArray.join(" ");
-        console.log("declineList set to "+person.declineList);
+        person.declineList = declineArray;
+        console.log("declineList set to "+person.declineList.join(', '));
         text.addMessage(gameState, actorName, "Setting your declineList to "+person.declineList);
     } else {
-        handleReproductionList(actorName, messageArray, "declineList",gameState )
+        handleReproductionList(actorName, messageArray, "declineList", gameState )
         intersectList = intersect(person.consentList, person.declineList)
-        if (intersectList && intersectList.length > 0){
+        if (intersectList && intersectList.length > 0 
+            || ( person.consentList && person.declineList.includes("!all"))
+            || ( person.declineList && person.consentList.includes("!all")) ){
             text.addMessage(gameState, actorName, "Your consent and decline lists have overlaps.  Consent is checked first.")
-        }    
+        }
+        text.addMessage(gameState, actorName, "Decline updated.");    
     }
     return globalMatingCheck(gameState)
 }
