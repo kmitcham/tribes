@@ -200,14 +200,6 @@ function invite(author, invitelist, gameState){
     if (!person){
         return "Can not find you in the tribe, sorry"
     }
-    if (person.cannotInvite){
-        message = 
-             "Your invitations for this season are used up.  You will be able to edit your invites for next season after the work round starts."
-        return message;
-    }
-    if (person.isPregnant && gameState.children[person.isPregnant] && gameState.children[person.isPregnant].age == -2){
-        return "You are already pregnant, and will not invite this round.";
-    }
     if (! invitelist){
         console.log("No list found; return existing list")
         message = "invitelist: "+person.inviteList;
@@ -299,7 +291,7 @@ function decline(actorName, messageArray,  gameState){
         if (intersectList && intersectList.length > 0 
             || ( person.consentList && person.declineList.includes("!all"))
             || ( person.declineList && person.consentList.includes("!all")) ){
-            text.addMessage(gameState, actorName, "Your consent and decline lists have overlaps.  Consent is checked first.")
+            text.addMessage(gameState, actorName, "Your consent and decline lists have overlaps.  Decline has priority.")
         }
         text.addMessage(gameState, actorName, "Decline updated.");    
     }
@@ -342,6 +334,7 @@ function sortCommitFirst(a,b){
 function globalMatingCheck(gameState){
     allDone = true;
     actionableInvites = true;
+    population = gameState.population;
     if (! gameState.reproductionRound){
         return;
     }

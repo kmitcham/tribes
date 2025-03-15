@@ -558,3 +558,34 @@ test("consent and decline collisions on all", () =>{
   member = gameState["population"]["p1"]
   expect(["p2"]).toStrictEqual(member.declineList);
 });
+
+
+test("consent and decline collisions by name", () =>{
+  var gameState = {
+      "reproductionRound": true,
+      "population": {
+          "p1":{
+              "name": "p1",
+              "gender": "female",
+              "cannotInvite": true,
+              "inviteList":["!pass"],
+              "consentList": ["p2"],
+              "declineList": ["p2"]
+          },
+          "p2":{
+              "name": "p2",
+              "gender": "male",
+              "inviteList":["p1"]
+          }
+       },
+      "round": "reproduction"
+  }
+  response = reproLib.globalMatingCheck(gameState);
+  p1 = gameState["population"]["p1"];
+  p2 =  gameState["population"]["p2"];
+  expect(gameState.messages);
+  p1message = gameState.messages["p1"];
+  p2message = gameState.messages["p2"];
+  expect(p1message).toStrictEqual("p2 flirts with you, but you decline.");
+  expect(p2message).toStrictEqual("p1 declines your invitation.");
+});

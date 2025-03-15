@@ -34,9 +34,9 @@ function playerHelpRounds(){
 		text+=' feed <amt> <childName | @mothername | !all >  [<more childNames>]\n'
 		text+='-=Reproduction Commands=-\n'
 		text+=' romance  show your current reproduction lists\n'
-		text+=' invite <target> [target !pass] The order you would like to invite people to mate.  \n\tIf the list ends with !pass, you will give up if they decline. !save will retain the list every season\n\tUpdates made DURING the reproduction round will not be saved.\n'
-		text+=' consent <target> [target] The list of people you would accept mating invitations from.\n'
-		text+=' decline <target> [target] The list of people whose mating invitations you would decline\n'
+		text+=' invite [inviteList] The order you would like to invite people to mate.  \n\tIf the list ends with !pass, you will give up if they all decline. !save will retain the list every season\n\tUpdates made DURING the reproduction round will not be saved.\n'
+		text+=' consent [consentList] The list of people you would accept mating invitations from.\n'
+		text+=' decline [declineList] The list of people whose mating invitations you would decline\n'
 		// pass is not needed due to mandatory secret mating
 		//text+=' pass (decline to invite anyone in the mating round; can still get invitations)\n'
 		text+=' scorechildren  count number of children by parent'
