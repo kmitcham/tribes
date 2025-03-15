@@ -22,7 +22,8 @@ function initGame(gameName){
 	gameState.open = true
 	gameState.conceptionCounter = 0
 	gameState.consumed = 0
-	gameState.spoiled = 0
+	gameState.spoiled = 0;
+	gameState.foodAcquired = 0;
 	gameState.population = {}
 	gameState.graveyard = {}
 	gameState.children = {}

@@ -33,7 +33,6 @@ function craft(interaction, gameState){
     var sourceName = interaction.member.displayName;
     var item = interaction.options.getString('item');
     var forceRoll = interaction.options.getInteger('force');
-    var population = gameState.population;
     player = pop.memberByName(sourceName, gameState);
     msg = worklib.canWork(gameState, player);
 

@@ -108,7 +108,8 @@ function doChance(rollValue, gameState){
                         motherName = child.mother
                         mother = population[motherName]
                         if (mother){
-                            mother.food += gift
+                            mother.food += gift;
+                            gameState.foodAcquired += gift;
                             message += '\n  '+motherName+' gets '+gift+' from '+childName
                         } else {
                             message += '\n  '+motherName+' was not around, so '+childName+' eats it out of grief.'

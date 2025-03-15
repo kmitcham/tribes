@@ -4,6 +4,7 @@ const text = require("./textprocess")
 const dice = require("./dice")
 const pop = require("./population")
 const feed = require("./feed")
+const end = require("./endgame")
 
 function eligibleMates(name, population, debug=false){
 	matcher = population[name]
@@ -734,7 +735,12 @@ function startReproduction(gameState){
 	gameState.foodRound = false
 	gameState.reproductionRound = true
 	delete gameState.enoughFood 
-	foodMessage = feed.consumeFood(gameState)
+	foodMessage = feed.consumeFood(gameState);
+    if (Object.keys(gameState.population).length == 0){
+		text.addMessage(gameState, "tribe", "All the players are dead-- game should end.");
+        end.endGame(gameState);
+        return;
+	} 
     foodMessage += '\n==> Starting the Reproduction round; invite other tribe members to reproduce.<==\n'
     foodMessage += 'After chance, the tribe can decide to move to a new location, but the injured and children under 2 will need 2 food'
     text.addMessage(gameState, "tribe",foodMessage)

@@ -69,7 +69,8 @@ function endGame(gameState, bot){
 	adultCount += Object.keys(population).length
     response += 'The tribe lost '+deadAdults+' members and banished '+banishCount+'.\n';
 	response += 'Count of surviving adults is:'+adultCount+' ('+newAdultCount+' new adults)\n';
-    response += 'At least '+gameState.spoiled+' food was lost to spoilage.  '
+    response += 'The tribe acquired  '+gameState.foodAcquired+' food and grain.'
+    response += 'At least '+gameState.spoiled+' food was lost to spoilage.'
 	response += '\nThe tribe was '+ scoreTribe(gameState);
     gameState.ended = true
     text.addMessage(gameState, "tribe", response)
@@ -113,12 +114,13 @@ function scoreChildrenMessage(gameState){
 		member = pop.memberByName(parentName, gameState)
 		if (member){
             if (member.gender == 'female'){
-			    message+= '\t'+parentName+'('+member.gender.substring(0, 1)+'): '+parentScores[parentName]
+			    message+= '\t'+member.name+'('+member.gender.substring(0, 1)+'): '+parentScores[parentName]
             } else if (gameState.ended){
-                message+= '\t'+parentName+'('+member.gender.substring(0, 1)+'): '+parentScores[parentName]
+                message+= '\t'+member.name+'('+member.gender.substring(0, 1)+'): '+parentScores[parentName]
             }
 		} else {
-			console.log('Banished or dead: '+[parentName]+' with score '+parentScores[parentName])
+            message += 'Banished or dead: '+[parentName]+' with score '+parentScores[parentName];
+			console.log('Banished or dead: '+[parentName]+' with score '+parentScores[parentName]);
 		}
 	}
 	return message

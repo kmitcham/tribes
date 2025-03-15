@@ -50,6 +50,7 @@ function gather(playername, player, rollValue,gameState){
 	message += get_message
 	player.food += getFood
 	player.grain += getGrain
+	gameState.foodAcquired += getFood + getGrain;
 	if (player.basket > 0){
 		var broll = roll(3)+modifier
 		message+= ' basket: ('+broll+')'
@@ -62,6 +63,7 @@ function gather(playername, player, rollValue,gameState){
         message += get_message
         player.food += getFood
         player.grain += getGrain
+		gameState.foodAcquired += getFood + getGrain;
             // check for basket loss
 		if (roll(1) <= 2){
 			message+= ' basket breaks.'
@@ -188,8 +190,9 @@ function hunt(playername, player, rollValue){
 		huntData = locations[gameState.currentLocationName]['hunt']
 		for (var i = 0; i < huntData.length; i++){
 			if (netRoll <= huntData[i][0]){
-				message += huntData[i][2] + ' +'+huntData[i][1]+' food'
-				player.food += huntData[i][1]
+				message += huntData[i][2] + ' +'+huntData[i][1]+' food';
+				player.food += huntData[i][1];
+				gameState.foodAcquired += huntData[i][1];
 				break
 			}
 		}
