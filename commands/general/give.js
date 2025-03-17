@@ -79,8 +79,11 @@ function give(gameState, sourceName, targetName, amount, item){
     }
     sourcePerson[item] -= amount;
     targetPerson[item] += amount;
+    pop.history(sourceName, response, gameState);
     gameState.saveRequired = true
 
     response = sourceName + " gives "+targetName+" "+amount+" "+item;
     text.addMessage(gameState, "tribe", response)
+    pop.history(sourceName, response, gameState);
+    pop.history(targetPerson, response, gameState);
 }

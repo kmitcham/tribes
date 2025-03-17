@@ -500,23 +500,23 @@ function makeLove(name1, name2, gameState, force = false){
 	if (mother.nursing && mother.nursing.length > 0){
 		spawnChance = 10
 	}
-	mroll = dice.roll(1)
-	droll = dice.roll(1)
-    console.log('secret mating rolls ['+mroll+']['+droll+']')
-	if (force != false || (mroll+droll) >= spawnChance ){
+	const roll1 = dice.roll(1)
+	const roll2 = dice.roll(1)
+    console.log('secret mating rolls ['+roll1+']['+roll2+']')
+	if (force != false || (roll1+roll2) >= spawnChance ){
         if (mother.hiddenPregnant){
             console.log(motherName+" is secretly already pregnant by "+mother.hiddenPregnant)
         } else {
             mother.hiddenPregnant = fatherName;
         }
 	} 
-    motherMessage = fatherName +' shares good feelings with you ['+mroll+']'
-    fatherMessage = motherName +' shares good feelings with you ['+droll+']'
-    pop.history(motherName, motherMessage, gameState)
-    pop.history(fatherName, fatherMessage, gameState)
-    text.addMessage(gameState, motherName, motherMessage)
-    text.addMessage(gameState, fatherName, fatherMessage)
-    detection(mother, father, (mroll+droll), gameState)
+    message1 = parent2.name +' shares good feelings with you ['+roll1+']'
+    message2 = 'You share good feelings with '+parent1.name+' ['+roll2+']'
+    pop.history(name2, message1, gameState)
+    pop.history(name1, message2, gameState)
+    text.addMessage(gameState, name2, message1)
+    text.addMessage(gameState, name1, message2)
+    detection(mother, father, (roll1+roll2), gameState)
 	return
 }
 module.exports.makeLove = makeLove;

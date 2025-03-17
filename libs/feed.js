@@ -281,35 +281,39 @@ function consumeFoodPlayers(gameState){
 	var response = '';
 	for  (var target in population) {
 		var hunger = 4
-		console.log(target+' f:'+population[target].food+' g:'+population[target].grain)
-		population[target].food = population[target].food - hunger
-		if (population[target].food < 0 ){
+		const person = population[target];
+		console.log(target+' f:'+person.food+' g:'+person.grain)
+		person.food = person.food - hunger
+		if (person.food < 0 ){
 			// food is negative, so just add it to grain here
-			population[target].grain = population[target].grain + population[target].food
-			population[target].food = 0
-			if (population[target].grain < 0){
-				response += "  "+target+" has starved to death.\n"
-				population[target].grain = 0
+			person.grain = person.grain + person.food
+			person.food = 0
+			if (person.grain < 0){
+				response += "  "+person.name+" has starved to death.\n"
+				person.grain = 0
 				perished.push(target)
 			}
 		}
-		if (population[target].gender == 'female' && childLib.countChildrenOfParentUnderAge(children, target, 4 ) > 1 ){
+		if (person.gender == 'female' && childLib.countChildrenOfParentUnderAge(children, target, 4 ) > 1 ){
 			// extra food issues here; mom needs 2 more food, or the child will die.
-			console.log(target+' needs extra food due to underage children. ')
-			population[target].food -= 2
-			if (population[target].food < 0 ){
+			const mom = person;
+			console.log(mom.name+' needs extra food due to nursing while pregnant. ');
+			response += mom.name+" needs extra food due to nursing while pregnant.";
+			mom.food -= 2
+			if (mom.food < 0 ){
 				// food is negative, so just add it to grain here
-				population[target].grain = population[target].grain + population[target].food
-				population[target].food = 0
-				if (population[target].grain < 0){
-					childname = population[target].isPregnant 
-					response += target+' lost her child '+child+' due to lack of food\n'
+				mom.grain = mom.grain + mom.food
+				mom.food = 0
+				if (mom.grain < 0){
+					childname = mom.isPregnant; 
+					response += target+' lost her child '+childname+' due to lack of food\n';
 					killlib.kill(childName, 'prenatal starvation',gameState)
-					delete population[target].isPregnant 
+					delete mom.isPregnant;
+					mom.grain = 0; 
 				}
 			}
 		}
-		console.log(target+' f:'+population[target].food+' g:'+population[target].grain)
+		console.log(target+' '+person.name+' f:'+person.food+' g:'+person.grain)
 	} 
 	var perishedCount = perished.length;
 	for (var i = 0; i < perishedCount; i++) {

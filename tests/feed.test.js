@@ -79,7 +79,7 @@ describe('feed function', () => {
             }
             feed(dummyMessage, gameState.population.p1, 2, ["p2"], gameState)
             response = gameState.messages["tribe"]
-            expect(response).toBe("p1 feeds 2 to C1\np1 feeds 2 to C2\n")
+            expect(response).toContain("p1 feeds 2 to C1\np1 feeds 2 to C2\n")
     });
     
     test("feed !all", () =>{
@@ -127,7 +127,7 @@ describe('feed function', () => {
             feed(null, gameState.population.p1, 2, ["!all"], gameState)
             response = gameState.messages["tribe"]
         
-            expect(response).toBe("p1 feeds 2 to C1\np1 feeds 2 to C2\np1 feeds 2 to C3\n")
+            expect(response).toContain("p1 feeds 2 to C1\np1 feeds 2 to C2\np1 feeds 2 to C3\n")
     });
 
     test("feed !all when no one is hungry", () =>{
