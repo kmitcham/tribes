@@ -145,16 +145,16 @@ function handleReproductionList(actorName, inputList, listName, gameState){
             break;
         } else if (targetName.toLowerCase() == '!save'){
             if (listName == 'inviteList'){
-                list.push(targetName)
-                save = true
+                list.push(targetName);
+                save = true;
             } else {
                 errors.push("!save is only valid in the inviteList.")
             }
         } else if (targetName.toLowerCase() == '!all'){
-            if (listName != 'inviteList'){
-                list.push(targetName)
+            if (listName == 'inviteList'){
+                errors.push("!all is only valid in the consentList and declineList.");
             } else {
-                errors.push("!all is only valid in the consentList and declineList.")
+                list.push(targetName);
             }
         } else {
             target = pop.memberByName(targetName, gameState);
@@ -166,7 +166,7 @@ function handleReproductionList(actorName, inputList, listName, gameState){
             if (localErrors != ""){
                 errors.push(localErrors)
             } else {
-                list.push(targetName)
+                list.push(target.name);
             }
         }
     }
@@ -176,15 +176,15 @@ function handleReproductionList(actorName, inputList, listName, gameState){
         for (error of errors){
             returnMessage += error+"\n"
         }
-        // clean up message?
-        returnMessage += ("Please try again to set the "+listName +"\n")
+        returnMessage += ("Please try again to set your "+listName +"\n")
     } else {
         actor[listName] = list;
         returnMessage += ("Setting your "+listName+" list to:"+list+"\n")
         if (save){
-            returnMessage += ("Saving your "+listName+" list be used in future rounds\n")
             if (gameState.reproductionRound){
                 returnMessage += "Changing your list during the reproduction means changes will not be saved, sorry.\n"
+            } else {
+                returnMessage += ("Saving your "+listName+" list be used in future rounds\n")
             }
         }
     }
@@ -193,9 +193,9 @@ function handleReproductionList(actorName, inputList, listName, gameState){
 module.exports.handleReproductionList = handleReproductionList;
 
 
-function invite(author, invitelist, gameState){
-    console.log('author '+author)
-    actorName = text.removeSpecialChars(author)
+function invite(rawActorName, invitelist, gameState){
+    console.log('author '+rawActorName)
+    actorName = text.removeSpecialChars(rawActorName)
     console.log('actorName:'+actorName)
     person = pop.memberByName(actorName, gameState)
     if (!person){

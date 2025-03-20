@@ -268,7 +268,7 @@ test("make a inviteList, with pass error", () =>{
       "round": "reproduction"
   }
   //function handleReproductionList(actorName, args, listName, gameState, bot){
-  expectedResponse = "Values after '!pass' must be removed.\n\nPlease try again to set the inviteList\n"
+  expectedResponse = "Values after '!pass' must be removed.\n\nPlease try again to set your inviteList\n"
   response = reproLib.handleReproductionList("p1", ["p2", "p4", "!pass", "p3"],"inviteList", gameState, {})
   expect(response).toBe(expectedResponse)
 });
