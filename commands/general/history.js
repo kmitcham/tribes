@@ -8,30 +8,8 @@ module.exports = {
 		.setDescription('History of your activity in the tribe')
        ,
     async execute(interaction, gameState) {
-        onCommand(interaction, gameState)
+        var playerName = interaction.member.displayName;
+        pop.showHistory(playerName, gameState)
 	},
 };
 
-function onCommand(interaction, gameState){
-    var playerName = interaction.member.displayName;
-    var player = pop.memberByName(playerName, gameState)
-    if (!player){
-        var player = pop.deadOrBanishedByName(playerName, gameState);
-        if (player){
-            text.addMessage(gameState, playerName, "Before you left the tribe, these things happened:");
-        } else {
-            text.addMessage(gameState, playerName, "You have no history with this tribe");
-            return;
-        }
-    }
-    messages = player.history
-    if (!messages){
-        text.addMessage(gameState, playerName, "You have no history.  How did you get in the tribe?");
-        console.log(playerName+" was in tribe but had no history");
-        return; 
-    }
-    for (const message of messages){
-        text.addMessage(gameState, playerName, message)
-    }
-    return
-}

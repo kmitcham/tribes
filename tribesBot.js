@@ -219,7 +219,6 @@ function sendRemainingMessageChunksToUser(user, messageArray, chunksSent){
 
 // Assuming you have a Discord.js client set up and authenticated
 // and you have a user object and guild ID
-
 async function getUserNickname(client, userId, guildId) {
 	try {
 	  // Get the guild object

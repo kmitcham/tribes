@@ -83,7 +83,8 @@ So how does that interact with targeting?
 so trying to fix how to null out reproduction lists.
 distracted since I broke migrate test
 ++ did I fix names with spaces in reproduction?  Add to unit test
-
+++ check nicknames in join and induct; add unit tests
+++ confirm showHistory works after banished or dead.
 
 
 W= has worked since new API

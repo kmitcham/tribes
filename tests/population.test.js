@@ -103,7 +103,7 @@ test("person with gender", ()=>{
     "population": {
      },
   }
-  memberName = "Steve";
+  memberName = "Sally";
   pop.addToPopulation(gameState,memberName, "female", null, null);
   player = pop.memberByName(memberName, gameState);
   actualName = player.name;
@@ -111,8 +111,9 @@ test("person with gender", ()=>{
   tribeMessage = gameState.messages["tribe"]
   expect(tribeMessage).toContain("female")
   expect(tribeMessage).toContain(memberName);
-  playerMessage = gameState.messages[memberName]
-  
+  pop.showHistory(memberName, gameState);
+  playerMessage = gameState.messages[memberName];
+  expect(playerMessage).toContain("joined the tribe");
 })
 
 test("person with gender and profession", ()=>{

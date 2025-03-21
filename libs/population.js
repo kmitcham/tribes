@@ -146,6 +146,30 @@ function history (playerName, message, gameState){
 }
 module.exports.history = history
 
+function showHistory(playerName, gameState){
+    var player = memberByName(playerName, gameState)
+    if (!player){
+        var player = deadOrBanishedByName(playerName, gameState);
+        if (player){
+            text.addMessage(gameState, playerName, "Before you left the tribe, these things happened:");
+        } else {
+            text.addMessage(gameState, playerName, "You have no history with this tribe");
+            return;
+        }
+    }
+    messages = player.history
+    if (!messages){
+        text.addMessage(gameState, playerName, "You have no history.  How did you get in the tribe?");
+        console.log(playerName+" was in tribe but had no history");
+        return; 
+    }
+    for (const message of messages){
+        text.addMessage(gameState, playerName, message)
+    }
+    return
+}
+module.exports.showHistory = showHistory
+
 // handle is the discord player object which we like to store for messaging with them later
 // possibly could just grab the id or something and find them in the channel for messaging
 function addToPopulation(gameState, sourceName, gender, profession, handle){

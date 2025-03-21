@@ -27,7 +27,7 @@ module.exports = {
                 .setRequired(false))
         ,
     async execute(interaction, gameState) {
-        var nickName = interaction.member.displayName;      
+        var nickName = interaction.nickName;   // set by tribesBot in main handling, since it needed the client    
         gender = interaction.options.getString('gender');
         profession = interaction.options.getString('profession');
         join(nickName, gameState, gender, profession, interaction.user)
