@@ -9,12 +9,11 @@ module.exports = {
         ,
     async execute(interaction, gameState, bot) {
         var actorName = interaction.member.displayName
-
-        response = close(actorName, gameState, bot)
+        response = close(actorName, gameState)
 	},
 };
 
-function close(actorName, gameState, bot){
+function close(actorName, gameState){
     var player = pop.memberByName(actorName, gameState)
     if ( !player.chief){
         text.addMessage(gameState,actorName, command+' requires chief priviliges')

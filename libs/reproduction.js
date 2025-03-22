@@ -112,10 +112,10 @@ function checkCompleteLists(gameState){
 }
 
 
-function handleReproductionList(actorName, inputList, listName, gameState){
-    console.log("Building "+listName+" for "+actorName+" args "+inputList)
+function handleReproductionList(actorName, arrayOfNames, listName, gameState){
+    console.log("Building "+listName+" for "+actorName+" args "+arrayOfNames)
     actor = pop.memberByName(actorName, gameState);
-    if (!inputList || inputList.length == 0){
+    if (!arrayOfNames || arrayOfNames.length == 0){
         delete actor[listName]
         // this may be dead code with the new discord API.
         console.log("DELETE in handle list actually called.  SURPRISE!");
@@ -125,13 +125,13 @@ function handleReproductionList(actorName, inputList, listName, gameState){
     errors = []
     list = []
     save = false;
-    for (rawTargetName of inputList){
+    for (rawTargetName of arrayOfNames){
         console.log("arg: "+rawTargetName)
         localErrors = "";   
         targetName = text.removeSpecialChars(rawTargetName)
         if (targetName.toLowerCase() == "!pass"){
             if (listName == 'inviteList'){
-                if (inputList.indexOf(rawTargetName) != (inputList.length -1)){
+                if (arrayOfNames.indexOf(rawTargetName) != (arrayOfNames.length -1)){
                     errors.push("Values after '!pass' must be removed.\n")
                 }
                 list.push(rawTargetName);
@@ -245,19 +245,23 @@ function consentPrep(gameState, sourceName, rawList){
         }   
     }
     let messageArray = rawList.split(" ");
+    if (rawList.includes(',')){
+        messageArray = rawList.split(",")
+        console.log("splitting consent on commas")
+    }
     if (messageArray.length < 1){
         text.addMessage(gameState, sourceName, "No values parsed from that consentList: "+rawList );
         return  "No values parsed from that consentList: "+rawList;
     }
     console.log("updating consentlist: "+messageArray);
-    var value = consent(sourceName, messageArray,  gameState);
+    consent(sourceName, messageArray,  gameState);
     gameState.saveRequired;
-    return value;
+    return member.consentList;
 }
 module.exports.consentPrep = consentPrep;
 
-function consent(actorName, messageArray,  gameState){
-    handleReproductionList(actorName, messageArray, "consentList", gameState );
+function consent(actorName, arrayOfNames,  gameState){
+    handleReproductionList(actorName, arrayOfNames, "consentList", gameState );
     person = pop.memberByName(actorName, gameState);
     intersectList = intersect(person.consentList, person.declineList);
     if (intersectList && intersectList.length > 0){
@@ -337,10 +341,10 @@ function globalMatingCheck(gameState){
     actionableInvites = true;
     population = gameState.population;
     if (! gameState.reproductionRound){
-        return;
+        return "It is not the mating round";
     }
     if (gameState.doneMating){
-        return;
+        return "Mating is complete";
     }
     while (actionableInvites){
         actionableInvites = false;
@@ -766,7 +770,10 @@ function checkMating(gameState, displayName){
                 text.addMessage(gameState, displayName, "checkMating is only relevant in the reproduction round.")
             }
             text.addMessage(gameState, displayName, "Checking on the mating status, in case it can be resolved.");
-            globalMatingCheck(gameState)
+            var message = globalMatingCheck(gameState);
+            if (message){
+                text.addMessage(gameState, displayName, message);
+            }
             return
 }
 module.exports.checkMating = checkMating;
