@@ -81,6 +81,7 @@ function deadOrBanishedByName(name, gameState){
 }
 module.exports.deadOrBanishedByName = deadOrBanishedByName
 
+// special handling for graveyard and banish
 function memberByNameFromDictionary(name, dictionary){
     if (name == null){
         console.log('attempt to find member for null name ')
@@ -95,16 +96,39 @@ function memberByNameFromDictionary(name, dictionary){
         console.log(name + " cleaned into "+cleaned)
         name = cleaned
     }
-    if (name in dictionary){
-        return dictionary[name];
-    }
-    for (var key in dictionary) {
-        possible = dictionary[key];
-        if (("name" in possible)  && name == possible.name){
-            return possible;
+    var person = null
+    var population = dictionary;
+    if (population[name] != null){
+         person = population[name][0]
+    } else if (population[name.toLowerCase()] != null){
+        person = population[name.toLowerCase()][0]
+    } else {
+        console.log("Exhaustive search in population for "+name)
+        for (match in population){
+            if (population[match].name.toLowerCase() === name.toLowerCase()){
+                person = population[match][0]
+                break;
+            }
+            if ( (population[match] && population[match]["handle"]) ){
+                if ( population[match]["handle"]["username"] == name 
+                    || population[match]["handle"]["displayName"] == name  
+                    || population[match]["handle"]["globalName"] == name
+                   ){
+                    person = population[match][0]
+                    break;
+                }
+                if (population[match].handle.id == name){
+                    person = population[match][0]
+                    break;
+                }
+            }
         }
     }
-    return null;
+    if (person != null){
+        return person
+    }
+    console.log("tribe "+gameState.name+" has no such member in population. tried "+name+" and "+name.toUpperCase())
+    return null
 }
 
 
@@ -150,6 +174,7 @@ function showHistory(playerName, gameState){
     var player = memberByName(playerName, gameState)
     if (!player){
         var player = deadOrBanishedByName(playerName, gameState);
+        console.log("getting history for banished player")
         if (player){
             text.addMessage(gameState, playerName, "Before you left the tribe, these things happened:");
         } else {

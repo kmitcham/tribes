@@ -477,7 +477,10 @@ function globalMatingCheck(gameState){
         text.addMessage(gameState, "tribe", "Time for chance.")
         gameState.doneMating = true;
         gameState.saveRequired = true;
+    } else {
+        text.addMessage(gameState, "tribe", "Reproduction round activities are not complete.");
     }
+
     return doneMating.length
 }
 module.exports.globalMatingCheck = globalMatingCheck;
@@ -510,12 +513,12 @@ function makeLove(name1, name2, gameState, force = false){
             mother.hiddenPregnant = fatherName;
         }
 	} 
-    message1 = parent2.name +' shares good feelings with you ['+roll1+']'
-    message2 = 'You share good feelings with '+parent1.name+' ['+roll2+']'
-    pop.history(name2, message1, gameState)
-    pop.history(name1, message2, gameState)
-    text.addMessage(gameState, name2, message1)
-    text.addMessage(gameState, name1, message2)
+    motherMessage = 'You shares good feelings with '+fatherName+' ['+roll1+']'
+    fatherMessage = 'You share good feelings with '+motherName+' ['+roll2+']'
+    pop.history(motherName, motherMessage, gameState)
+    pop.history(fatherName, fatherMessage, gameState)
+    text.addMessage(gameState, motherName, motherMessage)
+    text.addMessage(gameState, fatherName, fatherMessage)
     detection(mother, father, (roll1+roll2), gameState)
 	return
 }
@@ -762,6 +765,7 @@ function checkMating(gameState, displayName){
             if (!gameState.reproductionRound ){
                 text.addMessage(gameState, displayName, "checkMating is only relevant in the reproduction round.")
             }
+            text.addMessage(gameState, displayName, "Checking on the mating status, in case it can be resolved.");
             globalMatingCheck(gameState)
             return
 }

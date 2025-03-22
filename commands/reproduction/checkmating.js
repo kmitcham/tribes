@@ -8,6 +8,7 @@ module.exports = {
 		.setDescription('Show who needs to complete romance round activities')
         ,
     async execute(interaction, gameState) {
-        reproLib.checkMating(interaction, gameState)
+		var nickName = interaction.nickName;   // set by tribesBot in main handling, since it needed the client
+        reproLib.checkMating( gameState, nickName);
 	},
 };
