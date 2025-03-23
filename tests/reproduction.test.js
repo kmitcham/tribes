@@ -332,7 +332,7 @@ test("trigger end of mating", () =>{
   //function handleReproductionList(actorName, args, listName, gameState, bot){
   response = reproLib.globalMatingCheck( gameState, {})
   expect(gameState["population"]["p1"]["cannotInvite"]).toBeTruthy()
-  expect(response).toBe(4)
+  expect(response).toBe("this many people are done mating: 4")
 });
 
 test("sorting check", ()=>{

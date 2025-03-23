@@ -6,7 +6,7 @@ const pop = require("../../libs/population.js");
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('invite')
-		.setDescription('(<partner> [second choice partner] [!save] [!pass] Space seperated list of who to mate with.')
+		.setDescription('(<partner> [second choice partner] [!save] [!pass] Comma seperated list of who to mate with.')
         .addStringOption(option => 
             option
             .setName('invitelist')

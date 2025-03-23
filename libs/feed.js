@@ -20,15 +20,10 @@ function feed(unused, player, amount, inputChildList, gameState){
                     for (var childName in children){
                         var child = children[childName]
                         if (!( child.newAdult && child.newAdult == true) || child.food < 2){
-                            inputChildList.push(childName)
-							feedAtLeastOneChild = true;
+                            inputChildList.push(childName);
+							console.log("adding to inputChildList:"+childName);
                         }
                     }
-					if (!feedAtLeastOneChild){
-						text.addMessage(gameState, player.name,'no children need food');
-						console.log("message is "+'no children need food');
-						return 1; 
-					}
                     continue;
                 }
                 // this seems to be feeding based on mother?
@@ -61,15 +56,15 @@ function feed(unused, player, amount, inputChildList, gameState){
                 if (showErrors){text.addMessage(gameState, player.name,childName+' is all grown up and does not need food from you.')}
                 continue
             }
-            var fed = 0
+            
             if ( ( player['food']+ player['grain'] ) >= amount){
                 if (player['food'] >= amount){
                     player.food -= Number(amount)
 					feedAtLeastOneChild = true;
                 } else {
-                    fed = player.food
-                    player.food = 0
-                    player['grain'] -= (amount-fed)
+                    var foodExpended = player.food
+                    player.food = 0;
+                    player['grain'] -= (amount-foodExpended);
 					feedAtLeastOneChild = true;
                 }
                 message += player.name+' feeds '+amount+' to '+childName;
@@ -84,7 +79,7 @@ function feed(unused, player, amount, inputChildList, gameState){
             }
         }
 		if (!feedAtLeastOneChild){
-			message = "No children required food.";
+			message += "No children were fed.";
 		}
         console.log("message is "+message);
         text.addMessage(gameState, "tribe", message)

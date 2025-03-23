@@ -4,7 +4,7 @@ function removeSpecialChars(strVal){
 		console.log("empty or nonstring value to remove special chars:"+strVal)
 		return ""
 	}
-	return strVal.replace(/[^!a-zA-Z0-9_]+/g,'');
+	return strVal.replace(/[^!a-zA-Z0-9_]+/g,'').trim();
 }
 module.exports.removeSpecialChars = removeSpecialChars;
 

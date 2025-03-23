@@ -128,7 +128,8 @@ function handleReproductionList(actorName, arrayOfNames, listName, gameState){
     for (rawTargetName of arrayOfNames){
         console.log("arg: "+rawTargetName)
         localErrors = "";   
-        targetName = text.removeSpecialChars(rawTargetName)
+        targetName = text.removeSpecialChars(rawTargetName);
+        targetName = targetName.trim();
         if (targetName.toLowerCase() == "!pass"){
             if (listName == 'inviteList'){
                 if (arrayOfNames.indexOf(rawTargetName) != (arrayOfNames.length -1)){
@@ -166,7 +167,7 @@ function handleReproductionList(actorName, arrayOfNames, listName, gameState){
             if (localErrors != ""){
                 errors.push(localErrors)
             } else {
-                list.push(target.name);
+                list.push(target.name.trim());
             }
         }
     }
@@ -376,7 +377,7 @@ function globalMatingCheck(gameState){
                 continue;
             } else if (member.isInjured && member.isInjured > 0){
                 console.log("\t inviter is injured")
-                text.addMessage(gameState,member.name, "Your injury prevents you from mating.")
+                text.addMessage(gameState, member.name, "Your injury prevents you from mating.")
                 text.addMessage(gameState, "tribe", member.name+" is too injured for mating this round.")
                 member.cannotInvite = true;
                 continue
@@ -402,7 +403,9 @@ function globalMatingCheck(gameState){
                 }
                 var attemptFailed = false
                 const targetMember = pop.memberByName(targetName, gameState)
-                if (targetMember.declineList && (targetMember.declineList.includes(personName) || targetMember.declineList.includes("!all")) ){
+                if (targetMember.declineList && (targetMember.declineList.includes(personName) 
+                                        || targetMember.declineList.includes("!all")
+                                        || targetMember.declineList.includes(member.name)) ){
                     text.addMessage(gameState, personName, targetName+" declines your invitation.")
                     text.addMessage(gameState, targetName, personName+" flirts with you, but you decline.")
                     console.log("\t declines  ")
@@ -420,7 +423,9 @@ function globalMatingCheck(gameState){
                     console.log("\t sick or injured")
                     member.inviteList.shift()
                     attemptFailed = true;
-                } else if (targetMember.consentList && (targetMember.consentList.includes(personName) || targetMember.consentList.includes("!all"))){
+                } else if (targetMember.consentList && (targetMember.consentList.includes(personName) 
+                                                    || targetMember.consentList.includes("!all")
+                                                    || targetMember.consentList.includes(member.name))){
                     text.addMessage(gameState, personName, targetName+" is impressed by your flirtation.")
                     text.addMessage(gameState, targetName, personName+" flirts with you, and you are interested.")
                     makeLove(targetName, personName, gameState)
@@ -435,7 +440,7 @@ function globalMatingCheck(gameState){
                     whoNeedsToGiveAnAnswer.push(targetName)
                     doneMating.push(personName)
                     allDone = false
-                    console.log("\t no response found  "+targetName+" so allDone is false")
+                    console.log("\t no response found with "+targetName+" so allDone is false")
                 }
                 if (attemptFailed){
                     // can't lose your invite power just because of rejection
@@ -485,7 +490,7 @@ function globalMatingCheck(gameState){
         text.addMessage(gameState, "tribe", "Reproduction round activities are not complete.");
     }
 
-    return doneMating.length
+    return "this many people are done mating: "+doneMating.length
 }
 module.exports.globalMatingCheck = globalMatingCheck;
 
@@ -590,19 +595,19 @@ function addChild(mother, father, gameState){
 	child.food = 0
 	child.gender = genders[ (Math.trunc( Math.random ( ) * genders.length))]
 	nextIndex = (gameState.conceptionCounter % 26 )
-	child.name = getNextChildName(gameState.children, allNames, nextIndex)
-	gameState.children[child.name] = child	
-	console.log('added child '+child.name)
-	person = pop.memberByName(mother, gameState)
-    gameState.population[child.mother].isPregnant = child.name
+	child.name = getNextChildName(gameState.children, allNames, nextIndex);
+	gameState.children[child.name] = child;
+	console.log('added child '+child.name);
+	motherAsMember = pop.memberByName(mother, gameState)
+    motherAsMember.isPregnant = child.name
 	if (gameState.reproductionList){
 		const indexOfPreggers = gameState.reproductionList.indexOf(mother);
 		if (indexOfPreggers > -1) {
 			gameState.reproductionList.splice(indexOfPreggers, 1);
-			console.log('attempting to remove pregnant woman from reproduction list')
+			console.log('attempting to remove pregnant woman from reproduction list');
 		}
 	}
-	gameState.conceptionCounter++
+	gameState.conceptionCounter++;
 	return child
 }
 module.exports.addChild = addChild;
@@ -690,8 +695,7 @@ function validateDrone(gameState, actorName, args){
         fail = true;
         message+= "Drones need a name that is not already in the tribe.\n";
     } 
-    // is args name annoying?  (bad chars, command)
-    cleanName = util.cleanUpMessage(droneName);
+    cleanName = droneName;
     if (!cleanName===(droneName) || 
         ( droneName===("chief") || droneName===("vote")) ){
         fail = true;

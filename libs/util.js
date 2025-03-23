@@ -1,10 +1,5 @@
-const violencelib = require("./violence.js");
-const killlib = require("./kill.js");
+
 const reproLib = require("./reproduction.js");
-const savelib = require("./save.js");
-const locations = require('./locations.json');
-const text = require("./textprocess.js")
-const roll = require( "./dice.js") 
 
 var referees = ["kevinmitcham", "@kevinmitcham"]
 module.exports.referees = referees;
@@ -44,8 +39,7 @@ function gameStateMessage(gameState) {
 	if (gameState.reproductionRound){
 		if (reproLib.canStillInvite(gameState)){
 			message += ' (reproduction round: awaiting invitations or !pass from '+reproLib.canStillInvite(gameState)+')'
-		}
-		if (gameState.needChanceRoll ){
+		} else if (gameState.needChanceRoll ){
 			message += ' (reproduction round, awaiting chance)'
 		} else {
 			message += ' (reproduction round, awaiting migration or not.)'

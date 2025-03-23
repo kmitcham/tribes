@@ -1,6 +1,6 @@
 const guardlib = require("./guardCode.js")
 const dice = require("./dice.js")
-const util = require("./util.js")
+const tribeUtil = require("./util.js")
 const referees = require("./referees.json")
 const text = require("./textprocess")
 const pop = require("./population")
@@ -155,7 +155,7 @@ function doChance(rollValue, gameState){
             break;
         case 7: 
             message +=  "FIRE! The hunting track moves to 20 (no game!) The tribe must move to another area immediately (Section 9). "
-            if ( util.isColdSeason(gameState) && (gameState.currentLocationName == 'marsh' || gameState.currentLocationName == 'hills')){
+            if ( tribeUtil.isColdSeason(gameState) && (gameState.currentLocationName == 'marsh' || gameState.currentLocationName == 'hills')){
                 console.log("rerolling winter fire in the marsh or hills")
                 message = doChance(dice.roll(3), gameState)
                 return message
