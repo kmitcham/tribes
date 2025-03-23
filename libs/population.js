@@ -200,6 +200,9 @@ module.exports.showHistory = showHistory
 function addToPopulation(gameState, sourceName, gender, profession, handle){
     console.log("joining tribe with sourceName:"+sourceName)
     target = text.removeSpecialChars(sourceName)
+    if (sourceName != target){
+        text.addMessage(gameState, target, "Names with non-alphanumeric characters may impair game function.\n");
+    }
 
     if (gameState.population[target]){
         text.addMessage(gameState, sourceName, target+ ' is already in the tribe' )
@@ -257,8 +260,8 @@ function vote(gameState,  actorName, candidateName){
 
 		return
 	}
-	player.vote = candidateName
-	totalVotes = countByType(gameState.population, 'vote', candidateName)
+	player.vote = candidate.name
+	totalVotes = countByType(gameState.population, 'vote', candidate.name)
 	tribeSize = Object.keys(gameState.population).length
 	droneCount = 0;
 	for (memberName in gameState.population){
@@ -267,8 +270,8 @@ function vote(gameState,  actorName, candidateName){
 			droneCount = droneCount+1
 		}
 	}
-	console.log("Drone count is "+droneCount);
-	text.addMessage(gameState, "tribe",  actorName+" supports "+candidateName+" as chief")
+	console.log("Drone count while voting is "+droneCount);
+	text.addMessage(gameState, "tribe",  player.name+" supports "+candidate.name+" as chief")
 	// count all existing votes
 	if (totalVotes >= (2/3 * (tribeSize-droneCount))){
 		// clear the previous chief
@@ -279,8 +282,8 @@ function vote(gameState,  actorName, candidateName){
 			}
 		}
 		candidate.chief = true
-		history(candidateName, "became chief", gameState);
-		text.addMessage(gameState, "tribe", candidateName+' is the new chief')
+		history(candidate.name, "became chief", gameState);
+		text.addMessage(gameState, "tribe", candidate.name+' is the new chief')
 	}
 	gameState.saveRequired = true
 
