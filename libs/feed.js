@@ -19,7 +19,7 @@ function feed(unused, player, amount, inputChildList, gameState){
                     showErrors = false;
                     for (var childName in children){
                         var child = children[childName]
-                        if (!( child.newAdult && child.newAdult == true) || child.food < 2){
+                        if (!( ("newAdult" in child) && child.newAdult == true) || child.food >= 2){
                             inputChildList.push(childName);
 							console.log("adding to inputChildList:"+childName);
                         }
@@ -50,25 +50,25 @@ function feed(unused, player, amount, inputChildList, gameState){
             }
             if ( (child.food + amount) > 2 ){
                 if (showErrors){text.addMessage(gameState, player.name, childName+' does not need to eat that much.')}
-                continue
             }
             if ( child.newAdult && child.newAdult == true){
                 if (showErrors){text.addMessage(gameState, player.name,childName+' is all grown up and does not need food from you.')}
                 continue
             }
-            
-            if ( ( player['food']+ player['grain'] ) >= amount){
-                if (player['food'] >= amount){
-                    player.food -= Number(amount)
+            var amountForThisChild = ((child.food +amount) >2)?(amount-child.food):amount;
+
+            if ( ( player['food']+ player['grain'] ) >= amountForThisChild){
+                if (player['food'] >= amountForThisChild){
+                    player.food -= Number(amountForThisChild)
 					feedAtLeastOneChild = true;
                 } else {
                     var foodExpended = player.food
                     player.food = 0;
-                    player['grain'] -= (amount-foodExpended);
+                    player['grain'] -= (amountForThisChild-foodExpended);
 					feedAtLeastOneChild = true;
                 }
-                message += player.name+' feeds '+amount+' to '+childName;
-                children[childName].food += Number(amount)
+                message += player.name+' feeds '+amountForThisChild+' to '+childName;
+                children[childName].food += Number(amountForThisChild)
                 if (children[childName].food != 2){
                     message += ' '+childName+' could eat more.'
                 }
