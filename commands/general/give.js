@@ -79,7 +79,6 @@ function give(gameState, sourceName, targetName, amount, item){
     }
     sourcePerson[item] -= amount;
     targetPerson[item] += amount;
-    pop.history(sourceName, response, gameState);
     gameState.saveRequired = true
 
     response = sourceName + " gives "+targetName+" "+amount+" "+item;

@@ -6,7 +6,7 @@ const pop = require("../../libs/population.js");
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('decline')
-		.setDescription('Space seperated list of names of people you would NOT mate with. ')
+		.setDescription('Space or comma seperated list of names of people you would NOT mate with. ')
         .addStringOption(option => 
             option
             .setName('declinelist')
@@ -34,6 +34,9 @@ function declinePrep(interaction, gameState){
         
     }
     let listAsArray = rawList.split(" ");
+    if (rawList.includes(",")){
+        listAsArray = rawList.split(",");
+    }
     console.log("applying decline list to mating for "+sourceName);
     reproLib.decline(sourceName, listAsArray,  gameState);
     return 

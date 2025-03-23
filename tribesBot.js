@@ -182,13 +182,13 @@ async function sendMessages(bot, gameState, interaction){
 			if (! user){
 				console.log("not finding user for "+address+" userId="+userId)
 			} else {
-				console.log("in send messages 4.9 "+user.displayName);
+				console.log("user object was found for "+user.displayName);
 				chunksSent = 0;
 				sendRemainingMessageChunksToUser(user, chunks, chunksSent);
 			}
-			console.log("in send messages 5");
+			console.log("messages complete  for "+address);
 		} else {
-			console.log("no handle.id for "+address+" handle:"+userHandle);
+			console.log("no handle for "+address);
 		}
         delete messagesDict[address]
     }
@@ -219,7 +219,6 @@ function sendRemainingMessageChunksToUser(user, messageArray, chunksSent){
 
 // Assuming you have a Discord.js client set up and authenticated
 // and you have a user object and guild ID
-
 async function getUserNickname(client, userId, guildId) {
 	try {
 	  // Get the guild object

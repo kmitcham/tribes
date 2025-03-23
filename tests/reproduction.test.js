@@ -268,7 +268,7 @@ test("make a inviteList, with pass error", () =>{
       "round": "reproduction"
   }
   //function handleReproductionList(actorName, args, listName, gameState, bot){
-  expectedResponse = "Values after '!pass' must be removed.\n\nPlease try again to set the inviteList\n"
+  expectedResponse = "Values after '!pass' must be removed.\n\nPlease try again to set your inviteList\n"
   response = reproLib.handleReproductionList("p1", ["p2", "p4", "!pass", "p3"],"inviteList", gameState, {})
   expect(response).toBe(expectedResponse)
 });
@@ -332,7 +332,7 @@ test("trigger end of mating", () =>{
   //function handleReproductionList(actorName, args, listName, gameState, bot){
   response = reproLib.globalMatingCheck( gameState, {})
   expect(gameState["population"]["p1"]["cannotInvite"]).toBeTruthy()
-  expect(response).toBe(4)
+  expect(response).toBe("this many people are done mating: 4")
 });
 
 test("sorting check", ()=>{
@@ -374,12 +374,12 @@ test("matingList tests", () =>{
           "p1":{
               "name": "p1",
               "gender": "female",
-              "inviteList":["p2","!pass"],
-              "consentList":["p2"],
+              "inviteList":["p 2","!pass"],
+              "consentList":["p 2"],
               "declineList":[]
           },
           "p2":{
-            "name": "p2",
+            "name": "p 2",
             "gender": "male",
             "consentList":["p1"],
             "cannotInvite": true
@@ -421,7 +421,7 @@ test("make a invitelist, with commas, pass and save", () =>{
               "gender": "female"
           },
           "p2":{
-            "name": "p2",
+            "name": "p 2",
             "gender": "male"
           }
           , "p3":{
@@ -436,10 +436,10 @@ test("make a invitelist, with commas, pass and save", () =>{
       "round": "reproduction"
   }
   //function handleReproductionList(actorName, args, listName, gameState, bot){
-  expectedList = ["p2", "p3", "!save","!pass"]
-  inputList = ["p2,", "p3,", "!save,","!pass"]
+  expectedList = ["p 2", "p3", "!save","!pass"]
+  inputList = ["p 2,", "p3,", "!save,","!pass"]
   response = reproLib.handleReproductionList("p1", inputList ,"inviteList", gameState, {})
-  exp = "Setting your inviteList list to:p2,p3,!save,!pass\nSaving your inviteList list be used in future rounds\n"
+  exp = "Setting your inviteList list to:p 2,p3,!save,!pass\nSaving your inviteList list be used in future rounds\n"
   expect(response).toBe(exp)
   expect(gameState["population"]["p1"]["inviteList"]).toStrictEqual(expectedList)
 });
@@ -588,4 +588,52 @@ test("consent and decline collisions by name", () =>{
   p2message = gameState.messages["p2"];
   expect(p1message).toStrictEqual("p2 flirts with you, but you decline.");
   expect(p2message).toStrictEqual("p1 declines your invitation.");
+});
+
+test("mating with spaces in names", () =>{
+  var gameState = {
+      "reproductionRound":true,
+      "population": {
+          "p1":{
+              "name": "p1",
+              "gender": "female",
+              "inviteList":["p 2"],
+              "consentList":["!all"]
+          },
+          "p2":{
+            "name": "p 2",
+            "gender": "male",
+            "inviteList":["p1", "p4"],
+            "consentList":["p1"]
+          }
+          , "p3":{
+            "name": "p3",
+            "gender": "male",
+            "inviteList":["!pass"]
+          }
+          , "p4":{
+              "name": "p4",
+              "gender": "female",
+              "inviteList":["!pass"],
+              "consentList":["p 2"]
+            }
+       },
+       "children":{},
+      "round": "reproduction"
+  }
+  //function handleReproductionList(actorName, args, listName, gameState, bot){
+  response = reproLib.checkMating(gameState, "p1");
+  messages = gameState.messages;
+
+  expect("p 2" in messages);
+  p2messages = messages["p 2"];
+  expect(p2messages).toContain("p1 is impressed");
+  expect(p2messages).toContain("You share good feelings with p1");
+  expect(p2messages).toContain("p1 flirts with you, and you are interested.");
+  expect("p1" in messages);
+  p1messages = messages["p1"];
+  expect(p1messages).toContain("Checking");
+  expect(p1messages).toContain("p 2");
+  expect(p1messages).toContain("over");
+  expect(p1messages).toContain("done mating");
 });

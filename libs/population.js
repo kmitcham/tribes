@@ -81,6 +81,7 @@ function deadOrBanishedByName(name, gameState){
 }
 module.exports.deadOrBanishedByName = deadOrBanishedByName
 
+// special handling for graveyard and banish
 function memberByNameFromDictionary(name, dictionary){
     if (name == null){
         console.log('attempt to find member for null name ')
@@ -95,16 +96,39 @@ function memberByNameFromDictionary(name, dictionary){
         console.log(name + " cleaned into "+cleaned)
         name = cleaned
     }
-    if (name in dictionary){
-        return dictionary[name];
-    }
-    for (var key in dictionary) {
-        possible = dictionary[key];
-        if (("name" in possible)  && name == possible.name){
-            return possible;
+    var person = null
+    var population = dictionary;
+    if (population[name] != null){
+         person = population[name][0]
+    } else if (population[name.toLowerCase()] != null){
+        person = population[name.toLowerCase()][0]
+    } else {
+        console.log("Exhaustive search in population for "+name)
+        for (match in population){
+            if (population[match].name.toLowerCase() === name.toLowerCase()){
+                person = population[match][0]
+                break;
+            }
+            if ( (population[match] && population[match]["handle"]) ){
+                if ( population[match]["handle"]["username"] == name 
+                    || population[match]["handle"]["displayName"] == name  
+                    || population[match]["handle"]["globalName"] == name
+                   ){
+                    person = population[match][0]
+                    break;
+                }
+                if (population[match].handle.id == name){
+                    person = population[match][0]
+                    break;
+                }
+            }
         }
     }
-    return null;
+    if (person != null){
+        return person
+    }
+    console.log("tribe "+gameState.name+" has no such member in population. tried "+name+" and "+name.toUpperCase())
+    return null
 }
 
 
@@ -146,11 +170,39 @@ function history (playerName, message, gameState){
 }
 module.exports.history = history
 
+function showHistory(playerName, gameState){
+    var player = memberByName(playerName, gameState)
+    if (!player){
+        var player = deadOrBanishedByName(playerName, gameState);
+        console.log("getting history for banished player")
+        if (player){
+            text.addMessage(gameState, playerName, "Before you left the tribe, these things happened:");
+        } else {
+            text.addMessage(gameState, playerName, "You have no history with this tribe");
+            return;
+        }
+    }
+    messages = player.history
+    if (!messages){
+        text.addMessage(gameState, playerName, "You have no history.  How did you get in the tribe?");
+        console.log(playerName+" was in tribe but had no history");
+        return; 
+    }
+    for (const message of messages){
+        text.addMessage(gameState, playerName, message)
+    }
+    return
+}
+module.exports.showHistory = showHistory
+
 // handle is the discord player object which we like to store for messaging with them later
 // possibly could just grab the id or something and find them in the channel for messaging
 function addToPopulation(gameState, sourceName, gender, profession, handle){
     console.log("joining tribe with sourceName:"+sourceName)
     target = text.removeSpecialChars(sourceName)
+    if (sourceName != target){
+        text.addMessage(gameState, target, "Names with non-alphanumeric characters may impair game function.\n");
+    }
 
     if (gameState.population[target]){
         text.addMessage(gameState, sourceName, target+ ' is already in the tribe' )
@@ -208,8 +260,8 @@ function vote(gameState,  actorName, candidateName){
 
 		return
 	}
-	player.vote = candidateName
-	totalVotes = countByType(gameState.population, 'vote', candidateName)
+	player.vote = candidate.name
+	totalVotes = countByType(gameState.population, 'vote', candidate.name)
 	tribeSize = Object.keys(gameState.population).length
 	droneCount = 0;
 	for (memberName in gameState.population){
@@ -218,8 +270,8 @@ function vote(gameState,  actorName, candidateName){
 			droneCount = droneCount+1
 		}
 	}
-	console.log("Drone count is "+droneCount);
-	text.addMessage(gameState, "tribe",  actorName+" supports "+candidateName+" as chief")
+	console.log("Drone count while voting is "+droneCount);
+	text.addMessage(gameState, "tribe",  player.name+" supports "+candidate.name+" as chief")
 	// count all existing votes
 	if (totalVotes >= (2/3 * (tribeSize-droneCount))){
 		// clear the previous chief
@@ -230,8 +282,8 @@ function vote(gameState,  actorName, candidateName){
 			}
 		}
 		candidate.chief = true
-		history(candidateName, "became chief", gameState);
-		text.addMessage(gameState, "tribe", candidateName+' is the new chief')
+		history(candidate.name, "became chief", gameState);
+		text.addMessage(gameState, "tribe", candidate.name+' is the new chief')
 	}
 	gameState.saveRequired = true
 

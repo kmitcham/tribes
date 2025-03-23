@@ -5,6 +5,9 @@ module.exports.banish = (gameState, targetName, reason) =>{
     population = gameState.population    
     console.log("In banish lib for "+targetName)
     person = populationLib.memberByName(targetName, gameState)
+    if (!reason){
+        reason = "No reason supplied";
+    }
 	if (person){
         if (!gameState.banished){
             gameState.banished = {}
@@ -43,6 +46,7 @@ module.exports.banish = (gameState, targetName, reason) =>{
             }
         }
         gameState.banished[targetName] = [person, reason]
+        gameState.saveRequired = true;
         return
     } else {
         console.log("Failed to get the person; banish fails")

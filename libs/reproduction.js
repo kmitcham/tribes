@@ -112,10 +112,10 @@ function checkCompleteLists(gameState){
 }
 
 
-function handleReproductionList(actorName, inputList, listName, gameState){
-    console.log("Building "+listName+" for "+actorName+" args "+inputList)
+function handleReproductionList(actorName, arrayOfNames, listName, gameState){
+    console.log("Building "+listName+" for "+actorName+" args "+arrayOfNames)
     actor = pop.memberByName(actorName, gameState);
-    if (!inputList || inputList.length == 0){
+    if (!arrayOfNames || arrayOfNames.length == 0){
         delete actor[listName]
         // this may be dead code with the new discord API.
         console.log("DELETE in handle list actually called.  SURPRISE!");
@@ -125,13 +125,14 @@ function handleReproductionList(actorName, inputList, listName, gameState){
     errors = []
     list = []
     save = false;
-    for (rawTargetName of inputList){
+    for (rawTargetName of arrayOfNames){
         console.log("arg: "+rawTargetName)
         localErrors = "";   
-        targetName = text.removeSpecialChars(rawTargetName)
+        targetName = text.removeSpecialChars(rawTargetName);
+        targetName = targetName.trim();
         if (targetName.toLowerCase() == "!pass"){
             if (listName == 'inviteList'){
-                if (inputList.indexOf(rawTargetName) != (inputList.length -1)){
+                if (arrayOfNames.indexOf(rawTargetName) != (arrayOfNames.length -1)){
                     errors.push("Values after '!pass' must be removed.\n")
                 }
                 list.push(rawTargetName);
@@ -145,16 +146,16 @@ function handleReproductionList(actorName, inputList, listName, gameState){
             break;
         } else if (targetName.toLowerCase() == '!save'){
             if (listName == 'inviteList'){
-                list.push(targetName)
-                save = true
+                list.push(targetName);
+                save = true;
             } else {
                 errors.push("!save is only valid in the inviteList.")
             }
         } else if (targetName.toLowerCase() == '!all'){
-            if (listName != 'inviteList'){
-                list.push(targetName)
+            if (listName == 'inviteList'){
+                errors.push("!all is only valid in the consentList and declineList.");
             } else {
-                errors.push("!all is only valid in the consentList and declineList.")
+                list.push(targetName);
             }
         } else {
             target = pop.memberByName(targetName, gameState);
@@ -166,7 +167,7 @@ function handleReproductionList(actorName, inputList, listName, gameState){
             if (localErrors != ""){
                 errors.push(localErrors)
             } else {
-                list.push(targetName)
+                list.push(target.name.trim());
             }
         }
     }
@@ -176,15 +177,15 @@ function handleReproductionList(actorName, inputList, listName, gameState){
         for (error of errors){
             returnMessage += error+"\n"
         }
-        // clean up message?
-        returnMessage += ("Please try again to set the "+listName +"\n")
+        returnMessage += ("Please try again to set your "+listName +"\n")
     } else {
         actor[listName] = list;
         returnMessage += ("Setting your "+listName+" list to:"+list+"\n")
         if (save){
-            returnMessage += ("Saving your "+listName+" list be used in future rounds\n")
             if (gameState.reproductionRound){
                 returnMessage += "Changing your list during the reproduction means changes will not be saved, sorry.\n"
+            } else {
+                returnMessage += ("Saving your "+listName+" list be used in future rounds\n")
             }
         }
     }
@@ -193,9 +194,9 @@ function handleReproductionList(actorName, inputList, listName, gameState){
 module.exports.handleReproductionList = handleReproductionList;
 
 
-function invite(author, invitelist, gameState){
-    console.log('author '+author)
-    actorName = text.removeSpecialChars(author)
+function invite(rawActorName, invitelist, gameState){
+    console.log('author '+rawActorName)
+    actorName = text.removeSpecialChars(rawActorName)
     console.log('actorName:'+actorName)
     person = pop.memberByName(actorName, gameState)
     if (!person){
@@ -245,19 +246,23 @@ function consentPrep(gameState, sourceName, rawList){
         }   
     }
     let messageArray = rawList.split(" ");
+    if (rawList.includes(',')){
+        messageArray = rawList.split(",")
+        console.log("splitting consent on commas")
+    }
     if (messageArray.length < 1){
         text.addMessage(gameState, sourceName, "No values parsed from that consentList: "+rawList );
         return  "No values parsed from that consentList: "+rawList;
     }
     console.log("updating consentlist: "+messageArray);
-    var value = consent(sourceName, messageArray,  gameState);
+    consent(sourceName, messageArray,  gameState);
     gameState.saveRequired;
-    return value;
+    return member.consentList;
 }
 module.exports.consentPrep = consentPrep;
 
-function consent(actorName, messageArray,  gameState){
-    handleReproductionList(actorName, messageArray, "consentList", gameState );
+function consent(actorName, arrayOfNames,  gameState){
+    handleReproductionList(actorName, arrayOfNames, "consentList", gameState );
     person = pop.memberByName(actorName, gameState);
     intersectList = intersect(person.consentList, person.declineList);
     if (intersectList && intersectList.length > 0){
@@ -337,10 +342,10 @@ function globalMatingCheck(gameState){
     actionableInvites = true;
     population = gameState.population;
     if (! gameState.reproductionRound){
-        return;
+        return "It is not the mating round";
     }
     if (gameState.doneMating){
-        return;
+        return "Mating is complete";
     }
     while (actionableInvites){
         actionableInvites = false;
@@ -351,7 +356,8 @@ function globalMatingCheck(gameState){
         console.log("a sexlist "+listMemberNamesForSex)
         counter = 0
         for (personName of listMemberNamesForSex){
-            var member = pop.memberByName(personName, gameState)
+            var member = pop.memberByName(personName, gameState);
+            var personDisplayName = member.name;
             console.log("working "+personName +" "+member.name)
             index = listMemberNamesForSex.indexOf(personName)
             if (!member){
@@ -372,7 +378,7 @@ function globalMatingCheck(gameState){
                 continue;
             } else if (member.isInjured && member.isInjured > 0){
                 console.log("\t inviter is injured")
-                text.addMessage(gameState,member.name, "Your injury prevents you from mating.")
+                text.addMessage(gameState, member.name, "Your injury prevents you from mating.")
                 text.addMessage(gameState, "tribe", member.name+" is too injured for mating this round.")
                 member.cannotInvite = true;
                 continue
@@ -398,9 +404,12 @@ function globalMatingCheck(gameState){
                 }
                 var attemptFailed = false
                 const targetMember = pop.memberByName(targetName, gameState)
-                if (targetMember.declineList && (targetMember.declineList.includes(personName) || targetMember.declineList.includes("!all")) ){
-                    text.addMessage(gameState, personName, targetName+" declines your invitation.")
-                    text.addMessage(gameState, targetName, personName+" flirts with you, but you decline.")
+                const targetDisplayName = targetMember.name;
+                if (("declineList" in targetMember) && (targetMember.declineList.includes(personName) 
+                                        || targetMember.declineList.includes("!all")
+                                        || targetMember.declineList.includes(member.name)) ){
+                    text.addMessage(gameState, personDisplayName, targetDisplayName+" declines your invitation.")
+                    text.addMessage(gameState, targetDisplayName, personDisplayName+" flirts with you, but you decline.")
                     console.log("\t declines  ")
                     member.inviteList.shift()
                     attemptFailed = true;
@@ -416,9 +425,11 @@ function globalMatingCheck(gameState){
                     console.log("\t sick or injured")
                     member.inviteList.shift()
                     attemptFailed = true;
-                } else if (targetMember.consentList && (targetMember.consentList.includes(personName) || targetMember.consentList.includes("!all"))){
-                    text.addMessage(gameState, personName, targetName+" is impressed by your flirtation.")
-                    text.addMessage(gameState, targetName, personName+" flirts with you, and you are interested.")
+                } else if (targetMember.consentList && (targetMember.consentList.includes(personName) 
+                                                    || targetMember.consentList.includes("!all")
+                                                    || targetMember.consentList.includes(member.name))){
+                    text.addMessage(gameState, personDisplayName, targetName+" is impressed by your flirtation.")
+                    text.addMessage(gameState, targetName, personDisplayName+" flirts with you, and you are interested.")
                     makeLove(targetName, personName, gameState)
                     member.cannotInvite = true
                     doneMating.push(personName)
@@ -426,12 +437,12 @@ function globalMatingCheck(gameState){
                     continue
                 } else {
                     // this will get spammy, if the function is called every time anyone updates.
-                    text.addMessage(gameState, targetName, personName+" has invited you to mate- update your romance lists to include them (consent or decline) ")
-                    text.addMessage(gameState, personName, targetName+" considers your invitation.")
-                    whoNeedsToGiveAnAnswer.push(targetName)
+                    text.addMessage(gameState, targetDisplayName, personDisplayName+" has invited you to mate- update your romance lists to include them (consent or decline) ")
+                    text.addMessage(gameState, personDisplayName, targetDisplayName+" considers your invitation.")
+                    whoNeedsToGiveAnAnswer.push(targetDisplayName)
                     doneMating.push(personName)
                     allDone = false
-                    console.log("\t no response found  "+targetName+" so allDone is false")
+                    console.log("\t no response found with "+targetDisplayName+" so allDone is false")
                 }
                 if (attemptFailed){
                     // can't lose your invite power just because of rejection
@@ -477,8 +488,11 @@ function globalMatingCheck(gameState){
         text.addMessage(gameState, "tribe", "Time for chance.")
         gameState.doneMating = true;
         gameState.saveRequired = true;
+    } else {
+        text.addMessage(gameState, "tribe", "Reproduction round activities are not complete.");
     }
-    return doneMating.length
+
+    return "this many people are done mating: "+doneMating.length
 }
 module.exports.globalMatingCheck = globalMatingCheck;
 
@@ -510,12 +524,12 @@ function makeLove(name1, name2, gameState, force = false){
             mother.hiddenPregnant = fatherName;
         }
 	} 
-    message1 = parent2.name +' shares good feelings with you ['+roll1+']'
-    message2 = 'You share good feelings with '+parent1.name+' ['+roll2+']'
-    pop.history(name2, message1, gameState)
-    pop.history(name1, message2, gameState)
-    text.addMessage(gameState, name2, message1)
-    text.addMessage(gameState, name1, message2)
+    motherMessage = 'You shares good feelings with '+fatherName+' ['+roll1+']'
+    fatherMessage = 'You share good feelings with '+motherName+' ['+roll2+']'
+    pop.history(motherName, motherMessage, gameState)
+    pop.history(fatherName, fatherMessage, gameState)
+    text.addMessage(gameState, motherName, motherMessage)
+    text.addMessage(gameState, fatherName, fatherMessage)
     detection(mother, father, (roll1+roll2), gameState)
 	return
 }
@@ -583,19 +597,19 @@ function addChild(mother, father, gameState){
 	child.food = 0
 	child.gender = genders[ (Math.trunc( Math.random ( ) * genders.length))]
 	nextIndex = (gameState.conceptionCounter % 26 )
-	child.name = getNextChildName(gameState.children, allNames, nextIndex)
-	gameState.children[child.name] = child	
-	console.log('added child '+child.name)
-	person = pop.memberByName(mother, gameState)
-    gameState.population[child.mother].isPregnant = child.name
+	child.name = getNextChildName(gameState.children, allNames, nextIndex);
+	gameState.children[child.name] = child;
+	console.log('added child '+child.name);
+	motherAsMember = pop.memberByName(mother, gameState)
+    motherAsMember.isPregnant = child.name
 	if (gameState.reproductionList){
 		const indexOfPreggers = gameState.reproductionList.indexOf(mother);
 		if (indexOfPreggers > -1) {
 			gameState.reproductionList.splice(indexOfPreggers, 1);
-			console.log('attempting to remove pregnant woman from reproduction list')
+			console.log('attempting to remove pregnant woman from reproduction list');
 		}
 	}
-	gameState.conceptionCounter++
+	gameState.conceptionCounter++;
 	return child
 }
 module.exports.addChild = addChild;
@@ -683,8 +697,7 @@ function validateDrone(gameState, actorName, args){
         fail = true;
         message+= "Drones need a name that is not already in the tribe.\n";
     } 
-    // is args name annoying?  (bad chars, command)
-    cleanName = util.cleanUpMessage(droneName);
+    cleanName = droneName;
     if (!cleanName===(droneName) || 
         ( droneName===("chief") || droneName===("vote")) ){
         fail = true;
@@ -762,7 +775,11 @@ function checkMating(gameState, displayName){
             if (!gameState.reproductionRound ){
                 text.addMessage(gameState, displayName, "checkMating is only relevant in the reproduction round.")
             }
-            globalMatingCheck(gameState)
+            text.addMessage(gameState, displayName, "Checking on the mating status, in case it can be resolved.");
+            var message = globalMatingCheck(gameState);
+            if (message){
+                text.addMessage(gameState, displayName, message);
+            }
             return
 }
 module.exports.checkMating = checkMating;

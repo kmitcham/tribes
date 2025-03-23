@@ -83,7 +83,8 @@ So how does that interact with targeting?
 so trying to fix how to null out reproduction lists.
 distracted since I broke migrate test
 ++ did I fix names with spaces in reproduction?  Add to unit test
-
+++ check nicknames in join and induct; add unit tests
+++ confirm showHistory works after banished or dead.
 
 
 W= has worked since new API
@@ -164,4 +165,9 @@ I am interested in feedback on the help text, command descriptions, rules implem
 I realize that Discord isn't the best environment to do this, but until someone wants to team up to work on a cooler, stand-alone tool, this is what we have.
 
 SENT!
+Up on Daily Illuminator:
+https://www.sjgames.com/ill/archive/March_23_2025/Tribes_Playtest_On_Discord#:~:text=%7C%20More-,Permalink,-%E2%80%A2%20Archive%20%E2%80%A2
 
+
+saved file :./flounder-tribe/flounder-tribe.json at 2025-03-21T02:58:49.076Z
+command open by UgUgOogOog of flounder-tribe

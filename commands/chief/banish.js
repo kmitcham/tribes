@@ -29,14 +29,14 @@ module.exports = {
 };
 
 function banishAdmin(gameState, actorName, targetName, reason){
-    player = pop.memberByName(actorName, gameState);
-    targetPlayer = pop.memberByName(targetName, gameState);
+    const actingMember = pop.memberByName(actorName, gameState);
+    const targetMember = pop.memberByName(targetName, gameState);
 
-    if (!player ) {
+    if (!actingMember ) {
         text.addMessage(gameState, actorName, 'Is '+actorName+' even in the tribe?');
         return;
     }
-    if (!player.chief ) {
+    if (!actingMember.chief ) {
         text.addMessage(gameState, actorName, 'banish requires chief priviliges');
         return;
     }
@@ -44,7 +44,7 @@ function banishAdmin(gameState, actorName, targetName, reason){
         text.addMessage(gameState, actorName,'banish can not be used during a conflict')
         return
     }
-    if (! targetPlayer){
+    if (! targetMember){
         text.addMessage(gameState, actorName, targetName+ ' was not found in the tribe');
         return
     }
