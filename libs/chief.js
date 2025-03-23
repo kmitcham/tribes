@@ -17,7 +17,7 @@ function isChanceLegal(gameState, actorName, forceRoll){
     }
     var player = pop.memberByName(actorName, gameState)
     if ( !player.chief && !isRef){
-        text.addMessage(gameState, actorName,"chance requires chief privileges");
+        text.addMessage(gameState, actorName,"Chance requires chief privileges");
         return false;
     }
     if(gameState.reproductionRound == false ){

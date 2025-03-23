@@ -356,7 +356,8 @@ function globalMatingCheck(gameState){
         console.log("a sexlist "+listMemberNamesForSex)
         counter = 0
         for (personName of listMemberNamesForSex){
-            var member = pop.memberByName(personName, gameState)
+            var member = pop.memberByName(personName, gameState);
+            var personDisplayName = member.name;
             console.log("working "+personName +" "+member.name)
             index = listMemberNamesForSex.indexOf(personName)
             if (!member){
@@ -403,11 +404,12 @@ function globalMatingCheck(gameState){
                 }
                 var attemptFailed = false
                 const targetMember = pop.memberByName(targetName, gameState)
-                if (targetMember.declineList && (targetMember.declineList.includes(personName) 
+                const targetDisplayName = targetMember.name;
+                if (("declineList" in targetMember) && (targetMember.declineList.includes(personName) 
                                         || targetMember.declineList.includes("!all")
                                         || targetMember.declineList.includes(member.name)) ){
-                    text.addMessage(gameState, personName, targetName+" declines your invitation.")
-                    text.addMessage(gameState, targetName, personName+" flirts with you, but you decline.")
+                    text.addMessage(gameState, personDisplayName, targetDisplayName+" declines your invitation.")
+                    text.addMessage(gameState, targetDisplayName, personDisplayName+" flirts with you, but you decline.")
                     console.log("\t declines  ")
                     member.inviteList.shift()
                     attemptFailed = true;
@@ -426,8 +428,8 @@ function globalMatingCheck(gameState){
                 } else if (targetMember.consentList && (targetMember.consentList.includes(personName) 
                                                     || targetMember.consentList.includes("!all")
                                                     || targetMember.consentList.includes(member.name))){
-                    text.addMessage(gameState, personName, targetName+" is impressed by your flirtation.")
-                    text.addMessage(gameState, targetName, personName+" flirts with you, and you are interested.")
+                    text.addMessage(gameState, personDisplayName, targetName+" is impressed by your flirtation.")
+                    text.addMessage(gameState, targetName, personDisplayName+" flirts with you, and you are interested.")
                     makeLove(targetName, personName, gameState)
                     member.cannotInvite = true
                     doneMating.push(personName)
@@ -435,12 +437,12 @@ function globalMatingCheck(gameState){
                     continue
                 } else {
                     // this will get spammy, if the function is called every time anyone updates.
-                    text.addMessage(gameState, targetName, personName+" has invited you to mate- update your romance lists to include them (consent or decline) ")
-                    text.addMessage(gameState, personName, targetName+" considers your invitation.")
-                    whoNeedsToGiveAnAnswer.push(targetName)
+                    text.addMessage(gameState, targetDisplayName, personDisplayName+" has invited you to mate- update your romance lists to include them (consent or decline) ")
+                    text.addMessage(gameState, personDisplayName, targetDisplayName+" considers your invitation.")
+                    whoNeedsToGiveAnAnswer.push(targetDisplayName)
                     doneMating.push(personName)
                     allDone = false
-                    console.log("\t no response found with "+targetName+" so allDone is false")
+                    console.log("\t no response found with "+targetDisplayName+" so allDone is false")
                 }
                 if (attemptFailed){
                     // can't lose your invite power just because of rejection

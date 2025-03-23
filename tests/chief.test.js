@@ -168,9 +168,3 @@ test('should handle sickness (roll 5)', () => {
   assert.strictEqual(gameState.saveRequired, true);
   console.log("last test in chief complete");
 });
-
-test('test execution does not crash', ()=>{
-  expect("foo").toBe("foo");
-  assert("foo".includes("foo"));
-  console.log("finished tests without crash");
-});
