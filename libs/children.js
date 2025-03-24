@@ -72,7 +72,7 @@ module.exports.showChildren =  (children, population, filterName="", hideFathers
 				response += ' father:'+child.father
 			}
 			if (child.age < 24 ){
-				response += ' guardValue:'+ guardlib.findGuardValueForChild(childName, population, children)
+				response += ' guard value:'+ guardlib.findGuardValueForChild(childName, population, children)
 			}
 			if (child.babysitting){
 				response += ' watching:'+child.babysitting+' '
