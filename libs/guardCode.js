@@ -11,9 +11,9 @@ module.exports.findGuardValueForChild = (childName, population, children) =>{
 		var person = population[personName]
 		if (person.guarding && person.guarding.includes(childName)){
 			var watchValue = 1/person.guarding.length
-			logMessage += '\t'+personName+' adds '+watchValue
+			logMessage += '\t'+person.name+' adds '+watchValue
 			guardValue = guardValue + watchValue
-			child.guardians[personName] = person.guarding.length
+			child.guardians[person.name] = person.guarding.length
 		}
     }
     // check for babysitters
@@ -31,7 +31,6 @@ module.exports.findGuardValueForChild = (childName, population, children) =>{
 }
 
 function findLeastGuarded (children, population){
-	// guard score = 7 if unguarded; otherwise is the length of the guarders 'guarding' array
 	// guard score = 7 if unguarded; otherwise is the length of the guarders 'guarding' array
 	var guardChildSort = []
 	var leastGuarded = []

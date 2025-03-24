@@ -45,14 +45,14 @@ function feed(unused, player, amount, inputChildList, gameState){
             }
             child = children[childName]
             if (  Number(child.food) >= 2 ){
-                if (showErrors){text.addMessage(gameState, player.name,  childName+' has enough food already.')}
+                if (showErrors){text.addMessage(gameState, player.name,  childName+' has enough food already.  ')}
                 continue
             }
             if ( (child.food + amount) > 2 ){
-                if (showErrors){text.addMessage(gameState, player.name, childName+' does not need to eat that much.')}
+                if (showErrors){text.addMessage(gameState, player.name, childName+' does not need to eat that much.  ')}
             }
             if ( child.newAdult && child.newAdult == true){
-                if (showErrors){text.addMessage(gameState, player.name,childName+' is all grown up and does not need food from you.')}
+                if (showErrors){text.addMessage(gameState, player.name,childName+' is all grown up and does not need food from you.  ')}
                 continue
             }
             var amountForThisChild = ((child.food +amount) >2)?(amount-child.food):amount;
@@ -67,10 +67,10 @@ function feed(unused, player, amount, inputChildList, gameState){
                     player['grain'] -= (amountForThisChild-foodExpended);
 					feedAtLeastOneChild = true;
                 }
-                message += player.name+' feeds '+amountForThisChild+' to '+childName;
+                message += player.name+' feeds '+amountForThisChild+' to '+childName+".  ";
                 children[childName].food += Number(amountForThisChild)
                 if (children[childName].food != 2){
-                    message += ' '+childName+' could eat more.'
+                    message += childName+' could eat more.  '
                 }
                 message += '\n'
             } else {

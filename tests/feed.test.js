@@ -79,7 +79,8 @@ describe('feed function', () => {
             }
             feed(dummyMessage, gameState.population.p1, 2, ["p2"], gameState)
             response = gameState.messages["tribe"]
-            expect(response).toContain("p1 feeds 2 to C1\np1 feeds 2 to C2\n")
+            expect(response).toContain("p1 feeds 2 to C1")
+            expect(response).toContain("p1 feeds 2 to C2")
     });
     
     test("feed !all", () =>{
@@ -127,7 +128,9 @@ describe('feed function', () => {
             feed(null, gameState.population.p1, 2, ["!all"], gameState)
             response = gameState.messages["tribe"]
         
-            expect(response).toContain("p1 feeds 2 to C1\np1 feeds 2 to C2\np1 feeds 2 to C3\n")
+            expect(response).toContain("p1 feeds 2 to C1")
+            expect(response).toContain("p1 feeds 2 to C2")
+            expect(response).toContain("p1 feeds 2 to C3")
     });
 
     test("feed !all when no one is hungry", () =>{
@@ -173,9 +176,8 @@ describe('feed function', () => {
             }
         }
         feed(null, gameState.population.p1, 2, ["!all"], gameState)
-        response = gameState.messages["p1"]
-        // TODO: fix this bug so test passes
-        //expect(response).toBe("no children need food")
+        response = gameState.messages["tribe"]
+        expect(response).toContain("No children were fed")
     });
     
     test("feed !all when some are hungry", () =>{
