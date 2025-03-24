@@ -474,6 +474,40 @@ test("make a consent list with !all", () =>{
   expect(gameState["population"]["p1"]["consentList"]).toStrictEqual(expectedList)
 });
 
+test("make a consent list with !all and a declineList", () =>{
+  var gameState = {
+      "population": {
+          "p1":{
+              "name": "p1",
+              "gender": "female",
+              "declineList":["p3"]
+          },
+          "p2":{
+            "name": "p2",
+            "gender": "male"
+          }
+          , "p3":{
+            "name": "p3",
+            "gender": "male"
+          }
+          , "p4":{
+              "name": "p4",
+              "gender": "female"
+            }
+       },
+      "round": "reproduction"
+  }
+  expectedList = ["p2", "p3", "!all"];
+  rawInputList = "p2, p3, !all";
+  reproLib.consentPrep(gameState, "p1", rawInputList);
+  response = gameState.messages["p1"];
+  exp =  "Updated consentlist to p2,p3,!all"
+  expect(response).toContain(exp);
+  expect(response).toContain("will not override");
+  expect(response).toContain("Updated");
+  expect(gameState["population"]["p1"]["consentList"]).toStrictEqual(expectedList)
+});
+
 test("make a consent list with !none", () =>{
   var gameState = {
       "population": {

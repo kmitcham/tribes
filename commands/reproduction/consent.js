@@ -6,7 +6,7 @@ const text = require("../../libs/textprocess.js");
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('consent')
-		.setDescription('The comma seperated list of people you will mate with given an invitation.')
+		.setDescription('Comma seperated list of people you will mate with given an invitation.')
         .addStringOption(option => 
             option
             .setName('consentlist')

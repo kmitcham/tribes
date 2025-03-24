@@ -6,7 +6,7 @@ const pop = require("../../libs/population.js");
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('decline')
-		.setDescription('Space or comma seperated list of names of people you would NOT mate with. ')
+		.setDescription('Comma seperated list of names of people you would NOT mate with. ')
         .addStringOption(option => 
             option
             .setName('declinelist')

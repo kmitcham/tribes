@@ -250,9 +250,15 @@ function consentPrep(gameState, sourceName, rawList){
         messageArray = rawList.split(",")
         console.log("splitting consent on commas")
     }
+    for (var i = 0; i < messageArray.length; i++) { 
+        messageArray[i] = messageArray[i].trim();
+    }
     if (messageArray.length < 1){
         text.addMessage(gameState, sourceName, "No values parsed from that consentList: "+rawList );
         return  "No values parsed from that consentList: "+rawList;
+    }
+    if (messageArray.includes("!all") && "declineList" in member && member.declineList){
+        text.addMessage(gameState, member.name, "Your declinelist is not empty; !all will not override that.");
     }
     console.log("updating consentlist: "+messageArray);
     consent(sourceName, messageArray,  gameState);
@@ -266,7 +272,7 @@ function consent(actorName, arrayOfNames,  gameState){
     person = pop.memberByName(actorName, gameState);
     intersectList = intersect(person.consentList, person.declineList);
     if (intersectList && intersectList.length > 0){
-        text.addMessage(gameState, actorName, "Your consent and decline lists have overlaps.  Consent is checked first.");
+        text.addMessage(gameState, actorName, "Your consent and decline lists have overlaps.  Decline has priority.");
     }
     if ("consentList" in person){
         text.addMessage(gameState, actorName, "Updated consentlist to "+person.consentList);        
@@ -524,7 +530,7 @@ function makeLove(name1, name2, gameState, force = false){
             mother.hiddenPregnant = fatherName;
         }
 	} 
-    motherMessage = 'You shares good feelings with '+fatherName+' ['+roll1+']'
+    motherMessage = 'You share good feelings with '+fatherName+' ['+roll1+']'
     fatherMessage = 'You share good feelings with '+motherName+' ['+roll2+']'
     pop.history(motherName, motherMessage, gameState)
     pop.history(fatherName, fatherMessage, gameState)
