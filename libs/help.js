@@ -1,6 +1,7 @@
 function playerHelpBasic(){
-    	text = ''
-		text+='-=General Commands=-\n'
+    	text = '<required argument to command> [optional arguement] < option1 |or| option2 >'
+		text+='\n'
+		text+='###General Commands###\n'
 		text+=' babysit <adult child> <target child> a mother can ask her adult child to watch a child\n'
 		text+=' children [parent name] shows the ages and food of children, optionally filtered to descendants of specified parent\n'
 		text+=' give <amt> <food|grain|spearhead|basket> <player>\n'
@@ -19,7 +20,7 @@ function playerHelpBasic(){
 }
 function playerHelpRounds(){
 	text = ''
-		text+='-=Work Round Commands=-\n'
+		text+='###Work Round Commands###\n'
 		text+=' guard | ignore <childName> [<more childNames>] take on child care responsibilities for the child[ren]\n'
 		text+=' leastguarded shows the least supervised child; ties resolved randomly\n'
 		text+=' ready list who is still available to work\n'
@@ -28,15 +29,14 @@ function playerHelpRounds(){
 		text+=' hunt\n'
 		text+=' train learn crafting, if there is a willing teacher\n'
 		text+=' idle do nothing \n'
-		//text+=' command <target> <command>  (order a tribe member.  They might obey)\n'
 		text+='-=Food Round Commands=-\n'
 		text+=' foodcheck examine the food situation for every adult and living child; triggers reproduction round if everyone has enough food\n'
 		text+=' feed <amt> <childName | mothername | !all >  [<more childNames>]\n'
 		text+='-=Reproduction Commands=-\n'
 		text+=' romance  show your current reproduction lists\n'
-		text+=' invite [inviteList] The order you would like to invite people to mate.  \n\tIf the list ends with !pass, you will give up if they all decline. !save will retain the list every season\n\tUpdates made DURING the reproduction round will not be saved.\n'
-		text+=' consent [consentList] The list of people you would accept mating invitations from\n'
-		text+=' decline [declineList] The list of people whose mating invitations you would decline to mate with\n'
+		text+=' invite <inviteList> The list of people you would like to invite people to mate with, in preference order.  \n\tIf the list ends with !pass, you will give up if they all decline. !save will retain the list every season\n\tUpdates made DURING the reproduction round will not be saved.\n'
+		text+=' consent <consentList> The list of people you would accept mating invitations from\n'
+		text+=' decline <declineList> The list of people whose mating invitations you would decline to mate with\n'
 		// pass is not needed due to mandatory secret mating
 		//text+=' pass (decline to invite anyone in the mating round; can still get invitations)\n'
 		text+=' scorechildren  count number of children by parent'
@@ -44,7 +44,7 @@ function playerHelpRounds(){
 }
 function playerHelpConflict(){
 	text = '';
-		text+=' -=Conflict Commands=-\n'
+		text+='###Conflict Commands###\n'
 		text+=' demand <text of your demand>  You want this to happen, and you are willing to kill or die about it\n'
 		text+=' faction <for|against|neutral> Where you stand on the current DEMAND before the tribe; you must choose for the game to continue\n'
 		text+=' attack <target> attempt to harm another member of the tribe during violence\n'
@@ -54,7 +54,6 @@ function playerHelpConflict(){
 }
 
 function chiefHelp(){
-	text = ''
 	text = '\n### Chief Commands ###\n'
 	text+=' induct|banish <player> add|remove a tribe member\n'
 	text+=' open|close  toggle if people can join with "!join" or only with "!induct" by the chief\n'
@@ -63,6 +62,7 @@ function chiefHelp(){
 	text+=' startfood ends the work round; subtract food/grain; birth; child age increase\n'
 	text+=' startreproduction  start the reproduction round. Also when migration happens\n'
 	text+=' chance after mating, chance is required to end the season\n'
+  //text+=' command <target> <command>  (order a tribe member.  They might obey)\n'
 	text+=' migrate <newlocation> <go>  without go, just checks who would perish on the journey\n'
 	text+=' decree <law number> <law text> record a rule for the tribe, or replace the rule of the specified number\n'
 	text+=' skip <person>   end a players reproduction turn\n'
