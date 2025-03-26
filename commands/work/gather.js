@@ -17,37 +17,13 @@ module.exports = {
             )
         ,
     async execute(interaction, gameState) {
-        await gather(interaction, gameState)
+        var sourceName = interaction.member.displayName;
+        var forceRoll = interaction.options.getInteger('force');
+        await worklib.gather(gameState, sourceName, forceRoll)
 	},
 };
 
-function gather(interaction, gameState){
-    var sourceName = interaction.member.displayName;
-    var forceRoll = interaction.options.getInteger('force');
-    player = pop.memberByName(sourceName, gameState);
-    msg = worklib.canWork(gameState, player);
 
-    if (msg) {
-        text.addMessage(gameState, sourceName, msg)
-        return
-    }
-    if (player.guarding && player.guarding.length >= 5){
-        text.addMessage(gameState, sourceName, 'You can not gather while guarding more than 4 children.  You are guarding '+player.guarding )
-        return
-    }
-    var gatherRoll = dice.roll(3)
-    if (referees.includes(sourceName) && forceRoll){
-        gatherRoll = forceRoll;
-        if (gatherRoll < 3 || 18 < gatherRoll){
-            text.addMessage(gameState, sourceName,'Roll must be 3-18' )
-            return
-        }
-    }
-    message = gatherlib.gather( sourceName, player, gatherRoll, gameState)
-	pop.history(sourceName, message, gameState);
-    gameState.saveRequired = true;
-
-}
 
 function onError(interaction, response){
     interaction.user.send(response);

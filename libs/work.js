@@ -1,78 +1,43 @@
+const pop = require("./population.js")
+const text = require("./textprocess.js");
+const dice = require("./dice")
+const gatherlib = require("./gather.js")
+const referees = require("./referees.json");
+const locations = require('./locations.json');
+
+
 //////////////////////////////////////////////////////////
 /////  WORK SECTION   
 /////////////////////////////////////////////////////////
-function gather(playername, player, rollValue,gameState){
-	var message = ' gathers (roll='+rollValue+')';
-	var netRoll = rollValue
-	modifier = 0
-	if (gameState.seasonCounter%2 == 0){
-		message+= '(-3 season)  '
-		modifier -= 3
-	}
-	if ( player.profession != 'gatherer'){
-		message+=('(-3 skill) ')
-		modifier -= 3
-	}
-	if (player.guarding){
-		guardCount = player.guarding.length
-		if (guardCount == 3){
-			message+= '(-2 kids) '
-			modifier-= 2
-		}
-		if (guardCount == 4){
-			message+= '(-4 kids) '
-			modifier-= 4
-		}
-		if (guardCount > 4){
-			console.log(' gather with more than 4 kids should not happen')
-			return ' fails to get anything, too many kids in the way'
-		}
-	}
-	if (player.strength){
-		if (player.strength.toLowerCase() == 'strong'){
-			modifier += 1
-		} else if (player.strength.toLowerCase() == 'weak') {
-			modifier -= 1
-		} else {
-			console.log(playername+' has an invalid strength value '+player.strength)
-		}
-	}
-	netRoll = rollValue + modifier
-	console.log('gather roll:'+rollValue+' mod:'+modifier+' net:'+netRoll)
-	gatherData = locations[gameState.currentLocationName]['gather']
-	var get_message = ''
-	var getFood = 0
-	var getGrain = 0
-    var targetData = gatherDataFor(gameState.currentLocationName, netRoll)
-    getFood = targetData[1]
-	getGrain = targetData[2]
-	get_message = targetData[3] +' ('+((targetData[1]+targetData[2])+')')
-	message += get_message
-	player.food += getFood
-	player.grain += getGrain
-	gameState.foodAcquired += getFood + getGrain;
-	if (player.basket > 0){
-		var broll = roll(3)+modifier
-		message+= ' basket: ('+broll+')'
-		netRoll = broll+modifier
-        console.log('modified basket roll '+netRoll)
-        var targetData = gatherDataFor(gameState.currentLocationName, netRoll)
-        getFood = targetData[1]
-        getGrain = targetData[2]
-        get_message = targetData[3] +' ('+((targetData[1]+targetData[2])+')')
-        message += get_message
-        player.food += getFood
-        player.grain += getGrain
-		gameState.foodAcquired += getFood + getGrain;
-            // check for basket loss
-		if (roll(1) <= 2){
-			message+= ' basket breaks.'
-			player.basket -= 1
-		}
-	}
-	player.worked = true
-	return message
+
+function gather(gameState, sourceName, forceRoll){
+
+    player = pop.memberByName(sourceName, gameState);
+    msg = canWork(gameState, player);
+
+    if (msg) {
+        text.addMessage(gameState, sourceName, msg)
+        return
+    }
+    if (player.guarding && player.guarding.length >= 5){
+        text.addMessage(gameState, sourceName, 'You can not gather while guarding more than 4 children.  You are guarding '+player.guarding )
+        return
+    }
+    var gatherRoll = dice.roll(3)
+    if (referees.includes(sourceName) && forceRoll){
+        gatherRoll = forceRoll;
+        if (gatherRoll < 3 || 18 < gatherRoll){
+            text.addMessage(gameState, sourceName,'Roll must be 3-18' )
+            return
+        }
+    }
+    message = gatherlib.gather( sourceName, player, gatherRoll, gameState)
+	pop.history(sourceName, message, gameState);
+    gameState.saveRequired = true;
+
 }
+module.exports.gather = gather;
+
 function craft(playername, player, type, rollValue){
 	console.log('craft type'+type+' roll '+rollValue)
 	player.worked = true
@@ -91,134 +56,7 @@ function craft(playername, player, type, rollValue){
 	}
 	return playername+' crafts a '+type
 }
-function assist(playername, player, helpedPlayer){
-	player.worked = true
-	bonus = 0
-	if (player.spearhead > 0){
-		bonus += 1
-	}
-	if (player.profession == 'hunter'){
-		bonus += 1
-	} else {
-		bonus += 0.5
-	}
-	if (helpedPlayer.bonus ){
-		helpedPlayer.bonus += bonus
-	} else {
-		helpedPlayer.bonus = bonus	
-	}
-	if (!helpedPlayer.helpers){
-		helpedPlayer.helpers = [playername]
-	} else {
-		helpedPlayer.helpers.push(playername)
-	}
-	return ' goes hunting to assist '
-}
-// this should be deleted?
-function hunt(playername, player, rollValue){
-	console.error("deprecated hunting in work.js called")
-	player.worked = true
-	mods = 0
-	message = ' goes hunting. '
-	console.log(player+' hunt '+rollValue)
-	var modifier = 0
-	if ( player.profession != 'hunter'){
-		message+=('(-3 skill) ')
-		modifier -= 3
-	}
-	if (player.strength){
-		if (player.strength.toLowerCase() == 'strong'){
-			modifier += 1
-		} else if (player.strength.toLowerCase() == 'weak') {
-			modifier -= 1
-		} else {
-			console.log(playername+' has an invalid strength value '+player.strength)
-		}
-	}
-	if (isColdSeason()){
-		message+= '(-1 season) '
-		modifier -= 1
-	}
-	if (player.bonus && player.bonus >0 ){
-		player.bonus = Math.trunc(player.bonus)
-		if (player.bonus > 3){
-			modifier += 3
-		} else {
-			modifier += player.bonus
-		}
-		message += ' (with '+player.helpers+')'
-	}
-	if (player.spearhead > 0 && rollValue >= 9){
-		modifier += 3
-		message+= '(spearhead)'
-	}
-	message += '(rolls a '+rollValue+' ) '
-	if (rollValue < 7){
-		console.log('hunt under 7')
-		// injury section
-		if (rollValue == 6){
-			if (player.profession != 'hunter'){
-				message += 'Injury!'
-				player.isInjured = true
-			}
-		} else if (rollValue ==3 ){
-			message += 'Crippling injury!'
-			player.isInjured = true
-			if (player.strength = 'strong'){
-				delete player.strength
-			} else {
-				player.strength = 'weak'
-			}
-		} else {
-		// TODO: make this also possibly inure the helpers
-			message += 'Injury!'
-			player.isInjured = true
-		}
-	} else if (rollValue == 7 || rollValue == 8){
-		message += ' no luck'
-	} else {
-		// rewards section
-		netRoll = rollValue + modifier
-		console.log('hunt netRoll '+netRoll)
-		if (netRoll > locationDecay[locations[gameState.currentLocationName]['game_track']]){
-			message += ' (no '+huntData[netRoll][2]+' tracks )'
-			netRoll = locationDecay[locations[gameState.currentLocationName]['game_track']]
-		}
-		if (netRoll > 18){
-			netRoll = 18
-		}
-		huntData = locations[gameState.currentLocationName]['hunt']
-		for (var i = 0; i < huntData.length; i++){
-			if (netRoll <= huntData[i][0]){
-				message += huntData[i][2] + ' +'+huntData[i][1]+' food';
-				player.food += huntData[i][1];
-				gameState.foodAcquired += huntData[i][1];
-				break
-			}
-		}
-	}
-	// update the game track
-	var huntercount = 1
-	if (player.helpers ){
-		huntercount += Math.min(player.helpers.length,3)
-	}
-	// check for spearhead loss
-	if (player.spearhead > 0 && roll(1) <= 2){
-		player.spearhead -= 1
-		message += '(the spearhead broke)'
-	}
-	var oldTrack = gameState.gameTrack[gameState.currentLocationName]
-	gameState.gameTrack[gameState.currentLocationName] += huntercount
-	console.log('Game Track for '+gameState.currentLocationName+' advanced from '+oldTrack+' to '+gameState.gameTrack[gameState.currentLocationName])
-	// clear the stuff for group hunting
-	if (player.bonus && player.bonus != 0){
-		player.bonus = 0
-	}
-	if (player.helpers){
-		player.helpers = []
-	}
-	return message
-}
+module.exports.craft = craft;
 
 function gatherDataFor(locationName, roll){
 	resourceData = locations[locationName]['gather']
@@ -237,6 +75,7 @@ function gatherDataFor(locationName, roll){
 	}
 	console.log('error looking up resourceData for '+locationName+' '+type+' '+roll)
 }
+module.exports.gatherDataFor = gatherDataFor;
 
 // this is used by Ready
 function listReadyToWork(population){
@@ -280,3 +119,62 @@ function canWork(gameState, player){
 	return null;
 }
 module.exports.canWork = canWork;
+
+function craft(gameState, sourceName, item, forceRoll){
+
+    player = pop.memberByName(sourceName, gameState);
+    msg = canWork(gameState, player);
+
+    if (msg) {
+        text.addMessage(gameState, sourceName, msg)
+        return
+    }
+    if (player.canCraft == false){
+        text.addMessage(gameState, sourceName, 'You do not know how to craft')
+        return
+    }
+    if (player.guarding && player.guarding.length > 2){
+        text.addMessage(gameState, sourceName,  'You can not craft while guarding more than 2 children.  You are guarding '+player.guarding)
+        return
+    }
+
+    if (item.startsWith('b') ) {
+        item = 'basket'
+    } else if ( item.startsWith('s')){
+        item = 'spearhead'
+    } else {
+        response = "Unrecognized item "+item;
+        return onError(interaction, response);
+    }
+    
+    var craftRoll = dice.roll(1)
+	if (referees.includes(sourceName) && forceRoll){
+		craftRoll = forceRoll
+        if (craftRoll < 1 || 6 < craftRoll){
+            text.addMessage(gameState, sourceName, "forceRoll must be 1-6")
+		    return
+		}
+	}
+    var rollValue = craftRoll;
+	console.log('craft type '+item+' roll '+craftRoll)
+	player.worked = true
+	var message = sourceName+' crafts['+craftRoll+'] a '+item
+	if (player.profession != 'crafter'){
+		rollValue -= 1
+	}
+	if (rollValue > 1 && item == 'basket'){
+			player.basket += 1
+	} else if (rollValue > 2 && item == 'spearhead') {		
+			player.spearhead += 1
+	} else {
+		message =  sourceName+ ' creates something['+craftRoll+'], but it is not a '+item
+	}
+	pop.history(sourceName,message, gameState)
+	player.activity = 'craft'    
+    player.worked = true;
+    gameState.saveRequired=true;
+
+    text.addMessage(gameState, "tribe", message)
+
+}
+module.exports.craft = craft;

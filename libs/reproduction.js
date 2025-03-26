@@ -373,7 +373,7 @@ function globalMatingCheck(gameState){
                 doneMating.push(personName)
                 console.log("\t cannotInvite. "+member.name)
                 continue
-            } else if ( member.golem){
+            } else if (member.golem){
                 member.cannotInvite = true;
                 console.log("Skipping golem "+member.name)
             } else if (member.isPregnant){
@@ -398,18 +398,22 @@ function globalMatingCheck(gameState){
              // the person is eligible to mate, and has an invitelist
                 targetName = member.inviteList[0]
                 console.log(" inviting "+targetName)
-                if (targetName == "!pass"){
+                if (targetName.trim() == "!pass"){
                     member.cannotInvite = true
                     text.addMessage(gameState, "tribe", personName+" is passing on mating this round.")
                     doneMating.push(personName)
                     continue
                 }
-                if (targetName == "!save"){
+                if (targetName.trim() == "!save"){
                     console.log("Skipping the !save since it isn't really an invite")
                     continue
                 }
                 var attemptFailed = false
                 const targetMember = pop.memberByName(targetName, gameState)
+                if (!targetMember){
+                    console.log("No member for "+targetName);
+                    continue;
+                }
                 const targetDisplayName = targetMember.name;
                 if (("declineList" in targetMember) && (targetMember.declineList.includes(personName) 
                                         || targetMember.declineList.includes("!all")
