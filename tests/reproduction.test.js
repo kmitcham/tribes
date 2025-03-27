@@ -671,3 +671,28 @@ test("mating with spaces in names", () =>{
   expect(p1messages).toContain("over");
   expect(p1messages).toContain("done mating");
 });
+test("make a consentList, null in the array", () =>{
+  var gameState = {
+      "population": {
+          "p1":{
+              "name": "p1",
+              "gender": "female"
+          },
+          "p2":{
+            "name": "p2",
+            "gender": "male"
+          }
+          , "p3":{
+            "name": "p3",
+            "gender": "male"
+          }
+          , "p4":{
+              "name": "p4",
+              "gender": "male"
+            }
+       },
+      "round": "reproduction"
+  }
+  response = reproLib.handleReproductionList("p1", ["p2", null],"consentList", gameState, {});
+  expect(response).toContain("is not in the tribe");
+});

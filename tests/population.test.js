@@ -98,6 +98,30 @@ test("person by ignoresCase", ()=>{
     expect(actualName).toEqual(expectName);
   })
 
+  test("person by ignoresCase with spaces" , ()=>{
+    var gameState = {
+        "population": {
+            "demander": {
+                "name": "dem Ander",
+                "faction":"for",
+                "handle":{
+                  "id":7
+                }
+              },
+              "pro1": {
+                "name": "pro1",
+                "faction":"for"
+              }
+                        },
+        "round": "work"
+    }
+    expectName = 'dem Ander'
+    player = pop.memberByName('DEM ANDER', gameState);
+    expect(player).toBeTruthy();
+    actualName = player.name;
+    expect(actualName).toEqual(expectName);
+  })
+
 test("person with gender", ()=>{
   var gameState = {
     "population": {

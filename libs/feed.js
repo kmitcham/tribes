@@ -98,7 +98,7 @@ function checkFood(gameState, bot){
     children = gameState.children
     population = gameState.population
     for  (var targetName in population) {
-        person = population[targetName]
+        person = pop.memberByName(targetName, gameState);
         hunger = 4
         if (person.gender == 'female' && childLib.countChildrenOfParentUnderAge(children, targetName, 4) > 1){
             hunger = 6
@@ -145,6 +145,7 @@ function consumeFoodChildren(gameState){
 	console.log('children are eating')
 	for (childName in children){
 		var child = children[childName]
+		motherMember = pop.memberByName(child.mother, gameState);
 		if (child.dead){
 			continue;
 		}
@@ -155,16 +156,16 @@ function consumeFoodChildren(gameState){
 			if (child.food < 0){
 				response += " child:"+childName+" has starved to death.\n"
 				child.dead = true
-				if (population[child.mother] && population[child.mother].isPregnant ) {
-					delete population[child.mother].isPregnant
+				if (motherMember && motherMember.isPregnant ) {
+					delete motherMember.isPregnant
 				}
 				perishedChildren.push(childName)
 				continue;
 			} 
-			if (child.age == 0 ){
+			if (child.age <= 0 ){
 				birthRoll = dice.roll(3)
-				response += '\t'+child.mother+' gives birth to a '+child.gender+'-child, '+child.name
-				pop.history(child.mother,child.mother+' gives birth to a '+child.gender+'-child, '+child.name, gameState)
+				response += '\t'+motherMember.name+' gives birth to a '+child.gender+'-child, '+child.name
+				pop.history(motherMember.name, motherMember.name+' gives birth to a '+child.gender+'-child, '+child.name, gameState)
 				if (birthRoll < 5 ){
 					response += ' but the child did not survive\n'
 					child.dead = true
@@ -175,44 +176,44 @@ function consumeFoodChildren(gameState){
 					response += '\n'
 				}
 				//Mothers start guarding their newborns
-				person = pop.memberByName(child.mother, gameState)
-				if (!person.guarding){
-					person.guarding = [child.name]
-				} else if (person.guarding.indexOf(child.name) == -1){
-					person.guarding.push(child.name)
+				if (!motherMember.guarding){
+					motherMember.guarding = [child.name]
+				} else if (motherMember.guarding.indexOf(child.name) == -1){
+					persmotherMemberon.guarding.push(child.name)
 				}
 				if (birthRoll == 17){
 					twin = reproLib.addChild(child.mother, child.father, gameState);
-					delete child.mother.isPregnant; // this gets set by addChild, but the child was just born.
-					response += child.mother+' gives birth to a twin! Meet '+twin.name+', a healthy young '+twin.gender+'-child.\n'
-					pop.history(child.mother,child.mother+' gives birth to a twin! Meet '+twin.name+', a healthy young '+twin.gender+'-child', gameState)
-					person.guarding.push(twin.name)
+					delete motherMember.isPregnant; // this gets set by addChild, but the child was just born.
+					response += motherMember.name+' gives birth to a twin! Meet '+twin.name+', a healthy young '+twin.gender+'-child.\n'
+					pop.history(motherMember.name, motherMember.name+' gives birth to a twin! Meet '+twin.name+', a healthy young '+twin.gender+'-child', gameState)
+					motherMember.guarding.push(twin.name)
 					twin.age = 0
 				}
 			}
 			// Sometimes we get bugs where pregnancy doesn't clear; this will fix it eventually
 			if (child.age >= 0){
-				if (population[child.mother] && population[child.mother].isPregnant
-					&& population[child.mother].isPregnant == childName ){
-					delete population[child.mother].isPregnant
+				if (motherMember && pmotherMember.isPregnant
+					&& motherMember.isPregnant == childName ){
+					delete motherMember.isPregnant;
+					console.log("Deleting extended pregnancy for "+motherMember.name);
 				}
 			}
-			if (4 > child.age && child.age >=  0 && population[child.mother] ){
-				if ( ! population[child.mother].nursing){
-					population[child.mother].nursing = []
+			if (4 > child.age && child.age >=  0 && motherMember ){
+				if ( !motherMember.nursing){
+					motherMember.nursing = []
 				}
-				if (population[child.mother].nursing.indexOf(childName) == -1){
-					population[child.mother].nursing.push( child.name)
+				if (motherMember.nursing.indexOf(childName) == -1){
+					motherMember.nursing.push( child.name)
 				}
 			}
 			if (child.age >= 4 // 2 years in SEASONS
-					&& population[child.mother] && population[child.mother].nursing 
+					&& motherMember && motherMember.nursing 
 					&&  population[child.mother].nursing.indexOf(childName) > -1 ){
-				childIndex = population[child.mother].nursing.indexOf(childName)
-				population[child.mother].nursing.splice(childIndex, 1);
+				childIndex = motherMember.nursing.indexOf(childName)
+				motherMember.nursing.splice(childIndex, 1);
 				response += child.name+' is weaned.\n'
-				if (population[child.mother].nursing && population[child.mother].nursing.length == 0){
-					delete population[child.mother].nursing 
+				if (motherMember.nursing && motherMember.nursing.length == 0){
+					delete motherMember.nursing 
 				}
 			}
 		}
@@ -221,7 +222,7 @@ function consumeFoodChildren(gameState){
 			response += ">> "+child.name+' has reached adulthood!\n'
 			// clear all guardians
 			for  (var name in population) {
-				player = population[name]
+				player = pop.memberByName(name, gameState);
 				if (player.guarding && player.guarding.includes(child.name)){
 					const index = player.guarding.indexOf(child.name);
 					if (index > -1) {

@@ -38,8 +38,6 @@ module.exports.gather = (playername, player, rollValue, gameState) => {
 		} else if (player.strength.toLowerCase() == 'weak'.valueOf()) {
 			message += '(weak)'
 			modifier -= 1
-		} else {
-			console.log(playername+' has an invalid strength value '+player.strength)
 		}
 	}
 	netRoll = rollValue + modifier
