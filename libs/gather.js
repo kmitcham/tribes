@@ -66,6 +66,7 @@ module.exports.gather = (playername, player, rollValue, gameState) => {
 	message += get_message
 	player.food += getFood
 	player.grain += getGrain
+	gameState.foodAcquired += getFood + getGrain;
 	if (player.basket > 0){
 		var broll = dice.roll(3)+modifier
 		message+= ' basket: ['+broll+']'

@@ -68,6 +68,7 @@ module.exports.hunt = (playername, player, rollValue, gameState) =>{
         huntRow = huntDataFor(huntData, netRoll);
         message += "\n\t"+huntRow[2] + ' +'+huntRow[1]+' food'
         player.food += huntRow[1]
+        gameState.foodAcquired += huntRow[1]
     }
     // check for spearhead loss
     const breakRoll = dice.roll(1);

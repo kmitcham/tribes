@@ -69,7 +69,7 @@ function endGame(gameState, bot){
 	adultCount += Object.keys(population).length
     response += 'The tribe lost '+deadAdults+' members and banished '+banishCount+'.\n';
 	response += 'Count of surviving adults is:'+adultCount+' ('+newAdultCount+' new adults)\n';
-    response += 'The tribe acquired  '+gameState.foodAcquired+' food and grain.'
+    response += 'The tribe acquired  '+gameState.foodAcquired+' food and grain.  '
     response += 'At least '+gameState.spoiled+' food was lost to spoilage.'
 	response += '\nThe tribe was '+ scoreTribe(gameState);
     gameState.ended = true
