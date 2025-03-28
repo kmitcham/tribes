@@ -32,7 +32,7 @@ function children(gameState, displayName, onlyHungry, parentMember ){
 
     if (onlyHungry){
        response = ['These children need food:\n']
-        response.push(childlib.showChildren(children, population, 'hungry', gameState.secretMating))
+        response.push(childlib.showChildren(children, gameState, 'hungry', gameState.secretMating))
     } else if (parentMember){
             var parentName = parentMember.displayName;
             var parentPerson = pop.memberByName( parentName, gameState);
@@ -40,10 +40,10 @@ function children(gameState, displayName, onlyHungry, parentMember ){
                 text.addMessage(gameState, displayName, 'Could not find '+parentName )
             } else {
                 response = ['The descendants of '+parentName+' are:\n']
-                response.push.apply(response, childlib.showChildren(children, population, parentName, gameState.secretMating))
+                response.push.apply(response, childlib.showChildren(children, gameState, parentName, gameState.secretMating))
             }
     } else {
-        response = childlib.showChildren(children, population, "", gameState.secretMating)
+        response = childlib.showChildren(children, gameState, "", gameState.secretMating)
     }
     var compiledResponse = " "
     for (part of response){

@@ -1,6 +1,10 @@
 var childlib = require("../libs/children.js");
 
 test("Display adults only", () =>{
+    var gameState = {"population":{
+      "m1":{"name":"m1"     },
+      "f1":{"name":"f1"}    
+    }};
     var children = {
         "c1": {
           "mother": "m1",
@@ -18,7 +22,16 @@ test("Display adults only", () =>{
           "age": 30,"name":"c3", "food": 2, 'gender':'male'
         }
     }
-    actualMessage = (childlib.showChildren(children,{})).join()
+    var gameState = {
+      "population":{
+        "m1":{"name":"m1"     },
+        "m2":{"name":"m2"     },
+        "f2":{"name":"f2"     },
+        "f1":{"name":"f1"}    
+      },
+      "children":children
+    };
+    actualMessage = (childlib.showChildren(children,gameState)).join()
     expect(actualMessage.indexOf('Unborn')).toBe(-1)
     expect(actualMessage.indexOf('Children')).toBe(-1)
     expect(actualMessage.indexOf('Adults')).toBeGreaterThan(-1)
@@ -44,7 +57,16 @@ test("filter mixed ages", () =>{
           "age": -1,"name":"c3", "food": 2, 'gender':'male'
         }
     }
-    actualMessage = childlib.showChildren(children, {}, 'm1').join()
+    var gameState = {
+      "population":{
+        "m1":{"name":"m1"     },
+        "m2":{"name":"m2"     },
+        "f2":{"name":"f2"     },
+        "f1":{"name":"f1"}    
+      },
+      "children":children
+    };
+    actualMessage = childlib.showChildren(children, gameState, 'm1').join()
     expect(actualMessage.indexOf('Unborn')).toBeGreaterThan(-1)
     expect(actualMessage.indexOf('Adults')).toBeGreaterThan(-1)
     expect(actualMessage.indexOf('Children')).toBe(-1)
@@ -70,7 +92,16 @@ test("Check sorting", () =>{
         "age": -1,"name":"C", "food": 2, 'gender':'male'
       }
   }
-  actualMessage = childlib.showChildren(children, {}).join()
+  var gameState = {
+    "population":{
+      "m1":{"name":"m1"     },
+      "m2":{"name":"m2"     },
+      "f2":{"name":"f2"     },
+      "f1":{"name":"f1"}    
+    },
+    "children":children
+  };
+  actualMessage = childlib.showChildren(children, gameState).join()
   alocation = actualMessage.indexOf('Achild')
   blocation = actualMessage.indexOf('Bchild')
   clocation = actualMessage.indexOf('Cchild')
