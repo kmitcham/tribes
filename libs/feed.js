@@ -162,7 +162,7 @@ function consumeFoodChildren(gameState){
 				perishedChildren.push(childName)
 				continue;
 			} 
-			if (child.age <= 0 ){
+			if (child.age == 0 ){
 				birthRoll = dice.roll(3)
 				response += '\t'+motherMember.name+' gives birth to a '+child.gender+'-child, '+child.name
 				pop.history(motherMember.name, motherMember.name+' gives birth to a '+child.gender+'-child, '+child.name, gameState)
@@ -179,7 +179,7 @@ function consumeFoodChildren(gameState){
 				if (!motherMember.guarding){
 					motherMember.guarding = [child.name]
 				} else if (motherMember.guarding.indexOf(child.name) == -1){
-					persmotherMemberon.guarding.push(child.name)
+					motherMember.guarding.push(child.name)
 				}
 				if (birthRoll == 17){
 					twin = reproLib.addChild(child.mother, child.father, gameState);
@@ -192,7 +192,7 @@ function consumeFoodChildren(gameState){
 			}
 			// Sometimes we get bugs where pregnancy doesn't clear; this will fix it eventually
 			if (child.age >= 0){
-				if (motherMember && pmotherMember.isPregnant
+				if (motherMember && motherMember.isPregnant
 					&& motherMember.isPregnant == childName ){
 					delete motherMember.isPregnant;
 					console.log("Deleting extended pregnancy for "+motherMember.name);
@@ -208,7 +208,7 @@ function consumeFoodChildren(gameState){
 			}
 			if (child.age >= 4 // 2 years in SEASONS
 					&& motherMember && motherMember.nursing 
-					&&  population[child.mother].nursing.indexOf(childName) > -1 ){
+					&&  motherMember.nursing.indexOf(childName) > -1 ){
 				childIndex = motherMember.nursing.indexOf(childName)
 				motherMember.nursing.splice(childIndex, 1);
 				response += child.name+' is weaned.\n'
@@ -277,7 +277,7 @@ function consumeFoodPlayers(gameState){
 	var response = '';
 	for  (var target in population) {
 		var hunger = 4
-		const person = population[target];
+		const person = pop.memberByName(target, gameState);
 		console.log(target+' f:'+person.food+' g:'+person.grain)
 		person.food = person.food - hunger
 		if (person.food < 0 ){

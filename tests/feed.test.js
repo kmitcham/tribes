@@ -281,3 +281,7 @@ describe('feed function', () => {
         expect(actual).toContain('You do not have enough food or grain to feed Child1')
     });
 });
+
+test("consumeFoodChildren happy path", ()=>{
+    // TODO: have a test here.
+})

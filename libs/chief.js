@@ -52,7 +52,8 @@ function doChance(rollValue, gameState){
                 person = pop.memberByName(name, gameState);
                 safety = safety + 1;
             }
-            message +=  name +" grows stronger.";
+            message +=  person.name +" grows stronger.";
+            pop.history(name, message, gameState);
             if (person.strength && person.strength == 'weak'){
                 delete person.strength
             } else {
@@ -63,21 +64,25 @@ function doChance(rollValue, gameState){
             message +="Fungus! All stored food in the whole tribe, except grain, spoils and is lost."
             for (var name in population){
                 person = population[name];
+                pop.history(name, "Lost "+person.food+" to fungus", gameState);
                 gameState.spoiled += person.food;
                 person.food = 0
             }
             break;
         case 14 : 
             name = pop.randomMemberName(population)
-            person= population[name]
-            message +="Rats! All "+name+"'s food ["+person.food+"], except for grain, spoils and is lost.  "
+            person= pop.memberByName(name, gameState);
+            message +="Rats! All "+person.name+"'s food ["+person.food+"], except for grain, spoils and is lost.  "
+            pop.history(name, message, gameState);
             gameState.spoiled += person.food;
+            
             person.food = 0
             if (Object.keys(population).length >= 8){
                 name2 = pop.randomMemberName(population)
                 if (name != name2){
                     person2 = population[name2]
                     message+= name2+"'s ["+person2.food+"] food is also spoiled, in a strange coincidence."
+                    pop.history(name2, message2, gameState);
                     gameState.spoiled += person2.food;
                     person2.food = 0
                 }
@@ -87,13 +92,13 @@ function doChance(rollValue, gameState){
             break;
         case 13 : 
             name = pop.randomMemberName(population)
-            person= population[name]
+            person= pop.memberByName(name, gameState);
             if (person.hasOwnProperty('spearhead')){
                 person.spearhead += 1
             } else {
                 person.spearhead = 1
             }
-            message += name +" finds a spearhead"
+            message += person.name +" finds a spearhead"
             break;
         case 12 : 
             if (gameState.children){
@@ -106,13 +111,13 @@ function doChance(rollValue, gameState){
                             gift = 4
                         }
                         motherName = child.mother
-                        mother = population[motherName]
+                        mother = pop.memberByName(motherName, gameState);
                         if (mother){
                             mother.food += gift;
                             gameState.foodAcquired += gift;
-                            message += '\n  '+motherName+' gets '+gift+' from '+childName
+                            message += '\n  '+mother.name+' gets '+gift+' from '+childName
                         } else {
-                            message += '\n  '+motherName+' was not around, so '+childName+' eats it out of grief.'
+                            message += '\n  '+mother.name+' was not around, so '+childName+' eats it out of grief.'
                         }
                     }
                 }
@@ -123,14 +128,14 @@ function doChance(rollValue, gameState){
         case 11 : 
             message +="Locusts! Each player loses two dice of stored food"
             for (var name in population){
-                person = population[name]
+                person = pop.memberByName(name, gameState);
                 var amount = dice.roll(2)
                 if (amount > person.food){
                     amount = person.food
                 }
                 gameState.spoiled += amount;
                 person.food -= amount
-                message += "\n "+name+" loses "+amount
+                message += "\n "+person.name+" loses "+amount
                 if (person.food < 0) { person.food = 0}
             }
             break;
@@ -146,7 +151,7 @@ function doChance(rollValue, gameState){
             }
             person.food -= amount
             if (person.food < 0) { person.food = 0}
-            message += name + " loses "+amount+" food to weevils."
+            message += person.name + " loses "+amount+" food to weevils."
             gameState.spoiled += amount;
             break;
         case 8: 
@@ -168,13 +173,13 @@ function doChance(rollValue, gameState){
             person = population[name]
             person.isInjured = 4
             // TODO clear the guarding array of the injured person
-            message +=  name + " injured – miss next turn."
+            message +=  person.name + " injured – miss next turn."
             break;
         case 5: 
             name = pop.randomMemberName(population)
             person = population[name]
             person.isSick = 3
-            message +=  name + " got sick – eat 2 extra food and miss next turn. "
+            message +=  person.name + " got sick – eat 2 extra food and miss next turn. "
             if (person.food < 2){
                 message += '( but they only had '+person.food+' so the ref might kill them if no help is given or grain is used)'
             }
@@ -189,7 +194,7 @@ function doChance(rollValue, gameState){
         case 3: 
             name = pop.randomMemberName(population)
             person = population[name]
-            message +=  name +" gets a severe injury: miss next turn and "
+            message +=  person.name +" gets a severe injury: miss next turn and "
             person.isInjured = 4
             if (person.hasOwnProperty('strength') && person.strength == 'strong'){
                 delete person.strength
