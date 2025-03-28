@@ -22,8 +22,9 @@ function kill(name, message, gameState){
 		if (person.nursing){
 			person.nursing.forEach(childName=>kill(childName, 'no-milk'))
 		}
-		gameState.graveyard[person.name] = person
-		delete population[person.name]
+		targetKey =  Object.keys(population).find(key => population[key] === name);
+		gameState.graveyard[targetKey] = person
+		delete population[targetKey]
 	} else if (childName in children){
 		guardlib.unguardChild(childName, population)
 		clearNursingPregnant(childName, gameState.population)
