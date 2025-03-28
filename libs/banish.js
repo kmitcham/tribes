@@ -2,19 +2,20 @@ const populationLib = require("./population.js")
 const t = require("./textprocess")
 
 module.exports.banish = (gameState, targetName, reason) =>{
-    population = gameState.population    
+    const population = gameState.population    
     console.log("In banish lib for "+targetName)
-    person = populationLib.memberByName(targetName, gameState)
+    const banishTarget = populationLib.memberByName(targetName, gameState)
     if (!reason){
         reason = "No reason supplied";
     }
-	if (person){
+	if (banishTarget){
         if (!gameState.banished){
             gameState.banished = {}
         }
-        gameState.banished[targetName] = [person, reason]
+        gameState.banished[targetName] = [banishTarget, reason]
         // removing the player from the banish list is a pain.
-        delete population[targetName]
+        targetKey =  Object.keys(population).find(key => population[key] === banishTarget);
+        delete population[targetKey]
         t.addMessage(gameState, "tribe", targetName+' is banished from the tribe')
         for (childName in gameState.children){
             child = gameState.children[childName]
@@ -24,10 +25,10 @@ module.exports.banish = (gameState, targetName, reason) =>{
                 gameState.banished[childName] = [child, 'banished in the womb'];
                 delete gameState.children[childName]
             }
-            if (person.guarding && person.guarding.indexOf(childName) > -1 ){
-                childIndex = person.guarding.indexOf(childName)
+            if (banishTarget.guarding && banishTarget.guarding.indexOf(childName) > -1 ){
+                childIndex = banishTarget.guarding.indexOf(childName)
                 if (childIndex > -1) {
-                    person.guarding.splice(childIndex, 1);
+                    banishTarget.guarding.splice(childIndex, 1);
                 }
                 t.addMessage(gameState, "tribe", targetName+' stops guarding '+childName)
             }
@@ -45,7 +46,7 @@ module.exports.banish = (gameState, targetName, reason) =>{
                 }
             }
         }
-        gameState.banished[targetName] = [person, reason]
+        gameState.banished[targetName] = [banishTarget, reason]
         gameState.saveRequired = true;
         return
     } else {
