@@ -83,7 +83,8 @@ function doCommand(gameState, sourceName, item, amount){
         net = random + Math.trunc(Math.log(amount)) ;
         console.log(sourceName+' sacrifice roll was '+random+ '  plus bonus = '+net)
         rndMsg = ritualResults[net] || 'The ritual is clearly wrong.' 
-        sourcePerson[item] -= Number(amount)
+        sourcePerson[item] -= Number(amount);
+        gameState.spoiled += Number(amount);
     } else {
         response = 'You do not have that many '+item+': '+ sourcePerson[item]
         text.addMessage(gameState,sourceName, response);
