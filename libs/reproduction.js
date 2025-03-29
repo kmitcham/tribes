@@ -396,7 +396,7 @@ function globalMatingCheck(gameState){
                 continue
             } else if (invitingMember.inviteList && invitingMember.inviteList.length > 0) {
              // the person is eligible to mate, and has an invitelist
-                targetName = invitingMember.inviteList[0]
+                targetName = invitingMember.inviteList[invitingMember.inviteIndex||0];
                 console.log(" inviting "+targetName)
                 if (targetName.trim() == "!pass"){
                     invitingMember.cannotInvite = true
@@ -421,19 +421,16 @@ function globalMatingCheck(gameState){
                     text.addMessage(gameState, inviterDisplayName, targetDisplayName+" declines your invitation.")
                     text.addMessage(gameState, targetDisplayName, inviterDisplayName+" flirts with you, but you decline.")
                     console.log("\t declines  ")
-                    invitingMember.inviteList.shift(); //TODO: this is why save breaks.  Where did we stash the copy?
                     attemptFailed = true;
                 } else if (targetMember.isPregnant){
                     text.addMessage(gameState, personName, targetName+" is visibly pregnant.")
                     text.addMessage(gameState, targetName, personName+" flirts with you, but you are pregnant.")
                     console.log("\t is pregnant  ")
-                    invitingMember.inviteList.shift()
                     attemptFailed = true;
                 } else if (targetMember.isSick || targetMember.isInjured){
                     text.addMessage(gameState, targetName, personName+" flirts with you, but you are not healthy enough to respond.")
                     text.addMessage(gameState, personName, targetName+" is not healthy enough to enjoy your attention.")
                     console.log("\t sick or injured")
-                    invitingMember.inviteList.shift()
                     attemptFailed = true;
                 } else if (targetMember.consentList && (targetMember.consentList.includes(personName) 
                                                     || targetMember.consentList.includes("!all")
@@ -455,8 +452,9 @@ function globalMatingCheck(gameState){
                     console.log("\t no response found with "+targetDisplayName+" so allDone is false")
                 }
                 if (attemptFailed){
+                    invitingMember.inviteIndex = invitingMember.inviteIndex||0 + 1;
                     // can't lose your invite power just because of rejection
-                    if (invitingMember.inviteList.length > 0) {
+                    if (invitingMember.inviteList.length > invitingMember.inviteIndex) {
                         actionableInvites = true
                         console.log("\t more invitations exist")
                     } else {
@@ -490,7 +488,6 @@ function globalMatingCheck(gameState){
                 text.addMessage(gameState, "tribe",invitingMember.name+ " has been blessed with a child: "+invitingMember.isPregnant)
                 text.addMessage(gameState, personName, "You have been blessed with the child "+invitingMember.isPregnant)
             }
-            delete invitingMember.inviteList
         }
         if (noPregnancies){
             text.addMessage(gameState, "tribe", "No one has become pregnant this season.")
@@ -624,22 +621,6 @@ function addChild(mother, father, gameState){
 }
 module.exports.addChild = addChild;
 
-function rememberInviteLists(gameState){
-    population = gameState.population
-    for (personName in population){
-        person = population[personName]
-        if (person.inviteList && person.inviteList.length > 0 && person.inviteList.indexOf('!save') > -1) {
-            console.log('saving inviteList for '+personName)
-            person.saveInviteList = [...person.inviteList]
-            const index = person.inviteList.indexOf("!save");
-            if (index > -1) {
-                person.inviteList.splice(index, 1);
-            }
-        }
-    }
-}
-module.exports.rememberInviteLists = rememberInviteLists;
-
 function restoreSaveLists(gameState){
     population = gameState.population
     for (personName in population){
@@ -768,7 +749,6 @@ function startReproduction(gameState){
     foodMessage += 'After chance, the tribe can decide to move to a new location, but the injured and children under 2 will need 2 food'
     text.addMessage(gameState, "tribe",foodMessage)
 
-    rememberInviteLists(gameState);
     gameState.doneMating = false;
     globalMatingCheck(gameState)
     if (canStillInvite(gameState)){	

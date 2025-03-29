@@ -696,3 +696,48 @@ test("make a consentList, null in the array", () =>{
   response = reproLib.handleReproductionList("p1", ["p2", null],"consentList", gameState, {});
   expect(response).toContain("is not in the tribe");
 });
+
+test("handle mating with lists and decline", () =>{
+  var gameState = {
+    "name": "unitTest-tribe",
+      "population": {
+          "p1":{
+              "name": "p1",
+              "gender": "female",
+              "inviteList":["p2","p3", "p4"]
+          },
+          "p2":{
+            "name": "p2",
+            "gender": "male",
+            "declineList":["p1"],
+            "cannotInvite": true
+          }
+          , "p3":{
+            "name": "p3",
+            "gender": "male",
+            "consentList":["p1"],
+            "cannotInvite":true
+          },
+          "p4":{
+              "name": "p4",
+              "gender": "male",
+              "cannotInvite":true
+            }
+       },
+       "children":{},
+      "reproductionRound": true
+  }
+  //function handleReproductionList(actorName, args, listName, gameState, bot){
+  response = reproLib.globalMatingCheck( gameState, {})
+  expect(gameState["population"]["p1"]["cannotInvite"]).toBeTruthy();
+  const p1message = gameState["messages"]["p1"];
+  expect(p1message).toContain("p2 declines");
+  expect(p1message).toContain("You share good feelings with p3");
+  const p2message = gameState["messages"]["p2"];
+  expect(p2message).toContain("p1 flirts");
+  expect(p2message).toContain("decline");
+  const p3message = gameState["messages"]["p3"];
+  expect(p3message).toContain("p1 flirts");
+  expect(p3message).toContain("feelings");
+  expect(response).toBe("this many people are done mating: 4")
+});
