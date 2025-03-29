@@ -89,7 +89,7 @@ module.exports.feed = feed;
 
 // Side effect: if everyone has enough food, and it is foodRound, start reproduction round.
 function checkFood(gameState, bot){
-    message = ''
+    var message = ''
     hungryAdults = []
     happyAdults = []
     worriedAdults = []
@@ -101,6 +101,7 @@ function checkFood(gameState, bot){
         person = pop.memberByName(targetName, gameState);
         hunger = 4
         if (person.gender == 'female' && childLib.countChildrenOfParentUnderAge(children, targetName, 4) > 1){
+			message += person.name+" needs 6 food due to have more than one child under 2\n";
             hunger = 6
         }
         if (person.food >= hunger) {
@@ -122,7 +123,7 @@ function checkFood(gameState, bot){
             hungryChildren.push(childName)
         }
     }
-    message = 'Happy People: '+happyAdults+", "+satedChildren
+    message += 'Happy People: '+happyAdults+", "+satedChildren
     message += '\nWorried adults: '+worriedAdults
     message += '\nHungry adults: '+hungryAdults
     message += '\nHungry children: '+hungryChildren
@@ -293,8 +294,8 @@ function consumeFoodPlayers(gameState){
 		if (person.gender == 'female' && childLib.countChildrenOfParentUnderAge(children, target, 4 ) > 1 ){
 			// extra food issues here; mom needs 2 more food, or the child will die.
 			const mom = person;
-			console.log(mom.name+' needs extra food due to nursing while pregnant. ');
-			response += mom.name+" needs extra food due to nursing while pregnant.";
+			console.log(mom.name+' eats extra food due to multiple children under 2. ');
+			response += mom.name+" eats extra food due to multiple children under 2.";
 			mom.food -= 2
 			if (mom.food < 0 ){
 				// food is negative, so just add it to grain here
