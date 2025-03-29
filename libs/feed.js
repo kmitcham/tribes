@@ -164,36 +164,12 @@ function consumeFoodChildren(gameState){
 				continue;
 			} 
 			if (child.age == 0 ){
-				birthRoll = dice.roll(3)
-				response += '\t'+motherMember.name+' gives birth to a '+child.gender+'-child, '+child.name
-				pop.history(motherMember.name, motherMember.name+' gives birth to a '+child.gender+'-child, '+child.name, gameState)
-				if (birthRoll < 5 ){
-					response += ' but the child did not survive\n'
-					child.dead = true
-					killlib.kill(child.name, 'birth complications', gameState)
-					console.log('removing stillborn '+child.name)
-					continue;
-				} else {
-					response += '\n'
-				}
-				//Mothers start guarding their newborns
-				if (!motherMember.guarding){
-					motherMember.guarding = [child.name]
-				} else if (motherMember.guarding.indexOf(child.name) == -1){
-					motherMember.guarding.push(child.name)
-				}
-				if (birthRoll == 17){
-					twin = reproLib.addChild(child.mother, child.father, gameState);
-					delete motherMember.isPregnant; // this gets set by addChild, but the child was just born.
-					response += motherMember.name+' gives birth to a twin! Meet '+twin.name+', a healthy young '+twin.gender+'-child.\n'
-					pop.history(motherMember.name, motherMember.name+' gives birth to a twin! Meet '+twin.name+', a healthy young '+twin.gender+'-child', gameState)
-					motherMember.guarding.push(twin.name)
-					twin.age = 0
-				}
+				birthRoll = dice.roll(3);
+				birth(gameState, child, motherMember, birthRoll)
 			}
 			// Sometimes we get bugs where pregnancy doesn't clear; this will fix it eventually
 			if (child.age >= 0){
-				if (motherMember && motherMember.isPregnant
+				if (motherMember && 'isPregnant' in motherMember
 					&& motherMember.isPregnant == childName ){
 					delete motherMember.isPregnant;
 					console.log("Deleting extended pregnancy for "+motherMember.name);
@@ -254,6 +230,37 @@ function consumeFoodChildren(gameState){
 	return response;
 }
 module.exports.consumeFoodChildren = consumeFoodChildren
+
+function birth(gameState, child, motherMember, birthRoll){
+	response += '\t'+motherMember.name+' gives birth to a '+child.gender+'-child, '+child.name
+	pop.history(motherMember.name, motherMember.name+' gives birth to a '+child.gender+'-child, '+child.name, gameState)
+	if (birthRoll < 5 ){
+		response += ' but the child did not survive\n';
+		child.dead = true
+		killlib.kill(child.name, 'birth complications', gameState);
+		console.log('removing stillborn '+child.name);
+		return;
+	} else {
+		response += '\n'
+	}
+	delete motherMember.isPregnant;
+	//Mothers start guarding their newborns
+	if (!motherMember.guarding){
+		motherMember.guarding = [child.name]
+	} else if (motherMember.guarding.indexOf(child.name) == -1){
+		motherMember.guarding.push(child.name)
+	}
+	if (birthRoll == 17){
+		twin = reproLib.addChild(child.mother, child.father, gameState);
+		delete motherMember.isPregnant; // this gets set by addChild, but the child was just born.
+		response += motherMember.name+' gives birth to a twin! Meet '+twin.name+', a healthy young '+twin.gender+'-child.\n'
+		pop.history(motherMember.name, motherMember.name+' gives birth to a twin! Meet '+twin.name+', a healthy young '+twin.gender+'-child', gameState)
+		motherMember.guarding.push(twin.name)
+		twin.age = 0
+	}
+}
+module.exports.birth = birth
+
 
 function consumeFood(gameState){
 	if (!gameState){
