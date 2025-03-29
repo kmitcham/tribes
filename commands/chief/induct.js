@@ -34,17 +34,16 @@ module.exports = {
                 .setRequired(false))
         ,
     async execute(interaction, gameState) {
-        await induct(interaction, gameState)
+        targetObject = interaction.options.getMember('target')
+        var targetName = targetObject.displayName;
+        var gender = interaction.options.getString('gender')
+        var profession = interaction.options.getString('profession')
+        var sourceName = interaction.member.displayName;        
+        await induct(gameState, sourceName, targetName, gender, profession);
 	},
 };
 
-function induct(interaction, gameState){
-    targetObject = interaction.options.getMember('target')
-    var targetName = targetObject.displayName;
-    var gender = interaction.options.getString('gender')
-    var profession = interaction.options.getString('profession')
-    var sourceName = interaction.member.displayName;
-	
+function induct(gameState, sourceName, targetName, gender, profession){
     var chief = pop.memberByName(sourceName, gameState)
 	
     if (!chief ){
@@ -57,6 +56,11 @@ function induct(interaction, gameState){
         text.addMessage(gameState, "tribe", response);
         return
     }
+    if ( gameState.ended ){
+        text.addMessage(gameState, sourceName,  'The game is over.  Maybe you want to /join to start a new game?');
+        return
+    }
+
 	console.log("message b")
 
     pop.addToPopulation(gameState, targetName, gender, profession, targetObject)    

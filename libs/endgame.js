@@ -41,9 +41,14 @@ function endGame(gameState, bot){
     if (gameState.banished != null ){
         banishCount = Object.keys(gameState.banished).length;
     }
+    if ( gameState.ended ){
+        text.addMessage(gameState, actorName,  'The game has ended already.')
+        return
+    }
+    response = "### --- GAME OVER --- ###"
     children = gameState.children
     if (children){
-        response = 'The fate of the children:\n'
+        response += 'The fate of the children:\n'
         gameState.secretMating = false;
         gameState.gameOver = true;
         for (childName in children){
@@ -83,7 +88,7 @@ function endGame(gameState, bot){
 module.exports.scoreMessage = scoreMessage;
 function scoreMessage(gameState, bot){
     tribeResult = scoreTribe(gameState)
-    messageText = "---> Score for the tribe:"+tribeResult+" <---\n"
+    messageText = "###---> Score for the tribe:"+tribeResult+" <---###\n"
         + scoreChildrenMessage(gameState)
     return messageText
 }

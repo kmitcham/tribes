@@ -19,6 +19,10 @@ function close(actorName, gameState){
         text.addMessage(gameState,actorName, command+' requires chief priviliges')
         return
     }
+    if ( gameState.ended ){
+        text.addMessage(gameState, actorName,  'The game is over.  Maybe you want to /join to start a new game?');
+        return
+    }
     gameState.open = true
     gameState.saveRequired = true
     text.addMessage(gameState,"tribe", 'The tribe is open to all')

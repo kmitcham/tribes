@@ -11,6 +11,10 @@ const locations = require('./locations.json');
 /////////////////////////////////////////////////////////
 
 function gather(gameState, sourceName, forceRoll){
+	if ( gameState.ended ){
+		text.addMessage(gameState, sourceName,  'The game is over.  Maybe you want to /join to start a new game?');
+		return
+	}
 
     player = pop.memberByName(sourceName, gameState);
     msg = canWork(gameState, player);
@@ -37,26 +41,6 @@ function gather(gameState, sourceName, forceRoll){
 
 }
 module.exports.gather = gather;
-
-function craft(playername, player, type, rollValue){
-	console.log('craft type'+type+' roll '+rollValue)
-	player.worked = true
-	if (type.startsWith('spear')){
-		type = 'spearhead'
-	}
-	if (player.profession != 'crafter'){
-		rollValue -= 1
-	}
-	if (rollValue > 1 && type == 'basket'){
-			player.basket += 1
-	} else if (rollValue > 2 && type == 'spearhead') {		
-			player.spearhead += 1
-	} else {
-		return playername+ ' fails at crafting a '+type
-	}
-	return playername+' crafts a '+type
-}
-module.exports.craft = craft;
 
 function gatherDataFor(locationName, roll){
 	resourceData = locations[locationName]['gather']
@@ -178,3 +162,49 @@ function craft(gameState, sourceName, item, forceRoll){
 
 }
 module.exports.craft = craft;
+
+function train(gameState, sourceName, forceRoll){
+	var population = gameState.population;
+	player = pop.memberByName(sourceName, gameState);
+	msg = canWork(gameState, player);
+
+	if (msg) {
+		text.addMessage(gameState, sourceName,msg )
+		return
+	}
+	if (player.canCraft){
+		text.addMessage(gameState, sourceName,'You already know how to craft' )
+		return
+	}
+	if (player.guarding && player.guarding.length > 2){
+		text.addMessage(gameState, sourceName,'You can not learn crafting while guarding more than 2 children.  You are guarding '+player.guarding )
+		return
+	}
+	var crafters = pop.countByType(population, 'canCraft', true)
+	var noTeachers = pop.countByType(population, 'noTeach', true)
+	if (crafters <= noTeachers){
+		text.addMessage(gameState, sourceName,'No on in the tribe is able and willing to teach you crafting' )
+		return
+	}
+	learnRoll = dice.roll(2)
+	if (referees.includes(sourceName) && forceRoll){
+		learnRoll = forceRoll;
+		if (learnRoll < 2 || 12 < learnRoll){
+			text.addMessage(gameState, sourceName,'Roll must be 2-12' )
+			return
+		}
+	}
+	if ( learnRoll >= 10 ){
+		player.canCraft = true
+		message = player.name+' learns to craft. ['+learnRoll+']'
+	} else {
+		message = player.name+' tries to learn to craft, but does not understand it yet. ['+learnRoll+']'
+	}
+	player.activity = 'training'
+	player.worked = true;
+	pop.history(sourceName, message, gameState);
+	gameState.required = true;
+	text.addMessage(gameState, "tribe", message );
+	return;
+}
+module.exports.train = train;

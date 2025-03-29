@@ -16,6 +16,10 @@ module.exports = {
             text.addMessage(gameState, actorName,  "startreproduction requires chief priviliges")
             return
         }
+        if ( gameState.ended ){
+            text.addMessage(gameState, actorName,  'The game is over.  Maybe you want to /join to start a new game?');
+            return
+        }
         if (gameState.reproductionRound == true){
             text.addMessage(gameState, actorName,  'already in the reproductionRound')
             return 

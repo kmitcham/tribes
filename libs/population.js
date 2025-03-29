@@ -257,9 +257,12 @@ function vote(gameState,  actorName, candidateName){
 	}
 	if (!player){
 		text.addMessage(gameState, actorName,  'You are not a member of the tribe yet.')
-
 		return
 	}
+    if ( gameState.ended ){
+        text.addMessage(gameState, actorName,  'The game is over.  Maybe you want to /join to start a new game?');
+        return
+    }
 	player.vote = candidate.name
 	totalVotes = countByType(gameState.population, 'vote', candidate.name)
 	tribeSize = Object.keys(gameState.population).length

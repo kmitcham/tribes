@@ -18,6 +18,10 @@ module.exports = {
 
 function startWork(actorName, gameState){
     var player = pop.memberByName(actorName, gameState)
+    if ( gameState.ended ){
+        text.addMessage(gameState, actorName,  'The game is over.  Maybe you want to /join to start a new game?');
+        return
+    }
     if ( !player.chief){
         text.addMessage(gameState, actorName,  "startwork requires chief priviliges")
         return

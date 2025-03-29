@@ -27,6 +27,10 @@ module.exports = {
 function demand(gameState, actorName, demandText){
     var player = pop.memberByName(actorName, gameState)
     var currentDemand = "";
+    if ( gameState.ended ){
+        text.addMessage(gameState, actorName,  'The game is over.  Maybe you want to /join to start a new game?');
+        return
+    }
     if (gameState.hasOwnProperty('demand')) {
         currentDemand = gameState["demand"];
     }

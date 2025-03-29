@@ -36,6 +36,10 @@ function decree(gameState, actorName, number, lawText){
         text.addMessage(gameState, actorName, 'decree requires chief priviliges' )
         return
     }
+    if ( gameState.ended ){
+        text.addMessage(gameState, actorName,  'The game is over.  Maybe you want to /join to start a new game?');
+        return
+    }
     law =lawText
     if (! gameState.laws){
         gameState.laws = {};

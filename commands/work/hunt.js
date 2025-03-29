@@ -17,14 +17,17 @@ module.exports = {
             )
         ,
     async execute(interaction, gameState) {
-        await hunt(interaction, gameState)
+        var sourceName = interaction.member.displayName;
+        var forceRoll = interaction.options.getInteger('force');
+        await hunt(gameState, sourceName, forceRoll)
 	},
 };
 
-function hunt(interaction, gameState){
-    var sourceName = interaction.member.displayName;
-    var forceRoll = interaction.options.getInteger('force');
-    var population = gameState.population;
+function hunt(gameState, sourceName, forceRoll){
+    if ( gameState.ended ){
+        text.addMessage(gameState, sourceName,  'The game is over.  Maybe you want to /join to start a new game?');
+        return
+    }
     player = pop.memberByName(sourceName, gameState);
     // if this is null, the player can NOT work
     msg = worklib.canWork(gameState, player);

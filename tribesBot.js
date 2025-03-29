@@ -58,16 +58,11 @@ client.on(Events.InteractionCreate, async interaction => {
 	const command = client.commands.get(interaction.commandName);
     if (!command) return;
     let channel = await client.channels.fetch(interaction.channelId);
-	let guildId = await channel.guildId;
 	console.log("command "+interaction.commandName+ " by "+interaction.member.displayName+" of "+channel.name);
     if (channel.name.endsWith('tribe')){
         gameState = allGames[channel.name];
         if (!gameState || gameState.ended ){
             gameState = savelib.loadTribe(channel.name);
-            if (!gameState || gameState.ended ){
-                console.log('creating game '+channel.name);
-				gameState = savelib.initGame(channel.name, client )
-            }
         }
 		allGames[channel.name] = gameState;
     } else {

@@ -23,6 +23,10 @@ function startFoodFilter(actorName, gameState, bot){
         text.addMessage(gameState, actorName,"startfood requires chief privileges");
         return 
     }
+    if ( gameState.ended ){
+        text.addMessage(gameState, actorName,  'The game is over.  Maybe you want to /join to start a new game?');
+        return
+    }
     if (gameState.foodRound == true){
         text.addMessage(gameState, actorName,'already in the foodRound');
         return 

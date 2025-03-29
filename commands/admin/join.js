@@ -44,6 +44,11 @@ function join(actorName, gameState, gender, profession, handle){
         text.addMessage(gameState, actorName, 'You need to be inducted by the chief to join this tribe');
         return 
     }
+    if ( gameState.ended ){
+        console.log('resetting game when '+member.name+' joined. ');
+        text.addMessage(gameState, actorName, 'You are the first member of a new tribe.');
+        gameState = savelib.initGame(channel.name, client )
+    }
     console.log("display name is "+actorName +" username:"+actorName.username)
     pop.addToPopulation(gameState, actorName, gender, profession, handle)
     gameState.saveRequired = true;

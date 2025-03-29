@@ -8,13 +8,18 @@ module.exports = {
 		.setDescription('Show all of the laws, as set down by the chief')
         ,
     async execute(interaction, gameState) {
-        doCommand(interaction, gameState)
+        var displayName = interaction.member.displayName
+        law(displayName, gameState)
 	},
 };
 
-function doCommand(interaction, gameState){
-    var displayName = interaction.member.displayName
+function law(displayName, gameState){
+    var member = pop.memberByName(displayName, gameState);
     var response = 'There are no laws.';
+    if ( gameState.ended ){
+        text.addMessage(gameState, displayName,  'The game is over.  Maybe you want to /join to start a new game?');
+        return
+    }
     laws = gameState.laws
     if (laws){
         response = "The laws are:";
@@ -22,7 +27,7 @@ function doCommand(interaction, gameState){
     for (number in laws){
         response += '\n\t'+number+'\t'+laws[number]
     }
-    text.addMessage(gameState,displayName, response);
+    text.addMessage(gameState,member.name, response);
     gameState.saveRequired = true;
     return;
 }

@@ -17,6 +17,10 @@ function migrate(sourceName, destination, force, gameState){
 		text.addMessage(gameState,sourceName,'Actually migrating requires chief priviliges' )
         return "not a chief"
     }
+	if ( gameState.ended ){
+		text.addMessage(gameState, sourceName,  'The game is over.  Maybe you want to /join to start a new game?');
+		return
+	}
 	if (!destination){
 		text.addMessage(gameState,sourceName,'Migrate requires a destination (and force to make it happen)' )
         return "no destination"

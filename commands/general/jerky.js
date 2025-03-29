@@ -22,6 +22,10 @@ function makeJerky(sourceName, amount, gameState, bot){
     if (! gameState.canJerky){
         return "Conditions are not right for making jerky now."
     }
+    if ( gameState.ended ){
+        text.addMessage(gameState, sourceName,  'The game is over.  Maybe you want to /join to start a new game?');
+        return
+    }
     player = pop.memberByName(sourceName, gameState);
     actualFood = player.food
     if (amount > actualFood){

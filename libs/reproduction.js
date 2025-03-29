@@ -301,8 +301,8 @@ function decline(actorName, messageArray,  gameState){
         handleReproductionList(actorName, messageArray, "declineList", gameState )
         intersectList = intersect(person.consentList, person.declineList)
         if (intersectList && intersectList.length > 0 
-            || ( person.consentList && person.declineList.includes("!all"))
-            || ( person.declineList && person.consentList.includes("!all")) ){
+            || ( person.consentList  && person.declineList && person.declineList.includes("!all"))
+            || ( person.declineList && person.consentList && person.consentList.includes("!all")) ){
             text.addMessage(gameState, actorName, "Your consent and decline lists have overlaps.  Decline has priority.")
         }
         text.addMessage(gameState, actorName, "Decline updated.");    
@@ -327,6 +327,7 @@ function clearReproduction(gameState){
 	for (var personName in population){
 		person = population[personName]
 		delete person.cannotInvite;
+        person.inviteIndex=0;
 	}
 
 }
@@ -372,10 +373,16 @@ function globalMatingCheck(gameState){
              // the person is eligible to mate, and has an invitelist
                 targetName = invitingMember.inviteList[invitingMember.inviteIndex||0];
                 console.log(" inviting "+targetName)
+                if (! targetName ){
+                    console.log("member "+invitingMember.name+" had a false value for target in inviteList:"+targetName);
+                    text.addMessage(gameState, "tribe", inviterDisplayName+" has a troublesome problem flirting, and will not mate this round.");
+                    doneMating.push(personName);
+                    continue
+                }
                 if (targetName.trim() == "!pass"){
                     invitingMember.cannotInvite = true
-                    text.addMessage(gameState, "tribe", inviterDisplayName+" is done mating this round.")
-                    doneMating.push(personName)
+                    text.addMessage(gameState, "tribe", inviterDisplayName+" is done mating this round.");
+                    doneMating.push(personName);
                     continue
                 }
                 if (targetName.trim() == "!save"){

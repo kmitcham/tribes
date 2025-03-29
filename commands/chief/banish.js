@@ -48,5 +48,9 @@ function banishAdmin(gameState, actorName, targetName, reason){
         text.addMessage(gameState, actorName, targetName+ ' was not found in the tribe');
         return
     }
+    if ( gameState.ended ){
+        text.addMessage(gameState, actorName,  'The game is over.  Maybe you want to /join to start a new game?');
+        return
+    }
     return banish(gameState, targetName, reason)
 }

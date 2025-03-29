@@ -37,7 +37,10 @@ module.exports = {
 
 function give(gameState, sourceName, targetName, amount, item){
     var population = gameState.population;
-
+    if ( gameState.ended ){
+        text.addMessage(gameState, sourceName,  'The game is over.  Maybe you want to /join to start a new game?');
+        return
+    }
     if (targetName == sourceName){
         response = "Giving things to yourself is useful self-care.  Nobody loves you like you love you.";
         console.log("self give: "+targetName +" "+sourceName);
