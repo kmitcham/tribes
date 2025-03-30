@@ -3,6 +3,10 @@ const textLib = require("./textprocess.js")
 const populationLib = require("./population.js")
 
 
+function getKeyByValue(object, value) {
+	return Object.keys(object).find(key => object[key] === value);
+}
+
 function kill(name, message, gameState){
 	console.log("Killing "+name+" due to "+message+" at seasonCount "+gameState.seasonCounter);
 	population = gameState.population
@@ -22,8 +26,9 @@ function kill(name, message, gameState){
 		if (person.nursing){
 			person.nursing.forEach(childName=>kill(childName, 'no-milk', gameState));
 		}
+		personKey = getKeyByValue(gameState.population, person);
 		gameState.graveyard[name] = person
-		delete population[targetKey]
+		delete population[personKey]
 	} else if (childName in children){
 		guardlib.unguardChild(childName, population)
 		clearNursingPregnant(childName, gameState.population)
