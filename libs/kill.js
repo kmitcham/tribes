@@ -20,10 +20,9 @@ function kill(name, message, gameState){
 			kill(person.isPregnant, 'mother-died', gameState)
 		}
 		if (person.nursing){
-			person.nursing.forEach(childName=>kill(childName, 'no-milk'))
+			person.nursing.forEach(childName=>kill(childName, 'no-milk', gameState));
 		}
-		targetKey =  Object.keys(population).find(key => population[key] === name);
-		gameState.graveyard[targetKey] = person
+		gameState.graveyard[name] = person
 		delete population[targetKey]
 	} else if (childName in children){
 		guardlib.unguardChild(childName, population)
@@ -48,14 +47,14 @@ function clearNursingPregnant(childName, population){
 		if (person.nursing && person.nursing.indexOf(childName) > -1 ){
 			childIndex = person.nursing.indexOf(childName)
 			person.nursing.splice(childIndex, 1);
-			console.log(personName+' is no longer nursing '+childName)
+			console.log(person.name+' is no longer nursing '+childName)
 			if ((person.nursing).length == 0){
 				delete person.nursing
 			}
 		}
 		if (person.isPregnant && person.isPregnant == childName){
 			person.isPregnant = ''
-			console.log(personName+' is no longer pregnant with '+childName)
+			console.log(person.name+' is no longer pregnant with '+childName)
 		}
 	}
 }

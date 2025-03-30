@@ -47,16 +47,16 @@ module.exports.showChildren =  (children, gameState, filterName="", hideFathers=
 			// skip the dead
 		} else {
 			if (child.age < 0 && notStartedUnborn){
-				response += '###-----> Unborn <-----###\n'
+				response += '### -----> Unborn <----- ###\n'
 				notStartedUnborn = false;
 			} else if (0 <= child.age && child.age < 4 && notStartedYoungChildren ){
-				response += '###-----> Nursing Children <-----###\n'
+				response += '### -----> Nursing Children <----- ###\n'
 				notStartedYoungChildren = false;
 			} else if (4 <= child.age && child.age < 24 && notStartedMiddleChildren){
-				response += '###-----> Children <-----###\n'
+				response += '### -----> Children <----- ###\n'
 				notStartedMiddleChildren = false;
 			}	else if (child.age >= 24 && notPrintedNewAdultHeader){
-				response += '###-----> New Adults <-----###\n'
+				response += '### -----> New Adults <----- ###\n'
 				notPrintedNewAdultHeader = false;
 			}
 			response += (childName+': '+child.gender).padEnd(30,' ')+'age:'+((child.age)/2)

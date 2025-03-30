@@ -45,7 +45,7 @@ function endGame(gameState, bot){
         text.addMessage(gameState, actorName,  'The game has ended already.')
         return
     }
-    response = "### --- GAME OVER --- ###"
+    response = "### --- GAME OVER --- ### \n"
     children = gameState.children
     if (children){
         response += 'The fate of the children:\n'
@@ -74,9 +74,9 @@ function endGame(gameState, bot){
 	adultCount += Object.keys(population).length
     response += 'The tribe lost '+deadAdults+' members and banished '+banishCount+'.\n';
 	response += 'Count of surviving adults is:'+adultCount+' ('+newAdultCount+' new adults)\n';
-    response += 'The tribe acquired  '+gameState.foodAcquired+' food and grain.  '
-    response += 'At least '+gameState.spoiled+' food was lost to spoilage.'
-	response += '\nThe tribe was '+ scoreTribe(gameState);
+    response += 'The tribe acquired  '+gameState.foodAcquired+' food and grain.\n'
+    response += 'At least '+gameState.spoiled+' food was lost to spoilage.\n'
+	response += 'The tribe was '+ scoreTribe(gameState);
     gameState.ended = true
     text.addMessage(gameState, "tribe", response)
     childrenMessage  = scoreChildrenMessage(gameState);
@@ -111,7 +111,7 @@ function scoreChildrenMessage(gameState){
 		}
 	}
 	if (Object.keys(parentScores).length == 0) {
-        return  "No children were conceived, so all individual scores are zero.";
+        return  "No surving children were found, so all individual scores are zero.";
     }
     var message = 'Child scores:\n'
 

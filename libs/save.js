@@ -38,28 +38,11 @@ function initGame(gameName){
 	gameState.reproductionRound = false;
 	gameState.needChanceRoll = true
 	gameState.canJerky = false
-	console.log('Adding game '+gameName+' to the list of games')
 	saveTribe(gameState);
 	return gameState
 }
 module.exports.initGame = initGame;
 
-function sendJson(json) {
-	server.clients.forEach((client) => {
-	  if (client.readyState === WebSocket.OPEN) {
-		client.send(JSON.stringify(json));
-	  }
-	});
-  }
-  
-  server.on('connection', (socket) => {
-	console.log('Client connected');
-  
-	socket.on('close', () => {
-	  console.log('Client disconnected');
-	});
-  });
-  
 function loadJson(fileName) {
 	let rawdata = fs.readFileSync(fileName);
 	if (!rawdata || rawdata.byteLength == 0 ){
@@ -122,6 +105,7 @@ function actuallyWriteToDisk(fileName, jsonData){
 	}
     console.log(fileName+" saved!");
 }
+
 async function saveGameState(gameState, tribeName){
     var d = new Date();
     var saveTime = d.toISOString();

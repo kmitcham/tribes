@@ -54,3 +54,32 @@ module.exports.banish = (gameState, targetName, reason) =>{
         t.addMessage(gameState, "tribe", targetName+" was not found in the tribe")
     }
 }
+
+
+function banishAdmin(gameState, actorName, targetName, reason){
+    const actingMember = pop.memberByName(actorName, gameState);
+    const targetMember = pop.memberByName(targetName, gameState);
+
+    if (!actingMember ) {
+        text.addMessage(gameState, actorName, 'Is '+actorName+' even in the tribe?');
+        return;
+    }
+    if (!actingMember.chief ) {
+        text.addMessage(gameState, actorName, 'banish requires chief priviliges');
+        return;
+    }
+    if (gameState.demand || gameState.violence){
+        text.addMessage(gameState, actorName,'banish can not be used during a conflict')
+        return
+    }
+    if (! targetMember){
+        text.addMessage(gameState, actorName, targetName+ ' was not found in the tribe');
+        return
+    }
+    if ( gameState.ended ){
+        text.addMessage(gameState, actorName,  'The game is over.  Maybe you want to /join to start a new game?');
+        return
+    }
+    return banish(gameState, targetName, reason)
+}
+module.exports.banishAdmin = banishAdmin
