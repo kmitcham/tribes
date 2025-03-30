@@ -366,34 +366,8 @@ function globalMatingCheck(gameState){
             const inviterDisplayName = invitingMember.name;
             console.log("working "+personName +" "+invitingMember.name)
             index = listMemberNamesForSex.indexOf(personName)
-            if (!invitingMember){
-                console.log(" No person found for "+personName +" sexList "+listMemberNamesForSex)
+            if (hasReasontoNotInvite(gameState, invitingMember)){
                 continue;
-            } else if (invitingMember.cannotInvite  ) {
-                doneMating.push(personName)
-                console.log("\t cannotInvite. "+invitingMember.name)
-                continue
-            } else if (invitingMember.golem){
-                invitingMember.cannotInvite = true;
-                console.log("Skipping golem "+invitingMember.name)
-            } else if (invitingMember.isPregnant){
-                console.log("\t inviter was pregnant")
-                text.addMessage(gameState, invitingMember.name, "Your pregnancy prevents you from mating.")
-                text.addMessage(gameState, "tribe", invitingMember.name+" is too pregnant for mating this round.")
-                invitingMember.cannotInvite = true;
-                continue;
-            } else if (invitingMember.isInjured && invitingMember.isInjured > 0){
-                console.log("\t inviter is injured")
-                text.addMessage(gameState, invitingMember.name, "Your injury prevents you from mating.")
-                text.addMessage(gameState, "tribe", invitingMember.name+" is too injured for mating this round.")
-                invitingMember.cannotInvite = true;
-                continue
-            } else if (invitingMember.isSick && invitingMember.isSick > 0){
-                console.log("\t inviter is sick")
-                text.addMessage(gameState, invitingMember.name, "Your illness prevents you from mating.")
-                text.addMessage(gameState, "tribe", invitingMember.name+" is too sick for mating this round.")
-                invitingMember.cannotInvite = true;
-                continue
             } else if (invitingMember.inviteList && invitingMember.inviteList.length > 0) {
              // the person is eligible to mate, and has an invitelist
                 targetName = invitingMember.inviteList[invitingMember.inviteIndex||0];
@@ -502,6 +476,40 @@ function globalMatingCheck(gameState){
     return "this many people are done mating: "+doneMating.length
 }
 module.exports.globalMatingCheck = globalMatingCheck;
+
+function hasReasontoNotInvite(gameState, invitingMember){
+    if (!invitingMember){
+        console.log(" No person found for "+personName +" sexList "+listMemberNamesForSex)
+        return true;
+    } else if (invitingMember.cannotInvite  ) {
+        doneMating.push(personName)
+        console.log("\t cannotInvite. "+invitingMember.name)
+        return true;
+    } else if (invitingMember.golem){
+        invitingMember.cannotInvite = true;
+        console.log("Skipping golem "+invitingMember.name)
+        return true;
+    } else if (invitingMember.isPregnant){
+        console.log("\t inviter was pregnant")
+        text.addMessage(gameState, invitingMember.name, "Your pregnancy prevents you from mating.")
+        text.addMessage(gameState, "tribe", invitingMember.name+" is too pregnant for mating this round.")
+        invitingMember.cannotInvite = true;
+        return true;;
+    } else if (invitingMember.isInjured && invitingMember.isInjured > 0){
+        console.log("\t inviter is injured")
+        text.addMessage(gameState, invitingMember.name, "Your injury prevents you from mating.")
+        text.addMessage(gameState, "tribe", invitingMember.name+" is too injured for mating this round.")
+        invitingMember.cannotInvite = true;
+        return true;
+    } else if (invitingMember.isSick && invitingMember.isSick > 0){
+        console.log("\t inviter is sick")
+        text.addMessage(gameState, invitingMember.name, "Your illness prevents you from mating.")
+        text.addMessage(gameState, "tribe", invitingMember.name+" is too sick for mating this round.")
+        invitingMember.cannotInvite = true;
+        return true;
+    }
+    return false;
+}
 
 // a weak clone of the existing 'spawnFunction'  only works for secret mating
 function makeLove(name1, name2, gameState, force = false){
