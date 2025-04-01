@@ -1,6 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const pop = require("../../libs/population.js")
-const text = require("../../libs/textprocess.js")
+const general = require("../../libs/general.js")
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -14,29 +13,6 @@ module.exports = {
     async execute(interaction, gameState, bot) {
         const amount = interaction.options.getInteger('amount');
         var sourceName = interaction.member.displayName;
-        message = makeJerky(sourceName, amount, gameState, bot)
+        message = general.makeJerky(sourceName, amount, gameState, bot)
 	},
 };
-
-function makeJerky(sourceName, amount, gameState, bot){
-    if (! gameState.canJerky){
-        return "Conditions are not right for making jerky now."
-    }
-    if ( gameState.ended ){
-        text.addMessage(gameState, sourceName,  'The game is over.  Maybe you want to /join to start a new game?');
-        return
-    }
-    player = pop.memberByName(sourceName, gameState);
-    actualFood = player.food
-    if (amount > actualFood){
-        amount = actualFood;
-    }
-    extra = amount%3
-    jerky = (amount-extra)/3;
-    leftover = amount - (jerky * 3);
-    player.food = actualFood - amount + leftover
-    player.grain += jerky
-    message = sourceName+" converts "+(jerky * 3)+" food into "+jerky+" jerky";
-    text.addMessage(gameState, "tribe", message);
-    return;
-}
