@@ -1,7 +1,7 @@
 const populationLib = require("./population.js")
 const t = require("./textprocess")
 
-module.exports.banish = (gameState, targetName, reason) =>{
+function banish(gameState, targetName, reason){
     const population = gameState.population    
     console.log("In banish lib for "+targetName)
     const banishTarget = populationLib.memberByName(targetName, gameState)
@@ -54,11 +54,11 @@ module.exports.banish = (gameState, targetName, reason) =>{
         t.addMessage(gameState, "tribe", targetName+" was not found in the tribe")
     }
 }
-
+module.exports.banish = banish
 
 function banishAdmin(gameState, actorName, targetName, reason){
-    const actingMember = pop.memberByName(actorName, gameState);
-    const targetMember = pop.memberByName(targetName, gameState);
+    const actingMember = populationLib.memberByName(actorName, gameState);
+    const targetMember = populationLib.memberByName(targetName, gameState);
 
     if (!actingMember ) {
         text.addMessage(gameState, actorName, 'Is '+actorName+' even in the tribe?');

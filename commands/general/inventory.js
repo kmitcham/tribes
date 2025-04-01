@@ -1,7 +1,7 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const pop = require("../../libs/population.js")
 const text = require("../../libs/textprocess.js")
-const general = require("../../general.js");
+const general = require("../../libs/general.js");
 
 module.exports = {
 	data: new SlashCommandBuilder()
