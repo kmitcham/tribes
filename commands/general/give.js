@@ -1,6 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const text = require("../../libs/textprocess.js")
-const pop = require("../../libs/population.js");
+const general = require("../../libs/general.js");
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -31,61 +30,6 @@ module.exports = {
         var sourceName = interaction.member.displayName;
         var amount = interaction.options.getInteger('amount');
         var item = interaction.options.getString('item');
-        await give( gameState, sourceName, targetName, amount, item);
+        general.give( gameState, sourceName, targetName, amount, item);
 	},
 };
-
-function give(gameState, sourceName, targetName, amount, item){
-    var population = gameState.population;
-    if ( gameState.ended ){
-        text.addMessage(gameState, sourceName,  'The game is over.  Maybe you want to /join to start a new game?');
-        return
-    }
-    if (targetName == sourceName){
-        response = "Giving things to yourself is useful self-care.  Nobody loves you like you love you.";
-        console.log("self give: "+targetName +" "+sourceName);
-        text.addMessage(gameState, "tribe", response);
-        return;
-    }
-    if (item.startsWith('g')){
-        item = 'grain'
-    } else if ( item.startsWith('f')){
-        item = 'food'
-    } else if (item.startsWith('b') ) {
-        item = 'basket'
-    } else if ( item.startsWith('s')){
-        item = 'spearhead'
-    } else {
-        response = "Unrecognized item "+item;
-        text.addMessage(gameState, "tribe", response)
-        return ;
-    }
-    var targetPerson = {}
-    var sourcePerson = {}
-    // check if person is in tribe
-    targetPerson = pop.memberByName(targetName,gameState);
-    sourcePerson = pop.memberByName(sourceName,gameState);
-    if (!targetPerson || !sourcePerson){
-        response = "Source or target "+sourceName+":"+targetName+" not found in tribe";
-        text.addMessage(gameState, sourceName, response)
-        return ;
-    }
-    if (!sourcePerson[item] || sourcePerson[item] < amount){
-        response = sourceName+" does not have "+amount+" "+item;
-        text.addMessage(gameState, "tribe", response)
-        return ;
-    }
-    if (sourcePerson.activity == 'hunt' && item == 'spearhead' && gameState.round== 'work'){
-        response = sourceName+" already hunted with a spearhead, and cannot trade spearheads during the work round";
-        text.addMessage(gameState, "tribe", response)
-        return ;
-    }
-    sourcePerson[item] -= amount;
-    targetPerson[item] += amount;
-    gameState.saveRequired = true
-
-    response = sourceName + " gives "+targetName+" "+amount+" "+item;
-    text.addMessage(gameState, "tribe", response)
-    pop.history(sourceName, response, gameState);
-    pop.history(targetPerson, response, gameState);
-}

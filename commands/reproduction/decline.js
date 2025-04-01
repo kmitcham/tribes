@@ -38,6 +38,7 @@ function declinePrep(interaction, gameState){
         listAsArray = rawList.split(",");
     }
     console.log("applying decline list to mating for "+sourceName);
-    reproLib.decline(sourceName, listAsArray,  gameState);
+    response = reproLib.decline(sourceName, listAsArray,  gameState);
+    console.log("decline response:"+response);
     return 
 }

@@ -99,19 +99,6 @@ function canStillInvite(gameState){
 }
 module.exports.canStillInvite = canStillInvite ;
 
-function checkCompleteLists(gameState){
-    // unresolvable = []
-    // malelist = getPlayersByKeyValue("gender","male")
-    // femaleList = getPlayersByKeyValue("gender","female")
-    // for every player
-        // if cannotInvite
-        // else if !inviteList || inviteList doesn't end with !pass
-        //  unreslvable.append[playername]
-        // if consent+decline != genderList
-        //   unresolvable.append[playename]
-}
-
-
 function handleReproductionList(actorName, arrayOfNames, listName, gameState){
     console.log("Building "+listName+" for "+actorName+" args "+arrayOfNames)
     actor = pop.memberByName(actorName, gameState);
@@ -351,9 +338,11 @@ function globalMatingCheck(gameState){
     if (! gameState.reproductionRound){
         return "It is not the mating round";
     }
-    if (gameState.doneMating){
+    const inviteCheck = canStillInvite(gameState);
+    if (inviteCheck.length < 1 ){
         return "Mating is complete";
     }
+    console.log("In the global mating check");
     while (actionableInvites){
         actionableInvites = false;
         var listMemberNamesForSex = Object.keys(population)

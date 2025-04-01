@@ -13,7 +13,7 @@ function memberByName(name, gameState){
     }
     cleaned = text.removeSpecialChars(name)
     if (name != cleaned ){
-        console.log(name + " cleaned into "+cleaned)
+        console.log(name + " cleaned into >"+cleaned+"<");
         name = cleaned
     }
     if (!gameState || gameState.population == null){
@@ -27,7 +27,6 @@ function memberByName(name, gameState){
     } else if (population[name.toLowerCase()] != null){
         person = population[name.toLowerCase()]
     } else {
-        console.log("Exhaustive search in population for "+name)
         for (match in population){
             if (population[match].name.toLowerCase() === name.toLowerCase()){
                 person = population[match]

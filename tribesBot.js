@@ -133,7 +133,7 @@ async function sendMessages(bot, gameState, interaction){
 		// only reply here if reply is still needed; otherwise handle with other messages below
 		const message = messagesDict[actorName];
 		const chunks = message.match(/[\S\s]{1,1900}/g);
-		console.log("message was split in chunks:"+chunks.length);
+		console.log("message needs reply, with this many chunks:"+chunks.length);
 		if (message && interaction.isRepliable() ){
 			needsReply = false;
 			user = interaction.user;
@@ -142,6 +142,7 @@ async function sendMessages(bot, gameState, interaction){
 			if (chunks.length > 1){
 				response += " \n(check DMS for more info)"
 			}
+			console.log("reply to "+actorName+" : "+response);
 			await interaction.reply({ content: response, flags: MessageFlags.Ephemeral })
 			// double tap user so they have a DM of content as well.  TODO: confirm this is correct?
 			await user.send(chunks[chunksSent++]);
@@ -149,7 +150,6 @@ async function sendMessages(bot, gameState, interaction){
 				sendRemainingMessageChunksToUser(user, chunks, chunksSent);
 			}
 			delete messagesDict[actorName];
-			//console.log("in send messages finish send to actor >>>>>>>>>"+message+"<<<<<<");
 		} else {
 			console.log("null message for "+actorName+ " seasonCounter:"+gameState.seasonCounter)
 		}
@@ -158,8 +158,7 @@ async function sendMessages(bot, gameState, interaction){
 		channel = interaction.channel;
 		member = pop.memberByName(address, gameState);
 		const chunks = message.match(/[\S\s]{1,1900}/g);
-		console.log("message was split in chunks:"+chunks.length);
-		console.log("in send messages 4 "+address);
+		console.log(chunks.length+" chunks addressed to "+address);
 		if (!member){
 			console.log("No member for name "+address);
 			continue;
@@ -184,19 +183,17 @@ async function sendMessages(bot, gameState, interaction){
 			if (! user){
 				console.log("not finding user for "+address+" userId="+userId)
 			} else {
-				console.log("user object was found for "+user.displayName);
 				chunksSent = 0;
 				sendRemainingMessageChunksToUser(user, chunks, chunksSent);
 			}
-			console.log("messages complete  for "+address);
+			console.log("messages complete for "+address);
 		} else {
 			console.log("no handle for "+address);
 		}
         delete messagesDict[address]
     }
 	if (needsReply){
-		console.log(" no reply to "+interaction.commandName);
-		needsReply = false
+		console.log(" no reply made to "+interaction.commandName);
 	}
 	return 0;
 }
@@ -207,6 +204,7 @@ function sendRemainingMessageChunksToUser(user, messageArray, chunksSent){
 		return;
 	}
 	while (chunksSent < messageArray.length){
+		console.log(messageArray.length+ " chunks bound for "+user.displayName);
 		if (messageArray[chunksSent]){
 			user.send({content: messageArray[chunksSent++] });
 		} else {
@@ -214,29 +212,11 @@ function sendRemainingMessageChunksToUser(user, messageArray, chunksSent){
 			chunksSent++; //increment to avoid infinite loops
 		}
 	}
-	console.log("messages sent.  chunksSent = "+chunksSent);
+	console.log(chunksSent+ " chunks sent to "+user.displayName);
 	return;
 }
 
 
-// Assuming you have a Discord.js client set up and authenticated
-// and you have a user object and guild ID
-async function getUserNickname(client, userId, guildId) {
-	try {
-	  // Get the guild object
-	  const guild = await client.guilds.fetch(guildId);
-	  
-	  // Get the GuildMember object for the user in this specific guild
-	  const guildMember = await guild.members.fetch(userId);
-	  
-	  // Get the nickname (or username if no nickname is set)
-	  const nickname = guildMember.nickname || guildMember.user.username;
-	  
-	  return nickname;
-	} catch (error) {
-	  console.error('Error fetching nickname:', error);
-	  return null;
-	}
-  }
+////////////////////////////////////////////////
 client.login(token);
 

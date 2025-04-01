@@ -16,8 +16,8 @@ module.exports = {
     async execute(interaction, gameState, bot) {
         try {
             var displayName = interaction.member.displayName;
-            response = onCommand(interaction, gameState, bot)
-            text.addMessage(gameState, displayName, response );
+            var rawList = interaction.options.getString('invitelist');
+            response = prepInviteList(gameState, displayName, rawList);
             console.log('invite response was '+response)
         } catch (error) {
                 // And of course, make sure you catch and log any errors!
@@ -26,13 +26,11 @@ module.exports = {
     },
 };
 
-function onCommand(interaction, gameState, bot){
-    var population = gameState.population;
-    var sourceName = interaction.member.displayName;
+function prepInviteList(gameState, sourceName, rawList){
 
     var player = pop.memberByName(sourceName, gameState);
     var message = 'error in invite, message not set';
-    var rawList = interaction.options.getString('invitelist');
+    
     if (! rawList ) {
         if (player.inviteList){
             return "Current invitelist: "+player.inviteList.join(" ")
@@ -44,6 +42,9 @@ function onCommand(interaction, gameState, bot){
     if (rawList.includes(",")){
         messageArray = rawList.split(",");
     }
+    console.log(sourceName+" raw invitelist:"+rawList+ " as array:"+messageArray);
     message = reproLib.invite(sourceName, messageArray,  gameState, bot);
+    text.addMessage(gameState, sourceName, response );
+
     return message;
 }
