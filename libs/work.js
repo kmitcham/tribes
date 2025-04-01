@@ -208,3 +208,20 @@ function train(gameState, sourceName, forceRoll){
 	return;
 }
 module.exports.train = train;
+
+function setSecrets(gameState, actorName, willTrain){
+	member = pop.memberByName(actorName, gameState);
+	if (member && member.canCraft == true){
+		if (willTrain){
+			delete member.noTeach;
+			text.addMessage(gameState, actorName, 'You will try to teach those willing to learn')
+		} else {
+			member.noTeach = true
+			text.addMessage(gameState, actorName,'You will no longer teach others to craft')
+		}
+	} else {
+		text.addMessage(gameState, actorName,'You do not know any crafting secrets')
+	}
+	gameState.saveRequired = true;
+}
+module.exports.setSecrets = setSecrets;

@@ -64,6 +64,9 @@ client.on(Events.InteractionCreate, async interaction => {
         if (!gameState ){
             gameState = savelib.loadTribe(channel.name);
         }
+		if (!gameState){
+			gameState = savelib.initGame(channel.name);
+		}
 		if ( gameState.ended && interaction.commandName == "join"){
 			console.log("Join on an ended game; starting fresh game");
 			gameState = savelib.initGame(channel.name);
