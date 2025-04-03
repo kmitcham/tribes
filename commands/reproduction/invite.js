@@ -43,7 +43,7 @@ function prepInviteList(gameState, sourceName, rawList){
         messageArray = rawList.split(",");
     }
     console.log(sourceName+" raw invitelist:"+rawList+ " as array:"+messageArray);
-    message = reproLib.invite(sourceName, messageArray,  gameState, bot);
+    message = reproLib.invite(sourceName, messageArray,  gameState);
     text.addMessage(gameState, sourceName, response );
 
     return message;

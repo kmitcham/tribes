@@ -41,7 +41,7 @@ function join(actorName, gameState, gender, profession, handle){
         text.addMessage(gameState, actorName, 'You are already a member of this tribe');
         return 
     }
-    if (! gameState.open){
+    if (gameState.open == false){
         text.addMessage(gameState, actorName, 'You need to be inducted by the chief to join this tribe');
         return 
     }

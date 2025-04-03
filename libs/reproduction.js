@@ -195,7 +195,7 @@ function invite(rawActorName, invitelist, gameState){
         return message
     }
     console.log('got messageArray:'+invitelist)
-    message = handleReproductionList(actorName, invitelist, "inviteList",gameState )
+    message = handleReproductionList(actorName, invitelist, "inviteList", gameState )
     globalMatingCheck(gameState);
     console.log("message at end of reprolib invite:"+message)
     if (person.inviteList){
@@ -466,9 +466,10 @@ function globalMatingCheck(gameState){
         gameState.doneMating = true;
         gameState.saveRequired = true;
     } else {
-        text.addMessage(gameState, "tribe", "Reproduction round activities are not complete.");
+        if (gameState.reproductionRound == true){
+            text.addMessage(gameState, "tribe", "Reproduction round activities are not complete.");
+        }
     }
-
     return "this many people are done mating: "+doneMating.length
 }
 module.exports.globalMatingCheck = globalMatingCheck;
@@ -766,7 +767,7 @@ function startReproduction(gameState){
 module.exports.startReproduction = startReproduction;
 
 function checkMating(gameState, displayName){
-            if (!gameState.reproductionRound ){
+            if (gameState.reproductionRound == false ){
                 text.addMessage(gameState, displayName, "checkMating is only relevant in the reproduction round.")
             }
             text.addMessage(gameState, displayName, "Checking on the mating status, in case it can be resolved.");

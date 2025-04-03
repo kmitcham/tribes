@@ -62,17 +62,15 @@ function give(gameState, sourceName, targetName, amount, item){
 }
 module.exports.give = give;
 
-function inventory( gameState, target, actorName ){
-    if (!target ){
+function inventory( gameState, targetName, actorName ){
+    if (!targetName ){
         response = 'Whole Tribe Inventory:'
         for (var personName in gameState.population){
             person = pop.memberByName(personName, gameState)
             response += '\n  '+inventoryMessage(person)
         }
     } else {
-        var targetName = target.displayName;
         person = pop.memberByName(targetName, gameState)
-
         if (!person || person == null){
             response = targetName +' does not seem to be a person';
             return response;

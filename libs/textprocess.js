@@ -12,6 +12,10 @@ function addMessage(gameState, address, message){
     if (! gameState['messages'] ){
         gameState['messages'] = {}
     }
+    if (! address){
+        console.log("Message with no address: "+message);
+        return;
+    }
     messages = gameState['messages']
     if (messages[address]){
         messages[address] += '\n'+message

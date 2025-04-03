@@ -105,16 +105,17 @@ async function sendMessages(bot, gameState, interaction){
 		return;
 	}
 	actorName = interaction.nickName;
+	var chunks = []
 	MAX_LENGTH = 1900; //docs say 2000 is max; better safe than sorry
 	// regext [\S\s] is any chacter that is either a space or not a space; eg, any character
 	needsReply = interaction.isRepliable();
 	if ("tribe" in messagesDict ){
 		console.log("in send messages tribe >>"+messagesDict["tribe"]+"<<");
 		message = messagesDict["tribe"];
-		const chunks = message.match(/[\S\s]{1,1900}/g);
 		chunksSent = 0;
 		const channel = await bot.channels.cache.find(channel => channel.name === gameState.name);
 		if (message){
+			chunks = message.match(/[\S\s]{1,1900}/g);
 			if (needsReply ){
 				await interaction.reply({ content: chunks[0] });
 				chunksSent = 1;
@@ -132,32 +133,52 @@ async function sendMessages(bot, gameState, interaction){
 	if (actorName in messagesDict && needsReply){
 		// only reply here if reply is still needed; otherwise handle with other messages below
 		const message = messagesDict[actorName];
-		const chunks = message.match(/[\S\s]{1,1900}/g);
-		console.log("message needs reply, with this many chunks:"+chunks.length);
-		if (message && interaction.isRepliable() ){
-			needsReply = false;
-			user = interaction.user;
-			response = chunks[0];
-			chunksSent = 0;
-			if (chunks.length > 1){
-				response += " \n(check DMS for more info)"
-			}
-			console.log("reply to "+actorName+" : "+response);
-			await interaction.reply({ content: response, flags: MessageFlags.Ephemeral })
-			// double tap user so they have a DM of content as well.  TODO: confirm this is correct?
-			await user.send(chunks[chunksSent++]);
-			if (chunksSent < chunks.length){
-				sendRemainingMessageChunksToUser(user, chunks, chunksSent);
-			}
-			delete messagesDict[actorName];
+		if (!message){
+			console.log('skipping empty message for '+actorName);
 		} else {
-			console.log("null message for "+actorName+ " seasonCounter:"+gameState.seasonCounter)
+			chunks = message.match(/[\S\s]{1,1900}/g);
+			if (!chunks || chunks.length == 0){
+				console.log("Weird empty message (no chunks) for "+actorName);
+			} else {
+				chunks = message.match(/[\S\s]{1,1900}/g);
+				console.log("message needs reply, with this many chunks:"+chunks.length);
+				if (message && interaction.isRepliable() ){
+					needsReply = false;
+					user = interaction.user;
+					response = chunks[0];
+					chunksSent = 0;
+					if (chunks.length > 1){
+						response += " \n(check DMS for more info)"
+					}
+					console.log("reply to "+actorName+" : "+response);
+					await interaction.reply({ content: response, flags: MessageFlags.Ephemeral })
+					// double tap user so they have a DM of content as well.  TODO: confirm this is correct?
+					if (chunks[0]){
+						await user.send(chunks[0]);
+					}
+					chunksSent++;
+					if (chunksSent < chunks.length){
+						sendRemainingMessageChunksToUser(user, chunks, chunksSent);
+					}
+					delete messagesDict[actorName];
+				} else {
+					console.log("null message for "+actorName+ " seasonCounter:"+gameState.seasonCounter)
+				}
+			}
 		}
 	}
     for (const [address, message] of Object.entries(messagesDict)){
 		channel = interaction.channel;
 		member = pop.memberByName(address, gameState);
+		if (!message){
+			console.log('empty message for '+address);
+			continue;
+		}		
 		const chunks = message.match(/[\S\s]{1,1900}/g);
+		if (!chunks || chunks.length == 0){
+			console.log("Weird empty message (no chunks) for "+address);
+			continue;
+		}
 		console.log(chunks.length+" chunks addressed to "+address);
 		if (!member){
 			console.log("No member for name "+address);
@@ -182,6 +203,7 @@ async function sendMessages(bot, gameState, interaction){
 			const user = bot.users.cache.get(userId);
 			if (! user){
 				console.log("not finding user for "+address+" userId="+userId)
+				console.log("Dropping "+chunks.length+"message chunks, including:"+chunks[0])
 			} else {
 				chunksSent = 0;
 				sendRemainingMessageChunksToUser(user, chunks, chunksSent);
@@ -210,6 +232,10 @@ function sendRemainingMessageChunksToUser(user, messageArray, chunksSent){
 		} else {
 			console.log("empty chunk?  chunkSent:"+chunksSent);
 			chunksSent++; //increment to avoid infinite loops
+		}
+		if (chunksSent > 10){
+			console.log("Spamming user with too many chunks.  Aborting messages");
+			break;
 		}
 	}
 	console.log(chunksSent+ " chunks sent to "+user.displayName);
