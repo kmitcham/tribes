@@ -35,6 +35,10 @@ module.exports = {
             response = "Reproduction activities are underway"
         }
         text.addMessage(gameState, "tribe", response);
+        var d = new Date();
+        var saveTime = d.toISOString();
+        saveTime = saveTime.replace(/\//g, "-");
+        console.log(saveTime+" start reproduction round  season:"+gameState.seasonCounter);
 	},
 };
 

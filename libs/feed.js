@@ -81,7 +81,6 @@ function feed(unused, player, amount, inputChildList, gameState){
 		if (!feedAtLeastOneChild){
 			message += "No children were fed.";
 		}
-        console.log("message is "+message);
         text.addMessage(gameState, "tribe", message)
         return 0
 };	

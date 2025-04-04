@@ -15,11 +15,12 @@ module.exports = {
 function onCommand(interaction, gameState){
 	var displayName = interaction.member.displayName;
 	if (!gameState){
-		text.addMessage(gameState, displayName, "Not in a tribe");
+		// can this even happen?
+		console.warn("Status called with no gameState");
+		text.addMessage(gameState, displayName, "No tribe in this channel.  Do you want to /join and create one?");
 		return
 	}
     var response = util.gameStateMessage(gameState);
-	console.log("status response:"+response);
 	text.addMessage(gameState, displayName, response);
 	return 
 }

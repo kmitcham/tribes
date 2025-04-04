@@ -29,6 +29,12 @@ function eligibleMates(name, population, debug=false){
             if (debug) {console.log("pregnant ") }           
 			continue
         }
+        if (potentialMatch.isSick && potentialMatch.isSick > 0){
+            if (debug) {console.log("sick ") }
+        }
+        if (potentialMatch.isInjured && potentialMatch.isInjured > 0){
+            if (debug) {console.log("injured ") }
+        }
         if (debug) {console.log("possible match!")}
 		potentialMatches.push(matchName)
     }
@@ -101,9 +107,9 @@ module.exports.canStillInvite = canStillInvite ;
 
 function handleReproductionList(actorName, arrayOfNames, listName, gameState){
     console.log("Building "+listName+" for "+actorName+" args "+arrayOfNames)
-    actor = pop.memberByName(actorName, gameState);
+    var actingMember = pop.memberByName(actorName, gameState);
     if (!arrayOfNames || arrayOfNames.length == 0){
-        delete actor[listName]
+        delete actingMember[listName]
         // this may be dead code with the new discord API.
         console.log("DELETE in handle list actually called.  SURPRISE!");
         return "Deleting your empty "+listName
@@ -145,16 +151,17 @@ function handleReproductionList(actorName, arrayOfNames, listName, gameState){
                 list.push(targetName);
             }
         } else {
-            target = pop.memberByName(targetName, gameState);
-            if (target){
-                localErrors+= matingObjections(actor, target)
+            var targetMember = pop.memberByName(targetName, gameState);
+            if (targetMember){
+                localErrors+= matingObjections(actingMember, targetMember)
             } else {
                 localErrors+= rawTargetName+" is not in the tribe.\n"
             }
             if (localErrors != ""){
                 errors.push(localErrors)
             } else {
-                list.push(target.name.trim());
+                list.push(targetMember.name.trim());
+                console.log("\t\t adding "+targetMember.name+" to consent for "+actingMember.name)
             }
         }
     }
@@ -166,7 +173,7 @@ function handleReproductionList(actorName, arrayOfNames, listName, gameState){
         }
         returnMessage += ("Please try again to set your "+listName +"\n")
     } else {
-        actor[listName] = list;
+        actingMember[listName] = list;
         returnMessage += ("Setting your "+listName+" list to:"+list+"\n")
         if (save){
             if (gameState.reproductionRound){
@@ -181,29 +188,39 @@ function handleReproductionList(actorName, arrayOfNames, listName, gameState){
 module.exports.handleReproductionList = handleReproductionList;
 
 
-function invite(rawActorName, invitelist, gameState){
-    console.log('author '+rawActorName)
-    actorName = text.removeSpecialChars(rawActorName)
-    console.log('actorName:'+actorName)
-    person = pop.memberByName(actorName, gameState)
-    if (!person){
-        return "Can not find you in the tribe, sorry"
+function invite(gameState, rawActorName, rawList ){
+    console.log('invite raw actorName: '+rawActorName)
+    var player = pop.memberByName(rawActorName, gameState);
+    var message = 'error in invite, message not set';
+    if (!player){
+        text.addMessage(gameState, player.name, "Can not find you in the tribe, sorry" );
+        return ;
+    }    
+    if (! rawList ) {
+        if (player.inviteList){
+            text.addMessage(gameState, player.name, "Current invitelist: "+player.inviteList.join(" ") );
+            return ;
+        } else {
+            text.addMessage(gameState, player.name, "No current inviteList" );
+            return ;
+        }
     }
-    if (! invitelist){
-        console.log("No list found; return existing list")
-        message = "invitelist: "+person.inviteList;
-        return message
+    let inviteNamesAsArray = rawList.split(" ");
+    if (rawList.includes(",")){
+        inviteNamesAsArray = rawList.split(",");
     }
-    console.log('got messageArray:'+invitelist)
-    message = handleReproductionList(actorName, invitelist, "inviteList", gameState )
+    // TODO: make sure to split out items starting with !    
+    console.log(player.name+" raw invitelist:"+rawList+ " as array:"+inviteNamesAsArray);
+
+    message = handleReproductionList(player.name, inviteNamesAsArray, "inviteList", gameState )
     globalMatingCheck(gameState);
     console.log("message at end of reprolib invite:"+message)
-    if (person.inviteList){
-        console.log("Invitelist: "+person.inviteList.join(" "))
+    if (player.inviteList){
+        console.log("after update Invitelist: "+player.inviteList.join(" "))
     } else {
 
     }
-    
+    text.addMessage(gameState, player.name, message );
     return message
 }
 module.exports.invite = invite;
@@ -255,12 +272,18 @@ function consentPrep(gameState, sourceName, rawList){
 module.exports.consentPrep = consentPrep;
 
 function consent(actorName, arrayOfNames,  gameState){
-    handleReproductionList(actorName, arrayOfNames, "consentList", gameState );
     person = pop.memberByName(actorName, gameState);
+    if (!person){
+        console.log(actorName+" not found in tribe");
+        text.addMessage(gameState, actorName, "You are not in the tribe");
+        return;
+    }
     intersectList = intersect(person.consentList, person.declineList);
     if (intersectList && intersectList.length > 0){
         text.addMessage(gameState, actorName, "Your consent and decline lists have overlaps.  Decline has priority.");
     }
+    handleMessage = handleReproductionList(actorName, arrayOfNames, "consentList", gameState );
+    text.addMessage(gameState, person.name, handleMessage);
     if ("consentList" in person){
         text.addMessage(gameState, actorName, "Updated consentlist to "+person.consentList);        
     } else {
@@ -762,6 +785,7 @@ function startReproduction(gameState){
 	pop.decrementSickness(gameState.population, gameState);
     gameState.saveRequired = true;
     gameState.archiveRequired = true;
+    
     return
 }
 module.exports.startReproduction = startReproduction;

@@ -20,7 +20,6 @@ module.exports = {
         }
 		var actorName = interaction.member.displayName;
 		var response = general.inventory(gameState, targetName, actorName );
-        console.log("inventory response:"+response)
 	},
 };
 

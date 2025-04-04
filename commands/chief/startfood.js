@@ -47,7 +47,10 @@ function startFood(gameState, bot){
     pop.decrementSickness(population, gameState, bot);
     text.addMessage(gameState, "tribe", '\n==>Starting the food and trading round.  Make sure everyone has enough to eat, or they will starve<==');
     message = util.gameStateMessage(gameState)
-    console.log("start food population:"+gameState.population)
+    var d = new Date();
+    var saveTime = d.toISOString();
+	saveTime = saveTime.replace(/\//g, "-");
+    console.log(saveTime+" start food round  season:"+gameState.seasonCounter);
     text.addMessage(gameState, "tribe", message);
 
     foodMessage = feed.checkFood(gameState,bot);

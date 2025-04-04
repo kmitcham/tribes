@@ -53,6 +53,10 @@ function startWork(actorName, gameState){
     text.addMessage(gameState, "tribe", (utils.gameStateMessage(gameState)));
     text.addMessage(gameState, "tribe", '\n==>Starting the work round.  Guard (or ignore) your children, then craft, gather, hunt, assist or train.<==');
     gameState.saveRequired = true;
+    var d = new Date();
+    var saveTime = d.toISOString();
+    saveTime = saveTime.replace(/\//g, "-");
+    console.log(saveTime+" start work round  season:"+gameState.seasonCounter);
     return
 }
 

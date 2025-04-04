@@ -148,7 +148,7 @@ async function sendMessages(bot, gameState, interaction){
 					response = chunks[0];
 					chunksSent = 0;
 					if (chunks.length > 1){
-						response += " \n(check DMS for more info)"
+						response += " \n(check DMs for more info)"
 					}
 					console.log("reply to "+actorName+" : "+response);
 					await interaction.reply({ content: response, flags: MessageFlags.Ephemeral })
