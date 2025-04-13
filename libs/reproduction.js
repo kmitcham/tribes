@@ -321,17 +321,6 @@ function decline(actorName, messageArray,  gameState){
 }
 module.exports.decline = decline;
 
-function pass(msg, gameState){
-    author = msg.author
-    actor = pop.memberByName(author.username, gameState);
-    actor.cannotInvite = true;
-    delete actor.inviteList;
-    text.addMessage(gameState, "tribe", author.username+" passes on mating this turn.")
-    globalMatingCheck(gameState);
-    return;
-}
-module.exports.pass = pass;
-
 function clearReproduction(gameState){
     population = gameState.population;
 	for (var personName in population){
@@ -760,27 +749,45 @@ function addDrone(gameState, gender, profession, droneName){
 }
 module.exports.addDrone = addDrone;
 
+function pass(gameState, actorName){
+    person = pop.memberByName(actorName, gameState);
+    if (! person){
+        text.addMessage(gameState, actorName, "You are not in this tribe.");
+        return;
+    }
+    if (gameState.reproductionRound){
+        person.cannotInvite = true;
+        result = globalMatingCheck(gameState);
+        text.addMessage(gameState, "tribe", result)
+        return;
+    } else {
+        text.addMessage(gameState, person.name, "You can only pass during reproduction round.");
+        return;
+    }
+}
+module.exports.pass = pass;
+
 function startReproduction(gameState){
 	// actually consume food here
 	gameState.needChanceRoll = true  // this magic boolean prevents starting work until we did chance roll
 	gameState.workRound = false
 	gameState.foodRound = false
 	gameState.reproductionRound = true
-	delete gameState.enoughFood 
+	delete gameState.enoughFood;
 	foodMessage = feed.consumeFood(gameState);
     if (Object.keys(gameState.population).length == 0){
 		text.addMessage(gameState, "tribe", "All the players are dead-- game should end.");
         end.endGame(gameState);
         return;
 	} 
-    foodMessage += '\n==> Starting the Reproduction round; invite other tribe members to reproduce.<==\n'
-    foodMessage += 'After chance, the tribe can decide to move to a new location, but the injured and children under 2 will need 2 food'
-    text.addMessage(gameState, "tribe",foodMessage)
+    foodMessage += '\n==> Starting the Reproduction round; invite other tribe members to reproduce.<==\n';
+    foodMessage += 'After chance, the tribe can decide to move to a new location, but the injured and children under 2 will need 2 food';
+    text.addMessage(gameState, "tribe",foodMessage);
 
     gameState.doneMating = false;
-    globalMatingCheck(gameState)
+    globalMatingCheck(gameState);
     if (canStillInvite(gameState)){	
-        text.addMessage(gameState, "tribe",'(awaiting invitations or !pass from '+canStillInvite(gameState)+')' )	
+        text.addMessage(gameState, "tribe",'(awaiting invitations or /pass from '+canStillInvite(gameState)+')' );
     }
 	pop.decrementSickness(gameState.population, gameState);
     gameState.saveRequired = true;

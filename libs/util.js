@@ -38,7 +38,7 @@ function gameStateMessage(gameState) {
 	if (gameState.foodRound ) {message += '  (food round)'}
 	if (gameState.reproductionRound){
 		if (reproLib.canStillInvite(gameState)){
-			message += ' (reproduction round: awaiting invitations or !pass from '+reproLib.canStillInvite(gameState)+')'
+			message += ' (reproduction round: awaiting invitations or /pass from '+reproLib.canStillInvite(gameState)+')'
 		} else if (gameState.needChanceRoll ){
 			message += ' (reproduction round, awaiting chance)'
 		} else {

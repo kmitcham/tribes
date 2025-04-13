@@ -37,8 +37,7 @@ function playerHelpRounds(){
 		text+=' invite <inviteList> The list of people you would like to invite people to mate with, in preference order.  \n\tIf the list ends with !pass, you will give up if they all decline. !save will retain the list every season\n\tUpdates made DURING the reproduction round will not be saved.\n'
 		text+=' consent <consentList> The list of people you would accept mating invitations from\n'
 		text+=' decline <declineList> The list of people whose mating invitations you would decline to mate with\n'
-		// pass is not needed due to mandatory secret mating
-		//text+=' pass (decline to invite anyone in the mating round; can still get invitations)\n'
+		text+=' pass Decline to invite anyone in this mating round; can still respond to invitations\n'
 		text+=' scorechildren  count number of children by parent'
 		return text;
 }

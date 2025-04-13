@@ -697,6 +697,50 @@ test("make a consentList, null in the array", () =>{
   expect(response).toContain("is not in the tribe");
 });
 
+test("pass when not in tribe", () => {
+  var gameState = {
+    "name": "test-tribe",
+    "population": {}
+  }
+  reproLib.pass(gameState, "dummy");
+  const message = gameState["messages"]["dummy"];
+  expect(message).toContain("You are not in this tribe.")
+});
+
+test("pass when not in reproduction", () => {
+  var gameState = {
+    "name": "test-tribe",
+    "reproductionRound": false,
+    "population": {
+      "dummy":{
+        "username":"dummy",
+        "handle":{"userid":7},
+        "name":"dummy"
+      }
+    }
+  }
+  reproLib.pass(gameState, "dummy");
+  const message = gameState["messages"]["dummy"];
+  expect(message).toContain("round.")
+});
+
+test("pass happypath", () => {
+  var gameState = {
+    "name": "test-tribe",
+    "reproductionRound": true,
+    "population": {
+      "dummy":{
+        "username":"dummy",
+        "handle":{"userid":7},
+        "name":"dummy"
+      }
+    }
+  }
+  reproLib.pass(gameState, "dummy");
+  const message = gameState["messages"]["tribe"];
+  expect(message).toContain("complete")
+});
+
 test("handle mating with lists and decline", () =>{
   var gameState = {
     "name": "unitTest-tribe",
