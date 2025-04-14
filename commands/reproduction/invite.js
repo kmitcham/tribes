@@ -20,7 +20,7 @@ module.exports = {
             console.log('invite response was '+response)
         } catch (error) {
                 // And of course, make sure you catch and log any errors!
-                console.error('invite error'+error);
+                console.error('invite error '+error);
         }
     },
 };

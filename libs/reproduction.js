@@ -193,8 +193,8 @@ function invite(gameState, rawActorName, rawList ){
     var player = pop.memberByName(rawActorName, gameState);
     var message = 'error in invite, message not set';
     if (!player){
-        text.addMessage(gameState, player.name, "Can not find you in the tribe, sorry" );
-        return ;
+        text.addMessage(gameState, rawActorName, "You must be a member of the tribe to invite someone to mate." );
+        return;
     }    
     if (! rawList ) {
         if (player.inviteList){
@@ -266,32 +266,63 @@ function consentPrep(gameState, sourceName, rawList){
     }
     console.log("updating consentlist: "+messageArray);
     consent(sourceName, messageArray,  gameState);
-    gameState.saveRequired;
     return member.consentList;
 }
 module.exports.consentPrep = consentPrep;
 
 function consent(actorName, arrayOfNames,  gameState){
-    person = pop.memberByName(actorName, gameState);
-    if (!person){
-        console.log(actorName+" not found in tribe");
+    var member = pop.memberByName(actorName, gameState);
+    if (!member){
+        console.log(actorName+" not found in tribe for consent");
         text.addMessage(gameState, actorName, "You are not in the tribe");
         return;
     }
-    intersectList = intersect(person.consentList, person.declineList);
+    var intersectList = intersect(member.consentList, member.declineList);
     if (intersectList && intersectList.length > 0){
         text.addMessage(gameState, actorName, "Your consent and decline lists have overlaps.  Decline has priority.");
     }
     handleMessage = handleReproductionList(actorName, arrayOfNames, "consentList", gameState );
-    text.addMessage(gameState, person.name, handleMessage);
-    if ("consentList" in person){
-        text.addMessage(gameState, actorName, "Updated consentlist to "+person.consentList);        
+    text.addMessage(gameState, member.name, handleMessage);
+    if ("consentList" in member ){
+        if (member.consentList.length > 0) {
+            text.addMessage(gameState, actorName, "Updated consentlist to "+member.consentList);
+        } else {
+            text.addMessage(gameState, actorName, "You will not consent to mating with anyone.");
+            delete member["consentList"];
+        }
     } else {
-        text.addMessage(gameState, actorName, "You stop consenting to anyone.");
+        text.addMessage(gameState, actorName, "You will not consent to mating with anyone.");
     }
+    gameState.saveRequired = true; 
     return globalMatingCheck(gameState);
 }
 module.exports.consent = consent;
+
+function declinePrep(interaction, gameState){
+    var sourceName = interaction.member.displayName;
+    var rawList = interaction.options.getString('declinelist');
+
+    var player = pop.memberByName(sourceName, gameState);
+    if (! rawList ) {
+        if (player.declineList && player.declineList.length > 0){
+            text.addMessage(gameState, sourceName, "Current declinelist: "+player.declinelist.join(" "));
+            return "Current declinelist: "+player.declinelist.join(" ");
+        } else {
+            text.addMessage(gameState, sourceName, "No current declinelist");
+            return  "No current declinelist";
+        }
+        
+    }
+    let listAsArray = rawList.split(" ");
+    if (rawList.includes(",")){
+        listAsArray = rawList.split(",");
+    }
+    console.log("applying decline list to mating for "+sourceName);
+    response = decline(sourceName, listAsArray,  gameState);
+    console.log("decline response:"+response);
+    return 
+}
+module.exports.declinePrep = declinePrep;
 
 function decline(actorName, messageArray,  gameState){
     person = pop.memberByName(actorName, gameState);
@@ -315,7 +346,8 @@ function decline(actorName, messageArray,  gameState){
             || ( person.declineList && person.consentList && person.consentList.includes("!all")) ){
             text.addMessage(gameState, actorName, "Your consent and decline lists have overlaps.  Decline has priority.")
         }
-        text.addMessage(gameState, actorName, "Decline updated.");    
+        text.addMessage(gameState, actorName, "Decline updated.");   
+        gameState.saveRequired = true; 
     }
     return globalMatingCheck(gameState)
 }
@@ -372,10 +404,14 @@ function globalMatingCheck(gameState){
                 continue;
             } else if (invitingMember.inviteList && invitingMember.inviteList.length > 0) {
              // the person is eligible to mate, and has an invitelist
-                targetName = invitingMember.inviteList[invitingMember.inviteIndex||0];
+                index = 0;
+                if ("inviteIndex" in invitingMember){
+                    index = invitingMember.inviteIndex;
+                }
+                targetName = invitingMember.inviteList[index];
                 console.log(" inviting "+targetName)
                 if (! targetName ){
-                    console.log("member "+invitingMember.name+" had a false value for target in inviteList:"+targetName);
+                    console.log("member "+invitingMember.name+" had a false value for target "+index+" in inviteList:"+targetName);
                     text.addMessage(gameState, "tribe", inviterDisplayName+" has a troublesome problem flirting, and will not mate this round.");
                     doneMating.push(personName);
                     continue
@@ -440,9 +476,9 @@ function globalMatingCheck(gameState){
                         actionableInvites = true
                         console.log("\t more invitations exist")
                     } else {
-                        allDone = false
                         console.log("allDone is false, since no invites to try, and no resolution.")
                     }
+                    allDone = false
                 }
             } else {
                 // person has no invites pending
@@ -456,12 +492,16 @@ function globalMatingCheck(gameState){
             text.addMessage(gameState, personName, "You have not responded to an invitation")
         }
     }
+    if (canStillInvite(gameState)){	
+        text.addMessage(gameState, "tribe",'(awaiting invitations or /pass from '+canStillInvite(gameState)+')' );
+        allDone = false;
+    }
     if (allDone){
         text.addMessage(gameState, "tribe", "---> Reproductive activites are complete for the season <---")
         noPregnancies = true
         for (personName in population){
-            invitingMember = population[personName]
-            text.addMessage(gameState, personName, "Reproduction round activities are over.")
+            invitingMember = pop.memberByName(personName, gameState);
+            text.addMessage(gameState, invitingMember.name, "Reproduction round activities are over.")
             if (invitingMember.hiddenPregnant){
                 fatherName = invitingMember.hiddenPregnant
                 var child = addChild(invitingMember.name, fatherName, gameState)
@@ -786,9 +826,6 @@ function startReproduction(gameState){
 
     gameState.doneMating = false;
     globalMatingCheck(gameState);
-    if (canStillInvite(gameState)){	
-        text.addMessage(gameState, "tribe",'(awaiting invitations or /pass from '+canStillInvite(gameState)+')' );
-    }
 	pop.decrementSickness(gameState.population, gameState);
     gameState.saveRequired = true;
     gameState.archiveRequired = true;

@@ -203,7 +203,7 @@ async function sendMessages(bot, gameState, interaction){
 			const user = bot.users.cache.get(userId);
 			if (! user){
 				console.log("not finding user for "+address+" userId="+userId)
-				console.log("Dropping "+chunks.length+"message chunks, including:"+chunks[0])
+				console.log("Dropping "+chunks.length+" message chunks, including:"+chunks[0])
 			} else {
 				chunksSent = 0;
 				sendRemainingMessageChunksToUser(user, chunks, chunksSent);
