@@ -27,21 +27,32 @@ function memberByName(name, gameState){
     } else if (population[name.toLowerCase()] != null){
         person = population[name.toLowerCase()]
     } else {
-        for (match in population){
-            if (population[match].name.toLowerCase() === name.toLowerCase()){
-                person = population[match]
+        for (var possibleMatch in population){
+            if (population[possibleMatch].name.toLowerCase() === name.toLowerCase()){
+                person = population[possibleMatch]
+                console.log("Name match on removing case: "+name)
                 break;
             }
-            if ( (population[match] && population[match]["handle"]) ){
-                if ( population[match]["handle"]["username"] == name 
-                    || population[match]["handle"]["displayName"] == name  
-                    || population[match]["handle"]["globalName"] == name
+            if ( (population[possibleMatch] && population[possibleMatch]["handle"]) ){
+                if ( population[possibleMatch]["handle"]["username"] === name
+                    || population[possibleMatch]["handle"]["displayName"] === name
+                    || population[possibleMatch]["handle"]["globalName"] === name
                    ){
-                    person = population[match]
+                    person = population[possibleMatch]
+                    console.log("Name match on handle with case: "+name)
                     break;
                 }
-                if (population[match].handle.id == name){
-                    person = population[match]
+                if ( population[possibleMatch]["handle"]["username"] === name.toLowerCase()
+                    || population[possibleMatch]["handle"]["displayName"] === name.toLowerCase()
+                    || population[possibleMatch]["handle"]["globalName"] === name.toLowerCase()
+                   ){
+                    person = population[possibleMatch]
+                    console.log("Name match handle toLowerCase: "+name)
+                    break;
+                }
+                if (population[possibleMatch].handle.id == name){
+                    person = population[possibleMatch]
+                    console.log("Name match on id: "+name)
                     break;
                 }
             }
@@ -59,7 +70,7 @@ function memberByName(name, gameState){
         }
         return person
     }
-    console.log("tribe "+gameState.name+" has no such member in population. tried "+name+" and "+name.toUpperCase())
+    console.log("tribe "+gameState.name+" has no such member "+name+" in population.");
     return null
 }
 module.exports.memberByName = memberByName

@@ -137,13 +137,6 @@ function handleReproductionList(actorName, arrayOfNames, listName, gameState){
             list = [];
             save = true
             break;
-        } else if (targetName.toLowerCase() == '!save'){
-            if (listName == 'inviteList'){
-                list.push(targetName);
-                save = true;
-            } else {
-                errors.push("!save is only valid in the inviteList.")
-            }
         } else if (targetName.toLowerCase() == '!all'){
             if (listName == 'inviteList'){
                 errors.push("!all is only valid in the consentList and declineList.");
@@ -420,10 +413,6 @@ function globalMatingCheck(gameState){
                     invitingMember.cannotInvite = true
                     text.addMessage(gameState, "tribe", inviterDisplayName+" is done mating this round.");
                     doneMating.push(personName);
-                    continue
-                }
-                if (targetName.trim() == "!save"){
-                    console.log("Skipping the !save since it isn't really an invite")
                     continue
                 }
                 var attemptFailed = false

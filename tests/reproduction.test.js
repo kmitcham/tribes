@@ -185,7 +185,7 @@ test("make a consentList, with pass", () =>{
   expect(response).toContain("!pass is only valid in the inviteList")
 
 });
-test("make a invitelist, with pass and save", () =>{
+test("make a invitelist, with pass", () =>{
   var gameState = {
       "population": {
           "p1":{
@@ -208,14 +208,14 @@ test("make a invitelist, with pass and save", () =>{
       "round": "reproduction"
   }
   //function handleReproductionList(actorName, args, listName, gameState, bot){
-  expectedList = ["p2", "p3", "!save","!pass"]
+  expectedList = ["p2", "p3","!pass"]
   response = reproLib.handleReproductionList("p1", expectedList ,"inviteList", gameState, {})
-  exp = "Setting your inviteList list to:p2,p3,!save,!pass\nSaving your inviteList list be used in future rounds\n"
+  exp = "Setting your inviteList list to:p2,p3,!pass\n"
   expect(response).toBe(exp)
   expect(gameState["population"]["p1"]["inviteList"]).toStrictEqual(expectedList)
 });
 
-test("make a invitelist, with Pass and Save", () =>{
+test("make a invitelist, with Pass", () =>{
   var gameState = {
       "population": {
           "p1":{
@@ -238,9 +238,9 @@ test("make a invitelist, with Pass and Save", () =>{
       "round": "reproduction"
   }
   //function handleReproductionList(actorName, args, listName, gameState, bot){
-  expectedList = ["p2", "p3", "!Save","!Pass"]
+  expectedList = ["p2", "p3","!Pass"]
   response = reproLib.handleReproductionList("p1", expectedList ,"inviteList", gameState, {})
-  exp = "Setting your inviteList list to:p2,p3,!Save,!Pass\nSaving your inviteList list be used in future rounds\n"
+  exp = "Setting your inviteList list to:p2,p3,!Pass\n"
   expect(response).toBe(exp)
   expect(gameState["population"]["p1"]["inviteList"]).toStrictEqual(expectedList)
 });
@@ -436,10 +436,10 @@ test("make a invitelist, with commas, pass and save", () =>{
       "round": "reproduction"
   }
   //function handleReproductionList(actorName, args, listName, gameState, bot){
-  expectedList = ["p 2", "p3", "!save","!pass"]
-  inputList = ["p 2,", "p3,", "!save,","!pass"]
+  expectedList = ["p 2", "p3","!pass"]
+  inputList = ["p 2,", "p3,","!pass"]
   response = reproLib.handleReproductionList("p1", inputList ,"inviteList", gameState, {})
-  exp = "Setting your inviteList list to:p 2,p3,!save,!pass\nSaving your inviteList list be used in future rounds\n"
+  exp = "Setting your inviteList list to:p 2,p3,!pass\n"
   expect(response).toBe(exp)
   expect(gameState["population"]["p1"]["inviteList"]).toStrictEqual(expectedList)
 });
