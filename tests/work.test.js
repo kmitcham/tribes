@@ -289,7 +289,7 @@ describe('Work Module Tests', () => {
       expect(text.addMessage).toHaveBeenCalledWith(
         mockGameState, 
         'testPlayer', 
-        'You already know how to craft'
+        'You already know how to craft.'
       );
     });
     
@@ -317,7 +317,7 @@ describe('Work Module Tests', () => {
       expect(text.addMessage).toHaveBeenCalledWith(
         mockGameState, 
         'testPlayer', 
-        'No on in the tribe is able and willing to teach you crafting'
+        'No one in the tribe is able and willing to teach you crafting.'
       );
     });
     
@@ -349,7 +349,7 @@ describe('Work Module Tests', () => {
       expect(text.addMessage).toHaveBeenCalledWith(
         mockGameState,
         "tribe",
-        expect.stringContaining('tries to learn to craft, but does not understand it yet')
+        expect.stringContaining('does not understand it yet')
       );
     });
   });

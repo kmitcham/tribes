@@ -173,7 +173,7 @@ function train(gameState, sourceName, forceRoll){
 		return
 	}
 	if (player.canCraft){
-		text.addMessage(gameState, sourceName,'You already know how to craft' )
+		text.addMessage(gameState, sourceName,'You already know how to craft.' )
 		return
 	}
 	if (player.guarding && player.guarding.length > 2){
@@ -183,7 +183,7 @@ function train(gameState, sourceName, forceRoll){
 	var crafters = pop.countByType(population, 'canCraft', true)
 	var noTeachers = pop.countByType(population, 'noTeach', true)
 	if (crafters <= noTeachers){
-		text.addMessage(gameState, sourceName,'No on in the tribe is able and willing to teach you crafting' )
+		text.addMessage(gameState, sourceName,'No one in the tribe is able and willing to teach you crafting.' )
 		return
 	}
 	learnRoll = dice.roll(2)
@@ -198,7 +198,7 @@ function train(gameState, sourceName, forceRoll){
 		player.canCraft = true
 		message = player.name+' learns to craft. ['+learnRoll+']'
 	} else {
-		message = player.name+' tries to learn to craft, but does not understand it yet. ['+learnRoll+']'
+		message = player.name+' studies crafting technique, but does not understand it yet. ['+learnRoll+']'
 	}
 	player.activity = 'training'
 	player.worked = true;

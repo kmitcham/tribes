@@ -300,8 +300,8 @@ function consumeFoodPlayers(gameState){
 		if (person.gender == 'female' && childLib.countChildrenOfParentUnderAge(children, target, 4 ) > 1 ){
 			// extra food issues here; mom needs 2 more food, or the child will die.
 			const mom = person;
-			console.log(mom.name+' eats extra food due to multiple children under 2. ');
-			response += mom.name+" eats extra food due to multiple children under 2.";
+			console.log(mom.name+' eats extra food due to multiple children under 2.  ');
+			response += mom.name+" eats extra food due to multiple children under 2.  ";
 			mom.food -= 2
 			if (mom.food < 0 ){
 				// food is negative, so just add it to grain here
