@@ -369,17 +369,18 @@ function sortCommitFirst(a,b){
 
 
 function globalMatingCheck(gameState){
-    allDone = true;
-    actionableInvites = true;
-    population = gameState.population;
+    console.log("In the global mating check");
     if (! gameState.reproductionRound){
         return "It is not the mating round";
     }
-    const inviteCheck = canStillInvite(gameState);
+    var inviteCheck = canStillInvite(gameState);
     if (inviteCheck.length < 1 ){
+        text.addMessage(gameState, "tribe", "Mating is complete.");
         return "Mating is complete";
     }
-    console.log("In the global mating check");
+    var allDone = true;
+    var actionableInvites = true;
+    var population = gameState.population;
     while (actionableInvites){
         actionableInvites = false;
         var listMemberNamesForSex = Object.keys(population)
@@ -455,7 +456,6 @@ function globalMatingCheck(gameState){
                     text.addMessage(gameState, inviterDisplayName, targetDisplayName+" considers your invitation.")
                     whoNeedsToGiveAnAnswer.push(targetDisplayName)
                     doneMating.push(personName)
-                    allDone = false
                     console.log("\t no response found with "+targetDisplayName+" so allDone is false")
                 }
                 if (attemptFailed){
@@ -467,11 +467,9 @@ function globalMatingCheck(gameState){
                     } else {
                         console.log("allDone is false, since no invites to try, and no resolution.")
                     }
-                    allDone = false
                 }
             } else {
                 // person has no invites pending
-                allDone = false
                 console.log("\t No invites found for "+personName+" so allDone is false")
             }
         }
@@ -481,9 +479,13 @@ function globalMatingCheck(gameState){
             text.addMessage(gameState, personName, "You have not responded to an invitation")
         }
     }
-    if (canStillInvite(gameState)){	
-        text.addMessage(gameState, "tribe",'(awaiting invitations or /pass from '+canStillInvite(gameState)+')' );
+    inviteCheck = canStillInvite(gameState);
+    console.log("After mating checks, inviteCheck is: "+inviteCheck);
+    if (inviteCheck){	
+        text.addMessage(gameState, "tribe",'(awaiting invitations or /pass from '+inviteCheck+')' );
         allDone = false;
+    } else {
+        allDone = true;
     }
     if (allDone){
         text.addMessage(gameState, "tribe", "---> Reproductive activites are complete for the season <---")
