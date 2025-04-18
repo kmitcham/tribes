@@ -13,13 +13,13 @@ module.exports = {
                 .setDescription('Which tribe member to display')
                 .setRequired(false)),
     async execute(interaction, gameState) {
-		var targetUser = interaction.options.getMember('target');
+        var targetUser = interaction.options.getMember('target');
         var targetName = null;
         if (targetUser){
-            targetName = targetUser.name;
+            targetName = targetUser.displayName;
         }
-		var actorName = interaction.member.displayName;
-		var response = general.inventory(gameState, targetName, actorName );
+        var actorName = interaction.member.displayName;
+        general.inventory(gameState, targetName, actorName );
 	},
 };
 
