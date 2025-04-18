@@ -6,15 +6,15 @@ function playerHelpBasic(){
 		text+=' children [parent name] shows the ages and food of children, optionally filtered to descendants of specified parent\n'
 		text+=' give <amt> <food|grain|spearhead|basket> <player>\n'
 		text+=' graveyard list of all deceased members and children\n'
-		text+=' inventory <target|all>  show inventory and character info. No arg means self\n'
+		text+=' inventory <target>  show inventory and character info. No arg means show inventory for entire tribe\n'
 		text+=' law see the current list of laws\n'
 		text+=' sacrifice <amount> <type>  place an item beyond use for religious or other reasons [non-standard]\n'
 		text+=' scout <location> examine the envionment, default is current location\n'
 		text+=' secrets toggle the state of willingness to teach others to craft\n'
 		text+=' specialize <hunter|gatherer|crafter> at the start of the game\n'
 		text+=' status see the current location, year, season and local game\n'
-		text+=' vote <target>  your choice for chief.  A chief is required for the game to proceed, but has no other authority.\n'
-		text+= 'ping confirms the server is up and functional.  Server is expected to be down from midnight to 7am, Pacific Time.\n'
+		text+=' vote <target>  your choice for chief.  A chief is required for the game to proceed, and controls tribe membership\n'
+		text+= 'ping confirms the server is up and functional\n'
 		//text+=' obey <commands>  (things you will do if the chief commands, in case of extended AFK)\n'
 		return text;
 }
