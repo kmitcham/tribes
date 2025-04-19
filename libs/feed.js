@@ -123,14 +123,13 @@ function checkFood(gameState, bot){
         }
     }
     message += 'Happy Adults: '+happyAdults.join(', ')
-	message += 'Happy Children: '+satedChildren.join(', ');
+	message += '\nHappy Children: '+satedChildren.join(', ');
     message += '\nWorried adults: '+worriedAdults.join(', ');
     message += '\nHungry adults: '+hungryAdults.join(', ');
     message += '\nHungry children: '+hungryChildren.join(', ');
     if (!worriedAdults.length && !hungryAdults.length && !hungryChildren.length && gameState.foodRound ){
         gameState.enoughFood = true
         text.addMessage(gameState, "tribe", "Everyone has enough food, starting reproduction automatically.")
-        // TODO handle this
         reproLib.startReproduction(gameState)
     }
     return message
