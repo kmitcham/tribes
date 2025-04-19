@@ -430,7 +430,7 @@ describe('consumeFoodChildren Function Tests', () => {
     
     // Check birth-related actions
     expect(response).toContain('Mother1 gives birth to a male-child' );
-    
+    // this can fail when  (birthRoll < 5 )
     // Mother should be guarding the child
     expect(gameState.population['Mother1'].guarding).toContain('Child1');
 

@@ -100,7 +100,7 @@ function checkFood(gameState, bot){
         person = pop.memberByName(targetName, gameState);
         hunger = 4
         if (person.gender == 'female' && childLib.countChildrenOfParentUnderAge(children, targetName, 4) > 1){
-			message += person.name+" needs 6 food due to have more than one child under 2\n";
+			message += person.name+" needs 6 food due to having more than one child under 2\n";
             hunger = 6
         }
         if (person.food >= hunger) {
@@ -122,10 +122,11 @@ function checkFood(gameState, bot){
             hungryChildren.push(childName)
         }
     }
-    message += 'Happy People: '+happyAdults+", "+satedChildren
-    message += '\nWorried adults: '+worriedAdults
-    message += '\nHungry adults: '+hungryAdults
-    message += '\nHungry children: '+hungryChildren
+    message += 'Happy Adults: '+happyAdults.join(', ')
+	message += 'Happy Children: '+satedChildren.join(', ');
+    message += '\nWorried adults: '+worriedAdults.join(', ');
+    message += '\nHungry adults: '+hungryAdults.join(', ');
+    message += '\nHungry children: '+hungryChildren.join(', ');
     if (!worriedAdults.length && !hungryAdults.length && !hungryChildren.length && gameState.foodRound ){
         gameState.enoughFood = true
         text.addMessage(gameState, "tribe", "Everyone has enough food, starting reproduction automatically.")
