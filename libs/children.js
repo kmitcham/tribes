@@ -1,8 +1,39 @@
 const guardlib = require("./guardCode.js");
 const { child } = require("winston");
 const pop = require("./population")
+const text = require("./textprocess");
 
-module.exports.showChildren =  (children, gameState, filterName="", hideFathers=true ) =>{
+function showChildrenPrep(gameState, displayName, onlyHungry, parentMember ){
+    var children = gameState.children;
+    var response = [];
+    if (onlyHungry){
+        response.push('These children need food:\n');
+        response.push(showChildren(children, gameState, 'hungry', gameState.secretMating))
+    } else if (parentMember){
+            var parentName = parentMember.displayName;
+            var parentPerson = pop.memberByName( parentName, gameState);
+            if (!parentPerson ){
+                text.addMessage(gameState, displayName, 'Could not find '+parentName )
+            } else {
+                if (parentPerson.gender == 'male'){
+                     response.push("It is impossible to know who the father of a child is until the game ends.");
+                } else {
+                    response.push('The descendants of '+parentName+' are:\n');
+                    response.push.apply(response, showChildren(children, gameState, parentName, gameState.secretMating))
+                }
+            }
+    } else {
+        response.push(showChildren(children, gameState, "", gameState.secretMating));
+    }
+    for (part of response){
+		text.addMessage(gameState, displayName, part);
+    }
+    return 
+}
+module.exports.showChildrenPrep = showChildrenPrep;
+
+// returns an array of strings instead of directly updated the messages
+function showChildren(children, gameState, filterName="", hideFathers=true ){
 	population = gameState.population;
 	responseMessages = []
 	childNames = Object.keys(children)
@@ -81,14 +112,14 @@ module.exports.showChildren =  (children, gameState, filterName="", hideFathers=
 			if (child.babysitting){
 				response += ' watching:'+child.babysitting+' ';
 			}
-			response += '\n';
-			console.log(response);
+			console.log("showChildren response: "+response);
 		}
 	} 
 	responseMessages.push(response)
 	responseMessages.push('There are '+childNames.length+' children in total. \n')
 	return responseMessages
 }
+module.exports.showChildren = showChildren;
 
 function countChildrenOfParentUnderAge(children, parentName, age){
 	var count = 0

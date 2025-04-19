@@ -48,20 +48,28 @@ function give(gameState, sourceName, targetName, amount, item){
         text.addMessage(gameState, sourceName, response)
         return ;
     }
-    if ((!sourcePerson[item] || sourcePerson[item] < amount ) && (!isRef) ){
-        response = "You do not have "+amount+" "+item;
-        text.addMessage(gameState, sourcePerson.name, response)
-        return ;
+    if ((!sourcePerson[item] || sourcePerson[item] < amount ) ){
+        if (isRef){
+            text.addMessage(gameState, "tribe","Referee powers invoked!");
+        } else {
+            response = "You do not have "+amount+" "+item;
+            text.addMessage(gameState, sourcePerson.name, response)
+            return ;
+        }
     }
     if (sourcePerson.activity == 'hunt' && item == 'spearhead' && gameState.round== 'work'){
         response = "You already hunted with a spearhead, and cannot trade spearheads during the work round";
         text.addMessage(gameState, sourcePerson.name, response)
         return ;
     }
-    if (amount < 0 && !isRef){
-        response = "Giving a negative amount is not valid.";
-        text.addMessage(gameState, sourcePerson.name, response)
-        return ;
+    if (amount < 0){
+        if (isRef){
+            text.addMessage(gameState, "tribe", "Referee powers invoked!");
+        } else {
+            response = "Giving a negative amount is not valid.";
+            text.addMessage(gameState, sourcePerson.name, response)
+            return ;
+        }
     }
 
     if (isRef){

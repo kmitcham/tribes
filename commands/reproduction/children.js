@@ -1,5 +1,4 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const text = require("../../libs/textprocess");
 const childlib = require("../../libs/children.js");
 const pop = require("../../libs/population.js");
 
@@ -22,33 +21,6 @@ module.exports = {
         var parentMember = interaction.options.getMember('parent');
         var onlyHungry = interaction.options.getBoolean('hungry');
         var displayName = interaction.member.displayName;
-        children( gameState, displayName, onlyHungry, parentMember);
+        childlib.showChildrenPrep( gameState, displayName, onlyHungry, parentMember);
 	},
 };
-
-function children(gameState, displayName, onlyHungry, parentMember ){
-    var population = gameState.population;
-    var children = gameState.children;
-
-    if (onlyHungry){
-       response = ['These children need food:\n']
-        response.push(childlib.showChildren(children, gameState, 'hungry', gameState.secretMating))
-    } else if (parentMember){
-            var parentName = parentMember.displayName;
-            var parentPerson = pop.memberByName( parentName, gameState);
-            if (!parentPerson ){
-                text.addMessage(gameState, displayName, 'Could not find '+parentName )
-            } else {
-                response = ['The descendants of '+parentName+' are:\n']
-                response.push.apply(response, childlib.showChildren(children, gameState, parentName, gameState.secretMating))
-            }
-    } else {
-        response = childlib.showChildren(children, gameState, "", gameState.secretMating)
-    }
-    var compiledResponse = " "
-    for (part of response){
-        compiledResponse = compiledResponse+"\n"+part;
-    }
-    text.addMessage(gameState, displayName, compiledResponse);
-    return 
-}
