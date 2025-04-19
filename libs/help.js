@@ -4,7 +4,7 @@ function playerHelpBasic(){
 		text+='###General Commands###\n'
 		text+=' babysit <adult child> <target child> a mother can ask her adult child to watch a child\n'
 		text+=' children [parent name] shows the ages and food of children, optionally filtered to descendants of specified parent\n'
-		text+=' give <amt> <food|grain|spearhead|basket> <player>\n'
+		text+=' give <player> <amt> <food|grain|spearhead|basket> <player>\n'
 		text+=' graveyard list of all deceased members and children\n'
 		text+=' inventory <target>  show inventory and character info. No arg means show inventory for entire tribe\n'
 		text+=' law see the current list of laws\n'

@@ -180,6 +180,16 @@ function doChance(rollValue, gameState){
             person = population[name]
             person.isSick = 3
             message +=  person.name + " got sick – eat 2 extra food and miss next turn. "
+            // if person has < 2 food
+            //    if NOBODY in the tribe has any food
+            //      if person has grain
+            //         eat grain
+            //         return
+            //      else if nobody has grain
+            //         kill person
+            //         return
+            //    else // someone else has food or grain
+            //      emit warn message
             if (person.food < 2){
                 message += '( but they only had '+person.food+' so the ref might kill them if no help is given or grain is used)'
             }
