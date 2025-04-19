@@ -2,7 +2,7 @@
 const text = require("./textprocess.js")
 const pop = require("./population.js")
 const dice = require("./dice.js");
-
+const referees = require("./referees.json")
 
 function give(gameState, sourceName, targetName, amount, item){
     if ( gameState.ended ){
@@ -31,29 +31,46 @@ function give(gameState, sourceName, targetName, amount, item){
     var targetPerson = {}
     var sourcePerson = {}
 
+    isRef = referees.includes(sourceName);
+    if (isRef){
+        console.log("ref cheat give "+amount+" "+item+" to "+targetName);
+    }
     // check if person is in tribe
     targetPerson = pop.memberByName(targetName,gameState);
     sourcePerson = pop.memberByName(sourceName,gameState);
-    if (!targetPerson || !sourcePerson){
-        response = "Source or target "+sourceName+":"+targetName+" not found in tribe";
+    if (!targetPerson ){
+        response = "Target "+targetName+" not found in tribe";
         text.addMessage(gameState, sourceName, response)
         return ;
     }
-    if (!sourcePerson[item] || sourcePerson[item] < amount){
-        response = sourceName+" does not have "+amount+" "+item;
-        text.addMessage(gameState, "tribe", response)
+    if (!sourcePerson && !isRef){
+        response = "You are not a member of tribe";
+        text.addMessage(gameState, sourceName, response)
+        return ;
+    }
+    if ((!sourcePerson[item] || sourcePerson[item] < amount ) && (!isRef) ){
+        response = "You do not have "+amount+" "+item;
+        text.addMessage(gameState, sourcePerson.name, response)
         return ;
     }
     if (sourcePerson.activity == 'hunt' && item == 'spearhead' && gameState.round== 'work'){
-        response = sourceName+" already hunted with a spearhead, and cannot trade spearheads during the work round";
-        text.addMessage(gameState, "tribe", response)
+        response = "You already hunted with a spearhead, and cannot trade spearheads during the work round";
+        text.addMessage(gameState, sourcePerson.name, response)
+        return ;
+    }
+    if (amount < 0 && !isRef){
+        response = "Giving a negative amount is not valid.";
+        text.addMessage(gameState, sourcePerson.name, response)
         return ;
     }
 
-    sourcePerson[item] -= amount;
-    targetPerson[item] += amount;
+    if (isRef){
+        targetPerson[item] += amount;
+    } else {
+        sourcePerson[item] -= amount;
+        targetPerson[item] += amount;
+    }
     gameState.saveRequired = true
-
     response = sourceName + " gives "+targetName+" "+amount+" "+item;
     text.addMessage(gameState, "tribe", response)
     pop.history(sourceName, response, gameState);
