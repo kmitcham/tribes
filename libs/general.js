@@ -48,7 +48,7 @@ function give(gameState, sourceName, targetName, amount, item){
         text.addMessage(gameState, sourceName, response)
         return ;
     }
-    if ((!sourcePerson[item] || sourcePerson[item] < amount ) ){
+    if (isRef || (!sourcePerson[item] || sourcePerson[item] < amount ) ){
         if (isRef){
             text.addMessage(gameState, "tribe","Referee powers invoked!");
         } else {

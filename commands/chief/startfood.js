@@ -45,7 +45,7 @@ function startFood(gameState, bot){
     population = gameState.population;
     clearWorkFlags(population);
     pop.decrementSickness(population, gameState, bot);
-    text.addMessage(gameState, "tribe", '\n==>Starting the food and trading round.  Make sure everyone has enough to eat, or they will starve<==');
+    text.addMessage(gameState, "tribe", '\n==>Starting the food and trading round.  Use /foodcheck to be sure everyone has enough to eat, or they will starve<==');
     message = util.gameStateMessage(gameState)
     var d = new Date();
     var saveTime = d.toISOString();

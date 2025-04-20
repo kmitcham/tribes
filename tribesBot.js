@@ -73,7 +73,8 @@ client.on(Events.InteractionCreate, async interaction => {
 		}
 		allGames[channel.name] = gameState;
     } else {
-		interaction.reply("Tribes commands need to be in a tribe channel");
+		const response = "Tribes commands need to be in a tribe channel";
+		interaction.replied({ content: response, flags: MessageFlags.Ephemeral })
 		return;
 	}
 	nickName = interaction.member.displayName;
