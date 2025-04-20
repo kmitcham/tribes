@@ -3,27 +3,26 @@ const { child } = require("winston");
 const pop = require("./population")
 const text = require("./textprocess");
 
-function showChildrenPrep(gameState, displayName, onlyHungry, parentMember ){
+function showChildrenPrep(gameState, displayName, onlyHungry, filterParentName ){
     var children = gameState.children;
     var response = [];
     if (onlyHungry){
-        response.push('These children need food:\n');
-        response.push(showChildren(children, gameState, 'hungry', gameState.secretMating))
-    } else if (parentMember){
-            var parentName = parentMember.displayName;
-            var parentPerson = pop.memberByName( parentName, gameState);
-            if (!parentPerson ){
+        response.push('These children need food:');
+        response.push( ...( showChildren(children, gameState, 'hungry', gameState.secretMating)))
+    } else if (filterParentName){
+            var parentPerson = pop.memberByName( filterParentName, gameState);
+            if (! parentPerson ){
                 text.addMessage(gameState, displayName, 'Could not find '+parentName )
             } else {
                 if (parentPerson.gender == 'male'){
                      response.push("It is impossible to know who the father of a child is until the game ends.");
                 } else {
-                    response.push('The descendants of '+parentName+' are:\n');
-                    response.push.apply(response, showChildren(children, gameState, parentName, gameState.secretMating))
+                    response.push('The descendants of '+filterParentName+' are:');
+                    response.push( ...(showChildren(children, gameState, filterParentName, gameState.secretMating)))
                 }
             }
     } else {
-        response.push(showChildren(children, gameState, "", gameState.secretMating));
+        response.push(...(showChildren(children, gameState, "", gameState.secretMating)));
     }
     for (part of response){
 		text.addMessage(gameState, displayName, part);
@@ -37,7 +36,6 @@ function showChildren(children, gameState, filterName="", hideFathers=true ){
 	population = gameState.population;
 	responseMessages = []
 	childNames = Object.keys(children)
-	var response = ''
 	mine = 0 
 	var notPrintedNewAdultHeader = true;
 	var notStartedMiddleChildren = true;
@@ -52,14 +50,7 @@ function showChildren(children, gameState, filterName="", hideFathers=true ){
 		return children[a].age - children[b].age
 	});
 	for (childName of sortedChildrenNames) {
-		if (response.length > 1700){
-			responseMessages.push(response)
-			response = ''
-		}
 		var child = children[childName]
-		if ( filterName && !(child.mother == filterName || child.father == filterName) ) {
-			continue
-		}
 		if (filterName){
 			if (filterName == child.mother){
 				// do nothing
@@ -67,9 +58,13 @@ function showChildren(children, gameState, filterName="", hideFathers=true ){
 				// also do nothing
 			} else if (filterName == "hungry") {
 				if (child.food >= 2){
+					// skip this child, they are not hungry
 					continue;
+				} else {
+					// do nothing
 				}
-			}else {
+			} else {
+				// skip this child, since it does not match the parent filter
 				continue;
 			}
 		}
@@ -77,46 +72,46 @@ function showChildren(children, gameState, filterName="", hideFathers=true ){
 			//response += '('+childName+' is dead)\n';
 			// skip the dead
 		} else {
+			var childMessage = "";
 			if (child.age < 0 && notStartedUnborn){
-				response += '### -----> Unborn <----- ###\n'
+				responseMessages.push('### -----> Unborn <----- ###');
 				notStartedUnborn = false;
 			} else if (0 <= child.age && child.age < 4 && notStartedYoungChildren ){
-				response += '### -----> Nursing Children <----- ###\n'
+				responseMessages.push('### -----> Nursing Children <----- ###');
 				notStartedYoungChildren = false;
 			} else if (4 <= child.age && child.age < 24 && notStartedMiddleChildren){
-				response += '### -----> Children <----- ###\n'
+				responseMessages.push('### -----> Children <----- ###');
 				notStartedMiddleChildren = false;
 			}	else if (child.age >= 24 && notPrintedNewAdultHeader){
-				response += '### -----> New Adults <----- ###\n'
+				responseMessages.push('### -----> New Adults <----- ###');
 				notPrintedNewAdultHeader = false;
 			}
-			response += (childName+': '+child.gender).padEnd(30,' ')+'age:'+((child.age)/2)
+			childMessage += (childName+': '+child.gender).padEnd(30,' ')+'age:'+((child.age)/2)
 			if (child.newAdult){
-				response += 'Full grown!'.padStart(16, ' ')
+				childMessage += 'Full grown!'.padStart(16, ' ')
 			} else {
 				if (child.food < 2){
-					response += '  needs '+(2-child.food)+' food'
+					childMessage += '  needs '+(2-child.food)+' food'
 				} else { 
-					response += '  not hungry'.padStart(16, ' ')
+					childMessage += '  not hungry'.padStart(16, ' ')
 				}
 			}
 			motherMember = pop.memberByName(child.mother, gameState);
 			fatherMember = pop.memberByName(child.father, gameState);
-			response += ' mother:'+motherMember.name;
+			childMessage += ' mother:'+motherMember.name;
 			if (!hideFathers){
-				response += ' father:'+fatherMember.name;
+				childMessage += ' father:'+fatherMember.name;
 			}
 			if (child.age < 24 ){
-				response += ' guard value:'+ guardlib.findGuardValueForChild(childName, population, children);
+				childMessage += ' guard value:'+ guardlib.findGuardValueForChild(childName, population, children);
 			}
 			if (child.babysitting){
-				response += ' watching:'+child.babysitting+' ';
+				childMessage += ' watching:'+child.babysitting+' ';
 			}
-			console.log("showChildren response: "+response);
+			responseMessages.push(childMessage);
 		}
 	} 
-	responseMessages.push(response)
-	responseMessages.push('There are '+childNames.length+' children in total. \n')
+	responseMessages.push('There are '+childNames.length+' children in total.')
 	return responseMessages
 }
 module.exports.showChildren = showChildren;

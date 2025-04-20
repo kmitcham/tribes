@@ -100,21 +100,22 @@ client.on(Events.InteractionCreate, async interaction => {
 });
 
 async function sendMessages(bot, gameState, interaction){
-	messagesDict = gameState['messages'];
+	const messagesDict = gameState['messages'];
 	if (! messagesDict){
 		console.log("sendMessages on empty");
 		return;
 	}
-	actorName = interaction.nickName;
+	const actorName = interaction.nickName;
 	var chunks = []
 	MAX_LENGTH = 1900; //docs say 2000 is max; better safe than sorry
 	// regext [\S\s] is any chacter that is either a space or not a space; eg, any character
-	needsReply = interaction.isRepliable();
+	var needsReply = interaction.isRepliable();
 	if ("tribe" in messagesDict ){
 		console.log("in send messages tribe >>"+messagesDict["tribe"]+"<<");
-		message = messagesDict["tribe"];
+		var message = messagesDict["tribe"];
 		chunksSent = 0;
 		const channel = await bot.channels.cache.find(channel => channel.name === gameState.name);
+		var chunks = []
 		if (message){
 			chunks = message.match(/[\S\s]{1,1900}/g);
 			if (needsReply ){
@@ -137,7 +138,12 @@ async function sendMessages(bot, gameState, interaction){
 		if (!message){
 			console.log('skipping empty message for '+actorName);
 		} else {
-			chunks = message.match(/[\S\s]{1,1900}/g);
+			var chunks = []
+			if (message.length < 1){
+				console.log("Weird empty message (length zero) for "+actorName);
+			} else {
+				chunks = message.match(/[\S\s]{1,1900}/g);
+			}
 			if (!chunks || chunks.length == 0){
 				console.log("Weird empty message (no chunks) for "+actorName);
 			} else {

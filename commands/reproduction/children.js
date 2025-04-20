@@ -18,9 +18,13 @@ module.exports = {
             .setRequired(false))
         ,
     async execute(interaction, gameState) {
-        var parentMember = interaction.options.getMember('parent');
+        var filterParentUser = interaction.options.getMember('parent')
+        filterParentName = null;
+        if (filterParentUser){
+            filterParentName = filterParentUser.displayName;
+        }
         var onlyHungry = interaction.options.getBoolean('hungry');
         var displayName = interaction.member.displayName;
-        childlib.showChildrenPrep( gameState, displayName, onlyHungry, parentMember);
+        childlib.showChildrenPrep( gameState, displayName, onlyHungry, filterParentName);
 	},
 };

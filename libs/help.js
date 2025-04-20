@@ -9,7 +9,7 @@ function playerHelpBasic(){
 		text+=' inventory <target>  show inventory and character info. No arg means show inventory for entire tribe\n'
 		text+=' law see the current list of laws\n'
 		text+=' sacrifice <amount> <type>  place an item beyond use for religious or other reasons [non-standard]\n'
-		text+=' scout <location> examine the envionment, default is current location\n'
+		text+=' scout <location> examine the environment, default is current location\n'
 		text+=' secrets toggle the state of willingness to teach others to craft\n'
 		text+=' specialize <hunter|gatherer|crafter> at the start of the game\n'
 		text+=' status see the current location, year, season and local game\n'
