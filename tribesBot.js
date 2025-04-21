@@ -95,7 +95,12 @@ client.on(Events.InteractionCreate, async interaction => {
 	} catch (error) {
         console.log("there was an error in that command:");
 		console.error(error);
-		channel.send("TribesBot had a problem with the last command.")
+		var message = "TribesBot had a problem with the last command.";
+		if (interaction && interaction.user){
+			sendRemainingMessageChunksToUser(interaction.user, [message], 0);
+		} else {
+			channel.send(message)
+		}
 	}
 });
 

@@ -193,7 +193,8 @@ function law(displayName, gameState){
     for (number in laws){
         response += '\n\t'+number+'\t'+laws[number]
     }
-    text.addMessage(gameState,member.name, response);
+    // possibly the person is not a member of the tribe, and just wants to see the laws
+    text.addMessage(gameState, displayName, response);
     gameState.saveRequired = true;
     return;
 }

@@ -10,6 +10,6 @@ module.exports = {
         ,
     async execute(interaction, gameState) {
         var displayName = interaction.member.displayName
-        law(displayName, gameState)
+        general.law(displayName, gameState)
 	},
 };
