@@ -367,7 +367,6 @@ function sortCommitFirst(a,b){
     return Math.random()-.5
 }
 
-
 function globalMatingCheck(gameState){
     console.log("In the global mating check");
     if (! gameState.reproductionRound){
@@ -411,7 +410,7 @@ function globalMatingCheck(gameState){
                 }
                 if (targetName.trim() == "!pass"){
                     invitingMember.cannotInvite = true
-                    text.addMessage(gameState, "tribe", inviterDisplayName+" is done mating this round.");
+                    //text.addMessage(gameState, "tribe", inviterDisplayName+" is done mating this round.");
                     doneMating.push(personName);
                     continue
                 }
@@ -518,7 +517,7 @@ module.exports.globalMatingCheck = globalMatingCheck;
 
 function hasReasontoNotInvite(gameState, invitingMember){
     if (!invitingMember){
-        console.log(" No person found for "+personName +" sexList "+listMemberNamesForSex)
+        console.log("\t NULL person may not invite anyone");
         return true;
     } else if (invitingMember.cannotInvite  ) {
         doneMating.push(personName)
@@ -526,7 +525,7 @@ function hasReasontoNotInvite(gameState, invitingMember){
         return true;
     } else if (invitingMember.golem){
         invitingMember.cannotInvite = true;
-        console.log("Skipping golem "+invitingMember.name)
+        console.log("\t Skipping golem "+invitingMember.name)
         return true;
     } else if (invitingMember.isPregnant){
         console.log("\t inviter was pregnant")
@@ -550,11 +549,10 @@ function hasReasontoNotInvite(gameState, invitingMember){
     return false;
 }
 
-// a weak clone of the existing 'spawnFunction'  only works for secret mating
-function makeLove(name1, name2, gameState, force = false){
+function makeLove(targetName, inviterName, gameState, force = false){
     const population = gameState.population;
-    var parent1 = pop.memberByName(name1, gameState);
-    var parent2 = pop.memberByName(name2, gameState);
+    var parent1 = pop.memberByName(targetName, gameState);
+    var parent2 = pop.memberByName(inviterName, gameState);
     var mother = parent2
     var father = parent1
 	if (parent1.gender == 'female') {
@@ -580,8 +578,10 @@ function makeLove(name1, name2, gameState, force = false){
 	} 
     motherMessage = 'You share good feelings with '+fatherName+' ['+roll1+']'
     fatherMessage = 'You share good feelings with '+motherName+' ['+roll2+']'
-    pop.history(motherName, motherMessage, gameState)
-    pop.history(fatherName, fatherMessage, gameState)
+    inviterMessage = 'You share good feelings with '+targetName;
+    targetMessage = inviterName +' invite you to share good feelings';
+    pop.history(inviterName, inviterMessage, gameState)
+    pop.history(targetName, targetMessage, gameState)
     text.addMessage(gameState, motherName, motherMessage)
     text.addMessage(gameState, fatherName, fatherMessage)
     detection(mother, father, (roll1+roll2), gameState)

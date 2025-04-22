@@ -8,7 +8,7 @@ module.exports = {
         ,
     async execute(interaction, gameState) {
         var actorName = interaction.member.displayName
-        response = startWork(actorName, gameState)
+        response = chief.startWork(actorName, gameState)
 	},
 };
 
