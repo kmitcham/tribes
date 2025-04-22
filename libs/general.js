@@ -30,62 +30,60 @@ function give(gameState, sourceName, targetName, amount, item){
     }
     var targetPerson = {}
     var sourcePerson = {}
-
-    isRef = referees.includes(sourceName);
-    if (isRef){
-        console.log("ref cheat give "+amount+" "+item+" to "+targetName);
-    }
-    // check if person is in tribe
-    targetPerson = pop.memberByName(targetName,gameState);
-    sourcePerson = pop.memberByName(sourceName,gameState);
+    targetPerson = pop.memberByName(targetName, gameState);
     if (!targetPerson ){
         response = "Target "+targetName+" not found in tribe";
         text.addMessage(gameState, sourceName, response)
         return ;
     }
-    if (!sourcePerson && !isRef){
-        response = "You are not a member of tribe";
-        text.addMessage(gameState, sourceName, response)
-        return ;
-    }
-    if (isRef || (!sourcePerson[item] || sourcePerson[item] < amount ) ){
-        if (isRef){
-            text.addMessage(gameState, "tribe","Referee powers invoked!");
-        } else {
-            response = "You do not have "+amount+" "+item;
-            text.addMessage(gameState, sourcePerson.name, response)
-            return ;
-        }
-    }
-    if (sourcePerson.activity == 'hunt' && item == 'spearhead' && gameState.round== 'work'){
-        response = "You already hunted with a spearhead, and cannot trade spearheads during the work round";
-        text.addMessage(gameState, sourcePerson.name, response)
-        return ;
-    }
-    if (amount < 0){
-        if (isRef){
-            text.addMessage(gameState, "tribe", "Referee powers invoked!");
-        } else {
-            response = "Giving a negative amount is not valid.";
-            text.addMessage(gameState, sourcePerson.name, response)
-            return ;
-        }
-    }
-
-    if (isRef){
-        targetPerson[item] += amount;
-    } else {
+    sourcePerson = pop.memberByName(sourceName, gameState);
+    const isRef = referees.includes(sourceName);
+    const isLegal = legalGive(gameState, sourceName, item, amount);
+    if (isLegal){
         sourcePerson[item] -= amount;
         targetPerson[item] += amount;
+    } else if (isRef){
+        text.addMessage("Referee powers invoked");
+        targetPerson[item] += amount;
+    } else {
+        // not a valid operation
+        return;
     }
     gameState.saveRequired = true
     response = sourceName + " gives "+targetName+" "+amount+" "+item;
-    text.addMessage(gameState, "tribe", response)
+    text.addMessage(gameState, "tribe", response);
+    // ref might not be in tribe, but console error thrown by history is OK
     pop.history(sourceName, response, gameState);
     pop.history(targetName, response, gameState);
     console.log("give is complete.");
 }
 module.exports.give = give;
+
+function legalGive(gameState, sourceName, item, amount){
+    const sourcePerson = pop.memberByName(sourceName, gameState);
+    if (!sourcePerson){
+        response = "You are not a member of tribe";
+        text.addMessage(gameState, sourceName, response)
+        return false;
+    }
+    // ref can give even if not in tribe, 
+    if ( (!sourcePerson[item] || sourcePerson[item] < amount ) ){
+            response = "You do not have "+amount+" "+item;
+            text.addMessage(gameState, sourcePerson.name, response)
+            return false;
+    }
+    if ("activity" in sourcePerson && sourcePerson.activity == 'hunt' && item == 'spearhead' && gameState.round== 'work'){
+        response = "You already hunted with a spearhead, and cannot trade spearheads during the work round";
+        text.addMessage(gameState, sourcePerson.name, response)
+        return false;
+    }
+    if (amount < 0){
+        response = "Giving a negative amount is not valid.";
+        text.addMessage(gameState, sourcePerson.name, response)
+        return false;
+    }
+    return true;
+}
 
 function inventory( gameState, targetName, actorName ){
     if (!targetName ){

@@ -42,6 +42,7 @@ function kill(name, message, gameState){
 		return;
 	}
 	textLib.addMessage(gameState, "tribe", name+" killed by "+message);
+	populationLib.history(name, name+" killed by "+message, gameState );
 	return 
 }
 module.exports.kill = kill

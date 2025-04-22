@@ -166,5 +166,36 @@ test('should handle sickness (roll 5)', () => {
           personName === 'Charlie' ? 3 : 10));
   assert.strictEqual(gameState.needChanceRoll, false);
   assert.strictEqual(gameState.saveRequired, true);
+});
+
+test('should handle sickness (roll 5) with no food', () => {
+  gameState.population["Alice"]["food"]=0;
+  delete gameState.population["Bob"];
+  delete gameState.population["Dave"];
+  delete gameState.population["Charlie"];
+  const result =  chiefLib.doChance(5, gameState);
+  assert(result.includes('got sick'));
+  const personName = result.split(' ')[2];
+  assert.strictEqual(gameState.population[personName].isSick, 3);
+  assert(gameState.population['Alice'].food ==0 );
+  assert.strictEqual(gameState.needChanceRoll, false);
+  assert.strictEqual(gameState.saveRequired, true);
+  assert.strictEqual(gameState.population["Alice"].payTwoOrDie, true);
   console.log("last test in chief complete");
+});
+
+test('PayTwoOrDie should kill you', ()=>{
+  gameState.population["Alice"]["food"]=0;
+  gameState.population["Alice"]["grain"]=0;
+  gameState.population["Bob"]["food"]=0;
+  gameState.population["Bob"]["grain"]=2;
+  delete gameState.population["Dave"];
+  delete gameState.population["Charlie"];
+  gameState.population["Alice"].payTwoOrDie = true;
+  gameState.population["Bob"].payTwoOrDie = true;
+  gameState.population["Alice"].chief = true;
+  result = chiefLib.startWork("Alice", gameState);
+  var deadAlice = gameState.graveyard["Alice"];
+  assert.equal(deadAlice.deathMessage, "lack of extra sustenance while ill");
+  assert.equal(gameState.population["Bob"]["grain"],0);
 });

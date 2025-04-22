@@ -1,5 +1,5 @@
 const populationLib = require("./population.js")
-const t = require("./textprocess")
+const text = require("./textprocess")
 
 function banish(gameState, targetName, reason){
     const population = gameState.population    
@@ -16,7 +16,7 @@ function banish(gameState, targetName, reason){
         // removing the player from the banish list is a pain.
         targetKey =  Object.keys(population).find(key => population[key] === banishTarget);
         delete population[targetKey]
-        t.addMessage(gameState, "tribe", targetName+' is banished from the tribe')
+        text.addMessage(gameState, "tribe", targetName+' is banished from the tribe')
         for (childName in gameState.children){
             child = gameState.children[childName]
             console.log(childName+' is getting checked')
@@ -30,7 +30,7 @@ function banish(gameState, targetName, reason){
                 if (childIndex > -1) {
                     banishTarget.guarding.splice(childIndex, 1);
                 }
-                t.addMessage(gameState, "tribe", targetName+' stops guarding '+childName)
+                text.addMessage(gameState, "tribe", targetName+' stops guarding '+childName)
             }
         }
         // clean up inviteLists
@@ -51,7 +51,7 @@ function banish(gameState, targetName, reason){
         return
     } else {
         console.log("Failed to get the person; banish fails")
-        t.addMessage(gameState, "tribe", targetName+" was not found in the tribe")
+        text.addMessage(gameState, "tribe", targetName+" was not found in the tribe")
     }
 }
 module.exports.banish = banish
@@ -61,7 +61,7 @@ function banishAdmin(gameState, actorName, targetName, reason){
     const targetMember = populationLib.memberByName(targetName, gameState);
 
     if (!actingMember ) {
-        text.addMessage(gameState, actorName, 'Is '+actorName+' even in the tribe?');
+        text.addMessage(gameState, actorName, 'Are you even in a tribe?');
         return;
     }
     if (!actingMember.chief ) {

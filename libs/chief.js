@@ -4,6 +4,10 @@ const tribeUtil = require("./util.js")
 const referees = require("./referees.json")
 const text = require("./textprocess")
 const pop = require("./population")
+const reproLib = require("./reproduction.js");
+const locations = require('./locations.json');
+const utils = require("./util.js");
+const kill = require("./kill.js");
 
 
 function isChanceLegal(gameState, actorName, forceRoll){
@@ -180,20 +184,12 @@ function doChance(rollValue, gameState){
             person = population[name]
             person.isSick = 3
             message +=  person.name + " got sick – eat 2 extra food and miss next turn. "
-            // if person has < 2 food
-            //    if NOBODY in the tribe has any food
-            //      if person has grain
-            //         eat grain
-            //         return
-            //      else if nobody has grain
-            //         kill person
-            //         return
-            //    else // someone else has food or grain
-            //      emit warn message
             if (person.food < 2){
-                message += '( but they only had '+person.food+' so the ref might kill them if no help is given or grain is used)'
+                message += '(but they only had '+person.food+' so they need to have two food or grain at the start of work round or die)'
+                person.payTwoOrDie = true;
+            } else {
+                person.food -= 2
             }
-            person.food -= 2
             if (person.food < 0) { person.food = 0}
             if (person.guarding && person.guarding.length > 0){
                 message += " They can no longer guard "+person.guarding
@@ -225,3 +221,75 @@ function doChance(rollValue, gameState){
     return message;
 }
 module.exports.doChance = doChance;
+
+function startWork(actorName, gameState){
+    var player = pop.memberByName(actorName, gameState)
+    if ( gameState.ended ){
+        text.addMessage(gameState, actorName,  'The game is over.  Maybe you want to /join to start a new game?');
+        return
+    }
+    if ( !player.chief){
+        text.addMessage(gameState, actorName,  "startwork requires chief priviliges")
+        return
+    }
+    if (gameState.workRound == true){
+        text.addMessage(gameState, actorName,  'already in the workRound')
+        return 
+    }
+    if(gameState.reproductionRound == false){
+        text.addMessage(gameState, actorName, 'Can only go to work round from reproduction round')
+        return
+    }
+    //TODO: confirm no longer needed
+    //reproLib.restoreSaveLists(gameState);
+    gameState.archiveRequired = true;
+    recoverGameTracks(gameState)
+    // clear out old activities
+    for (personName in gameState.population){
+        person = pop.memberByName(personName, gameState)
+        delete person.activity;
+        if (person.payTwoOrDie == true){
+            var owed = 2;
+            person.food = (person.food - owed);
+            if (person.food < 0){
+                person.grain += person.food;
+                person.food = 0;
+            }
+            if (person.grain < 0){
+                kill.kill(person.name, "lack of extra sustenance while ill", gameState);
+            }
+            delete person.payTwoOrDie;
+        }
+    }
+    pop.decrementSickness(gameState.population, gameState);
+    gameState.workRound = true;
+    gameState.foodRound = false;
+    gameState.reproductionRound = false;
+    gameState.doneMating = false;
+    gameState.canJerky = false;
+    reproLib.clearReproduction(gameState);
+    text.addMessage(gameState, "tribe", (utils.gameStateMessage(gameState)));
+    text.addMessage(gameState, "tribe", '\n==>Starting the work round.  Guard (or ignore) your children, then craft, gather, hunt, assist or train.<==');
+    gameState.saveRequired = true;
+    var d = new Date();
+    var saveTime = d.toISOString();
+    saveTime = saveTime.replace(/\//g, "-");
+    console.log(saveTime+" start work round  season:"+gameState.seasonCounter);
+    return
+}
+module.exports.startWork = startWork;
+
+function recoverGameTracks(gameState){
+	if (utils.isColdSeason(gameState)){
+		for (locationName in locations){
+			const modifier = locations[locationName]['game_track_recover']
+			const oldTrack = gameState.gameTrack[locationName]
+			gameState.gameTrack[locationName]  -= modifier
+			if (gameState.gameTrack[locationName]< 1){
+				gameState.gameTrack[locationName] = 1
+			}
+			console.log(locationName+' game_track moves from '+oldTrack+' to '+gameState.gameTrack[locationName])
+		}
+	}
+	gameState.seasonCounter += 1
+}

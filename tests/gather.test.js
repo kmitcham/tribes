@@ -124,6 +124,36 @@ test('no skill roll', () =>{
     expect(gameState["population"][playername]['food']).toBe(4)
 });
 
+test('no profession roll', () =>{
+  var gameState = {
+        "seasonCounter": 1,
+        "gameTrack": {
+          "veldt": 1,
+          "forest": 1,
+          "marsh": 1,
+          "hills": 1
+        },
+        "name": "flounder-tribe",
+        "population": {
+          "hunter1": {
+            "gender": "female",
+            "spearhead": 0,
+            "name": "hunter1",
+            "food":0,
+            "grain":0,
+          }
+        },
+        "currentLocationName": "marsh",
+        "round": "work"
+  }
+  var playername = "hunter1"
+  var player = gameState["population"][playername]
+  output = lib.gather(playername, player, 10, gameState)
+  expect(output).toMatch('clams');
+  expect(gameState["population"][playername]['food']).toBe(4)
+});
+
+
 test('cold season mod', () =>{
     var gameState = {
           "seasonCounter": 2,

@@ -1,5 +1,63 @@
 const lib = require("../libs/hunt.js");
 
+test('no profession', () =>{
+  var gameState = {
+        "seasonCounter": 1,
+        "gameTrack": {
+          "veldt": 1,
+          "forest": 1,
+          "marsh": 1,
+          "hills": 1
+        },
+        "name": "flounder-tribe",
+        "population": {
+          "Hunter1": {
+            "gender": "female",
+            "spearhead": 0,
+            "name": "Hunter1",
+            "food":0,
+          }
+        },
+        "currentLocationName": "marsh",
+        "round": "work"
+  }
+  var playername = "Hunter1"
+  var player = gameState["population"][playername]
+  output = lib.hunt(playername, player, 10, gameState)
+  expect(output).toContain('[10]-skill');
+  expect(gameState["gameTrack"]["marsh"]).toBe(2)
+  expect(gameState["population"][playername]['food']).toBe(0)
+});
+test('non-hunting profession', () =>{
+  var gameState = {
+        "seasonCounter": 1,
+        "gameTrack": {
+          "veldt": 1,
+          "forest": 1,
+          "marsh": 1,
+          "hills": 1
+        },
+        "name": "flounder-tribe",
+        "population": {
+          "Hunter1": {
+            "gender": "female",
+            "spearhead": 0,
+            "name": "Hunter1",
+            "food":0,
+            "profession": "accountant"
+          }
+        },
+        "currentLocationName": "marsh",
+        "round": "work"
+  }
+  var playername = "Hunter1"
+  var player = gameState["population"][playername]
+  output = lib.hunt(playername, player, 10, gameState)
+  expect(output).toContain('[10]-skill');
+  expect(gameState["gameTrack"]["marsh"]).toBe(2)
+  expect(gameState["population"][playername]['food']).toBe(0)
+});
+
 test('injury case', () =>{
     var gameState = {
           "seasonCounter": 1,

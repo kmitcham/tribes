@@ -170,7 +170,7 @@ function handleReproductionList(actorName, arrayOfNames, listName, gameState){
         returnMessage += ("Setting your "+listName+" list to:"+list+"\n")
         if (save){
             if (gameState.reproductionRound){
-                returnMessage += "Changing your list during the reproduction means changes will not be saved, sorry.\n"
+                returnMessage += "Changing your list during the reproduction may cause secret informatio to leak.\n"
             } else {
                 returnMessage += ("Saving your "+listName+" list be used in future rounds\n")
             }
@@ -375,7 +375,6 @@ function globalMatingCheck(gameState){
     }
     var inviteCheck = canStillInvite(gameState);
     if (inviteCheck.length < 1 ){
-        text.addMessage(gameState, "tribe", "Mating is complete.");
         return "Mating is complete";
     }
     var allDone = true;

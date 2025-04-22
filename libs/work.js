@@ -113,7 +113,7 @@ function craft(gameState, sourceName, item, forceRoll){
         text.addMessage(gameState, sourceName, msg)
         return
     }
-    if (player.canCraft == false){
+    if (!("canCraft" in player) || player.canCraft == false){
         text.addMessage(gameState, sourceName, 'You do not know how to craft')
         return
     }

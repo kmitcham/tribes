@@ -203,6 +203,17 @@ describe('Work Module Tests', () => {
         'You do not know how to craft'
       );
     });
+    test('should not allow crafting when player knows nothing', () => {
+      delete mockPlayer.canCraft;
+      
+      craft(mockGameState, 'testPlayer', 'basket');
+      
+      expect(text.addMessage).toHaveBeenCalledWith(
+        mockGameState, 
+        'testPlayer', 
+        'You do not know how to craft'
+      );
+    });
     
     test('should not allow crafting when guarding too many children', () => {
       mockPlayer.canCraft = true;

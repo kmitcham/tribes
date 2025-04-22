@@ -1,6 +1,7 @@
-const text = require("./textprocess.js")
-const dice = require("./dice")
-const prof = require("./profession")
+const text = require("./textprocess.js");
+const dice = require("./dice");
+const prof = require("./profession");
+const help = require("./help.js");
 
 function memberByName(name, gameState){
     if (name == null){
@@ -173,7 +174,7 @@ function history (playerName, message, gameState){
         player.history = []
     }
     if (!player){
-        console.log('trying to record history with no player record:'+playerName)
+        console.log('trying to record history with no player record:'+playerName+": "+message);
         return;
     }
     player.history.push(gameState.seasonCounter/2+": "+message)
@@ -297,6 +298,8 @@ function vote(gameState,  actorName, candidateName){
 		candidate.chief = true
 		history(candidate.name, "became chief", gameState);
 		text.addMessage(gameState, "tribe", candidate.name+' is the new chief')
+        var chiefHelp = help.chiefHelp();
+        text.addMessage(gameState, candidate.name, chiefHelp);
 	}
 	gameState.saveRequired = true
 

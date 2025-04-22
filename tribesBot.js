@@ -74,7 +74,15 @@ client.on(Events.InteractionCreate, async interaction => {
 		allGames[channel.name] = gameState;
     } else {
 		const response = "Tribes commands need to be in a tribe channel";
-		interaction.replied({ content: response, flags: MessageFlags.Ephemeral })
+		try {
+			if (interaction && ! interaction.replied ){
+				interaction.reply({ content: response, flags: MessageFlags.Ephemeral });
+				return
+			} 
+		} catch (error){
+			console.log("Error handling non-tribe-channel command: "+error);	
+		}
+		channel.send("Tribes commands need to be in a tribe channel");
 		return;
 	}
 	nickName = interaction.member.displayName;
@@ -95,12 +103,7 @@ client.on(Events.InteractionCreate, async interaction => {
 	} catch (error) {
         console.log("there was an error in that command:");
 		console.error(error);
-		var message = "TribesBot had a problem with the last command.";
-		if (interaction && interaction.user){
-			sendRemainingMessageChunksToUser(interaction.user, [message], 0);
-		} else {
-			channel.send(message)
-		}
+		channel.send("TribesBot had a problem with the last command.")
 	}
 });
 
