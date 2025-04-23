@@ -9,6 +9,72 @@ const locations = require('./locations.json');
 const utils = require("./util.js");
 const kill = require("./kill.js");
 
+function close(actorName, gameState){
+    var player = pop.memberByName(actorName, gameState)
+    if (!player || !player.chief){
+        text.addMessage(gameState, actorName,'close requires chief priviliges' )
+        return
+    }
+    gameState.open = false
+    if (gameState.open){
+        text.addMessage(gameState, "tribe", "The tribe is open to all who /join");
+    } else {
+        text.addMessage(gameState, "tribe", "The tribe is closed; the chief must /induct new members");
+    }
+    gameState.saveRequired = true;
+    return
+}
+module.exports.close = close;
+
+function decree(gameState, actorName, number, lawText){
+    var player = pop.memberByName(actorName, gameState)
+    if ( !player.chief){
+        text.addMessage(gameState, actorName, 'decree requires chief priviliges' )
+        return
+    }
+    if ( gameState.ended ){
+        text.addMessage(gameState, actorName,  'The game is over.  Maybe you want to /join to start a new game?');
+        return
+    }
+    law =lawText
+    if (! gameState.laws){
+        gameState.laws = {};
+        console.log("Initializing laws");
+    }
+    if ( !number ){
+        number = Object.keys(gameState.laws).length
+        console.log("defauting law number "+number);
+    } 
+    gameState.laws[number] = law;
+    text.addMessage(gameState, "tribe","Your chief creates a new law: "+law);
+    gameState.saveRequired = true;
+    return
+}
+module.exports.decree = decree;
+
+function induct(gameState, sourceName, targetName, gender, profession){
+    var chief = pop.memberByName(sourceName, gameState)
+	
+    if (!chief ){
+        response = "You must be in the tribe to do that";
+        text.addMessage(gameState, "tribe", response);
+        return
+    }
+    if (!chief.chief){
+        response = "You must be chief to induct a member";
+        text.addMessage(gameState, "tribe", response);
+        return
+    }
+    if ( gameState.ended ){
+        text.addMessage(gameState, sourceName,  'The game is over.  Maybe you want to /join to start a new game?');
+        return
+    }
+
+	console.log("message b")
+
+    pop.addToPopulation(gameState, targetName, gender, profession, targetObject)    
+}
+module.exports.induct = induct;
 
 function isChanceLegal(gameState, actorName, forceRoll){
     isRef = referees.includes(actorName);

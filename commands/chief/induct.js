@@ -1,8 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const text = require("../../libs/textprocess")
-const prof = require("../../libs/profession")
-const pop = require("../../libs/population")
-const dice = require("../../libs/dice")
+const chief = require("../../libs/chief.js");
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -39,29 +36,6 @@ module.exports = {
         var gender = interaction.options.getString('gender')
         var profession = interaction.options.getString('profession')
         var sourceName = interaction.member.displayName;        
-        await induct(gameState, sourceName, targetName, gender, profession);
+        await chief.induct(gameState, sourceName, targetName, gender, profession);
 	},
 };
-
-function induct(gameState, sourceName, targetName, gender, profession){
-    var chief = pop.memberByName(sourceName, gameState)
-	
-    if (!chief ){
-        response = "You must be in the tribe to do that";
-        text.addMessage(gameState, "tribe", response);
-        return
-    }
-    if (!chief.chief){
-        response = "You must be chief to induct a member";
-        text.addMessage(gameState, "tribe", response);
-        return
-    }
-    if ( gameState.ended ){
-        text.addMessage(gameState, sourceName,  'The game is over.  Maybe you want to /join to start a new game?');
-        return
-    }
-
-	console.log("message b")
-
-    pop.addToPopulation(gameState, targetName, gender, profession, targetObject)    
-}

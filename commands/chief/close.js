@@ -1,6 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const pop = require("../../libs/population")
-const text = require("../../libs/textprocess")
+const chief = require("../../libs/chief.js");
 
 
 module.exports = {
@@ -11,23 +10,6 @@ module.exports = {
     async execute(interaction, gameState, bot) {
         var actorName = interaction.member.displayName
 
-        response = close(actorName, gameState)
+        response = chief.close(actorName, gameState)
 	},
 };
-
-function close(actorName, gameState){
-    var player = pop.memberByName(actorName, gameState)
-    if ( !player.chief){
-        text.addMessage(gameState, actorName,'close requires chief priviliges' )
-        return
-    }
-    gameState.open = false
-    if (gameState.open){
-        text.addMessage(gameState, "tribe", "The tribe is open")
-    } else {
-       text.addMessage(gameState, "tribe", "The tribe is closed")
-    }
-    gameState.saveRequired = true;
-
-    return
-}

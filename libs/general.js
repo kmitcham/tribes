@@ -173,6 +173,7 @@ function makeJerky(sourceName, amount, gameState, bot){
     player.grain += jerky
     message = sourceName+" converts "+(jerky * 3)+" food into "+jerky+" jerky";
     text.addMessage(gameState, "tribe", message);
+    gameState.saveRequired = true;
     return;
 }
 module.exports.makeJerky = makeJerky;
