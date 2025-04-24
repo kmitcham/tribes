@@ -24,7 +24,7 @@ test('no profession', () =>{
   var playername = "Hunter1"
   var player = gameState["population"][playername]
   output = lib.hunt(playername, player, 10, gameState)
-  expect(output).toContain('[10]-skill');
+  expect(output).toContain('10]-skill');
   expect(gameState["gameTrack"]["marsh"]).toBe(2)
   expect(gameState["population"][playername]['food']).toBe(0)
 });
@@ -53,7 +53,7 @@ test('non-hunting profession', () =>{
   var playername = "Hunter1"
   var player = gameState["population"][playername]
   output = lib.hunt(playername, player, 10, gameState)
-  expect(output).toContain('[10]-skill');
+  expect(output).toContain('10]-skill');
   expect(gameState["gameTrack"]["marsh"]).toBe(2)
   expect(gameState["population"][playername]['food']).toBe(0)
 });

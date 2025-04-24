@@ -6,7 +6,7 @@ const text = require('./textprocess')
 //module.exports.hunt = (playername, player, rollValue, gameState) =>{
 //    function gather(playername, player, rollValue,gameState){
 module.exports.gather = (playername, player, rollValue, gameState) => {
-    var message = playername+' gathers ['+rollValue+']';
+    var message = playername+' gathers [roll '+rollValue+']';
 	var netRoll = rollValue
 	modifier = 0
     if (gameState.seasonCounter%2 == 0){

@@ -12,7 +12,7 @@ module.exports.locationDecay = locationDecay
 
 module.exports.hunt = (playername, player, rollValue, gameState) =>{
 	mods = 0
-	message = playername+' goes hunting. ['+rollValue+']'
+	message = playername+' goes hunting. [roll '+rollValue+']'
 	// injury check
 	strMod = 0
 	if (player.strength && player.strength.toLowerCase() == 'strong'.valueOf()){
