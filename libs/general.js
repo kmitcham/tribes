@@ -39,11 +39,12 @@ function give(gameState, sourceName, targetName, amount, item){
     sourcePerson = pop.memberByName(sourceName, gameState);
     const isRef = referees.includes(sourceName);
     const isLegal = legalGive(gameState, sourceName, item, amount);
+    console.log("isRef:"+isRef+" isLegalgive:"+isLegal);
     if (isLegal){
         sourcePerson[item] -= amount;
         targetPerson[item] += amount;
     } else if (isRef){
-        text.addMessage("Referee powers invoked");
+        text.addMessage(gameState, "tribe", "Referee powers invoked");
         targetPerson[item] += amount;
     } else {
         // not a valid operation
@@ -232,31 +233,33 @@ function sacrifice(gameState, sourceName, item, amount, rollOf2dice){
         text.addMessage(gameState,sourceName, response);
         return 
     }
-
     if (  sourcePerson[item] >= amount){
+        // avg 
+        net = rollOf2dice - 2  + Math.trunc(Math.log2(amount)) ;
+        console.log(sourcePerson.name+' sacrifice roll was '+rollOf2dice+ '  plus bonus = '+net)
+        sourcePerson[item] -= Number(amount);
+        gameState.spoiled += Number(amount);
         ritualResults = [
             'The ritual seems clumsy.'    				// 0  Impossible result?
             ,'You feel a vague sense of unease.'    				// 1
-            ,'Nothing seems to happen.'    				// 2
-            , sourcePerson.name+"'s eyes gleam wildly."					// 3
-            ,'A hawk flies directly overhead.'				// 4
-            ,'There is the distant sound of thunder.'		// 5  
-            ,'The campfire flickers brightly.'				// 6
-            ,'The sun goes behind a cloud.'					// 7   
+            ,'Nothing seems to happen.'    				            // 2
+            , sourcePerson.name+"'s eyes gleam wildly."				// 3
+            ,'A hawk flies directly overhead.'				        // 4
+            ,'There is the distant sound of thunder.'		        // 5  
+            ,'The campfire flickers brightly.'				        // 6
+            ,'The sun goes behind a cloud.'					        // 7   
             ,'The night goes very still and quiet when the ritual is complete.'
-            ,'An owl hoots three times.'					// 9
-            ,'In the distance, a wolf howls.'				// 10   highest base roll
-            ,'You remember the way your mother held you as a child.'  // 11
-            ,'You feel protected.'   						// 12
-            ,'You remember learning from the ones who came before you.'
-            ,'You feel warm and satisfied.' 				// 14
-            ,'You feel content.'		   					// 15
+            ,'An owl hoots three times.'					        // 9
+            ,'In the distance, a wolf howls.'				        // 10   highest base roll
+            ,'You remember the way your mother held you as a child.' // 11
+            ,'You feel protected.'   						        // 12
+            ,'You remember learning from the ones who came before you.' //13
+            ,'You feel warm and satisfied.' 				        // 14
+            ,'You feel content.'		   					        // 15
+            ,'A songbird lands on the shoulder of '+sourcePerson.name+'.' // 16
+            ,'A flower suddenly blooms in the middle of the camp.'	// 17
         ]
-        net = rollOf2dice - 2  + Math.trunc(Math.log2(amount)) ;
-        console.log(sourcePerson.name+' sacrifice roll was '+rollOf2dice+ '  plus bonus = '+net)
-        rndMsg = ritualResults[net] || 'The ritual is clearly wrong.' 
-        sourcePerson[item] -= Number(amount);
-        gameState.spoiled += Number(amount);
+        rndMsg = ritualResults[net] || ritualResults[ritualResults.length-1];
     } else {
         response = 'You do not have that many '+item+': '+ sourcePerson[item]
         text.addMessage(gameState, sourceName, response);
