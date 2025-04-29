@@ -19,7 +19,7 @@ module.exports = {
     async execute(interaction, gameState) {
         var sourceName = interaction.member.displayName;
         var forceRoll = interaction.options.getInteger('force');
-        await hunt(gameState, sourceName, forceRoll)
+        hunt(gameState, sourceName, forceRoll)
 	},
 };
 

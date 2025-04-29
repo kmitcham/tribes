@@ -89,9 +89,9 @@ client.on(Events.InteractionCreate, async interaction => {
 	// if no errors, and we are sure we have a gameState
 	try {
 		interaction.nickName = nickName?nickName:interaction.user.displayName;
-		await command.execute(interaction, gameState, client);
+		command.execute(interaction, gameState, client);
 		// send responses to the messages
-		await sendMessages(client, gameState, interaction);
+		sendMessages(client, gameState, interaction);
 		if (gameState.saveRequired){
 			savelib.saveTribe(gameState);
 			gameState.saveRequired = false;
@@ -107,7 +107,7 @@ client.on(Events.InteractionCreate, async interaction => {
 	}
 });
 
-async function sendMessages(bot, gameState, interaction){
+function sendMessages(bot, gameState, interaction){
 	const messagesDict = gameState['messages'];
 	if (! messagesDict){
 		console.log("sendMessages on empty");
@@ -122,12 +122,12 @@ async function sendMessages(bot, gameState, interaction){
 		console.log("in send messages tribe >>"+messagesDict["tribe"]+"<<");
 		var message = messagesDict["tribe"];
 		chunksSent = 0;
-		const channel = await bot.channels.cache.find(channel => channel.name === gameState.name);
+		const channel = bot.channels.cache.find(channel => channel.name === gameState.name);
 		var chunks = []
 		if (message){
 			chunks = message.match(/[\S\s]{1,1900}/g);
 			if (needsReply ){
-				await interaction.reply({ content: chunks[0] });
+				interaction.reply({ content: chunks[0] });
 				chunksSent = 1;
 			} else {
 				channel.send({content: chunks[chunksSent++] });
@@ -166,10 +166,10 @@ async function sendMessages(bot, gameState, interaction){
 						response += " \n(message truncated.  Check DMs for more info)"
 					}
 					console.log("reply to "+actorName+" : "+response);
-					await interaction.reply({ content: response, flags: MessageFlags.Ephemeral })
+					interaction.reply({ content: response, flags: MessageFlags.Ephemeral })
 					// double tap user so they have a DM of content as well.  TODO: confirm this is correct?
 					if (chunks[0]){
-						await user.send(chunks[0]);
+						user.send(chunks[0]);
 					}
 					chunksSent++;
 					if (chunksSent < chunks.length){

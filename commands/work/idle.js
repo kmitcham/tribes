@@ -9,7 +9,7 @@ module.exports = {
 		.setDescription('do nothing this season')
         ,
     async execute(interaction, gameState) {
-        await idle(interaction, gameState)
+        idle(interaction, gameState)
 	},
 };
 

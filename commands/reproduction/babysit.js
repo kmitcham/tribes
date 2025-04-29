@@ -20,7 +20,7 @@ module.exports = {
             var babysitterName = interaction.options.getString('babysitter');
             var childName = interaction.options.getString('child');
             var actorName = interaction.member.displayName;
-            await babysit(gameState, actorName, babysitterName, childName)
+            babysit(gameState, actorName, babysitterName, childName)
 	},
 };
 

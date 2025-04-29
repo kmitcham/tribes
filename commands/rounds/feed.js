@@ -18,7 +18,7 @@ module.exports = {
             .setRequired(false))
         ,
     async execute(interaction, gameState) {
-        await feed(interaction, gameState)
+        feed(interaction, gameState)
 	},
 };
 

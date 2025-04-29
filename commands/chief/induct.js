@@ -36,6 +36,6 @@ module.exports = {
         var gender = interaction.options.getString('gender')
         var profession = interaction.options.getString('profession')
         var sourceName = interaction.member.displayName;        
-        await chief.induct(gameState, sourceName, targetName, gender, profession);
+        chief.induct(gameState, sourceName, targetName, gender, profession);
 	},
 };

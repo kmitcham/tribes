@@ -18,7 +18,7 @@ module.exports = {
     async execute(interaction, gameState) {
         var sourceName = interaction.member.displayName;
         var forceRoll = interaction.options.getInteger('force');
-        await worklib.train(gameState, sourceName, forceRoll);
+        worklib.train(gameState, sourceName, forceRoll);
 	},
 };
 
