@@ -369,6 +369,7 @@ function sortCommitFirst(a,b){
 
 function globalMatingCheck(gameState){
     console.log("In the global mating check");
+    var infinite_loop_count = 0;
     if (! gameState.reproductionRound){
         return "It is not the mating round";
     }
@@ -380,6 +381,12 @@ function globalMatingCheck(gameState){
     var actionableInvites = true;
     var population = gameState.population;
     while (actionableInvites){
+        infinite_loop_count += 1;
+        if (infinite_loop_count > 10){
+            console.log("----------------------------infinite loop count error: "+infinite_loop_count);
+            console.log("gameState:\n"+gameState);
+            return "Infinite loop error.  oops.";
+        }
         actionableInvites = false;
         var listMemberNamesForSex = Object.keys(population)
         listMemberNamesForSex.sort(function(){return Math.random()-.5});
@@ -412,6 +419,11 @@ function globalMatingCheck(gameState){
                     invitingMember.cannotInvite = true
                     //text.addMessage(gameState, "tribe", inviterDisplayName+" is done mating this round.");
                     doneMating.push(personName);
+                    continue
+                }
+                if (targetName.trim() == "!save"){
+                    // this is legacy code since it used to be a valid option
+                    console.log(" skipping save for "+inviterDisplayName);
                     continue
                 }
                 var attemptFailed = false
@@ -457,7 +469,11 @@ function globalMatingCheck(gameState){
                     console.log("\t no response found with "+targetDisplayName+" so allDone is false")
                 }
                 if (attemptFailed){
-                    invitingMember.inviteIndex = invitingMember.inviteIndex||0 + 1;
+                    if ("inviteIndex" in invitingMember){
+                        invitingMember.inviteIndex = invitingMember.inviteIndex + 1;
+                    } else {
+                        invitingMember.inviteIndex = 1;
+                    }
                     // can't lose your invite power just because of rejection
                     if (invitingMember.inviteList.length > invitingMember.inviteIndex) {
                         actionableInvites = true
