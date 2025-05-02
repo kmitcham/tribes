@@ -111,11 +111,11 @@ function inventoryMessage(person){
 	if (!person){
 		return 'No person '+person
 	}
-    message = person.name 
+    message = '***'+person.name+'***'
     if (person.nickname ){
 		message += " ("+person.nickname+")"
 	} 
-    message += " "+person.gender.substring(0,1)+'\n\t\t '
+    message += " "+person.gender+'\n\t\t '
 	message += person.food+'  food \t'
 	message += person.grain+'  grain \t'
 	message += person.basket+'  baskets \t'
@@ -132,15 +132,15 @@ function inventoryMessage(person){
 		message += '\n\t\t is nursing '+person.nursing
 	}
 	if (person.isInjured && person.isInjured > 0 ){
-		message += '\n\t\t is injured and unable to work'
+		message += '\n\t\t is ***injured*** and unable to work'
 	}	
 	if (person.isSick && person.isSick > 0 ){
-		message += '\n\t\t is sick and unable to work'
+		message += '\n\t\t is ***sick*** and unable to work'
 	}
 	if (person.guarding){
 		message += '\n\t\t is guarding '+person.guarding
 	}
-	if (person.strength){
+	if (person.strength && person.strength != 'average'){
 		message += '\n\t\t is '+person.strength
 	}
 	if (person.profession != 'crafter' && person.canCraft){

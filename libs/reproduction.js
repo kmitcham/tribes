@@ -523,9 +523,7 @@ function globalMatingCheck(gameState){
         gameState.doneMating = true;
         gameState.saveRequired = true;
     } else {
-        if (gameState.reproductionRound == true){
-            text.addMessage(gameState, "tribe", "Reproduction round activities are not complete.");
-        }
+        text.addMessage(gameState, "tribe", "Reproduction round activities are not complete.");
     }
     return "this many people are done mating: "+doneMating.length
 }
@@ -812,6 +810,32 @@ function pass(gameState, actorName){
     }
 }
 module.exports.pass = pass;
+
+function startReproductionChecks(gameState, actorName ){
+    var player = pop.memberByName(actorName, gameState)
+    if ( !player.chief){
+        text.addMessage(gameState, actorName,  "startreproduction requires chief priviliges")
+        return
+    }
+    if ( gameState.ended ){
+        text.addMessage(gameState, actorName,  'The game is over.  Maybe you want to /join to start a new game?');
+        return
+    }
+    if (gameState.reproductionRound == true){
+        text.addMessage(gameState, actorName,  'already in the reproductionRound')
+        return 
+    }
+    if(gameState.foodRound == false){
+        text.addMessage(gameState, actorName, 'Can only go to reproduction round from food round')
+        return
+    }
+    startReproduction(gameState, bot);
+    var d = new Date();
+    var saveTime = d.toISOString();
+    saveTime = saveTime.replace(/\//g, "-");
+    console.log(saveTime+" start reproduction round  season:"+gameState.seasonCounter);
+}
+module.exports.startReproductionChecks = startReproductionChecks;
 
 function startReproduction(gameState){
 	// actually consume food here
