@@ -214,6 +214,7 @@ function consumeFoodChildren(gameState){
 					response += sitter.name +" stops watching the new adult.\n"
 				}
 			}
+			delete child.guardians
 		}
 	}
 	// clean up the dead
