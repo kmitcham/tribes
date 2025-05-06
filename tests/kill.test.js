@@ -1,4 +1,5 @@
 const { kill } = require('../libs/kill'); // Replace with your actual module name
+console.log = jest.fn();
 
 
 // Helper function to clear nursing/pregnant references

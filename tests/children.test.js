@@ -1,4 +1,5 @@
 var childlib = require("../libs/children.js");
+console.log = jest.fn();
 
 test("Display new adults also", () =>{
     var gameState = {"population":{

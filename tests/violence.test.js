@@ -1,4 +1,5 @@
 var violencelib = require("../libs/violence.js");
+console.log = jest.fn();
 
 test("Happy Path Demand", () =>{
     var gameState = {

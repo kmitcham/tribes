@@ -1,6 +1,7 @@
 const m = require("../libs/migrateLib")
 const killlib = require("../libs/kill")
 const text = require("../libs/textprocess")
+console.log = jest.fn();
 
   let gameState;
 

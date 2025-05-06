@@ -1,4 +1,5 @@
 const lib = require("../libs/hunt.js");
+console.log = jest.fn();
 
 test('no profession', () =>{
   var gameState = {

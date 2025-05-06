@@ -1,5 +1,6 @@
 var reproLib = require("../libs/reproduction.js");
 const allNames = require('../libs/names.json');
+console.log = jest.fn();
 
 test("excludes people", () =>{
     var gameState = {

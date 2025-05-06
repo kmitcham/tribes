@@ -1,5 +1,8 @@
 const pop = require('../libs/population')
 
+// Mock console.log to capture logs
+console.log = jest.fn();
+
 test("Name with @", ()=>{
     var gameState = {
         "population": {

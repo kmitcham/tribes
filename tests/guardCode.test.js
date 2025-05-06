@@ -1,4 +1,5 @@
 const lib = require("../libs/guardCode.js");
+console.log = jest.fn();
 
 test('simple watch cases', () =>{
     var population = {

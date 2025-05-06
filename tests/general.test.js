@@ -2,6 +2,7 @@ const general = require("../libs/general.js");
 const pop = require("../libs/population.js")
 const dice = require("../libs/dice.js");
 const referees = require("../libs/referees.json")
+console.log = jest.fn();
 
 
 describe('give function', () => {

@@ -1,4 +1,5 @@
 const lib = require("../libs/gather.js");
+console.log = jest.fn();
 
 test('low roll', () =>{
     var gameState = {

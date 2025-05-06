@@ -1,4 +1,5 @@
 var banishlib = require("../libs/banish.js");
+console.log = jest.fn();
 
 test("banish person", () =>{
     var gameState = {

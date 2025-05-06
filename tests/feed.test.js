@@ -1,5 +1,6 @@
 // feed.test.js
 const { feed, checkFood, consumeFoodChildren, birth } = require("../libs/feed.js");
+console.log = jest.fn();
 
 
 describe('feed function', () => {

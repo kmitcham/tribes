@@ -4,6 +4,7 @@ const text = require('../libs/textprocess.js');
 const dice = require('../libs/dice.js');
 const gatherlib = require('../libs/gather.js');
 const locations = require('../libs/locations.json');
+console.log = jest.fn();
 
 // Mock dependencies
 jest.mock('../libs/population.js');

@@ -1,5 +1,6 @@
 var dice = require("../libs/dice");
 var text = require("../libs/textprocess");
+console.log = jest.fn();
 
 test("Numbers stay in range", () =>{
     for (var i=0; i < 100; i++){

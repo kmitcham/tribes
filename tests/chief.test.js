@@ -1,6 +1,7 @@
 // Import necessary dependencies
 const assert = require('assert');
 const chiefLib = require('../libs/chief.js');
+console.log = jest.fn();
 
 let gameState;
 

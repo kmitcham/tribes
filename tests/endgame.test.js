@@ -1,4 +1,5 @@
 var endLib = require("../libs/endgame.js");
+console.log = jest.fn();
 
 test("Count dead adults", () =>{
     var gameState = {
