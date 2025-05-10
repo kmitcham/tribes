@@ -67,7 +67,6 @@ function legalGive(gameState, sourceName, item, amount){
         text.addMessage(gameState, sourceName, response)
         return false;
     }
-    // ref can give even if not in tribe, 
     if ( (!sourcePerson[item] || sourcePerson[item] < amount ) ){
             response = "You do not have "+amount+" "+item;
             text.addMessage(gameState, sourcePerson.name, response)

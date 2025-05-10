@@ -109,20 +109,25 @@ client.on(Events.InteractionCreate, async interaction => {
 
 function sendMessages(bot, gameState, interaction){
 	const messagesDict = gameState['messages'];
+	const channel = bot.channels.cache.find(channel => channel.name === gameState.name);
 	if (! messagesDict){
 		console.log("sendMessages on empty");
 		return;
 	}
-	const actorName = interaction.nickName;
+	var actorName = "Unknown"
+	var needsReply = false;
+	if (interaction){
+		actorName = interaction.nickName;
+		needsReply = interaction.isRepliable();
+		console.log("Had an interaction needs reply = "+needsReply )
+	}
 	var chunks = []
 	MAX_LENGTH = 1900; //docs say 2000 is max; better safe than sorry
 	// regext [\S\s] is any chacter that is either a space or not a space; eg, any character
-	var needsReply = interaction.isRepliable();
 	if ("tribe" in messagesDict ){
 		console.log("in send messages tribe >>"+messagesDict["tribe"]+"<<");
 		var message = messagesDict["tribe"];
 		chunksSent = 0;
-		const channel = bot.channels.cache.find(channel => channel.name === gameState.name);
 		var chunks = []
 		if (message){
 			chunks = message.match(/[\S\s]{1,1900}/g);
@@ -141,6 +146,7 @@ function sendMessages(bot, gameState, interaction){
 		delete messagesDict["tribe"];
 	}
 	if (actorName in messagesDict && needsReply){
+		console.log("Actor "+actorName+" in the dictionary and needsReply");
 		// only reply here if reply is still needed; otherwise handle with other messages below
 		const message = messagesDict[actorName];
 		if (!message){
@@ -181,9 +187,10 @@ function sendMessages(bot, gameState, interaction){
 				}
 			}
 		}
+	} else {
+		console.log(actorName+" was not in the messagesDictionary");
 	}
     for (const [address, message] of Object.entries(messagesDict)){
-		channel = interaction.channel;
 		member = pop.memberByName(address, gameState);
 		if (!message){
 			console.log('empty message for '+address);
@@ -215,7 +222,10 @@ function sendMessages(bot, gameState, interaction){
 				console.log("Could not get an ID for "+address);
 				continue;
 			}
-			const user = bot.users.cache.get(userId);
+			var user = bot.users.cache.get(userId);
+			if (!user){
+				user = getUser(userId);
+			}
 			if (! user){
 				console.log("not finding user for "+address+" userId="+userId)
 				console.log("Dropping "+chunks.length+" message chunks, including:"+chunks[0])
@@ -230,9 +240,21 @@ function sendMessages(bot, gameState, interaction){
         delete messagesDict[address]
     }
 	if (needsReply){
-		console.log(" no reply made to "+interaction.commandName);
+		console.log(" no reply made that command");
 	}
 	return 0;
+}
+
+async function getUser(userId) {
+	console.log("In emergency get user for "+userId);
+    try {
+        const user = await client.users.fetch(userId);
+        console.log(`Found user: ${user.tag}`);
+        return user;
+    } catch (error) {
+        console.error(`Failed to fetch user with ID ${userId}:`, error);
+        return null;
+    }
 }
 
 function sendRemainingMessageChunksToUser(user, messageArray, chunksSent){
@@ -243,7 +265,13 @@ function sendRemainingMessageChunksToUser(user, messageArray, chunksSent){
 	while (chunksSent < messageArray.length){
 		console.log(messageArray.length+ " chunks bound for "+user.displayName);
 		if (messageArray[chunksSent]){
-			user.send({content: messageArray[chunksSent++] });
+			try {
+				user.send({content: messageArray[chunksSent++] });
+			} catch ( error){
+				console.log("Error sending "+messageArray[chunksSent]);
+				console.log("To user:"+user);
+				console.log(error);
+			}
 		} else {
 			console.log("empty chunk?  chunkSent:"+chunksSent);
 			chunksSent++; //increment to avoid infinite loops

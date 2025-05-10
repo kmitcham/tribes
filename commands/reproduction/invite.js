@@ -17,7 +17,7 @@ module.exports = {
             var displayName = interaction.member.displayName;
             var rawList = interaction.options.getString('invitelist');
             var cleanArray = pop.convertStringToArray(rawList);
-            if (false){
+            if (true){
                 var processedList = []
                 for (value of cleanArray){
                     processedList.push(pop.nameFromAtNumber(value, bot));

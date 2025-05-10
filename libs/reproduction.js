@@ -372,6 +372,7 @@ function globalMatingCheck(gameState){
     }
     var inviteCheck = canStillInvite(gameState);
     if (inviteCheck.length < 1 ){
+        text.addMessage(gameState, "tribe", "---> Reproductive activites are complete for the season <---")
         return "Mating is complete";
     }
     var allDone = true;
@@ -830,7 +831,7 @@ function startReproductionChecks(gameState, actorName ){
         text.addMessage(gameState, actorName, 'Can only go to reproduction round from food round')
         return
     }
-    startReproduction(gameState, bot);
+    startReproduction(gameState);
     var d = new Date();
     var saveTime = d.toISOString();
     saveTime = saveTime.replace(/\//g, "-");
