@@ -3,6 +3,48 @@ const dice = require("./dice");
 const prof = require("./profession");
 const help = require("./help.js");
 
+
+function convertStringToArray(listString){
+    if (listString instanceof Array){
+        return listString;
+    }
+    if (!listString || !(typeof listString === "string")){
+        console.log("listString neither array nor string: "+listString);
+        return [];
+    }
+    var asArray = [];
+    if (listString.includes(',')){
+        asArray = listString.split(',')
+    } else {
+        asArray = listString.split(' ')
+    }
+    var trimmedArray = []
+    for (var element of asArray){
+        trimmedArray.push( element.trim());
+    }
+    return trimmedArray;
+}
+module.exports.convertStringToArray = convertStringToArray
+
+function nameFromAtNumber(atNumber, bot){
+    if (atNumber && atNumber.length > 0){
+        if (bot && (atNumber.startsWith('<')  || atNumber.startsWith('@'))){
+            var justNumber = atNumber.replace(/[^0-9]/g, '');
+            var user = bot.users.cache.get(justNumber);
+            if (user){
+                atNumber = user.displayName;
+            } else {
+                console.log("No luck getting user for "+atNumber);
+            }
+        }
+        atNumber = atNumber.replace(/[^a-zA-Z0-9_!]/g, '');
+        return atNumber;
+    }
+    console.log("Bad call to nameFromAtNumber:"+atNumber);
+    return "";
+}
+module.exports.nameFromAtNumber = nameFromAtNumber
+
 function memberByName(name, gameState){
     if (name == null){
         console.log('attempt to find member for null name ')

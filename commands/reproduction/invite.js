@@ -16,10 +16,18 @@ module.exports = {
         try {
             var displayName = interaction.member.displayName;
             var rawList = interaction.options.getString('invitelist');
-            response = reproLib.invite(gameState, displayName, rawList);
-            console.log('invite response was '+response)
+            var cleanArray = pop.convertStringToArray(rawList);
+            if (false){
+                var processedList = []
+                for (value of cleanArray){
+                    processedList.push(pop.nameFromAtNumber(value, bot));
+                }
+                response = reproLib.invite(gameState, displayName, processedList);
+            } else {
+                response = reproLib.invite(gameState, displayName, rawList);
+            }
+            console.log('invite response was '+response);
         } catch (error) {
-                // And of course, make sure you catch and log any errors!
                 console.error('invite error '+error);
         }
     },

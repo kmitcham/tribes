@@ -198,10 +198,7 @@ function invite(gameState, rawActorName, rawList ){
             return ;
         }
     }
-    let inviteNamesAsArray = rawList.split(" ");
-    if (rawList.includes(",")){
-        inviteNamesAsArray = rawList.split(",");
-    }
+    var inviteNamesAsArray = pop.convertStringToArray(rawList);
     // TODO: make sure to split out items starting with !    
     console.log(player.name+" raw invitelist:"+rawList+ " as array:"+inviteNamesAsArray);
 
@@ -401,7 +398,7 @@ function globalMatingCheck(gameState){
             index = listMemberNamesForSex.indexOf(personName)
             if (hasReasontoNotInvite(gameState, invitingMember)){
                 continue;
-            } else if (invitingMember.inviteList && invitingMember.inviteList.length > 0) {
+            } else if (invitingMember.inviteList && invitingMember.inviteList.length > 0 && !invitingMember.cannotInvite) {
              // the person is eligible to mate, and has an invitelist
                 index = 0;
                 if ("inviteIndex" in invitingMember){
@@ -800,6 +797,10 @@ function pass(gameState, actorName){
         return;
     }
     if (gameState.reproductionRound){
+        if (person.cannotInvite){
+            text.addMessage(gameState, person.name, "You do not have a invite left to pass on.");
+            return;
+        }
         person.cannotInvite = true;
         result = globalMatingCheck(gameState);
         text.addMessage(gameState, "tribe", result)

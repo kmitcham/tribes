@@ -197,3 +197,167 @@ test("list names by gender", ()=>{
   expect(expectFemale.includes("female2"));
   expect(2).toEqual(actualMale.length)
 })
+
+test("string list to array", ()=>{
+  var input = "a b c";
+  var expected = ['a','b','c'];
+  var actual = pop.convertStringToArray(input);
+  expect(actual).toEqual(expected);
+
+  input = "a,b,c";
+  expected = ['a','b','c'];
+  actual = pop.convertStringToArray(input);
+  expect(actual).toEqual(expected);
+
+  input = "a";
+  expected = ['a'];
+  actual = pop.convertStringToArray(input);
+  expect(actual).toEqual(expected);
+  
+  input = "";
+  expected = [];
+  actual = pop.convertStringToArray(input);
+  expect(actual).toEqual(expected);
+
+  input = "a b, c";
+  expected = ['a b', 'c'];
+  actual = pop.convertStringToArray(input);
+  expect(actual).toEqual(expected);
+
+  input = [];
+  expected = [];
+  actual = pop.convertStringToArray(input);
+  expect(actual).toEqual(expected);
+  
+  input = null;
+  expected = [];
+  actual = pop.convertStringToArray(input);
+  expect(actual).toEqual(expected);
+});
+
+// Mock console.log to capture logs
+console.log = jest.fn();
+
+describe('nameFromAtNumber function (revised)', () => {
+    let bot;
+    let nameFromAtNumber = pop.nameFromAtNumber
+    beforeEach(() => {
+        // Reset mocks before each test
+        jest.clearAllMocks();
+
+        // Mock bot object with users.cache.get
+        bot = {
+            users: {
+                cache: {
+                    get: jest.fn()
+                }
+            }
+        };
+    });
+
+    test('should return cleaned displayName when atNumber starts with @ and user is found', () => {
+        const atNumber = '@12345';
+        bot.users.cache.get.mockReturnValueOnce({ displayName: 'Alice!_123' });
+
+        const result = nameFromAtNumber(atNumber, bot);
+
+        expect(bot.users.cache.get).toHaveBeenCalledWith('12345');
+        expect(result).toBe('Alice!_123');
+        expect(console.log).not.toHaveBeenCalled();
+    });
+
+    test('should return cleaned displayName when atNumber starts with <@ and user is found', () => {
+        const atNumber = '<@12345>';
+        bot.users.cache.get.mockReturnValueOnce({ displayName: 'Bob!_456' });
+
+        const result = nameFromAtNumber(atNumber, bot);
+
+        expect(bot.users.cache.get).toHaveBeenCalledWith('12345');
+        expect(result).toBe('Bob!_456');
+        expect(console.log).not.toHaveBeenCalled();
+    });
+
+    test('should return cleaned atNumber when user not found in cache', () => {
+        const atNumber = '@12345';
+        bot.users.cache.get.mockReturnValueOnce(null);
+
+        const result = nameFromAtNumber(atNumber, bot);
+
+        expect(bot.users.cache.get).toHaveBeenCalledWith('12345');
+        expect(result).toBe('12345');
+        expect(console.log).toHaveBeenCalledWith('No luck getting user for @12345');
+    });
+
+    test('should clean atNumber by removing non-word characters except !', () => {
+        const atNumber = '@12345#$%';
+        bot.users.cache.get.mockReturnValueOnce(null);
+
+        const result = nameFromAtNumber(atNumber, bot);
+
+        expect(result).toBe('12345');
+        expect(console.log).toHaveBeenCalledWith('No luck getting user for @12345#$%');
+    });
+
+    test('should preserve ! in displayName when user is found', () => {
+        const atNumber = '@12345';
+        bot.users.cache.get.mockReturnValueOnce({ displayName: 'Hello!World@#' });
+
+        const result = nameFromAtNumber(atNumber, bot);
+
+        expect(result).toBe('Hello!World');
+        expect(console.log).not.toHaveBeenCalled();
+    });
+
+    test('should clean atNumber when bot is not provided', () => {
+        const atNumber = '@12345#$%';
+        const result = nameFromAtNumber(atNumber, null);
+
+        expect(result).toBe('12345');
+        expect(console.log).not.toHaveBeenCalled();
+    });
+
+    test('should clean atNumber when it does not start with @ or <', () => {
+        const atNumber = 'User#$%!Name';
+        const result = nameFromAtNumber(atNumber, bot);
+
+        expect(result).toBe('User!Name');
+        expect(bot.users.cache.get).not.toHaveBeenCalled();
+        expect(console.log).not.toHaveBeenCalled();
+    });
+
+    test('should log "Bad call" and return empty string when atNumber is null', () => {
+        const atNumber = null;
+        const result = nameFromAtNumber(atNumber, bot);
+
+        expect(result).toBe('');
+        expect(console.log).toHaveBeenCalledWith('Bad call to nameFromAtNumber:' + atNumber);
+        expect(bot.users.cache.get).not.toHaveBeenCalled();
+    });
+
+    test('should log "Bad call" and return empty string when atNumber is undefined', () => {
+        const atNumber = undefined;
+        const result = nameFromAtNumber(atNumber, bot);
+
+        expect(result).toBe('');
+        expect(console.log).toHaveBeenCalledWith('Bad call to nameFromAtNumber:' + atNumber);
+        expect(bot.users.cache.get).not.toHaveBeenCalled();
+    });
+
+    test('should log "Bad call" and return empty string when atNumber is empty', () => {
+        const atNumber = '';
+        const result = nameFromAtNumber(atNumber, bot);
+
+        expect(result).toBe('');
+        expect(console.log).toHaveBeenCalledWith('Bad call to nameFromAtNumber:');
+        expect(bot.users.cache.get).not.toHaveBeenCalled();
+    });
+
+    test('should handle atNumber with only special characters after cleaning', () => {
+        const atNumber = '@#$%^&*';
+        const result = nameFromAtNumber(atNumber, bot);
+
+        expect(result).toBe('');
+        expect(bot.users.cache.get).toHaveBeenCalledWith('');
+        expect(console.log).toHaveBeenCalledWith('No luck getting user for @#$%^&*');
+    });
+});
