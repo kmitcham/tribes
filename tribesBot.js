@@ -107,7 +107,7 @@ client.on(Events.InteractionCreate, async interaction => {
 	}
 });
 
-function sendMessages(bot, gameState, interaction){
+async function sendMessages(bot, gameState, interaction){
 	const messagesDict = gameState['messages'];
 	const channel = bot.channels.cache.find(channel => channel.name === gameState.name);
 	if (! messagesDict){
@@ -222,9 +222,14 @@ function sendMessages(bot, gameState, interaction){
 				console.log("Could not get an ID for "+address);
 				continue;
 			}
-			var user = bot.users.cache.get(userId);
+			var user = await bot.users.cache.get(userId);
 			if (!user){
-				user = getUser(userId);
+				try {
+					user = await getUser(userId);
+					console.log("Got user "+user+" "+user.displayName);
+				} catch( error){
+					console.log("error with emergency get user:"+error);
+				}
 			}
 			if (! user){
 				console.log("not finding user for "+address+" userId="+userId)
@@ -248,6 +253,7 @@ function sendMessages(bot, gameState, interaction){
 async function getUser(userId) {
 	console.log("In emergency get user for "+userId);
     try {
+		console.log("UserId:"+userId);
         const user = await client.users.fetch(userId);
         console.log(`Found user: ${user.tag}`);
         return user;
@@ -268,7 +274,7 @@ function sendRemainingMessageChunksToUser(user, messageArray, chunksSent){
 			try {
 				user.send({content: messageArray[chunksSent++] });
 			} catch ( error){
-				console.log("Error sending "+messageArray[chunksSent]);
+				console.log("Error sending message: "+messageArray[chunksSent]);
 				console.log("To user:"+user);
 				console.log(error);
 			}
