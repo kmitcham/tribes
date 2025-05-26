@@ -85,6 +85,16 @@
         "console": "integratedTerminal",
         "internalConsoleOptions": "neverOpen"
           
-      }
+      },
+      {
+        "type": "node",
+        "request": "launch",
+        "name": "Launch Program",
+        "skipFiles": [
+            "<node_internals>/**"
+        ],
+        "cwd": "${workspaceFolder}/",
+        "program": "${workspaceFolder}/websocket.js"
+    }
   ]
 }
