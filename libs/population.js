@@ -80,6 +80,7 @@ function memberByName(name, gameState){
                 if ( population[possibleMatch]["handle"]["username"] === name
                     || population[possibleMatch]["handle"]["displayName"] === name
                     || population[possibleMatch]["handle"]["globalName"] === name
+                    || population[possibleMatch]["handle"]["nickname"] === name
                    ){
                     person = population[possibleMatch]
                     console.log("Name match on handle with case: "+name)
@@ -88,6 +89,7 @@ function memberByName(name, gameState){
                 if ( population[possibleMatch]["handle"]["username"] === name.toLowerCase()
                     || population[possibleMatch]["handle"]["displayName"] === name.toLowerCase()
                     || population[possibleMatch]["handle"]["globalName"] === name.toLowerCase()
+                    || population[possibleMatch]["handle"]["nickname"] === name.toLowerCase()
                    ){
                     person = population[possibleMatch]
                     console.log("Name match handle toLowerCase: "+name)

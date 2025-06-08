@@ -1,7 +1,8 @@
 const WebSocket = require('ws');
 const wss = new WebSocket.Server({ port: 8080 });
 const fs = require('fs');
-
+const util = require('./libs/util.js');
+const bcrypt = require('bcrypt');
 
 //let initialData = loadJson("./simpledata.json");
 //let initialData = loadJson("./data.json");
@@ -10,6 +11,8 @@ let tribePath = '../tribesAgent/'+tribe+'-tribe/'+tribe+'-tribe.json';
 let tribeData = loadJson(tribePath);
 let population = tribeData['population'];
 let children = tribeData['children'];
+let usersDict = loadJson("./users.json");
+console.log("kmitcham "+usersDict["kmitcham@gmail.com"].name);
 
 wss.on('connection', ws => {
     // setInterval(() => {
@@ -47,6 +50,13 @@ wss.on('connection', ws => {
                         label: 'children',
                         content: children
                     };
+                } else if (selection === 'status'){
+                    statusMessage = util.gameStateMessage(tribeData);
+                    messageData = {
+                        type: 'infoRequest',
+                        label: 'status',
+                        content: statusMessage
+                    };
                 } else {
                     messageData = {
                         type: 'error',
@@ -57,6 +67,11 @@ wss.on('connection', ws => {
                 ws.send(JSON.stringify({
                     messageData
                 }));
+            } else if (data.type === 'registerRequest'){
+                result = registerUser(data);
+                if (result){
+                    ws.send(JSON.stringify(result));
+                }
             } else if (data.type === 'command'){
                 // Process the "give" command
                 var command = data.command;
@@ -130,4 +145,53 @@ function removeClunkyKeys(population){
         cleanedPop[name] = cleaned;
     }
     return cleanedPop;
+}
+
+function registerUser(userData){
+    var name = userData.name;
+    var email = userData.email;
+    var password = hashPassword(userData.password);
+    var clientId = userData.clientId;
+    console.log("usersDict "+usersDict);
+
+    for (const [existingEmail, userRecord] of Object.entries(usersDict)){
+        if (existingEmail == email && !verifyPassword(password, userRecord.password) ){
+            console.log("Invalid password for existing record "+email);
+            throw ("Invalid Password");
+        }
+    }
+    for ([existingEmail, existingEntry] of usersDict){
+        var existingEntry = usersDict[email];
+        console.log("checking existing "+existingEmail);
+        if (existingEmail == email && !verifyPassword(password, existingEntry.password)){
+            console.log("Invalid password for "+email);
+            throw ("Invalid Password");
+        }
+        if (existingEmail == email && ! (existingEntry.name == name)){
+            console.log("No changing of names.  Maybe eventually  "+email);
+            throw ("Invalid Name Change");
+        }
+        if (existingEntry && existingEntry.name == name){
+            console.log("Duplicate name "+email);
+            throw ("Invalid Duplicate tribe name");
+        }
+    }
+    
+    usersDict[email] = userData;
+    messageData = {
+        type: 'registration',
+        label: 'success',
+        content: "success"
+    };
+    return messageData;
+}
+
+async function hashPassword(password) {
+    const saltRounds = 3; // Higher rounds = slower, more secure
+    const hash = await bcrypt.hash(password, saltRounds);
+    return hash;
+}
+async function verifyPassword(password, matchValue) {
+    const match = await bcrypt.compare(password, matchValue);
+    return match;
 }

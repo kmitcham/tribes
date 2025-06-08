@@ -174,3 +174,19 @@ command open by UgUgOogOog of flounder-tribe
 
 
 ++ Did a bunch of work to change what commands work after endgame; test that
+
+
+
+// register user : email, pwd, name
+//      if email in existing users:
+//          if pwd does not match:
+//              error
+//      else:
+//          if name in existing users:
+//              error
+//          hash pwd
+//          add to users: email: {hashed_pwd: xxx, name: yy; email:zzz}
+//
+// commands: if name and pwd match:
+//		do command
+//		add wss to tribe pop for player

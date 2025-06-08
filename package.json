@@ -13,11 +13,13 @@
     "clear_jest": "jest --clearCache"
   },
   "dependencies": {
+    "bcrypt": "^6.0.0",
     "discord-api-types": "^0.37.116",
     "discord.io": "^2.5.3",
-    "discord.js": "^14.12.1",
+    "discord.js": "^14.19.3",
     "latest": "^0.2.0",
     "test": "^0.6.0",
+    "update": "^0.7.4",
     "winston": "^3.3.3"
   },
   "devDependencies": {
