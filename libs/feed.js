@@ -245,22 +245,30 @@ function birth(gameState, child, motherMember, birthRoll){
 	}
 	delete motherMember.isPregnant;
 	//Mothers start guarding their newborns
-	if (!motherMember.guarding){
-		motherMember.guarding = [child.name]
-	} else if (motherMember.guarding.indexOf(child.name) == -1){
-		motherMember.guarding.push(child.name)
-	}
+	motherGuard(motherMember, child.name);
 	if (birthRoll == 17){
 		twin = reproLib.addChild(child.mother, child.father, gameState);
 		delete motherMember.isPregnant; // this gets set by addChild, but the child was just born.
 		response += motherMember.name+' gives birth to a twin! Meet '+twin.name+', a healthy young '+twin.gender+'-child.\n'
 		pop.history(motherMember.name, motherMember.name+' gives birth to a twin! Meet '+twin.name+', a healthy young '+twin.gender+'-child', gameState)
-		motherMember.guarding.push(twin.name)
+		motherGuard(motherMember, twin.name);
 		twin.age = 0
 	}
 }
 module.exports.birth = birth
 
+function motherGuard(motherMember, childName){
+	if (!motherMember.guarding){
+		motherMember.guarding = [childName]
+	} else {
+		if (motherMember.guarding.indexOf(childName) == -1 && motherMember.guarding.length < 5 ){
+			motherMember.guarding.push(childName);
+		} else {
+			response += '\t'+motherMember.name+' is guarding too many children, and '+childName+' is unwatched.\n';
+		}
+	}
+}
+module.exports.motherGuard = motherGuard
 
 function consumeFood(gameState){
 	if (!gameState){

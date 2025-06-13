@@ -174,7 +174,8 @@ command open by UgUgOogOog of flounder-tribe
 
 
 ++ Did a bunch of work to change what commands work after endgame; test that
-
+http DocumentRoot "/Library/WebServer/Documents"
+copied an alias to the TribeServer dir
 
 
 // register user : email, pwd, name

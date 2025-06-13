@@ -72,6 +72,11 @@ wss.on('connection', ws => {
                 if (result){
                     ws.send(JSON.stringify(result));
                 }
+            } else if (data.type === 'romanceRequest'){
+                if (validateUser(data)){
+                    romanceUpdate = processRomance(data, tribeData);
+                    ws.send(JSON.stringify(romanceUpdate));
+                }
             } else if (data.type === 'command'){
                 // Process the "give" command
                 var command = data.command;
@@ -111,7 +116,59 @@ wss.on('connection', ws => {
 
 });
 
+function _array_match(array1, array2){
+    if(array1.sort().join(',')=== array2.sort().join(',')){
+        return true;
+    }
+    return false;
+}
 
+function processRomance(data, tribeData){
+    var name = data.name;
+    var tribe = data.tribe;
+    var inviteList = data.inviteList;
+    var declineList = data.declineList;
+    var consentList = data.consentList;
+    var responseData = {}
+    // if the user is in the tribe
+    var userData = tribeData['population'][name];
+    if (userData){
+        if ( inviteList && ! _array_match(inviteList, userData['inviteList'])){
+            console.log("updating inviteList for "+name+" in "+tribe)
+            userData['inviteList'] = inviteList;
+        }
+        if ( declineList && ! _array_match(declineList, userData['declineList'])){
+            console.log("updating declineList for "+name+" in "+tribe)
+            userData['declineList'] = declineList;
+        }
+        if ( consentList && ! _array_match(consentList, userData['consentList'])){
+            console.log("updating consentList for "+name+" in "+tribe)
+            userData['consentList'] = consentList;
+        }
+        var romanceContent = {}
+        romanceContent['inviteList'] = userData['inviteList'];
+        romanceContent['consentList'] = userData['consentList'];
+        romanceContent['declineList'] = userData['declineList'];
+        
+        responseData = {
+            type: 'infoRequest',
+            label: 'romance',
+            content: romanceContent
+        };
+        // should do some stuff to update if the incoming data doesn't exist or something
+    } else {
+        console.error("Did not find "+name+" in tribe "+tribeData['name']);
+        responseData = {
+            type: 'error',
+            label: 'romance',
+            content: 'No such user in tribe'
+        };
+    }
+    return responseData;
+}
+function listsMatch(first, seccond){
+
+}
 function loadJson(fileName) {
 	let rawdata = fs.readFileSync(fileName);
 	if (!rawdata || rawdata.byteLength == 0 ){
@@ -145,6 +202,20 @@ function removeClunkyKeys(population){
         cleanedPop[name] = cleaned;
     }
     return cleanedPop;
+}
+
+function validateUser(userData){
+    var name = userData.name;
+    var email = userData.email;
+    var password = hashPassword(userData.password);
+    var clientId = userData.clientId;
+    for (const [existingEmail, userRecord] of Object.entries(usersDict)){
+        if (existingEmail == email && !verifyPassword(password, userRecord.password) ){
+            console.log("Invalid password for existing record "+email);
+            return false;
+        }
+    }
+    return true;
 }
 
 function registerUser(userData){

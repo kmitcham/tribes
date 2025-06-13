@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tribes</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        #commandInput {
+            width: 300px;
+            padding: 5px;
+            margin-right: 10px;
+        }
+        #sendButton {
+            padding: 5px 10px;
+        }
+        #messagesContainer {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-top: 10px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .message {
+            margin: 5px 0;
+        }
+        .error {
+            color: red;
+        }
+        .response {
+            color: green;
+        }
+        #populationTable {
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        #populationTable th, #populationTable td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        #populationTable th {
+            background-color: #f2f2f2;
+        }
+        .array-value {
+            background-color: #e6f3ff;
+            padding: 2px 5px;
+        }
+    </style>
+</head>
+<body>
+    <table id="formatTable">
+        <tr>
+            <th>Regististration</th>
+            <th>Select Tribe</th>
+        </tr>
+        <tr>
+            <td>        
+    <div id="registration">
+        <label for="email">Email (unique identifier)</label>
+        <input type="email" id="email" name="email">
+        <br>
+        <label for="playerNameField">Tribal Name</label>
+        <input type="text" id="playerNameField" name="playerNameField">
+        <br>
+        <label for="pwd">Password:</label>
+        <input type="password" id="pwd" name="pwd">
+        <button id="submitButton">Register</button>
+    </div>
+</td>
+<td>
+    <div id="tribeContainer">
+    <label for="tribeNames">Select a tribe:</label>
+    <select name="tribe" id="tribeNames">
+      <option value="bug">Bug</option>
+      <option value="flounder">Flounder</option>
+      <option value="bear">Bear</option>
+      <option value="vashon">Vashon</option>
+      <option value="mib">MIB</option>
+      <option value="sloth">Sloth</option>
+      <option value="wolf">Wolf</option>
+    </select>
+    <button id="refreshButton">Refresh Info</button>
+    </div>
+</td>
+</tr>
+</table>
+    <div id="command">
+        <h2>Command</h2>
+        <p>Enter commands like: <code>NOT YET IMPLEMENTED give player1 5 grain</code></p>
+        <input type="text" id="commandInput" placeholder="Enter command">
+        <button id="sendCommandButton">Send Command</button>
+        <div id="commandMessagesContainer">
+            <p class="message">Connecting to WebSocket server...</p>
+        </div>
+        <div id="tableContainer">
+            <h2>Command Results</h2>
+            <table id="commandResults"></table>
+        </div>
+    </div>
+    <div id="status">
+        <h2>Status:</h2>
+        <textarea id="statusText" rows="5" cols="80" readonly>Tribe status</textarea>
+    </div>
+    <div id="populationTableContainer">
+        <h2>Population</h2>
+        <table id="populationTable"></table>
+    </div>
+
+    <div id="childrenTableContainer">
+        <h2>Children</h2>
+        <table id="childrenTable"></table>
+    </div>
+    <div id="RomanceTableContainer">
+        <h2>Romance</h2>
+        <button id="romanceButton">Update Romance</button>
+        <table id="romanceTable"></table>
+    </div>
+    
+    <script>
+        const clientId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        console.log("clientId ", clientId);
+        // Connect to the WebSocket server
+        let ws = null;
+        const RECONNECT_INTERVAL = 2000; // 2 seconds delay between reconnection attempts
+        const MAX_RECONNECT_ATTEMPTS = 5; // Limit to avoid infinite loops
+        let reconnectAttempts = 0;
+        let validated = false;
+
+        function connectWebSocket() {
+            // Create a new WebSocket connection
+            let host = "192.168.1.20"
+            ws = new WebSocket('ws://'+host+':8080'); // Replace with your WebSocket URL
+
+            ws.onopen = function () {
+                console.log('WebSocket connection established');
+                reconnectAttempts = 0; // Reset attempts on successful connection
+            };
+
+            ws.onmessage = function (event) {
+                console.log('Message from server:', event.data);
+            };
+
+            ws.onerror = function (error) {
+                console.error('WebSocket error:', error);
+            };
+
+            ws.onclose = function (event) {
+                console.log('WebSocket connection closed:', event);
+                if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+                    console.log(`Attempting to reconnect (${reconnectAttempts + 1}/${MAX_RECONNECT_ATTEMPTS})...`);
+                    setTimeout(connectWebSocket, RECONNECT_INTERVAL); // Retry after delay
+                    reconnectAttempts++;
+                } else {
+                    console.log('Max reconnection attempts reached. Giving up.');
+                }
+            };
+        }
+        connectWebSocket();
+
+        // Function to check if the connection is valid
+        function isWebSocketValid() {
+            return ws && ws.readyState === 1; // Check if WebSocket exists and is open
+        }
+
+        // Function to manually check and reconnect if needed
+        async function checkAndReconnect() {
+            if (!isWebSocketValid()) {
+                console.log('WebSocket is not valid. Recreating connection...');
+                if (ws) {
+                    ws.close(); // Close existing connection if it exists
+                }
+                await connectWebSocket(); // Start a new connection
+                var reconnectAttempts = 0;
+                while (! isWebSocketValid && (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) ){
+                    console.log(`Awaiting reconnection (${reconnectAttempts + 1}/${MAX_RECONNECT_ATTEMPTS})...`);
+                    setTimeout(connectWebSocket, RECONNECT_INTERVAL); // Retry after delay
+                    reconnectAttempts++;
+                }
+                if (!isWebSocketValid){
+                    console.log('Max reconnection attempts reached. Giving up.');
+                }
+            } else {
+                console.log('WebSocket is still valid.');
+            }
+        }
+
+        // DOM elements
+        const refreshButton = document.getElementById('refreshButton');
+        const populationTableContainer = document.getElementById('populationTableContainer');
+        const populationTable = document.getElementById('populationTable');
+
+        const childrenTableContainer = document.getElementById('childrenTableContainer');
+        const childrenTable = document.getElementById('childrenTable');
+
+        const romanceTableContainer = document.getElementById('romanceTableContainer');
+        const romanceButton = document.getElementById('romanceButton');
+        const romanceTable = document.getElementById('romanceTable');
+
+        const statusText = document.getElementById('statusText');
+
+        const tribeNamePicker = document.getElementById('tribeNames');
+        const playerNameField = document.getElementById('playerNameField');
+        const playerPassword = document.getElementById('pwd');
+        const playerEmailField = document.getElementById("email");
+
+        const submitButton = document.getElementById('submitButton');
+
+        const commandInput = document.getElementById('commandInput');
+        const sendCommandButton = document.getElementById('sendCommandButton');
+        const commandMessagesContainer = document.getElementById('commandMessagesContainer');
+        const commandResults = document.getElementById('commandResults');
+
+
+        // Generate a unique client ID
+
+        // Helper to add a message to the UI
+        function addMessage(text, type = 'message') {
+            console.log("addMessage:"+type+"  message:"+text);
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            messageDiv.textContent = text;
+            if (type === 'infoRequest'){
+                console.log("info "+text);
+            } else {
+                console.log("type not info:"+type);
+            }
+        }
+
+        // Function to render population table
+        function renderPopulationTable(population) {
+            // Clear existing table
+            populationTable.innerHTML = '';
+            console.log("in renderPopulation")
+            // If population is empty or not an object, show a message
+            if (!population || typeof population !== 'object' || Object.keys(population).length === 0) {
+                populationTable.innerHTML = '<tr><td>No data available</td></tr>';
+                return;
+            }
+
+            const columns = ['Name', 'Gender', 'Profession', 'Food', 'Grain', 'Spearhead', 'Basket', 'Strength', 'canCraft','Worked', 'Guarding', 'isPregnant', 'Nursing']
+            // Create table header
+            const thead = document.createElement('thead');
+            const headerRow = document.createElement('tr');
+            columns.forEach(key => {
+                const th = document.createElement('th');
+                th.textContent = key;
+                headerRow.appendChild(th);
+            });
+            thead.appendChild(headerRow);
+            populationTable.appendChild(thead);
+
+            // Create table body
+            const tbody = document.createElement('tbody');
+            for (const [name, data] of Object.entries(population)) {
+                console.log("Population row for "+name+" data keys :"+Object.keys(data));
+                const row = document.createElement('tr');
+                if ( (data.food + data.grain) < 4){
+                    row.style.backgroundColor = 'red'
+                } else if (data.food < 4){
+                       row.style.backgroundColor = 'pink'
+                }
+                columns.forEach(key => {
+                    const td = document.createElement('td');
+                    if (key in data){
+                        var value = data[key];
+                    } else {
+                        var value = data[key.toLowerCase()];
+                    }
+                    let isSelf = false;
+                    if (key = 'name' && value && playerNameField.value && value == playerNameField.value){
+                        isSelf = true;
+                    }
+                    if (Array.isArray(value)) {
+                        // Handle array values (e.g., guarding, inviteList) with a styled display
+                        td.innerHTML = value.map(item => `<span class="array-value">${item}</span>`).join(', ');
+                    } else if (value === true || value === false) {
+                        // Handle boolean values
+                        td.textContent = value.toString();
+                    } else if (value === 0) {
+                        td.textContent = value;
+                    } else {
+                        // Handle strings, numbers, etc.
+                        td.textContent = value || '-';
+                        if (isSelf){
+                            td.style.fontWeight = 'bold';
+                        }
+                    }
+                    row.appendChild(td);
+                });
+                tbody.appendChild(row);
+            }
+            populationTable.appendChild(tbody);
+        }
+        // Function to render children table
+        function renderChildrenTable(children) {
+            // Clear existing table
+            childrenTable.innerHTML = '';
+            console.log("in render children:"+children)
+            // If population is empty or not an object, show a message
+            var failed = false;
+            if (!children){
+                console.log(" no child");
+                failed == true;
+            } else if (typeof children !== 'object'){
+                console.log(" wrong type");
+                failed == true;
+            }  else if (Object.keys(children).length === 0){
+                console.log(" no keys");
+                failed == true;
+            }
+            if (failed) {
+                console.log(" children is type: "+(typeof children));
+                console.log(" children is keys length: "+(Object.keys(children).length));
+                console.log(" children is bool: "+(!!children));
+
+                childrenTable.innerHTML = '<tr><td>No data available</td></tr>';
+                return;
+            }
+
+            const columns = ['Name', 'Age', 'Food', 'Guardians', 'Babysitting', 'Gender', 'Mother']
+            // Create table header
+            const thead = document.createElement('thead');
+            const headerRow = document.createElement('tr');
+            columns.forEach(key => {
+                const th = document.createElement('th');
+                th.textContent = key;
+                headerRow.appendChild(th);
+            });
+            thead.appendChild(headerRow);
+            childrenTable.appendChild(thead);
+            //console.log("in children type "+(typeof children)+ " ")
+
+            // Create table body
+            const tbody = document.createElement('tbody');
+            for (const [name, data] of Object.entries(children)) {
+                const row = document.createElement('tr');
+                if (data.age > 24){ // new adults
+                    row.style.backgroundColor = 'grey'
+                }
+                if (data.age < 4 ){
+                    row.style.backgroundColor = 'yellow'
+                }
+                if (data.age < 0 ){
+                    row.style.backgroundColor = 'pink'
+                }
+                columns.forEach(columnName => {
+                    const td = document.createElement('td');
+                    var value = data[columnName.toLowerCase()];
+                    if (columnName.toLowerCase() == "guardians"  && value){
+                        //console.log("in guard value type "+(typeof value)+ " "+Object.keys(value).length);
+                        //console.log(" keys:"+Object.keys(value).join(","));
+                        var guards = Object.keys(value);
+                        var response = "";
+                        for (const guardName of (guards)){
+                            guardValue = value[guardName];
+                            //console.log("guardName "+guardName+":"+guardValue);
+                            response = response +""+ guardName+ "("+guardValue+") "
+                        }
+                        console.log("response:"+response);
+                        for (const [foo, bar] of Object.entries(value)){
+                            //console.log("foo:"+foo+"  bar:"+bar);
+                        }
+                        value = response;
+                    }
+                    if (Array.isArray(value)) {
+                        // Handle array values (e.g., guarding, inviteList) with a styled display
+                        td.innerHTML = value.map(item => `<span class="array-value">${item}</span>`).join(', ');
+                    } else if (value === true || value === false) {
+                        // Handle boolean values
+                        td.textContent = value.toString();
+                    } else if (value === 0) {
+                        td.textContent = value;
+                    } else {
+                        // Handle strings, numbers, etc.
+                        td.textContent = value || '-';
+                    }
+                    row.appendChild(td);
+                });
+                tbody.appendChild(row);
+            }
+            childrenTable.appendChild(tbody);
+        }
+
+        function renderRomanceTable(romanceData, populationData){
+
+        }
+        function filterPopulationByGender(isMale, populationData){
+            filtered = {}
+            for (const [name, data] of Object.entries(populationData)) {
+                if ( (data['gender'].toLowerCase() === 'male') == isMale){
+                    filtered[name] = data;
+                }
+            }
+            return filtered;
+        }
+        function updateMessageBox(updateText){
+            // maybe all of history goes here?
+        }
+        // WebSocket event handlers
+        ws.onopen = () => {
+            addMessage('Connected to WebSocket server');
+            console.log('Connected to WebSocket server');
+        };
+
+        ws.onmessage = (event) => {
+            try {
+                const topData = JSON.parse(event.data);
+                var data = topData.messageData;
+                console.log('Received:', data);
+                if (!data){
+                    console.log("No data in message");
+                    data = {}
+                    return;
+                }
+                console.log("keys:"+Object.keys(data));
+                if (data.type === 'welcome') {
+                    console.log("welcome");
+                    addMessage(data.message);
+                } else if (data.type == 'registration') {
+                    submitButton.disabled = true;
+                    validated = true;
+                    playerPassword.disabled = true;
+                    playerNameField.disabled = true;
+                    playerEmailField.diabled = true;
+                } else if (data.type == 'command') {
+                    console.log("command");
+                    addMessage(data.message, data.success ? 'response' : 'command');
+                } else if (data.type == 'error') {
+                    console.log("error");
+                    addMessage(data.message, 'error');
+                } else if (data.type == 'infoRequest') {
+                    console.log("infoRequest "+ data.label);
+                    if (data.label == 'population'){
+                        renderPopulationTable(data.content);
+                    } else if (data.label == 'children'){
+                        console.log("Child content:"+data.content);
+                        renderChildrenTable(data.content);
+                    } else if (data.label == 'status'){
+                        console.log("Status content:"+data.content);
+                        statusText.value = data.content;
+                    } else { 
+                        console.log("Unknown type:"+data.label);
+                    }
+                } else {
+                    console.log("unmatched type: "+data.type);
+                }
+            } catch (error) {
+                console.error('Error parsing WebSocket message:', error);
+                addMessage('Error parsing data from server.', 'error');
+            }
+        };
+
+        ws.onerror = (error) => {
+            console.error('WebSocket error:', error);
+            addMessage('Error connecting to WebSocket server.', 'error');
+        };
+
+        ws.onclose = () => {
+            console.log('Disconnected from WebSocket server');
+            addMessage('Disconnected from server.', 'error');
+        };
+
+        submitButton.addEventListener('click', ()=>{
+            name = playerNameField.value;
+            password = playerPassword.value;
+            email = playerEmailField.value;
+            let message = {
+                type: 'registerRequest',
+                name: name,
+                email: email,
+                password: password,
+                clientId: clientId
+            };
+            ws.send(JSON.stringify(message));
+        }
+        );
+
+        refreshButton.addEventListener('click', ()=>{
+            tribe = tribeNamePicker.value;
+            name = playerNameField.value;
+            password = playerPassword.value;
+            email = playerEmailField.value;
+            let message = {
+                type: 'infoRequest',
+                selection: 'population',
+                tribe: tribe,
+                name: name,
+                email: email,
+                password: password,
+                clientId: clientId
+            };
+            checkAndReconnect()
+            ws.send(JSON.stringify(message));
+            addMessage(`Sent: infoRequest: population`);
+            message = {
+                type: 'infoRequest',
+                selection: 'children',
+                tribe: tribe,
+                name: name,
+                email: email,
+                password: password,
+                clientId: clientId
+            };
+            ws.send(JSON.stringify(message));
+            addMessage(`Sent: infoRequest: children`);
+            ws.send(JSON.stringify(message));
+            addMessage(`Sent: infoRequest: status`);
+            message = {
+                type: 'infoRequest',
+                selection: 'status',
+                tribe: tribe,
+                name: name,
+                email: email,
+                password: password,
+                clientId: clientId
+            };
+            ws.send(JSON.stringify(message));
+            addMessage(`Sent: infoRequest: status`);
+
+        }
+        )
+    </script>
+</body>
+</html>
