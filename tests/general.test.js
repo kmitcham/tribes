@@ -119,11 +119,19 @@ describe('give function', () => {
   });
 
   test('should fail if source hunted with spearhead in work round', () => {
+    gameState.population.player1.activity = "hunt";
+    general.give(gameState, 'player1', 'player2', 2, 'spearhead');
+    var messages = gameState.messages;
+    var expectedMessage = messages["player1"];
+    expect(expectedMessage).toContain("already hunted");
+  });
+
+  test('should give spearhead if source hunted with spearhead in work round but have more than two spearheads', () => {
       gameState.population.player1.activity = "hunt";
       general.give(gameState, 'player1', 'player2', 1, 'spearhead');
       var messages = gameState.messages;
-      var expectedMessage = messages["player1"];
-      expect(expectedMessage).toContain("already hunted");
+      var expectedMessage = messages["tribe"];
+      expect(expectedMessage).toContain("player1 gives player2 1 spearhead");
   });
 
   test('should fail if amount is negative and source is not a referee', () => {

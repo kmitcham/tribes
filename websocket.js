@@ -3,10 +3,11 @@ const wss = new WebSocket.Server({ port: 8080 });
 const fs = require('fs');
 const util = require('./libs/util.js');
 const bcrypt = require('bcrypt');
+const saveLib = require('./libs/save.js');
 
 //let initialData = loadJson("./simpledata.json");
 //let initialData = loadJson("./data.json");
-let tribe = "bug";
+let tribe = "bear";
 let tribePath = '../tribesAgent/'+tribe+'-tribe/'+tribe+'-tribe.json';
 let tribeData = loadJson(tribePath);
 let population = tribeData['population'];
@@ -71,6 +72,7 @@ wss.on('connection', ws => {
                 result = registerUser(data);
                 if (result){
                     ws.send(JSON.stringify(result));
+                    sendSecrets(ws, data, tribeData);
                 }
             } else if (data.type === 'romanceRequest'){
                 if (validateUser(data)){
@@ -115,6 +117,11 @@ wss.on('connection', ws => {
     });
 
 });
+
+function sendSecrets(ws, data){
+    var romanceUpdate = processRomance(data, tribeData);
+    ws.send(JSON.stringify(romanceUpdate));
+}
 
 function _array_match(array1, array2){
     if(array1.sort().join(',')=== array2.sort().join(',')){
@@ -224,36 +231,44 @@ function registerUser(userData){
     var password = hashPassword(userData.password);
     var clientId = userData.clientId;
     console.log("usersDict "+usersDict);
-
+    var errors = [];
     for (const [existingEmail, userRecord] of Object.entries(usersDict)){
         if (existingEmail == email && !verifyPassword(password, userRecord.password) ){
             console.log("Invalid password for existing record "+email);
-            throw ("Invalid Password");
+            errors.append("Invalid Password");
+            break;
         }
-    }
-    for ([existingEmail, existingEntry] of usersDict){
         var existingEntry = usersDict[email];
         console.log("checking existing "+existingEmail);
-        if (existingEmail == email && !verifyPassword(password, existingEntry.password)){
-            console.log("Invalid password for "+email);
-            throw ("Invalid Password");
-        }
         if (existingEmail == email && ! (existingEntry.name == name)){
             console.log("No changing of names.  Maybe eventually  "+email);
-            throw ("Invalid Name Change");
+            errors.append ("Invalid Name Change");
+            break;
         }
         if (existingEntry && existingEntry.name == name){
             console.log("Duplicate name "+email);
-            throw ("Invalid Duplicate tribe name");
+            errors.append ("Invalid Duplicate tribe name");
+            break;
         }
     }
-    
-    usersDict[email] = userData;
-    messageData = {
-        type: 'registration',
-        label: 'success',
-        content: "success"
-    };
+    if (errors.length > 0){
+        messageData = {
+            type: 'registration',
+            label: 'error',
+            content: errors
+        }
+    } else {
+        console.log("Adding "+email+" to list of users")
+        usersDict[email] = userData;
+        saveLib.actuallyWriteToDisk("users.json",usersDict);
+        messageData = {
+            type: 'registration',
+            label: 'success',
+            content: "success"
+        };    
+
+    }
+
     return messageData;
 }
 

@@ -385,8 +385,36 @@
             childrenTable.appendChild(tbody);
         }
 
-        function renderRomanceTable(romanceData, populationData){
+        function renderRomanceTable(memberName, romanceData, populationData){
+            var member = populationData[memberName];
+            var isMale = (member.gender.toLowerCase === 'male');
+            var rows = filterPopulationByGender( !isMale, populationData);
+            var columns = ['Name', 'Invite Order', 'Consent', 'Decline'];
+            romanceTable.innerHTML = '';
+            const thead = document.createElement('thead');
+            const headerRow = document.createElement('tr');
+            columns.forEach(key => {
+                const th = document.createElement('th');
+                th.textContent = key;
+                headerRow.appendChild(th);
+            });
+            thead.appendChild(headerRow);
+            romanceTable.appendChild(thead);
 
+            for ( const[name, data] of Object.entries(rows)){
+                const row = document.createElement('tr');
+                const nameCell = document.createElement('td');
+                nameCell.value = data.name;
+                row.appendChild(nameCell);
+                const orderCell = document.createElement('td');
+                row.appendChild(orderCell);
+                const consentCell = document.createElement('td');
+                row.appendChild(consentCell);
+                const declineCell = document.createElement('td');
+                row.appendChild(declineCell);
+
+                tbody.appendChild(row);
+            }
         }
         function filterPopulationByGender(isMale, populationData){
             filtered = {}
@@ -397,6 +425,16 @@
             }
             return filtered;
         }
+        function getConsentList(){
+            return []
+        }
+        function getDeclineList(){
+            return []
+        }
+        function getInviteList(){
+            return []
+        }
+        
         function updateMessageBox(updateText){
             // maybe all of history goes here?
         }
@@ -464,14 +502,37 @@
             addMessage('Disconnected from server.', 'error');
         };
 
+        romanceButton.addEventListener('click', ()=>{
+            var name = playerNameField.value;
+            var password = playerPassword.value;
+            var email = playerEmailField.value;
+            var tribe = tribeNamePicker.value;
+            var inviteList = getInviteList();
+            var consentList = getConsentList();
+            var declineList = getDeclineList();
+            let message = {
+                type: 'romanceRequest',
+                name: name,
+                email: email,
+                password: password,
+                tribe: tribe,
+                clientId: clientId,
+                inviteList: inviteList,
+                declineList: declineList,
+                consentList: consentList
+            };
+            ws.send(JSON.stringify(message));
+        })
         submitButton.addEventListener('click', ()=>{
             name = playerNameField.value;
             password = playerPassword.value;
             email = playerEmailField.value;
+            var tribe = tribeNamePicker.value;
             let message = {
                 type: 'registerRequest',
                 name: name,
                 email: email,
+                tribe: tribe,
                 password: password,
                 clientId: clientId
             };

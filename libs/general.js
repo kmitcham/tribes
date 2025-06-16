@@ -72,7 +72,7 @@ function legalGive(gameState, sourceName, item, amount){
             text.addMessage(gameState, sourcePerson.name, response)
             return false;
     }
-    if ("activity" in sourcePerson && sourcePerson.activity == 'hunt' && item == 'spearhead' && gameState.round== 'work'){
+    if ("activity" in sourcePerson && sourcePerson.activity == 'hunt' && item == 'spearhead' && gameState.round== 'work' && ( (sourcePerson.spearhead - amount) < 1)){
         response = "You already hunted with a spearhead, and cannot trade spearheads during the work round";
         text.addMessage(gameState, sourcePerson.name, response)
         return false;
