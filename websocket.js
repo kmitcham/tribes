@@ -1,19 +1,26 @@
 const WebSocket = require('ws');
-const wss = new WebSocket.Server({ port: 8080 });
+const PORT = 9090;
 const fs = require('fs');
 const util = require('./libs/util.js');
 const bcrypt = require('bcrypt');
-const saveLib = require('./libs/save.js');
 
-//let initialData = loadJson("./simpledata.json");
-//let initialData = loadJson("./data.json");
+var wss;
+console.log('Server started on port '+PORT);
+try {
+    wss = new WebSocket.Server({ port: PORT });
+} catch (error) {
+    console.error('Error setting up webserver:', error);
+    exit;
+}
+
+
 let tribe = "bear";
 let tribePath = '../tribesAgent/'+tribe+'-tribe/'+tribe+'-tribe.json';
 let tribeData = loadJson(tribePath);
 let population = tribeData['population'];
 let children = tribeData['children'];
 let usersDict = loadJson("./users.json");
-console.log("kmitcham "+usersDict["kmitcham@gmail.com"].name);
+
 
 wss.on('connection', ws => {
     // setInterval(() => {
@@ -36,8 +43,9 @@ wss.on('connection', ws => {
             population = tribeData['population'];
             children = tribeData['children'];
             // Handle command requests
+            // info is all the data you can get without being logged in
             if (data.type === 'infoRequest') {
-                const { selection } = data;
+                const selection = data.selection;
                 if (selection === 'population'){
                     const cleanPop = removeClunkyKeys(population);
                     messageData = {
@@ -60,24 +68,34 @@ wss.on('connection', ws => {
                     };
                 } else {
                     messageData = {
-                        type: 'error',
-                        message: 'Invalid infoRequest',
-                        content: message
+                        type: 'infoRequest',
+                        label: 'error',
+                        content: 'Invalid infoRequest:'+selection
                     }
                 }
-                ws.send(JSON.stringify({
-                    messageData
-                }));
+                var asString = JSON.stringify(messageData);
+                ws.send(asString);       
             } else if (data.type === 'registerRequest'){
-                result = registerUser(data);
-                if (result){
-                    ws.send(JSON.stringify(result));
-                    sendSecrets(ws, data, tribeData);
-                }
+                // needs to handle promise since decrypt can be slow
+                var response = {};
+                registerUser(data).then(result => 
+                    {
+                        console.log("sending response:"+result);
+                        for (var [key, value] of Object.entries(result)){
+                            console.log(key+" "+value);
+                        }
+                        var asString = JSON.stringify(result);
+                        ws.send(asString);          
+                        sendSecrets(ws, data);
+                    }).catch(error => {
+                        console.error("Failed to get user data:", error);
+                    });
+                console.log("register complete")   
             } else if (data.type === 'romanceRequest'){
                 if (validateUser(data)){
                     romanceUpdate = processRomance(data, tribeData);
-                    ws.send(JSON.stringify(romanceUpdate));
+                    var asString = JSON.stringify(romanceUpdate);
+                    ws.send(asString);
                 }
             } else if (data.type === 'command'){
                 // Process the "give" command
@@ -115,15 +133,22 @@ wss.on('connection', ws => {
             }));
         }
     });
-
 });
 
 function sendSecrets(ws, data){
     var romanceUpdate = processRomance(data, tribeData);
-    ws.send(JSON.stringify(romanceUpdate));
+    var asString = JSON.stringify(romanceUpdate);
+    console.log("sending romance secret "+asString);
+    ws.send(asString);
 }
 
 function _array_match(array1, array2){
+    if (! array1 && ! array2){
+        return true;
+    }
+    if (!array1 || !array2){
+        return false;
+    }
     if(array1.sort().join(',')=== array2.sort().join(',')){
         return true;
     }
@@ -143,6 +168,7 @@ function processRomance(data, tribeData){
         if ( inviteList && ! _array_match(inviteList, userData['inviteList'])){
             console.log("updating inviteList for "+name+" in "+tribe)
             userData['inviteList'] = inviteList;
+            console.log("inviteList:"+tribeData['population'][name]['inviteList'].join())
         }
         if ( declineList && ! _array_match(declineList, userData['declineList'])){
             console.log("updating declineList for "+name+" in "+tribe)
@@ -173,9 +199,7 @@ function processRomance(data, tribeData){
     }
     return responseData;
 }
-function listsMatch(first, seccond){
 
-}
 function loadJson(fileName) {
 	let rawdata = fs.readFileSync(fileName);
 	if (!rawdata || rawdata.byteLength == 0 ){
@@ -190,7 +214,6 @@ function loadJson(fileName) {
 	}
 	return parsedData;
 }
-console.log('Server started on port 8080');
 
 function removeClunkyKeys(population){
     const cleanedPop = {}
@@ -225,30 +248,24 @@ function validateUser(userData){
     return true;
 }
 
-function registerUser(userData){
+async function registerUser(userData){
     var name = userData.name;
     var email = userData.email;
-    var password = hashPassword(userData.password);
-    var clientId = userData.clientId;
-    console.log("usersDict "+usersDict);
-    var errors = [];
-    for (const [existingEmail, userRecord] of Object.entries(usersDict)){
-        if (existingEmail == email && !verifyPassword(password, userRecord.password) ){
-            console.log("Invalid password for existing record "+email);
-            errors.append("Invalid Password");
-            break;
-        }
-        var existingEntry = usersDict[email];
-        console.log("checking existing "+existingEmail);
-        if (existingEmail == email && ! (existingEntry.name == name)){
-            console.log("No changing of names.  Maybe eventually  "+email);
-            errors.append ("Invalid Name Change");
-            break;
-        }
-        if (existingEntry && existingEntry.name == name){
-            console.log("Duplicate name "+email);
-            errors.append ("Invalid Duplicate tribe name");
-            break;
+    var password = "";
+    hashPassword(userData.password).then(hashedValue => { password = hashedValue});
+    userData.password = password
+    var errors = "";
+    var existed = false;
+    for (const [existingName, userRecord] of Object.entries(usersDict)){
+        if (existingName == name){
+            var validPassword = verifyPassword(password ,userData.password);
+            if (password && !validPassword ){
+                console.log("Invalid password for existing player "+name);
+                errors= "Invalid Password";
+                break;
+            } else {
+                existed = true;
+            }
         }
     }
     if (errors.length > 0){
@@ -258,17 +275,19 @@ function registerUser(userData){
             content: errors
         }
     } else {
-        console.log("Adding "+email+" to list of users")
-        usersDict[email] = userData;
-        saveLib.actuallyWriteToDisk("users.json",usersDict);
+        if (existed){
+            console.log("returning user "+name);
+        } else {
+            console.log("Adding "+name+" "+email+" to list of users")
+            usersDict[name] = userData;
+            actuallyWriteToDisk("users.json",usersDict);
+        }
         messageData = {
             type: 'registration',
             label: 'success',
             content: "success"
         };    
-
     }
-
     return messageData;
 }
 
@@ -277,7 +296,39 @@ async function hashPassword(password) {
     const hash = await bcrypt.hash(password, saltRounds);
     return hash;
 }
-async function verifyPassword(password, matchValue) {
-    const match = await bcrypt.compare(password, matchValue);
+async function verifyPassword(input, matchValue) {
+    const match = await bcrypt.compare(input, matchValue);
+    console.log(input+" "+matchValue+ " "+match)
     return match;
+}
+// cloned from save lib; when save lib is loaded I get port violations 
+function actuallyWriteToDisk(fileName, jsonData){
+    jsonString = JSON.stringify(jsonData,null,2), err => { 
+        // Checking for errors 
+        if (err) {
+            console.log('error with jsonification of '+fileName+' '+err)
+            throw err;
+        }  
+    }
+    try {
+        fs.writeFileSync(fileName, jsonString, (err) => {
+            if (err) throw err;
+        });
+        checkedData = loadJson(fileName);
+        checkedString = JSON.stringify(checkedData,null,2), err => { 
+            // Checking for errors 
+            if (err) {
+                console.log('error 2 with jsonification of '+fileName+' '+err)
+                throw err;
+            }  
+        }
+        if ( checkedString === jsonString ){
+            console.log('checked data match')
+        } else {
+            console.log('checked data did not match')
+        }
+    } catch (err){
+        console.log('save failed. '+err)
+    }
+    console.log(fileName+" saved!");
 }

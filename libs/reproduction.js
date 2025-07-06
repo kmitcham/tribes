@@ -402,11 +402,11 @@ function globalMatingCheck(gameState){
             } else if (invitingMember.inviteList && invitingMember.inviteList.length > 0 && !invitingMember.cannotInvite) {
              // the person is eligible to mate, and has an invitelist
                 index = 0;
-                if ("inviteIndex" in invitingMember){
+                if ("inviteIndex" in invitingMember && invitingMember.inviteIndex ){
                     index = invitingMember.inviteIndex;
                 }
                 targetName = invitingMember.inviteList[index];
-                console.log(" inviting "+targetName)
+                console.log(" inviting "+targetName+ " index "+index);
                 if (! targetName ){
                     console.log("member "+invitingMember.name+" had a false value for target "+index+" in inviteList:"+targetName);
                     text.addMessage(gameState, "tribe", inviterDisplayName+" has a troublesome problem flirting, and will not mate this round.");

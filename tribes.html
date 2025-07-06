@@ -54,20 +54,19 @@
 <body>
     <table id="formatTable">
         <tr>
-            <th>Regististration</th>
+            <th>Registration</th>
             <th>Select Tribe</th>
         </tr>
         <tr>
             <td>        
     <div id="registration">
-        <label for="email">Email (unique identifier)</label>
-        <input type="email" id="email" name="email">
-        <br>
-        <label for="playerNameField">Tribal Name</label>
+        <label for="playerNameField">Name</label>
         <input type="text" id="playerNameField" name="playerNameField">
-        <br>
         <label for="pwd">Password:</label>
         <input type="password" id="pwd" name="pwd">
+        <br>
+        <label for="email">Email (for recovery purposes)</label>
+        <input type="email" id="email" name="email">
         <button id="submitButton">Register</button>
     </div>
 </td>
@@ -88,7 +87,7 @@
 </td>
 </tr>
 </table>
-    <div id="command">
+    <!-- <div id="command">
         <h2>Command</h2>
         <p>Enter commands like: <code>NOT YET IMPLEMENTED give player1 5 grain</code></p>
         <input type="text" id="commandInput" placeholder="Enter command">
@@ -100,7 +99,7 @@
             <h2>Command Results</h2>
             <table id="commandResults"></table>
         </div>
-    </div>
+    </div> -->
     <div id="status">
         <h2>Status:</h2>
         <textarea id="statusText" rows="5" cols="80" readonly>Tribe status</textarea>
@@ -133,7 +132,8 @@
         function connectWebSocket() {
             // Create a new WebSocket connection
             let host = "192.168.1.20"
-            ws = new WebSocket('ws://'+host+':8080'); // Replace with your WebSocket URL
+            let PORT = 9090;
+            ws = new WebSocket('ws://'+host+':'+PORT); // Replace with your WebSocket URL
 
             ws.onopen = function () {
                 console.log('WebSocket connection established');
@@ -192,6 +192,7 @@
         const refreshButton = document.getElementById('refreshButton');
         const populationTableContainer = document.getElementById('populationTableContainer');
         const populationTable = document.getElementById('populationTable');
+        var cachedPopulation;
 
         const childrenTableContainer = document.getElementById('childrenTableContainer');
         const childrenTable = document.getElementById('childrenTable');
@@ -199,6 +200,7 @@
         const romanceTableContainer = document.getElementById('romanceTableContainer');
         const romanceButton = document.getElementById('romanceButton');
         const romanceTable = document.getElementById('romanceTable');
+        const localRomanceData = {}
 
         const statusText = document.getElementById('statusText');
 
@@ -223,11 +225,6 @@
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${type}`;
             messageDiv.textContent = text;
-            if (type === 'infoRequest'){
-                console.log("info "+text);
-            } else {
-                console.log("type not info:"+type);
-            }
         }
 
         // Function to render population table
@@ -255,7 +252,7 @@
 
             // Create table body
             const tbody = document.createElement('tbody');
-            for (const [name, data] of Object.entries(population)) {
+            for (const [name, data] of Object.entries(population).sort()) {
                 console.log("Population row for "+name+" data keys :"+Object.keys(data));
                 const row = document.createElement('tr');
                 if ( (data.food + data.grain) < 4){
@@ -386,9 +383,16 @@
         }
 
         function renderRomanceTable(memberName, romanceData, populationData){
+            console.log("starting romance table 2 "+memberName);
+            if (! populationData ){
+                console.log("No population for romance");
+                populationData= cachedPopulation;
+            }
             var member = populationData[memberName];
             var isMale = (member.gender.toLowerCase === 'male');
             var rows = filterPopulationByGender( !isMale, populationData);
+            console.log("\trows:", rows);
+            const tbody = document.createElement('tbody');
             var columns = ['Name', 'Invite Order', 'Consent', 'Decline'];
             romanceTable.innerHTML = '';
             const thead = document.createElement('thead');
@@ -400,22 +404,106 @@
             });
             thead.appendChild(headerRow);
             romanceTable.appendChild(thead);
+            rowCounter = 0;
 
-            for ( const[name, data] of Object.entries(rows)){
+            for ( const[name, data] of Object.entries(rows).sort()){
+                console.log("romance table: "+name+":"+Object.values(data));
                 const row = document.createElement('tr');
-                const nameCell = document.createElement('td');
-                nameCell.value = data.name;
-                row.appendChild(nameCell);
-                const orderCell = document.createElement('td');
-                row.appendChild(orderCell);
-                const consentCell = document.createElement('td');
-                row.appendChild(consentCell);
-                const declineCell = document.createElement('td');
-                row.appendChild(declineCell);
-
+                localRomanceData[data.name] = {};
+                row.innerHTML = `
+                    <td>${data.name}</td>
+                    <td><input type="text" name="invite_order_${rowCounter}" pattern="[0-9]"></td>
+                    <td class="radio-cell">
+                        <input type="radio" name="status_${rowCounter}" value="consent" id="consent_${rowCounter}">
+                    </td>
+                    <td class="radio-cell">
+                        <input type="radio" name="status_${rowCounter}" value="decline" id="decline_${rowCounter}">
+                    </td>
+                `;
                 tbody.appendChild(row);
+                rowCounter++;
             }
+            romanceTable.append(tbody);
+            console.log("romance rendered");
+            setRomanceValues(romanceTable.rows, romanceData);
+            console.log("romance set");
         }
+
+        function readRomanceValues(rows){
+            var romanceData = {};
+            var inviteList = [];
+            var consentList = [];
+            var declineList = [];
+            var count = 0;
+            var index = -1;
+            for (let row of rows){
+                var name = row.cells[0].innerText;
+                const inviteOrderTextArea = row.querySelectorAll('input[type="text"]');
+                if (inviteOrderTextArea && inviteOrderTextArea[0]){
+                    index = inviteOrderTextArea[0].value;
+                    if (index){
+                        inviteList[index] = name;
+                    }
+                }
+                console.log("row name:"+name+" inviteVal:"+index+"  "+inviteList.join());
+                const radioButtons = row.querySelectorAll('input[type="radio"]');
+                let selectedValue = 'none';                
+                for (var radio of radioButtons){
+                    if (radio.value == "consent"){
+                        if (radio.checked == true){
+                            consentList.push(name);
+                        }
+                    }
+                    if (radio.value == "decline"){
+                        if (radio.checked == true){
+                            declineList.push(name);
+                        }
+                    }
+                };
+            };
+            console.log("inv: "+inviteList+ "  consnt: "+consentList+"  d:"+declineList)
+            romanceData['inviteList'] = inviteList.filter( Boolean );
+            romanceData['consentList'] = consentList;
+            romanceData['declineList'] = declineList;
+            return romanceData;
+        }
+
+        function setRomanceValues(rows, romanceData){
+            console.log("in set, rows:"+rows);
+            var consentList = romanceData.consentList ||[];
+            var inviteList = romanceData.inviteList;
+            
+            console.log("inviteList "+inviteList.join());
+            var declineList = romanceData.declineList || [];
+            var count = 0;
+            for (let row of rows){
+                var name = row.cells[0].innerText;
+                console.log("row name:"+name);
+                var name = row.cells[0].innerText;
+                if (inviteList.includes(name)){
+                    var index = inviteList.indexOf(name);
+                    const inviteOrderTextArea = row.querySelectorAll('input[type="text"]');
+                    if (inviteOrderTextArea && inviteOrderTextArea[0] && index > -1){
+                        inviteOrderTextArea[0].value = (index+1);
+                    }
+                }
+                const radioButtons = row.querySelectorAll('input[type="radio"]');
+                let selectedValue = 'none';                
+                for (var radio of radioButtons){
+                    if (radio.value == "consent"){
+                        if (consentList.includes(name) || consentList.includes("!all")){
+                            radio.checked = true;
+                        }
+                    }
+                    if (radio.value == "decline"){
+                        if (declineList.includes(name)){
+                            radio.checked = true;
+                        }
+                    }
+                };
+            };
+        }
+
         function filterPopulationByGender(isMale, populationData){
             filtered = {}
             for (const [name, data] of Object.entries(populationData)) {
@@ -425,122 +513,12 @@
             }
             return filtered;
         }
-        function getConsentList(){
-            return []
-        }
-        function getDeclineList(){
-            return []
-        }
-        function getInviteList(){
-            return []
-        }
         
         function updateMessageBox(updateText){
             // maybe all of history goes here?
         }
-        // WebSocket event handlers
-        ws.onopen = () => {
-            addMessage('Connected to WebSocket server');
-            console.log('Connected to WebSocket server');
-        };
-
-        ws.onmessage = (event) => {
-            try {
-                const topData = JSON.parse(event.data);
-                var data = topData.messageData;
-                console.log('Received:', data);
-                if (!data){
-                    console.log("No data in message");
-                    data = {}
-                    return;
-                }
-                console.log("keys:"+Object.keys(data));
-                if (data.type === 'welcome') {
-                    console.log("welcome");
-                    addMessage(data.message);
-                } else if (data.type == 'registration') {
-                    submitButton.disabled = true;
-                    validated = true;
-                    playerPassword.disabled = true;
-                    playerNameField.disabled = true;
-                    playerEmailField.diabled = true;
-                } else if (data.type == 'command') {
-                    console.log("command");
-                    addMessage(data.message, data.success ? 'response' : 'command');
-                } else if (data.type == 'error') {
-                    console.log("error");
-                    addMessage(data.message, 'error');
-                } else if (data.type == 'infoRequest') {
-                    console.log("infoRequest "+ data.label);
-                    if (data.label == 'population'){
-                        renderPopulationTable(data.content);
-                    } else if (data.label == 'children'){
-                        console.log("Child content:"+data.content);
-                        renderChildrenTable(data.content);
-                    } else if (data.label == 'status'){
-                        console.log("Status content:"+data.content);
-                        statusText.value = data.content;
-                    } else { 
-                        console.log("Unknown type:"+data.label);
-                    }
-                } else {
-                    console.log("unmatched type: "+data.type);
-                }
-            } catch (error) {
-                console.error('Error parsing WebSocket message:', error);
-                addMessage('Error parsing data from server.', 'error');
-            }
-        };
-
-        ws.onerror = (error) => {
-            console.error('WebSocket error:', error);
-            addMessage('Error connecting to WebSocket server.', 'error');
-        };
-
-        ws.onclose = () => {
-            console.log('Disconnected from WebSocket server');
-            addMessage('Disconnected from server.', 'error');
-        };
-
-        romanceButton.addEventListener('click', ()=>{
-            var name = playerNameField.value;
-            var password = playerPassword.value;
-            var email = playerEmailField.value;
-            var tribe = tribeNamePicker.value;
-            var inviteList = getInviteList();
-            var consentList = getConsentList();
-            var declineList = getDeclineList();
-            let message = {
-                type: 'romanceRequest',
-                name: name,
-                email: email,
-                password: password,
-                tribe: tribe,
-                clientId: clientId,
-                inviteList: inviteList,
-                declineList: declineList,
-                consentList: consentList
-            };
-            ws.send(JSON.stringify(message));
-        })
-        submitButton.addEventListener('click', ()=>{
-            name = playerNameField.value;
-            password = playerPassword.value;
-            email = playerEmailField.value;
-            var tribe = tribeNamePicker.value;
-            let message = {
-                type: 'registerRequest',
-                name: name,
-                email: email,
-                tribe: tribe,
-                password: password,
-                clientId: clientId
-            };
-            ws.send(JSON.stringify(message));
-        }
-        );
-
-        refreshButton.addEventListener('click', ()=>{
+        
+        function getBasicTribeInfo(){
             tribe = tribeNamePicker.value;
             name = playerNameField.value;
             password = playerPassword.value;
@@ -582,6 +560,133 @@
             ws.send(JSON.stringify(message));
             addMessage(`Sent: infoRequest: status`);
 
+        }
+
+        // WebSocket event handlers
+        ws.onopen = () => {
+            addMessage('Connected to WebSocket server');
+            console.log('Connected to WebSocket server');
+        };
+
+        ws.onmessage = (event) => {
+            try {
+                const topData = JSON.parse(event.data);
+                console.log('Received event:', event);
+                console.log('Received event.data: ', topData);
+                var data = topData;
+                for (var [key, value] of Object.entries(topData)){
+                    console.log(key+" "+value);
+                }  
+                console.log('Received data:', data);
+                if (!data){
+                    console.log("No data in message");
+                    data = {}
+                    return;
+                }
+                console.log("keys:"+Object.keys(data));
+                if (data.type === 'welcome') {
+                    console.log("welcome");
+                    addMessage(data.message);
+                } else if (data.type == 'registration') {
+                    if (data.label == 'error'){
+                        alert("Invalid registration:"+data.content);
+                    } else {
+                        submitButton.disabled = true;
+                        validated = true;
+                        playerPassword.disabled = true;
+                        playerNameField.disabled = true;
+                        playerEmailField.diabled = true;
+                        console.log("logged in");
+                    }
+                } else if (data.type == 'command') {
+                    console.log("command");
+                    addMessage(data.message, data.success ? 'response' : 'command');
+                } else if (data.type == 'error') {
+                    console.log("error");
+                    addMessage(data.message, 'error');
+                } else if (data.type == 'infoRequest') {
+                    console.log("infoRequest "+ data.label);
+                    if (data.label == 'population'){
+                        renderPopulationTable(data.content);
+                        console.log("caching population EGGPLANT");
+                        cachedPopulation = data.content;
+                    } else if (data.label == 'children'){
+                        console.log("Child content:"+data.content);
+                        renderChildrenTable(data.content);
+                    } else if (data.label == 'status'){
+                        console.log("Status content:"+data.content);
+                        statusText.value = data.content;                    
+                    } else if (data.label == 'romance'){
+                        console.log("romance content:"+data.content);
+                        renderRomanceTable(playerNameField.value, data.content, cachedPopulation); 
+                    } else { 
+                        console.log("Unknown type:"+data.label);
+                    }
+                } else {
+                    console.log("unmatched type: "+data.type);
+                }
+            } catch (error) {
+                console.error('Error parsing WebSocket message:', error);
+                addMessage('Error parsing data from server.', 'error');
+            }
+        };
+
+        ws.onerror = (error) => {
+            console.error('WebSocket error:', error);
+            addMessage('Error connecting to WebSocket server.', 'error');
+        };
+
+        ws.onclose = () => {
+            console.log('Disconnected from WebSocket server');
+            addMessage('Disconnected from server.', 'error');
+        };
+
+        romanceButton.addEventListener('click', ()=>{
+            var name = playerNameField.value;
+            var password = playerPassword.value;
+            var email = playerEmailField.value;
+            var tribe = tribeNamePicker.value;
+            
+            var romanceValues = readRomanceValues(romanceTable.rows);
+            var inviteList = romanceValues['inviteList'];
+            var consentList = romanceValues['consentList'];
+            var declineList = romanceValues['declineList'];
+            console.log("Sending server inviteList: "+inviteList.join());
+            let message = {
+                type: 'romanceRequest',
+                name: name,
+                email: email,
+                password: password,
+                tribe: tribe,
+                clientId: clientId,
+                inviteList: inviteList,
+                declineList: declineList,
+                consentList: consentList
+            };
+            ws.send(JSON.stringify(message));
+        })
+
+        submitButton.addEventListener('click', ()=>{
+            console.log("sending registration");
+            name = playerNameField.value;
+            password = playerPassword.value;
+            email = playerEmailField.value;
+            var tribe = tribeNamePicker.value;
+            getBasicTribeInfo();
+            let message = {
+                type: 'registerRequest',
+                name: name,
+                email: email,
+                tribe: tribe,
+                password: password,
+                clientId: clientId
+            };
+            ws.send(JSON.stringify(message));
+            console.log("sent registration");
+        });
+
+        refreshButton.addEventListener('click', ()=>{
+            getBasicTribeInfo();
         }
         )
     </script>

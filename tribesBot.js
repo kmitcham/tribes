@@ -92,6 +92,10 @@ client.on(Events.InteractionCreate, async interaction => {
 		command.execute(interaction, gameState, client);
 		// send responses to the messages
 		sendMessages(client, gameState, interaction);
+		var d = new Date();
+    	var saveTime = d.toISOString();
+		saveTime = saveTime.replace(/\//g, "-");
+		console.log("Command completed: "+saveTime);
 		if (gameState.saveRequired){
 			savelib.saveTribe(gameState);
 			gameState.saveRequired = false;
@@ -125,7 +129,7 @@ async function sendMessages(bot, gameState, interaction){
 	MAX_LENGTH = 1900; //docs say 2000 is max; better safe than sorry
 	// regext [\S\s] is any chacter that is either a space or not a space; eg, any character
 	if ("tribe" in messagesDict ){
-		console.log("in send messages tribe >>"+messagesDict["tribe"]+"<<");
+		//console.log("in send messages tribe >>"+messagesDict["tribe"]+"<<");
 		var message = messagesDict["tribe"];
 		chunksSent = 0;
 		var chunks = []
@@ -140,13 +144,13 @@ async function sendMessages(bot, gameState, interaction){
 			needsReply = false;
 		}
 		while (chunks && chunksSent < chunks.length){
-			console.log("sending bonus chunks to tribe");
+			//console.log("sending bonus chunks to tribe");
 			channel.send({content: chunks[chunksSent++] });
 		}
 		delete messagesDict["tribe"];
 	}
 	if (actorName in messagesDict && needsReply){
-		console.log("Actor "+actorName+" in the dictionary and needsReply");
+		//console.log("Actor "+actorName+" in the dictionary and needsReply");
 		// only reply here if reply is still needed; otherwise handle with other messages below
 		const message = messagesDict[actorName];
 		if (!message){
@@ -162,7 +166,7 @@ async function sendMessages(bot, gameState, interaction){
 				console.log("Weird empty message (no chunks) for "+actorName);
 			} else {
 				chunks = message.match(/[\S\s]{1,1900}/g);
-				console.log("message needs reply, with this many chunks:"+chunks.length);
+				//console.log("message needs reply, with this many chunks:"+chunks.length);
 				if (message && interaction.isRepliable() ){
 					needsReply = false;
 					user = interaction.user;
@@ -171,7 +175,7 @@ async function sendMessages(bot, gameState, interaction){
 					if (chunks.length > 1){
 						response += " \n(message truncated.  Check DMs for more info)"
 					}
-					console.log("reply to "+actorName+" : "+response);
+					//console.log("reply to "+actorName+" : "+response);
 					interaction.reply({ content: response, flags: MessageFlags.Ephemeral })
 					// double tap user so they have a DM of content as well.  TODO: confirm this is correct?
 					if (chunks[0]){
@@ -226,7 +230,7 @@ async function sendMessages(bot, gameState, interaction){
 			if (!user){
 				try {
 					user = await getUser(userId);
-					console.log("Got user "+user+" "+user.displayName);
+					//console.log("Got user "+user+" "+user.displayName);
 				} catch( error){
 					console.log("error with emergency get user:"+error);
 				}
@@ -238,7 +242,7 @@ async function sendMessages(bot, gameState, interaction){
 				chunksSent = 0;
 				sendRemainingMessageChunksToUser(user, chunks, chunksSent);
 			}
-			console.log("messages complete for "+address);
+			//console.log("messages complete for "+address);
 		} else {
 			console.log("no handle for "+address);
 		}
@@ -269,7 +273,7 @@ function sendRemainingMessageChunksToUser(user, messageArray, chunksSent){
 		return;
 	}
 	while (chunksSent < messageArray.length){
-		console.log(messageArray.length+ " chunks bound for "+user.displayName);
+		//console.log(messageArray.length+ " chunks bound for "+user.displayName);
 		if (messageArray[chunksSent]){
 			try {
 				user.send({content: messageArray[chunksSent++] });
@@ -287,7 +291,7 @@ function sendRemainingMessageChunksToUser(user, messageArray, chunksSent){
 			break;
 		}
 	}
-	console.log(chunksSent+ " chunks sent to "+user.displayName);
+	//console.log(chunksSent+ " chunks sent to "+user.displayName);
 	return;
 }
 
