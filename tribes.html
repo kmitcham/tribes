@@ -389,7 +389,8 @@
                 populationData= cachedPopulation;
             }
             var member = populationData[memberName];
-            var isMale = (member.gender.toLowerCase === 'male');
+            var isMale = (member.gender.toLowerCase() == 'male');
+            console.log("isMale: "+isMale);
             var rows = filterPopulationByGender( !isMale, populationData);
             console.log("\trows:", rows);
             const tbody = document.createElement('tbody');
@@ -407,7 +408,7 @@
             rowCounter = 0;
 
             for ( const[name, data] of Object.entries(rows).sort()){
-                console.log("romance table: "+name+":"+Object.values(data));
+                //console.log("romance table: "+name+":"+Object.values(data));
                 const row = document.createElement('tr');
                 localRomanceData[data.name] = {};
                 row.innerHTML = `
@@ -424,9 +425,7 @@
                 rowCounter++;
             }
             romanceTable.append(tbody);
-            console.log("romance rendered");
             setRomanceValues(romanceTable.rows, romanceData);
-            console.log("romance set");
         }
 
         function readRomanceValues(rows){
@@ -445,7 +444,6 @@
                         inviteList[index] = name;
                     }
                 }
-                console.log("row name:"+name+" inviteVal:"+index+"  "+inviteList.join());
                 const radioButtons = row.querySelectorAll('input[type="radio"]');
                 let selectedValue = 'none';                
                 for (var radio of radioButtons){
@@ -461,7 +459,6 @@
                     }
                 };
             };
-            console.log("inv: "+inviteList+ "  consnt: "+consentList+"  d:"+declineList)
             romanceData['inviteList'] = inviteList.filter( Boolean );
             romanceData['consentList'] = consentList;
             romanceData['declineList'] = declineList;
@@ -473,12 +470,12 @@
             var consentList = romanceData.consentList ||[];
             var inviteList = romanceData.inviteList;
             
-            console.log("inviteList "+inviteList.join());
+            //console.log("inviteList "+inviteList.join());
             var declineList = romanceData.declineList || [];
             var count = 0;
             for (let row of rows){
                 var name = row.cells[0].innerText;
-                console.log("row name:"+name);
+                //console.log("row name:"+name);
                 var name = row.cells[0].innerText;
                 if (inviteList.includes(name)){
                     var index = inviteList.indexOf(name);

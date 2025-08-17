@@ -1,15 +1,18 @@
 const WebSocket = require('ws');
+const logger = require('./libs/logger.js');
 const PORT = 9090;
 const fs = require('fs');
 const util = require('./libs/util.js');
 const bcrypt = require('bcrypt');
 
 var wss;
-console.log('Server started on port '+PORT);
+logger.errorLog.info('Test error log');
+logger.accessLog.info('Test access log');
+logger.accessLog.info('Server started on port '+PORT);
 try {
     wss = new WebSocket.Server({ port: PORT });
 } catch (error) {
-    console.error('Error setting up webserver:', error);
+    logger.errorLog.error('Error setting up webserver:', error);
     exit;
 }
 

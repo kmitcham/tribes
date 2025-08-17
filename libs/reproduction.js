@@ -201,6 +201,10 @@ function invite(gameState, rawActorName, rawList ){
     var inviteNamesAsArray = pop.convertStringToArray(rawList);
     // TODO: make sure to split out items starting with !    
     console.log(player.name+" raw invitelist:"+rawList+ " as array:"+inviteNamesAsArray);
+    if (gameState.reproductionRound == true && player.inviteIndex ){
+        console.log("Updateing inviteIndex for "+player.name+" since list updated during the round");
+        player.inviteIndex = 0;
+    }
 
     message = handleReproductionList(player.name, inviteNamesAsArray, "inviteList", gameState )
     globalMatingCheck(gameState);
@@ -402,8 +406,11 @@ function globalMatingCheck(gameState){
             } else if (invitingMember.inviteList && invitingMember.inviteList.length > 0 && !invitingMember.cannotInvite) {
              // the person is eligible to mate, and has an invitelist
                 index = 0;
-                if ("inviteIndex" in invitingMember && invitingMember.inviteIndex ){
+                if ("inviteIndex" in invitingMember && invitingMember.inviteIndex){
                     index = invitingMember.inviteIndex;
+                }
+                if ((index+1) > invitingMember.inviteList.length ) {
+                    console.log("\t inviteIndex is longer than invite list. index:"+index+" list:"+invitingMember.inviteList.join());
                 }
                 targetName = invitingMember.inviteList[index];
                 console.log(" inviting "+targetName+ " index "+index);
