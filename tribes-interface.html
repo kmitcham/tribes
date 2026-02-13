@@ -1,0 +1,1296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tribes Game Interface</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1rem;
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            grid-gap: 1rem;
+            height: calc(100vh - 120px);
+        }
+
+        .sidebar {
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow-y: auto;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+            grid-gap: 1rem;
+        }
+
+        .user-info {
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 1rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .form-group select, .form-group input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-group select:focus, .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+            width: 100%;
+            margin-bottom: 0.5rem;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-small {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.9rem;
+        }
+
+        .commands-section {
+            margin-top: 1rem;
+        }
+
+        .command-categories {
+            margin-bottom: 1rem;
+        }
+
+        .category-btn {
+            background: #f8f9fa;
+            color: #495057;
+            border: 1px solid #dee2e6;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+            width: auto;
+            display: inline-block;
+        }
+
+        .category-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .command-list {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: #f8f9fa;
+        }
+
+        .command-item {
+            padding: 0.75rem;
+            border-bottom: 1px solid #ddd;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .command-item:hover {
+            background-color: #e9ecef;
+        }
+
+        .command-item.selected {
+            background-color: #667eea;
+            color: white;
+        }
+
+        .command-name {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .command-desc {
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+
+        .command-item.selected .command-desc {
+            color: #e9ecef;
+        }
+
+        .data-section {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .section-header {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .tab-container {
+            padding: 1rem;
+            height: 100%;
+            overflow-y: auto;
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .tab {
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            border-bottom-color: #667eea;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .command-panel {
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .command-form {
+            margin-bottom: 1rem;
+        }
+
+        .command-parameters {
+            margin: 1rem 0;
+        }
+
+        .parameter-group {
+            margin-bottom: 1rem;
+        }
+
+        .messages-container {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 1rem;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 1rem;
+        }
+
+        .message {
+            margin-bottom: 0.5rem;
+            padding: 0.5rem;
+            border-radius: 4px;
+        }
+
+        .message.info {
+            background-color: #d4edda;
+            border-left: 4px solid #28a745;
+        }
+
+        .message.error {
+            background-color: #f8d7da;
+            border-left: 4px solid #dc3545;
+        }
+
+        .message.success {
+            background-color: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+        }
+
+        .connection-status {
+            padding: 0.5rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .connection-status.connected {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .connection-status.disconnected {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .connection-status.connecting {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .status-text {
+            white-space: pre-line;
+            font-family: monospace;
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+
+        .order-list {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            min-height: 100px;
+            max-height: 200px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            padding: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .order-item {
+            display: flex;
+            align-items: center;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 0.5rem;
+            margin-bottom: 0.25rem;
+            position: relative;
+        }
+
+        .order-number {
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-right: 0.5rem;
+            flex-shrink: 0;
+        }
+
+        .order-name {
+            flex-grow: 1;
+            margin-right: 0.5rem;
+        }
+
+        .order-controls {
+            display: flex;
+            gap: 0.25rem;
+        }
+
+        .order-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .order-btn:hover {
+            background: #495057;
+        }
+
+        .order-btn.up {
+            background: #28a745;
+        }
+
+        .order-btn.up:hover {
+            background: #1e7e34;
+        }
+
+        .order-btn.down {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .order-btn.down:hover {
+            background: #e0a800;
+        }
+
+        .order-btn.remove {
+            background: #dc3545;
+        }
+
+        .order-btn.remove:hover {
+            background: #c82333;
+        }
+
+        .add-player-section {
+            margin-top: 0.5rem;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .add-player-select {
+            flex-grow: 1;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto;
+            }
+            
+            .sidebar {
+                order: 2;
+            }
+            
+            .main-content {
+                order: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🏛️ Tribes Game Interface</h1>
+        <div class="connection-status" id="connectionStatus">Connecting...</div>
+    </div>
+
+    <div class="container">
+        <div class="sidebar">
+            <!-- User Info Section -->
+            <div class="user-info">
+                <div class="form-group">
+                    <label for="tribeSelect">Tribe:</label>
+                    <select id="tribeSelect">
+                        <option value="bear">Bear</option>
+                        <option value="flounder">Flounder</option>
+                        <option value="bug">Bug</option>
+                        <option value="vashon">Vashon</option>
+                        <option value="mib">MIB</option>
+                        <option value="sloth">Sloth</option>
+                        <option value="wolf">Wolf</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="playerName">Player Name:</label>
+                    <input type="text" id="playerName" placeholder="Enter your name">
+                </div>
+                
+                <div class="form-group">
+                    <label for="playerPassword">Password:</label>
+                    <input type="password" id="playerPassword" placeholder="Optional password">
+                </div>
+                
+                <button class="btn" id="registerBtn">Register/Login</button>
+            </div>
+
+            <!-- Commands Section -->
+            <div class="commands-section">
+                <h3>Available Commands</h3>
+                
+                <div class="command-categories" id="commandCategories">
+                    <button class="category-btn btn-small active" data-category="all">All</button>
+                </div>
+                
+                <div class="command-list" id="commandList">
+                    <div class="command-item">Loading commands...</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <!-- Command Execution Panel -->
+            <div class="command-panel">
+                <h3 id="selectedCommandName">Select a command</h3>
+                <p id="selectedCommandDesc">Choose a command from the sidebar to see its parameters.</p>
+                
+                <div class="command-form" id="commandForm" style="display: none;">
+                    <div class="command-parameters" id="commandParameters"></div>
+                    <button class="btn" id="executeCommandBtn">Execute Command</button>
+                </div>
+                
+                <div class="messages-container" id="messagesContainer"></div>
+            </div>
+
+            <!-- Data Display Section -->
+            <div class="data-section">
+                <div class="section-header">
+                    <div class="section-title">Game Data</div>
+                    <button class="btn btn-small" id="refreshDataBtn">Refresh Game Data</button>
+                </div>
+                
+                <div class="tab-container">
+                    <div class="tabs">
+                        <div class="tab active" data-tab="population">Population</div>
+                        <div class="tab" data-tab="children">Children</div>
+                        <div class="tab" data-tab="status">Game Status</div>
+                    </div>
+                    
+                    <div class="tab-content active" id="populationTab">
+                        <table id="populationTable">
+                            <thead>
+                                <tr>
+                                    <td colspan="100%">Click "Refresh Game Data" to load population data</td>
+                                </tr>
+                            </thead>
+                        </table>
+                    </div>
+                    
+                    <div class="tab-content" id="childrenTab">
+                        <table id="childrenTable">
+                            <thead>
+                                <tr>
+                                    <td colspan="100%">Click "Refresh Game Data" to load children data</td>
+                                </tr>
+                            </thead>
+                        </table>
+                    </div>
+                    
+                    <div class="tab-content" id="statusTab">
+                        <div class="status-text" id="statusText">
+                            Click "Refresh Game Data" to load game status
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class TribesClient {
+            constructor() {
+                this.ws = null;
+                this.clientId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                this.commands = {};
+                this.selectedCommand = null;
+                this.currentPopulation = null; // Store current population for dropdowns
+                this.reconnectAttempts = 0;
+                this.maxReconnectAttempts = 5;
+                this.reconnectInterval = 2000;
+                
+                this.initializeEventListeners();
+                this.connect();
+            }
+
+            connect() {
+                try {
+                    this.updateConnectionStatus('connecting');
+                    
+                    // Try to connect to localhost first, then fallback to other addresses
+                    const hosts = ['localhost', '127.0.0.1', '192.168.1.20', window.location.hostname || 'localhost'];
+                    const port = 8088;
+                    
+                    const tryHost = (hostIndex = 0) => {
+                        if (hostIndex >= hosts.length) {
+                            console.error('Failed to connect to any host');
+                            this.updateConnectionStatus('disconnected');
+                            this.scheduleReconnect();
+                            return;
+                        }
+                        
+                        const host = hosts[hostIndex];
+                        console.log(`Trying to connect to ws://${host}:${port}`);
+                        
+                        this.ws = new WebSocket(`ws://${host}:${port}`);
+                        
+                        this.ws.onopen = () => {
+                            console.log('WebSocket connected');
+                            this.updateConnectionStatus('connected');
+                            this.reconnectAttempts = 0;
+                            this.requestCommandList();
+                        };
+                        
+                        this.ws.onmessage = (event) => {
+                            this.handleMessage(JSON.parse(event.data));
+                        };
+                        
+                        this.ws.onerror = (error) => {
+                            console.error('WebSocket error:', error);
+                        };
+                        
+                        this.ws.onclose = () => {
+                            console.log('WebSocket closed');
+                            this.updateConnectionStatus('disconnected');
+                            tryHost(hostIndex + 1);
+                        };
+                        
+                        // If connection doesn't open in 2 seconds, try next host
+                        setTimeout(() => {
+                            if (this.ws.readyState !== WebSocket.OPEN) {
+                                this.ws.close();
+                                tryHost(hostIndex + 1);
+                            }
+                        }, 2000);
+                    };
+                    
+                    tryHost();
+                    
+                } catch (error) {
+                    console.error('Error connecting:', error);
+                    this.updateConnectionStatus('disconnected');
+                    this.scheduleReconnect();
+                }
+            }
+
+            scheduleReconnect() {
+                if (this.reconnectAttempts < this.maxReconnectAttempts) {
+                    this.reconnectAttempts++;
+                    setTimeout(() => this.connect(), this.reconnectInterval);
+                }
+            }
+
+            updateConnectionStatus(status) {
+                const statusEl = document.getElementById('connectionStatus');
+                statusEl.className = `connection-status ${status}`;
+                
+                switch (status) {
+                    case 'connected':
+                        statusEl.textContent = '✅ Connected to Tribes Server';
+                        break;
+                    case 'connecting':
+                        statusEl.textContent = '🔄 Connecting...';
+                        break;
+                    case 'disconnected':
+                        statusEl.textContent = '❌ Disconnected from Server';
+                        break;
+                }
+            }
+
+            send(data) {
+                if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+                    data.clientId = this.clientId;
+                    data.tribe = document.getElementById('tribeSelect').value;
+                    data.playerName = document.getElementById('playerName').value;
+                    data.password = document.getElementById('playerPassword').value;
+                    
+                    this.ws.send(JSON.stringify(data));
+                } else {
+                    this.addMessage('Not connected to server', 'error');
+                }
+            }
+
+            handleMessage(data) {
+                console.log('Received:', data);
+
+                switch (data.type) {
+                    case 'commandList':
+                        this.handleCommandList(data.commands);
+                        break;
+                    case 'commandResponse':
+                        this.handleCommandResponse(data);
+                        break;
+                    case 'infoRequest':
+                        this.handleInfoResponse(data);
+                        break;
+                    case 'tribeMessage':
+                        this.addMessage(`[TRIBE] ${data.message}`, 'info');
+                        break;
+                    case 'privateMessage':
+                        this.addMessage(`[PRIVATE] ${data.message}`, 'info');
+                        break;
+                    case 'registration':
+                        this.handleRegistrationResponse(data);
+                        break;
+                    case 'error':
+                        this.addMessage(data.message, 'error');
+                        break;
+                    default:
+                        console.log('Unknown message type:', data.type);
+                }
+            }
+
+            handleCommandList(commands) {
+                this.commands = commands;
+                this.updateCommandList();
+                this.updateCommandCategories();
+            }
+
+            handleCommandResponse(data) {
+                const type = data.success ? 'success' : 'error';
+                this.addMessage(`[${data.command.toUpperCase()}] ${data.message}`, type);
+            }
+
+            handleInfoResponse(data) {
+                switch (data.label) {
+                    case 'population':
+                        this.currentPopulation = data.content;
+                        this.updatePopulationTable(data.content);
+                        // Regenerate form if we were waiting for population data
+                        if (this.selectedCommand) {
+                            this.generateCommandForm();
+                        }
+                        break;
+                    case 'children':
+                        this.updateChildrenTable(data.content);
+                        break;
+                    case 'status':
+                        this.updateStatusText(data.content);
+                        break;
+                    case 'romance':
+                        this.addMessage('Romance data updated', 'info');
+                        break;
+                    case 'error':
+                        this.addMessage(data.content, 'error');
+                        break;
+                }
+            }
+
+            handleRegistrationResponse(data) {
+                const type = data.label === 'success' ? 'success' : 'error';
+                this.addMessage(`Registration: ${data.content}`, type);
+            }
+
+            updateCommandCategories() {
+                const categories = new Set(['all']);
+                Object.values(this.commands).forEach(cmd => categories.add(cmd.category));
+                
+                const container = document.getElementById('commandCategories');
+                container.innerHTML = '';
+                
+                categories.forEach(category => {
+                    const btn = document.createElement('button');
+                    btn.className = 'category-btn btn-small';
+                    btn.dataset.category = category;
+                    btn.textContent = category.charAt(0).toUpperCase() + category.slice(1);
+                    
+                    if (category === 'all') {
+                        btn.classList.add('active');
+                    }
+                    
+                    btn.onclick = () => this.filterCommands(category);
+                    container.appendChild(btn);
+                });
+            }
+
+            filterCommands(category) {
+                // Update category button states
+                document.querySelectorAll('.category-btn').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.category === category);
+                });
+                
+                // Filter command list
+                document.querySelectorAll('.command-item').forEach(item => {
+                    const commandCategory = item.dataset.category;
+                    const show = category === 'all' || commandCategory === category;
+                    item.style.display = show ? 'block' : 'none';
+                });
+            }
+
+            updateCommandList() {
+                const container = document.getElementById('commandList');
+                container.innerHTML = '';
+                
+                Object.entries(this.commands).forEach(([name, command]) => {
+                    const item = document.createElement('div');
+                    item.className = 'command-item';
+                    item.dataset.command = name;
+                    item.dataset.category = command.category;
+                    
+                    item.innerHTML = `
+                        <div class="command-name">${name}</div>
+                        <div class="command-desc">${command.description}</div>
+                    `;
+                    
+                    item.onclick = () => this.selectCommand(name);
+                    container.appendChild(item);
+                });
+            }
+
+            selectCommand(commandName) {
+                // Update selected command visual state
+                document.querySelectorAll('.command-item').forEach(item => {
+                    item.classList.toggle('selected', item.dataset.command === commandName);
+                });
+                
+                const command = this.commands[commandName];
+                this.selectedCommand = { name: commandName, ...command };
+                
+                document.getElementById('selectedCommandName').textContent = commandName;
+                document.getElementById('selectedCommandDesc').textContent = command.description;
+                
+                this.generateCommandForm();
+            }
+
+            generateCommandForm() {
+                const form = document.getElementById('commandForm');
+                const container = document.getElementById('commandParameters');
+                
+                if (!this.selectedCommand || !this.selectedCommand.options) {
+                    form.style.display = 'none';
+                    return;
+                }
+                
+                form.style.display = 'block';
+                container.innerHTML = '';
+                
+                // Check if this command needs player data and fetch it
+                const needsPlayerData = this.selectedCommand.options.some(option => 
+                    this.isPlayerTargetingOption(option.name)
+                );
+                
+                if (needsPlayerData && !this.currentPopulation) {
+                    // Fetch population data first
+                    this.send({ type: 'infoRequest', selection: 'population' });
+                    // Show loading message
+                    container.innerHTML = '<div>Loading player data...</div>';
+                    return;
+                }
+                
+                this.selectedCommand.options.forEach(option => {
+                    const group = document.createElement('div');
+                    group.className = 'parameter-group';
+                    
+                    const label = document.createElement('label');
+                    label.textContent = `${option.name} ${option.required ? '*' : ''}:`;
+                    group.appendChild(label);
+                    
+                    let input;
+                    if (option.choices && option.choices.length > 0) {
+                        // Existing choice dropdown
+                        input = document.createElement('select');
+                        option.choices.forEach(choice => {
+                            const opt = document.createElement('option');
+                            opt.value = choice.value;
+                            opt.textContent = choice.name;
+                            input.appendChild(opt);
+                        });
+                    } else if (this.isPlayerTargetingOption(option.name)) {
+                        // Player targeting dropdown
+                        input = document.createElement('select');
+                        input.innerHTML = '<option value="">Select a player...</option>';
+                        
+                        if (this.currentPopulation) {
+                            Object.keys(this.currentPopulation).forEach(playerName => {
+                                const opt = document.createElement('option');
+                                opt.value = playerName;
+                                opt.textContent = playerName;
+                                input.appendChild(opt);
+                            });
+                        }
+                    } else if (this.isOrderingOption(option.name)) {
+                        // Ordering interface for parameters like invite lists, consent lists
+                        input = this.createOrderingInterface(option.name);
+                    } else if (option.type === 4) { // INTEGER
+                        input = document.createElement('input');
+                        input.type = 'number';
+                    } else {
+                        input = document.createElement('input');
+                        input.type = 'text';
+                    }
+                    
+                    input.id = `param_${option.name}`;
+                    input.placeholder = option.description || '';
+                    input.className = 'form-control';
+                    
+                    // Apply same styling as other inputs
+                    input.style.width = '100%';
+                    input.style.padding = '0.5rem';
+                    input.style.border = '2px solid #ddd';
+                    input.style.borderRadius = '4px';
+                    input.style.fontSize = '1rem';
+                    
+                    group.appendChild(input);
+                    container.appendChild(group);
+                });
+            }
+
+            isPlayerTargetingOption(optionName) {
+                // Exclude ordering options from regular player targeting
+                if (this.isOrderingOption(optionName)) {
+                    return false;
+                }
+                
+                // List of parameter names that should show single player dropdowns
+                const playerTargetingNames = [
+                    'target', 'player', 'member', 'user', 'who', 'person',
+                    'candidate', 'guardian', 'child', 'mate', 'partner'
+                ];
+                
+                return playerTargetingNames.some(name => 
+                    optionName.toLowerCase().includes(name.toLowerCase())
+                );
+            }
+
+            isOrderingOption(optionName) {
+                // List of parameter names that need ordering interfaces
+                const orderingNames = [
+                    'invite', 'consent', 'decline', 'list', 'order', 'priority',
+                    'sequence', 'queue', 'rank'
+                ];
+                
+                return orderingNames.some(name => 
+                    optionName.toLowerCase().includes(name.toLowerCase())
+                );
+            }
+
+            createOrderingInterface(paramName) {
+                const container = document.createElement('div');
+                container.className = 'ordering-container';
+                
+                // Hidden input to store the final ordered list
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.id = `param_${paramName}`;
+                container.appendChild(hiddenInput);
+                
+                // Ordered list display
+                const orderList = document.createElement('div');
+                orderList.className = 'order-list';
+                orderList.id = `order-list-${paramName}`;
+                orderList.innerHTML = '<div style="color: #6c757d; text-align: center; padding: 1rem;">No players added yet</div>';
+                container.appendChild(orderList);
+                
+                // Add player section
+                const addSection = document.createElement('div');
+                addSection.className = 'add-player-section';
+                
+                const playerSelect = document.createElement('select');
+                playerSelect.className = 'add-player-select';
+                playerSelect.innerHTML = '<option value="">Choose a player to add...</option>';
+                
+                if (this.currentPopulation) {
+                    Object.keys(this.currentPopulation).forEach(playerName => {
+                        const opt = document.createElement('option');
+                        opt.value = playerName;
+                        opt.textContent = playerName;
+                        playerSelect.appendChild(opt);
+                    });
+                }
+                
+                const addBtn = document.createElement('button');
+                addBtn.type = 'button';
+                addBtn.className = 'btn btn-small';
+                addBtn.textContent = 'Add';
+                addBtn.onclick = () => this.addPlayerToOrder(paramName, playerSelect.value);
+                
+                addSection.appendChild(playerSelect);
+                addSection.appendChild(addBtn);
+                container.appendChild(addSection);
+                
+                return container;
+            }
+
+            addPlayerToOrder(paramName, playerName) {
+                if (!playerName) return;
+                
+                const orderList = document.getElementById(`order-list-${paramName}`);
+                const hiddenInput = document.getElementById(`param_${paramName}`);
+                
+                // Get current list
+                let currentList = [];
+                if (hiddenInput.value) {
+                    currentList = hiddenInput.value.split(',');
+                }
+                
+                // Don't add duplicates
+                if (currentList.includes(playerName)) {
+                    this.addMessage(`${playerName} is already in the list`, 'error');
+                    return;
+                }
+                
+                currentList.push(playerName);
+                hiddenInput.value = currentList.join(',');
+                
+                this.updateOrderDisplay(paramName, currentList);
+                
+                // Reset the select
+                const playerSelect = orderList.parentElement.querySelector('.add-player-select');
+                playerSelect.value = '';
+            }
+
+            updateOrderDisplay(paramName, orderedList) {
+                const orderList = document.getElementById(`order-list-${paramName}`);
+                
+                if (orderedList.length === 0) {
+                    orderList.innerHTML = '<div style="color: #6c757d; text-align: center; padding: 1rem;">No players added yet</div>';
+                    return;
+                }
+                
+                orderList.innerHTML = '';
+                
+                orderedList.forEach((playerName, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'order-item';
+                    
+                    const number = document.createElement('div');
+                    number.className = 'order-number';
+                    number.textContent = index + 1;
+                    
+                    const name = document.createElement('div');
+                    name.className = 'order-name';
+                    name.textContent = playerName;
+                    
+                    const controls = document.createElement('div');
+                    controls.className = 'order-controls';
+                    
+                    if (index > 0) {
+                        const upBtn = document.createElement('button');
+                        upBtn.type = 'button';
+                        upBtn.className = 'order-btn up';
+                        upBtn.textContent = '↑';
+                        upBtn.onclick = () => this.movePlayerInOrder(paramName, index, -1);
+                        controls.appendChild(upBtn);
+                    }
+                    
+                    if (index < orderedList.length - 1) {
+                        const downBtn = document.createElement('button');
+                        downBtn.type = 'button';
+                        downBtn.className = 'order-btn down';
+                        downBtn.textContent = '↓';
+                        downBtn.onclick = () => this.movePlayerInOrder(paramName, index, 1);
+                        controls.appendChild(downBtn);
+                    }
+                    
+                    const removeBtn = document.createElement('button');
+                    removeBtn.type = 'button';
+                    removeBtn.className = 'order-btn remove';
+                    removeBtn.textContent = '×';
+                    removeBtn.onclick = () => this.removePlayerFromOrder(paramName, index);
+                    controls.appendChild(removeBtn);
+                    
+                    item.appendChild(number);
+                    item.appendChild(name);
+                    item.appendChild(controls);
+                    orderList.appendChild(item);
+                });
+            }
+
+            movePlayerInOrder(paramName, fromIndex, direction) {
+                const hiddenInput = document.getElementById(`param_${paramName}`);
+                const currentList = hiddenInput.value.split(',');
+                const toIndex = fromIndex + direction;
+                
+                if (toIndex < 0 || toIndex >= currentList.length) return;
+                
+                // Swap elements
+                [currentList[fromIndex], currentList[toIndex]] = [currentList[toIndex], currentList[fromIndex]];
+                
+                hiddenInput.value = currentList.join(',');
+                this.updateOrderDisplay(paramName, currentList);
+            }
+
+            removePlayerFromOrder(paramName, index) {
+                const hiddenInput = document.getElementById(`param_${paramName}`);
+                const currentList = hiddenInput.value.split(',');
+                
+                currentList.splice(index, 1);
+                hiddenInput.value = currentList.join(',');
+                
+                this.updateOrderDisplay(paramName, currentList);
+            }
+
+            executeCommand() {
+                if (!this.selectedCommand) {
+                    this.addMessage('No command selected', 'error');
+                    return;
+                }
+                
+                const parameters = {};
+                const form = document.getElementById('commandParameters');
+                const inputs = form.querySelectorAll('input, select');
+                
+                inputs.forEach(input => {
+                    const paramName = input.id.replace('param_', '');
+                    
+                    // Handle ordering parameters (comma-separated lists)
+                    if (input.type === 'hidden' && this.isOrderingOption(paramName)) {
+                        // Send as array for ordering parameters
+                        const orderList = input.value ? input.value.split(',') : [];
+                        parameters[paramName] = orderList;
+                    } else {
+                        parameters[paramName] = input.value;
+                    }
+                });
+                
+                this.send({
+                    type: 'command',
+                    command: this.selectedCommand.name,
+                    parameters: parameters
+                });
+            }
+
+            addMessage(text, type = 'info') {
+                const container = document.getElementById('messagesContainer');
+                const message = document.createElement('div');
+                message.className = `message ${type}`;
+                message.textContent = `[${new Date().toLocaleTimeString()}] ${text}`;
+                
+                container.appendChild(message);
+                container.scrollTop = container.scrollHeight;
+                
+                // Limit to 50 messages
+                while (container.children.length > 50) {
+                    container.removeChild(container.firstChild);
+                }
+            }
+
+            requestCommandList() {
+                this.send({ type: 'listCommands' });
+            }
+
+            refreshGameData() {
+                this.currentPopulation = null; // Clear cached population when refreshing
+                this.send({ type: 'infoRequest', selection: 'population' });
+                this.send({ type: 'infoRequest', selection: 'children' });
+                this.send({ type: 'infoRequest', selection: 'status' });
+            }
+
+            registerPlayer() {
+                const name = document.getElementById('playerName').value;
+                const password = document.getElementById('playerPassword').value;
+                
+                if (!name) {
+                    this.addMessage('Player name is required', 'error');
+                    return;
+                }
+                
+                this.send({
+                    type: 'registerRequest',
+                    playerName: name,
+                    password: password,
+                    email: `${name}@tribes.local`
+                });
+            }
+
+            updatePopulationTable(population) {
+                const table = document.getElementById('populationTable');
+                table.innerHTML = '';
+                
+                if (!population || Object.keys(population).length === 0) {
+                    table.innerHTML = '<tr><td colspan="100%">No population data available</td></tr>';
+                    return;
+                }
+                
+                // Get all unique keys for columns
+                const allKeys = new Set();
+                Object.values(population).forEach(person => {
+                    Object.keys(person).forEach(key => allKeys.add(key));
+                });
+                
+                const columns = ['Name', ...Array.from(allKeys)];
+                
+                // Create header
+                const thead = document.createElement('thead');
+                const headerRow = document.createElement('tr');
+                columns.forEach(col => {
+                    const th = document.createElement('th');
+                    th.textContent = col;
+                    headerRow.appendChild(th);
+                });
+                thead.appendChild(headerRow);
+                table.appendChild(thead);
+                
+                // Create body
+                const tbody = document.createElement('tbody');
+                Object.entries(population).forEach(([name, data]) => {
+                    const row = document.createElement('tr');
+                    
+                    // Name column
+                    const nameCell = document.createElement('td');
+                    nameCell.textContent = name;
+                    row.appendChild(nameCell);
+                    
+                    // Data columns
+                    Array.from(allKeys).forEach(key => {
+                        const cell = document.createElement('td');
+                        const value = data[key];
+                        cell.textContent = Array.isArray(value) ? value.join(', ') : (value || '');
+                        row.appendChild(cell);
+                    });
+                    
+                    tbody.appendChild(row);
+                });
+                table.appendChild(tbody);
+            }
+
+            updateChildrenTable(children) {
+                const table = document.getElementById('childrenTable');
+                table.innerHTML = '';
+                
+                if (!children || Object.keys(children).length === 0) {
+                    table.innerHTML = '<tr><td colspan="100%">No children data available</td></tr>';
+                    return;
+                }
+                
+                // Similar implementation to population table
+                const allKeys = new Set();
+                Object.values(children).forEach(child => {
+                    Object.keys(child).forEach(key => allKeys.add(key));
+                });
+                
+                const columns = ['Name', ...Array.from(allKeys)];
+                
+                const thead = document.createElement('thead');
+                const headerRow = document.createElement('tr');
+                columns.forEach(col => {
+                    const th = document.createElement('th');
+                    th.textContent = col;
+                    headerRow.appendChild(th);
+                });
+                thead.appendChild(headerRow);
+                table.appendChild(thead);
+                
+                const tbody = document.createElement('tbody');
+                Object.entries(children).forEach(([name, data]) => {
+                    const row = document.createElement('tr');
+                    
+                    const nameCell = document.createElement('td');
+                    nameCell.textContent = name;
+                    row.appendChild(nameCell);
+                    
+                    Array.from(allKeys).forEach(key => {
+                        const cell = document.createElement('td');
+                        const value = data[key];
+                        cell.textContent = Array.isArray(value) ? value.join(', ') : (value || '');
+                        row.appendChild(cell);
+                    });
+                    
+                    tbody.appendChild(row);
+                });
+                table.appendChild(tbody);
+            }
+
+            updateStatusText(status) {
+                document.getElementById('statusText').textContent = status;
+            }
+
+            initializeEventListeners() {
+                // Execute command button
+                document.getElementById('executeCommandBtn').onclick = () => this.executeCommand();
+                
+                // Register button
+                document.getElementById('registerBtn').onclick = () => this.registerPlayer();
+                
+                // Refresh data button
+                document.getElementById('refreshDataBtn').onclick = () => this.refreshGameData();
+                
+                // Tribe dropdown change - clear cached data when switching tribes
+                document.getElementById('tribeSelect').onchange = () => {
+                    this.currentPopulation = null;
+                    if (this.selectedCommand) {
+                        this.generateCommandForm(); // Regenerate form to show loading
+                    }
+                };
+                
+                // Tab switching
+                document.querySelectorAll('.tab').forEach(tab => {
+                    tab.onclick = () => {
+                        const targetTab = tab.dataset.tab;
+                        
+                        // Switch tab active states
+                        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                        tab.classList.add('active');
+                        
+                        // Switch content
+                        document.querySelectorAll('.tab-content').forEach(content => {
+                            content.classList.remove('active');
+                        });
+                        document.getElementById(`${targetTab}Tab`).classList.add('active');
+                    };
+                });
+            }
+        }
+
+        // Initialize the client when page loads
+        window.addEventListener('DOMContentLoaded', () => {
+            window.tribesClient = new TribesClient();
+        });
+    </script>
+</body>
+</html>
