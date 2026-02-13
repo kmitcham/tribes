@@ -455,7 +455,7 @@
             <!-- User Info Section -->
             <div class="user-info">
                 <div class="form-group">
-                    <label for="tribeSelect">Tribe:</label>
+                    <label for="tribeSelect">Tribe: <span id="tribeRemembered" style="color: #28a745; font-size: 0.8em; display: none;">💾</span></label>
                     <select id="tribeSelect">
                         <option value="bear">Bear</option>
                         <option value="flounder">Flounder</option>
@@ -468,7 +468,7 @@
                 </div>
                 
                 <div class="form-group">
-                    <label for="playerName">Player Name:</label>
+                    <label for="playerName">Player Name: <span id="nameRemembered" style="color: #28a745; font-size: 0.8em; display: none;">💾</span></label>
                     <input type="text" id="playerName" placeholder="Enter your name">
                 </div>
                 
@@ -564,8 +564,96 @@
                 this.maxReconnectAttempts = 5;
                 this.reconnectInterval = 2000;
                 
+                this.loadSavedSettings();
                 this.initializeEventListeners();
                 this.connect();
+            }
+
+            // Cookie management functions
+            setCookie(name, value, days = 30) {
+                const expires = new Date();
+                expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
+                document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
+            }
+
+            getCookie(name) {
+                const nameEQ = name + "=";
+                const ca = document.cookie.split(';');
+                for (let i = 0; i < ca.length; i++) {
+                    let c = ca[i];
+                    while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+                    if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+                }
+                return null;
+            }
+
+            loadSavedSettings() {
+                const savedTribe = this.getCookie('tribesLastTribe');
+                const savedPlayerName = this.getCookie('tribesLastPlayerName');
+                
+                if (savedTribe) {
+                    // Wait for DOM to be ready, then set the value
+                    setTimeout(() => {
+                        const tribeSelect = document.getElementById('tribeSelect');
+                        const tribeIndicator = document.getElementById('tribeRemembered');
+                        if (tribeSelect && tribeIndicator) {
+                            tribeSelect.value = savedTribe;
+                            tribeIndicator.style.display = 'inline';
+                            tribeIndicator.title = 'Tribe remembered from last visit';
+                        }
+                    }, 100);
+                }
+                
+                if (savedPlayerName) {
+                    setTimeout(() => {
+                        const playerNameInput = document.getElementById('playerName');
+                        const nameIndicator = document.getElementById('nameRemembered');
+                        if (playerNameInput && nameIndicator) {
+                            playerNameInput.value = savedPlayerName;
+                            nameIndicator.style.display = 'inline';
+                            nameIndicator.title = 'Player name remembered from last visit';
+                        }
+                    }, 100);
+                }
+                
+                // Show welcome back message if we loaded settings
+                if (savedTribe || savedPlayerName) {
+                    setTimeout(() => {
+                        const welcomeMsg = savedPlayerName ? 
+                            `Welcome back, ${savedPlayerName}! 🏛️` : 
+                            'Previous settings restored 🏛️';
+                        this.addMessage(welcomeMsg, 'info');
+                    }, 200);
+                }
+            }
+
+            saveSettings() {
+                const tribe = document.getElementById('tribeSelect').value;
+                const playerName = document.getElementById('playerName').value;
+                
+                if (tribe) {
+                    this.setCookie('tribesLastTribe', tribe);
+                    const tribeIndicator = document.getElementById('tribeRemembered');
+                    if (tribeIndicator) {
+                        tribeIndicator.style.display = 'inline';
+                        tribeIndicator.title = 'Tribe remembered from last visit';
+                    }
+                }
+                
+                if (playerName) {
+                    this.setCookie('tribesLastPlayerName', playerName);
+                    const nameIndicator = document.getElementById('nameRemembered');
+                    if (nameIndicator) {
+                        nameIndicator.style.display = 'inline';
+                        nameIndicator.title = 'Player name remembered from last visit';
+                    }
+                } else {
+                    // Hide indicator if name is cleared
+                    const nameIndicator = document.getElementById('nameRemembered');
+                    if (nameIndicator) {
+                        nameIndicator.style.display = 'none';
+                    }
+                }
             }
 
             connect() {
@@ -856,12 +944,38 @@
                         input.innerHTML = '<option value="">Select a player...</option>';
                         
                         if (this.currentPopulation) {
-                            Object.keys(this.currentPopulation).forEach(playerName => {
+                            const currentPlayerName = document.getElementById('playerName').value;
+                            let availablePlayers = Object.keys(this.currentPopulation);
+                            
+                            // Filter for reproduction commands to only show opposite gender
+                            if (this.isReproductionCommand(this.selectedCommand.name)) {
+                                availablePlayers = this.getValidTargetsForReproduction(currentPlayerName);
+                            }
+                            
+                            availablePlayers.forEach(playerName => {
                                 const opt = document.createElement('option');
                                 opt.value = playerName;
-                                opt.textContent = playerName;
+                                
+                                // Add gender indicator for reproduction commands
+                                if (this.isReproductionCommand(this.selectedCommand.name)) {
+                                    const gender = this.currentPopulation[playerName].gender;
+                                    const genderIcon = gender === 'male' ? '♂' : '♀';
+                                    opt.textContent = `${playerName} ${genderIcon}`;
+                                } else {
+                                    opt.textContent = playerName;
+                                }
+                                
                                 input.appendChild(opt);
                             });
+                            
+                            // Add helper text for reproduction commands
+                            if (this.isReproductionCommand(this.selectedCommand.name) && availablePlayers.length === 0) {
+                                const helperText = document.createElement('option');
+                                helperText.value = '';
+                                helperText.textContent = 'No valid targets (opposite gender only)';
+                                helperText.disabled = true;
+                                input.appendChild(helperText);
+                            }
                         }
                     } else if (this.isOrderingOption(option.name)) {
                         // Ordering interface for parameters like invite lists, consent lists
@@ -886,6 +1000,28 @@
                     input.style.fontSize = '1rem';
                     
                     group.appendChild(input);
+                    
+                    // Add helper text for reproduction commands
+                    if ((this.isPlayerTargetingOption(option.name) || this.isOrderingOption(option.name)) && 
+                        this.isReproductionCommand(this.selectedCommand.name)) {
+                        const helperText = document.createElement('div');
+                        helperText.style.fontSize = '0.8rem';
+                        helperText.style.color = '#6c757d';
+                        helperText.style.marginTop = '0.25rem';
+                        
+                        const currentPlayerName = document.getElementById('playerName').value;
+                        const currentPlayer = this.currentPopulation && this.currentPopulation[currentPlayerName];
+                        
+                        if (!currentPlayer) {
+                            helperText.textContent = '⚠️ Join the tribe first to see gender-filtered options';
+                            helperText.style.color = '#ffc107';
+                        } else {
+                            helperText.textContent = '💕 Romance commands only show opposite gender players';
+                        }
+                        
+                        group.appendChild(helperText);
+                    }
+                    
                     container.appendChild(group);
                 });
             }
@@ -919,6 +1055,43 @@
                 );
             }
 
+            isReproductionCommand(commandName) {
+                // List of commands that deal with reproduction/romance
+                const reproductionCommands = [
+                    'romance', 'invite', 'consent', 'decline', 'babysit', 
+                    'checkmating', 'pass'
+                ];
+                
+                return reproductionCommands.includes(commandName);
+            }
+
+            getValidTargetsForReproduction(currentPlayerName) {
+                if (!this.currentPopulation || !currentPlayerName) {
+                    return Object.keys(this.currentPopulation || {});
+                }
+                
+                const currentPlayer = this.currentPopulation[currentPlayerName];
+                if (!currentPlayer) {
+                    // Current player not in tribe yet - show warning and return all players
+                    console.warn('Current player not found in tribe population');
+                    return Object.keys(this.currentPopulation);
+                }
+                
+                if (!currentPlayer.gender) {
+                    // If we can't determine current player's gender, allow all
+                    return Object.keys(this.currentPopulation);
+                }
+                
+                const currentPlayerGender = currentPlayer.gender;
+                const oppositeGender = currentPlayerGender === 'male' ? 'female' : 'male';
+                
+                // Filter to only opposite gender players
+                return Object.keys(this.currentPopulation).filter(playerName => {
+                    const player = this.currentPopulation[playerName];
+                    return player && player.gender === oppositeGender;
+                });
+            }
+
             createOrderingInterface(paramName) {
                 const container = document.createElement('div');
                 container.className = 'ordering-container';
@@ -945,10 +1118,35 @@
                 playerSelect.innerHTML = '<option value="">Choose a player to add...</option>';
                 
                 if (this.currentPopulation) {
-                    Object.keys(this.currentPopulation).forEach(playerName => {
+                    const currentPlayerName = document.getElementById('playerName').value;
+                    let availablePlayers = Object.keys(this.currentPopulation);
+                    
+                    // Filter for reproduction commands to only show opposite gender
+                    if (this.isReproductionCommand(this.selectedCommand.name)) {
+                        availablePlayers = this.getValidTargetsForReproduction(currentPlayerName);
+                        
+                        if (availablePlayers.length === 0) {
+                            const noTargetsOption = document.createElement('option');
+                            noTargetsOption.value = '';
+                            noTargetsOption.textContent = 'No valid targets (opposite gender only)';
+                            noTargetsOption.disabled = true;
+                            playerSelect.appendChild(noTargetsOption);
+                        }
+                    }
+                    
+                    availablePlayers.forEach(playerName => {
                         const opt = document.createElement('option');
                         opt.value = playerName;
-                        opt.textContent = playerName;
+                        
+                        // Add gender indicator for reproduction commands
+                        if (this.isReproductionCommand(this.selectedCommand.name)) {
+                            const gender = this.currentPopulation[playerName].gender;
+                            const genderIcon = gender === 'male' ? '♂' : '♀';
+                            opt.textContent = `${playerName} ${genderIcon}`;
+                        } else {
+                            opt.textContent = playerName;
+                        }
+                        
                         playerSelect.appendChild(opt);
                     });
                 }
@@ -1014,7 +1212,15 @@
                     
                     const name = document.createElement('div');
                     name.className = 'order-name';
-                    name.textContent = playerName;
+                    
+                    // Add gender indicator for reproduction commands
+                    if (this.isReproductionCommand(this.selectedCommand.name) && this.currentPopulation[playerName]) {
+                        const gender = this.currentPopulation[playerName].gender;
+                        const genderIcon = gender === 'male' ? '♂' : '♀';
+                        name.textContent = `${playerName} ${genderIcon}`;
+                    } else {
+                        name.textContent = playerName;
+                    }
                     
                     const controls = document.createElement('div');
                     controls.className = 'order-controls';
@@ -1140,6 +1346,9 @@
                     return;
                 }
                 
+                // Save settings when registering
+                this.saveSettings();
+                
                 this.send({
                     type: 'registerRequest',
                     playerName: name,
@@ -1260,12 +1469,27 @@
                 // Refresh data button
                 document.getElementById('refreshDataBtn').onclick = () => this.refreshGameData();
                 
-                // Tribe dropdown change - clear cached data when switching tribes
+                // Tribe dropdown change - clear cached data when switching tribes and save setting
                 document.getElementById('tribeSelect').onchange = () => {
                     this.currentPopulation = null;
+                    this.saveSettings(); // Save the new tribe selection
                     if (this.selectedCommand) {
                         this.generateCommandForm(); // Regenerate form to show loading
                     }
+                };
+                
+                // Player name change - save setting
+                document.getElementById('playerName').onchange = () => {
+                    this.saveSettings(); // Save the new player name
+                    this.currentPopulation = null; // Clear population cache to trigger gender filtering refresh
+                    if (this.selectedCommand) {
+                        this.generateCommandForm(); // Regenerate form for gender filtering
+                    }
+                };
+                
+                // Also save on input for real-time saving
+                document.getElementById('playerName').oninput = () => {
+                    this.saveSettings();
                 };
                 
                 // Tab switching

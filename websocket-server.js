@@ -188,7 +188,7 @@ function startServer() {
 }
 
 async function handleWebSocketMessage(ws, data) {
-    let tribe = data.tribe || 'bear';
+    let tribe = data.tribe || 'bug';
     let gameState = await getGameState(tribe);
     
     switch (data.type) {
