@@ -94,7 +94,7 @@
             "<node_internals>/**"
         ],
         "cwd": "${workspaceFolder}/",
-        "program": "${workspaceFolder}/websocket.js"
+        "program": "${workspaceFolder}/websocket-server.js"
     }
   ]
 }

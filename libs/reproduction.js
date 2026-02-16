@@ -215,6 +215,7 @@ function invite(gameState, rawActorName, rawList ){
 
     }
     text.addMessage(gameState, player.name, message );
+    gameState.saveRequired = true;
     return message
 }
 module.exports.invite = invite;
@@ -341,8 +342,8 @@ function decline(actorName, messageArray,  gameState){
             text.addMessage(gameState, actorName, "Your consent and decline lists have overlaps.  Decline has priority.")
         }
         text.addMessage(gameState, actorName, "Decline updated.");   
-        gameState.saveRequired = true; 
     }
+    gameState.saveRequired = true;
     return globalMatingCheck(gameState)
 }
 module.exports.decline = decline;

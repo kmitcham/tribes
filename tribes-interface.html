@@ -119,6 +119,46 @@
             margin-top: 1rem;
         }
 
+        .help-section {
+            margin-top: 1rem;
+            border-top: 2px solid #e9ecef;
+            padding-top: 1rem;
+        }
+
+        .help-tabs {
+            margin-bottom: 1rem;
+        }
+
+        .help-tab-btn {
+            background: #f8f9fa;
+            color: #495057;
+            border: 1px solid #dee2e6;
+            margin-right: 0.25rem;
+            margin-bottom: 0.25rem;
+            width: auto;
+            display: inline-block;
+            font-size: 0.8rem;
+            padding: 0.4rem 0.6rem;
+        }
+
+        .help-tab-btn.active {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+        }
+
+        .help-content {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 0.75rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            line-height: 1.4;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-line;
+        }
+
         .command-categories {
             margin-bottom: 1rem;
         }
@@ -428,6 +468,139 @@
             flex-grow: 1;
         }
 
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-popup {
+            background: white;
+            border-radius: 8px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #eee;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #666;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+
+        .modal-close:hover {
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .modal-body {
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+
+        .modal-actions .btn {
+            min-width: 100px;
+        }
+
+        /* Login area state modifications */
+        .user-info.minimized {
+            padding: 0.5rem;
+            opacity: 0.7;
+            transition: all 0.3s ease;
+        }
+
+        .user-info.minimized h3 {
+            font-size: 1rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .user-info.minimized .form-group {
+            margin-bottom: 0.25rem;
+        }
+
+        .user-info.minimized .btn {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .user-info.minimized #expandLoginBtn {
+            opacity: 1;
+            pointer-events: auto;
+            display: block !important;
+        }
+
+        #expandLoginBtn {
+            display: none;
+        }
+
+        /* Enhanced messages container */
+        .messages-container {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 1rem;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 1rem;
+        }
+
         @media (max-width: 768px) {
             .container {
                 grid-template-columns: 1fr;
@@ -440,6 +613,11 @@
             
             .main-content {
                 order: 1;
+            }
+
+            .modal-popup {
+                margin: 1rem;
+                width: calc(100% - 2rem);
             }
         }
     </style>
@@ -478,6 +656,7 @@
                 </div>
                 
                 <button class="btn" id="registerBtn">Register/Login</button>
+                <button class="btn btn-small" id="expandLoginBtn" style="display: none; margin-top: 0.5rem; font-size: 0.8rem;">✏️ Edit Login</button>
             </div>
 
             <!-- Commands Section -->
@@ -492,18 +671,30 @@
                     <div class="command-item">Loading commands...</div>
                 </div>
             </div>
+
+            <!-- Help Section -->
+            <div class="help-section">
+                <h3>Game Help</h3>
+                
+                <div class="help-tabs" id="helpTabs">
+                    <button class="help-tab-btn active" data-help-type="overview">Overview</button>
+                    <button class="help-tab-btn" data-help-type="basic">Basic</button>
+                    <button class="help-tab-btn" data-help-type="rounds">Rounds</button>
+                    <button class="help-tab-btn" data-help-type="conflict">Conflict</button>
+                    <button class="help-tab-btn" data-help-type="chief">Chief</button>
+                </div>
+                
+                <div class="help-content" id="helpContent">
+                    Click on a help tab above to see information about different aspects of the game.
+                </div>
+            </div>
         </div>
 
         <div class="main-content">
-            <!-- Command Execution Panel -->
+            <!-- Game Messages Panel -->
             <div class="command-panel">
-                <h3 id="selectedCommandName">Select a command</h3>
-                <p id="selectedCommandDesc">Choose a command from the sidebar to see its parameters.</p>
-                
-                <div class="command-form" id="commandForm" style="display: none;">
-                    <div class="command-parameters" id="commandParameters"></div>
-                    <button class="btn" id="executeCommandBtn">Execute Command</button>
-                </div>
+                <h3 id="selectedCommandName">Game Messages</h3>
+                <p id="selectedCommandDesc">Command responses and game updates will appear below.</p>
                 
                 <div class="messages-container" id="messagesContainer"></div>
             </div>
@@ -563,6 +754,9 @@
                 this.reconnectAttempts = 0;
                 this.maxReconnectAttempts = 5;
                 this.reconnectInterval = 2000;
+                this.refreshTimer = null; // Timer for automatic refresh every 30 seconds
+                this.lastRefreshTime = 0; // Track when last refresh occurred
+                this.autoRefresh = true; // Default to true, will be overridden by server
                 
                 this.loadSavedSettings();
                 this.initializeEventListeners();
@@ -682,6 +876,9 @@
                             this.updateConnectionStatus('connected');
                             this.reconnectAttempts = 0;
                             this.requestCommandList();
+                            this.requestSettings();
+                            // Auto-refresh game data on connection
+                            this.refreshGameData();
                         };
                         
                         this.ws.onmessage = (event) => {
@@ -695,6 +892,10 @@
                         this.ws.onclose = () => {
                             console.log('WebSocket closed');
                             this.updateConnectionStatus('disconnected');
+                            if (this.refreshTimer) {
+                                clearTimeout(this.refreshTimer);
+                                this.refreshTimer = null;
+                            }
                             tryHost(hostIndex + 1);
                         };
                         
@@ -764,7 +965,11 @@
                         this.handleCommandResponse(data);
                         break;
                     case 'infoRequest':
-                        this.handleInfoResponse(data);
+                        if (data.label === 'settings') {
+                            this.handleSettingsResponse(data);
+                        } else {
+                            this.handleInfoResponse(data);
+                        }
                         break;
                     case 'tribeMessage':
                         this.addMessage(`[TRIBE] ${data.message}`, 'info');
@@ -774,6 +979,9 @@
                         break;
                     case 'registration':
                         this.handleRegistrationResponse(data);
+                        break;
+                    case 'helpContent':
+                        this.handleHelpContent(data);
                         break;
                     case 'error':
                         this.addMessage(data.message, 'error');
@@ -792,6 +1000,8 @@
             handleCommandResponse(data) {
                 const type = data.success ? 'success' : 'error';
                 this.addMessage(`[${data.command.toUpperCase()}] ${data.message}`, type);
+                // Auto-refresh game data after every command
+                this.refreshGameData();
             }
 
             handleInfoResponse(data) {
@@ -799,10 +1009,7 @@
                     case 'population':
                         this.currentPopulation = data.content;
                         this.updatePopulationTable(data.content);
-                        // Regenerate form if we were waiting for population data
-                        if (this.selectedCommand) {
-                            this.generateCommandForm();
-                        }
+                        // Population data loaded - modals will automatically use this data when opened
                         break;
                     case 'children':
                         this.updateChildrenTable(data.content);
@@ -822,6 +1029,23 @@
             handleRegistrationResponse(data) {
                 const type = data.label === 'success' ? 'success' : 'error';
                 this.addMessage(`Registration: ${data.content}`, type);
+                
+                // Auto-refresh game data after successful registration
+                if (data.label === 'success') {
+                    this.refreshGameData();
+                    this.requestCommandList(); // Refresh command list in case chief status changed
+                    this.minimizeLoginArea(); // Minimize login area after successful registration
+                }
+            }
+
+            minimizeLoginArea() {
+                const userInfo = document.querySelector('.user-info');
+                userInfo.classList.add('minimized');
+            }
+
+            expandLoginArea() {
+                const userInfo = document.querySelector('.user-info');
+                userInfo.classList.remove('minimized');
             }
 
             updateCommandCategories() {
@@ -864,7 +1088,10 @@
                 const container = document.getElementById('commandList');
                 container.innerHTML = '';
                 
-                Object.entries(this.commands).forEach(([name, command]) => {
+                // Sort commands alphabetically by name
+                const sortedCommands = Object.entries(this.commands).sort(([a], [b]) => a.localeCompare(b));
+                
+                sortedCommands.forEach(([name, command]) => {
                     const item = document.createElement('div');
                     item.className = 'command-item';
                     item.dataset.command = name;
@@ -889,10 +1116,99 @@
                 const command = this.commands[commandName];
                 this.selectedCommand = { name: commandName, ...command };
                 
-                document.getElementById('selectedCommandName').textContent = commandName;
-                document.getElementById('selectedCommandDesc').textContent = command.description;
+                // If command has no parameters, execute it immediately
+                if (!command.options || command.options.length === 0) {
+                    console.log('Auto-executing command with no parameters:', commandName);
+                    this.send({
+                        type: 'command',
+                        command: commandName,
+                        parameters: {}
+                    });
+                } else {
+                    // Show modal for commands with parameters
+                    this.showCommandModal();
+                }
+            }
+
+            showCommandModal() {
+                const modal = document.getElementById('commandModal');
+                const title = document.getElementById('modalTitle');
+                const description = document.getElementById('modalDescription');
+                const parametersContainer = document.getElementById('modalCommandParameters');
+                const executeBtn = document.getElementById('modalExecuteBtn');
+                const cancelBtn = document.getElementById('modalCancelBtn');
+                const closeBtn = document.getElementById('modalClose');
+
+                title.textContent = this.selectedCommand.name;
+                description.textContent = this.selectedCommand.description;
+
+                // Generate command form in modal
+                this.generateCommandFormInModal(parametersContainer);
+
+                // Setup modal event handlers
+                executeBtn.onclick = () => this.executeModalCommand();
+                cancelBtn.onclick = () => this.closeCommandModal();
+                closeBtn.onclick = () => this.closeCommandModal();
                 
-                this.generateCommandForm();
+                // Close modal when clicking overlay
+                modal.onclick = (e) => {
+                    if (e.target === modal) {
+                        this.closeCommandModal();
+                    }
+                };
+
+                // Close modal with ESC key
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape' && modal.classList.contains('active')) {
+                        this.closeCommandModal();
+                    }
+                });
+
+                // Show modal
+                modal.classList.add('active');
+            }
+
+            closeCommandModal() {
+                const modal = document.getElementById('commandModal');
+                modal.classList.remove('active');
+            }
+
+            executeModalCommand() {
+                const parametersContainer = document.getElementById('modalCommandParameters');
+                const parameters = this.collectParametersFromContainer(parametersContainer);
+                
+                if (parameters !== null) {
+                    console.log('Executing modal command:', this.selectedCommand.name, 'with parameters:', parameters);
+                    this.send({
+                        type: 'command',
+                        command: this.selectedCommand.name,
+                        parameters: parameters
+                    });
+                    this.closeCommandModal();
+                }
+            }
+
+            generateCommandFormInModal(container) {
+                if (!this.selectedCommand || !this.selectedCommand.options) {
+                    return;
+                }
+
+                container.innerHTML = '';
+
+                // Check if this command needs player data and fetch it
+                const needsPlayerData = this.selectedCommand.options.some(option => 
+                    this.isPlayerTargetingOption(option.name)
+                );
+                
+                if (needsPlayerData && !this.currentPopulation) {
+                    // Fetch population data first
+                    this.send({ type: 'infoRequest', selection: 'population' });
+                    // Show loading message
+                    container.innerHTML = '<div>Loading player data...</div>';
+                    return;
+                }
+
+                this.renderParametersInContainer(container);
             }
 
             generateCommandForm() {
@@ -905,6 +1221,18 @@
                 }
                 
                 form.style.display = 'block';
+                
+                // Preserve existing form values before clearing container
+                const preservedValues = {};
+                const existingInputs = container.querySelectorAll('input, select');
+                existingInputs.forEach(input => {
+                    if (input.id && input.id.startsWith('param_')) {
+                        const paramName = input.id.replace('param_', '');
+                        preservedValues[paramName] = input.value;
+                        console.log('Preserving value for', paramName, ':', input.value);
+                    }
+                });
+                
                 container.innerHTML = '';
                 
                 // Check if this command needs player data and fetch it
@@ -979,7 +1307,7 @@
                         }
                     } else if (this.isOrderingOption(option.name)) {
                         // Ordering interface for parameters like invite lists, consent lists
-                        input = this.createOrderingInterface(option.name);
+                        input = this.createOrderingInterface(option.name, preservedValues[option.name] || '');
                     } else if (option.type === 4) { // INTEGER
                         input = document.createElement('input');
                         input.type = 'number';
@@ -1092,21 +1420,164 @@
                 });
             }
 
-            createOrderingInterface(paramName) {
+            renderParametersInContainer(container) {
+                this.selectedCommand.options.forEach(option => {
+                    const group = document.createElement('div');
+                    group.className = 'parameter-group';
+                    
+                    const label = document.createElement('label');
+                    label.textContent = `${option.name} ${option.required ? '*' : ''}:`;
+                    group.appendChild(label);
+                    
+                    let input;
+                    if (option.choices && option.choices.length > 0) {
+                        // Existing choice dropdown
+                        input = document.createElement('select');
+                        option.choices.forEach(choice => {
+                            const opt = document.createElement('option');
+                            opt.value = choice.value;
+                            opt.textContent = choice.name;
+                            input.appendChild(opt);
+                        });
+                    } else if (this.isPlayerTargetingOption(option.name)) {
+                        // Player targeting dropdown
+                        input = document.createElement('select');
+                        input.innerHTML = '<option value="">Select a player...</option>';
+                        
+                        if (this.currentPopulation) {
+                            const currentPlayerName = document.getElementById('playerName').value;
+                            let availablePlayers = Object.keys(this.currentPopulation);
+                            
+                            // Filter for reproduction commands to only show opposite gender
+                            if (this.isReproductionCommand(this.selectedCommand.name)) {
+                                availablePlayers = this.getValidTargetsForReproduction(currentPlayerName);
+                            }
+                            
+                            availablePlayers.forEach(playerName => {
+                                const opt = document.createElement('option');
+                                opt.value = playerName;
+                                
+                                // Add gender indicator for reproduction commands
+                                if (this.isReproductionCommand(this.selectedCommand.name)) {
+                                    const gender = this.currentPopulation[playerName].gender;
+                                    const genderIcon = gender === 'male' ? '♂' : '♀';
+                                    opt.textContent = `${playerName} ${genderIcon}`;
+                                } else {
+                                    opt.textContent = playerName;
+                                }
+                                
+                                input.appendChild(opt);
+                            });
+                        }
+                    } else if (this.isOrderingOption(option.name)) {
+                        // Create ordering interface
+                        const orderingInterface = this.createOrderingInterface(option.name, '');
+                        group.appendChild(orderingInterface);
+                        
+                        // Add help text for ordering
+                        const helperText = document.createElement('div');
+                        helperText.className = 'helper-text';
+                        helperText.textContent = 'Click "+ Add" to add players, then drag to reorder';
+                        
+                        if (this.isReproductionCommand(this.selectedCommand.name)) {
+                            helperText.textContent = '💕 Romance commands only show opposite gender players';
+                        }
+                        
+                        group.appendChild(helperText);
+                    } else {
+                        // Regular text input
+                        input = document.createElement(option.type === 'number' ? 'input' : 'input');
+                        input.type = option.type || 'text';
+                        if (option.placeholder) {
+                            input.placeholder = option.placeholder;
+                        }
+                    }
+                    
+                    if (input) {
+                        input.id = `param_${option.name}`;
+                        input.required = option.required;
+                        group.appendChild(input);
+                    }
+                    
+                    // Add help text for player targeting options in reproduction commands
+                    if ((this.isPlayerTargetingOption(option.name) || this.isOrderingOption(option.name)) && 
+                        this.isReproductionCommand(this.selectedCommand.name) && 
+                        !this.isOrderingOption(option.name)) {
+                        const helperText = document.createElement('div');
+                        helperText.className = 'helper-text';
+                        
+                        if (this.isPlayerTargetingOption(option.name)) {
+                            helperText.textContent = '💕 Romance commands only show opposite gender players';
+                        }
+                        
+                        group.appendChild(helperText);
+                    }
+                    
+                    container.appendChild(group);
+                });
+            }
+
+            collectParametersFromContainer(container) {
+                const parameters = {};
+                const inputs = container.querySelectorAll('input, select');
+                
+                console.log('Found', inputs.length, 'total inputs in container');
+                
+                inputs.forEach(input => {
+                    console.log('Processing input:', input.id, 'type:', input.type, 'value:', input.value);
+                    
+                    // Only process inputs with parameter IDs (starting with 'param_')
+                    if (!input.id || !input.id.startsWith('param_')) {
+                        console.log('Skipping input without param_ ID:', input.id);
+                        return;
+                    }
+                    
+                    const paramName = input.id.replace('param_', '');
+                    console.log('Parameter name:', paramName, 'isOrdering:', this.isOrderingOption(paramName));
+                    
+                    // Handle ordering parameters (comma-separated lists)
+                    if (input.type === 'hidden' && this.isOrderingOption(paramName)) {
+                        // Send as array for ordering parameters
+                        const orderList = input.value ? input.value.split(',') : [];
+                        console.log('Ordering parameter', paramName, 'raw value:', input.value, 'as array:', orderList);
+                        parameters[paramName] = orderList;
+                    } else {
+                        parameters[paramName] = input.value;
+                    }
+                });
+                
+                // Validation
+                const required = this.selectedCommand.options ? this.selectedCommand.options.filter(opt => opt.required) : [];
+                const missing = required.filter(opt => !parameters[opt.name] || parameters[opt.name] === '');
+                
+                if (missing.length > 0) {
+                    this.addMessage(`Missing required parameters: ${missing.map(opt => opt.name).join(', ')}`, 'error');
+                    return null;
+                }
+                
+                return parameters;
+            }
+
+            createOrderingInterface(paramName, preservedValue = '') {
                 const container = document.createElement('div');
                 container.className = 'ordering-container';
+                
+                console.log('createOrderingInterface for', paramName, 'preserved value:', preservedValue);
                 
                 // Hidden input to store the final ordered list
                 const hiddenInput = document.createElement('input');
                 hiddenInput.type = 'hidden';
                 hiddenInput.id = `param_${paramName}`;
+                hiddenInput.value = preservedValue; // Use preserved value
                 container.appendChild(hiddenInput);
+                
+                // Parse preserved value to initialize the display
+                const existingList = preservedValue ? preservedValue.split(',') : [];
                 
                 // Ordered list display
                 const orderList = document.createElement('div');
                 orderList.className = 'order-list';
                 orderList.id = `order-list-${paramName}`;
-                orderList.innerHTML = '<div style="color: #6c757d; text-align: center; padding: 1rem;">No players added yet</div>';
                 container.appendChild(orderList);
                 
                 // Add player section
@@ -1161,20 +1632,34 @@
                 addSection.appendChild(addBtn);
                 container.appendChild(addSection);
                 
+                // Initialize display with existing values after everything is built
+                if (existingList.length > 0) {
+                    this.updateOrderDisplayWithElement(orderList, existingList, paramName);
+                } else {
+                    orderList.innerHTML = '<div style="color: #6c757d; text-align: center; padding: 1rem;">No players added yet</div>';
+                }
+                
                 return container;
             }
 
             addPlayerToOrder(paramName, playerName) {
                 if (!playerName) return;
                 
+                console.log('addPlayerToOrder called with paramName:', paramName, 'playerName:', playerName);
+                
                 const orderList = document.getElementById(`order-list-${paramName}`);
                 const hiddenInput = document.getElementById(`param_${paramName}`);
+                
+                console.log('Found orderList:', !!orderList, 'Found hiddenInput:', !!hiddenInput);
+                console.log('Hidden input current value:', hiddenInput ? hiddenInput.value : 'NOT FOUND');
                 
                 // Get current list
                 let currentList = [];
                 if (hiddenInput.value) {
                     currentList = hiddenInput.value.split(',');
                 }
+                
+                console.log('Current list before adding:', currentList);
                 
                 // Don't add duplicates
                 if (currentList.includes(playerName)) {
@@ -1184,6 +1669,8 @@
                 
                 currentList.push(playerName);
                 hiddenInput.value = currentList.join(',');
+                
+                console.log('Updated hidden input value to:', hiddenInput.value);
                 
                 this.updateOrderDisplay(paramName, currentList);
                 
@@ -1257,6 +1744,69 @@
                 });
             }
 
+            updateOrderDisplayWithElement(orderListElement, orderedList, paramName) {
+                if (orderedList.length === 0) {
+                    orderListElement.innerHTML = '<div style="color: #6c757d; text-align: center; padding: 1rem;">No players added yet</div>';
+                    return;
+                }
+                
+                orderListElement.innerHTML = '';
+                
+                orderedList.forEach((playerName, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'order-item';
+                    
+                    const number = document.createElement('div');
+                    number.className = 'order-number';
+                    number.textContent = index + 1;
+                    
+                    const name = document.createElement('div');
+                    name.className = 'order-name';
+                    
+                    // Add gender indicator for reproduction commands
+                    if (this.isReproductionCommand(this.selectedCommand.name) && this.currentPopulation[playerName]) {
+                        const gender = this.currentPopulation[playerName].gender;
+                        const genderIcon = gender === 'male' ? '♂' : '♀';
+                        name.textContent = `${playerName} ${genderIcon}`;
+                    } else {
+                        name.textContent = playerName;
+                    }
+                    
+                    const controls = document.createElement('div');
+                    controls.className = 'order-controls';
+                    
+                    if (index > 0) {
+                        const upBtn = document.createElement('button');
+                        upBtn.type = 'button';
+                        upBtn.className = 'order-btn up';
+                        upBtn.textContent = '↑';
+                        upBtn.onclick = () => this.movePlayerInOrder(paramName, index, -1);
+                        controls.appendChild(upBtn);
+                    }
+                    
+                    if (index < orderedList.length - 1) {
+                        const downBtn = document.createElement('button');
+                        downBtn.type = 'button';
+                        downBtn.className = 'order-btn down';
+                        downBtn.textContent = '↓';
+                        downBtn.onclick = () => this.movePlayerInOrder(paramName, index, 1);
+                        controls.appendChild(downBtn);
+                    }
+                    
+                    const removeBtn = document.createElement('button');
+                    removeBtn.type = 'button';
+                    removeBtn.className = 'order-btn remove';
+                    removeBtn.textContent = '×';
+                    removeBtn.onclick = () => this.removePlayerFromOrder(paramName, index);
+                    controls.appendChild(removeBtn);
+                    
+                    item.appendChild(number);
+                    item.appendChild(name);
+                    item.appendChild(controls);
+                    orderListElement.appendChild(item);
+                });
+            }
+
             movePlayerInOrder(paramName, fromIndex, direction) {
                 const hiddenInput = document.getElementById(`param_${paramName}`);
                 const currentList = hiddenInput.value.split(',');
@@ -1291,24 +1841,33 @@
                 const form = document.getElementById('commandParameters');
                 const inputs = form.querySelectorAll('input, select');
                 
+                console.log('Found', inputs.length, 'total inputs');
+                
                 inputs.forEach(input => {
+                    console.log('Processing input:', input.id, 'type:', input.type, 'value:', input.value);
+                    
+                    // Only process inputs with parameter IDs (starting with 'param_')
+                    if (!input.id || !input.id.startsWith('param_')) {
+                        console.log('Skipping input without param_ ID:', input.id);
+                        return;
+                    }
+                    
                     const paramName = input.id.replace('param_', '');
+                    console.log('Parameter name:', paramName, 'isOrdering:', this.isOrderingOption(paramName));
                     
                     // Handle ordering parameters (comma-separated lists)
                     if (input.type === 'hidden' && this.isOrderingOption(paramName)) {
                         // Send as array for ordering parameters
                         const orderList = input.value ? input.value.split(',') : [];
+                        console.log('Ordering parameter', paramName, 'raw value:', input.value, 'as array:', orderList);
                         parameters[paramName] = orderList;
                     } else {
                         parameters[paramName] = input.value;
                     }
                 });
                 
-                this.send({
-                    type: 'command',
-                    command: this.selectedCommand.name,
-                    parameters: parameters
-                });
+                console.log('executeCommand called - this function is deprecated, commands now use modals');
+                this.addMessage('Please select a command from the sidebar to open the command modal', 'info');
             }
 
             addMessage(text, type = 'info') {
@@ -1327,7 +1886,73 @@
             }
 
             requestCommandList() {
-                this.send({ type: 'listCommands' });
+                const playerName = document.getElementById('playerName')?.value || '';
+                this.send({ 
+                    type: 'listCommands',
+                    playerName: playerName 
+                });
+            }
+
+            requestHelp(helpType) {
+                this.send({
+                    type: 'helpRequest',
+                    helpType: helpType
+                });
+            }
+
+            requestSettings() {
+                this.send({
+                    type: 'infoRequest',
+                    selection: 'settings'
+                });
+            }
+
+            handleSettingsResponse(data) {
+                if (data.content && typeof data.content.autoRefresh !== 'undefined') {
+                    this.autoRefresh = data.content.autoRefresh;
+                    console.log(`Auto-refresh ${this.autoRefresh ? 'enabled' : 'disabled'} by server`);
+                    
+                    // Set up or clear the timer based on the setting
+                    if (this.autoRefresh) {
+                        this.setupAutoRefreshTimer();
+                    } else {
+                        if (this.refreshTimer) {
+                            clearTimeout(this.refreshTimer);
+                            this.refreshTimer = null;
+                        }
+                    }
+                }
+            }
+
+            handleHelpContent(data) {
+                const helpContent = document.getElementById('helpContent');
+                if (helpContent) {
+                    helpContent.textContent = data.content;
+                }
+            }
+
+            requestSettings() {
+                this.send({
+                    type: 'infoRequest',
+                    selection: 'settings'
+                });
+            }
+
+            handleSettingsResponse(data) {
+                if (data.content && typeof data.content.autoRefresh !== 'undefined') {
+                    this.autoRefresh = data.content.autoRefresh;
+                    console.log(`Auto-refresh ${this.autoRefresh ? 'enabled' : 'disabled'} by server`);
+                    
+                    // Set up or clear the timer based on the setting
+                    if (this.autoRefresh) {
+                        this.setupAutoRefreshTimer();
+                    } else {
+                        if (this.refreshTimer) {
+                            clearTimeout(this.refreshTimer);
+                            this.refreshTimer = null;
+                        }
+                    }
+                }
             }
 
             refreshGameData() {
@@ -1335,6 +1960,30 @@
                 this.send({ type: 'infoRequest', selection: 'population' });
                 this.send({ type: 'infoRequest', selection: 'children' });
                 this.send({ type: 'infoRequest', selection: 'status' });
+                this.lastRefreshTime = Date.now();
+                this.resetAutoRefreshTimer();
+            }
+
+            setupAutoRefreshTimer() {
+                // Only set up timer if autoRefresh is enabled
+                if (this.autoRefresh) {
+                    this.resetAutoRefreshTimer();
+                }
+            }
+
+            resetAutoRefreshTimer() {
+                if (this.refreshTimer) {
+                    clearTimeout(this.refreshTimer);
+                }
+                
+                // Only set up timer if autoRefresh is enabled
+                if (this.autoRefresh) {
+                    this.refreshTimer = setTimeout(() => {
+                        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+                            this.refreshGameData();
+                        }
+                    }, 30000); // 30 seconds
+                }
             }
 
             registerPlayer() {
@@ -1460,11 +2109,11 @@
             }
 
             initializeEventListeners() {
-                // Execute command button
-                document.getElementById('executeCommandBtn').onclick = () => this.executeCommand();
-                
                 // Register button
                 document.getElementById('registerBtn').onclick = () => this.registerPlayer();
+                
+                // Expand login area button
+                document.getElementById('expandLoginBtn').onclick = () => this.expandLoginArea();
                 
                 // Refresh data button
                 document.getElementById('refreshDataBtn').onclick = () => this.refreshGameData();
@@ -1473,18 +2122,15 @@
                 document.getElementById('tribeSelect').onchange = () => {
                     this.currentPopulation = null;
                     this.saveSettings(); // Save the new tribe selection
-                    if (this.selectedCommand) {
-                        this.generateCommandForm(); // Regenerate form to show loading
-                    }
+                    // Player data cleared - modals will automatically reload when needed
                 };
                 
                 // Player name change - save setting
                 document.getElementById('playerName').onchange = () => {
                     this.saveSettings(); // Save the new player name
                     this.currentPopulation = null; // Clear population cache to trigger gender filtering refresh
-                    if (this.selectedCommand) {
-                        this.generateCommandForm(); // Regenerate form for gender filtering
-                    }
+                    this.requestCommandList(); // Refresh command list in case chief status changed
+                    // Player data cleared - modals will automatically reload when needed
                 };
                 
                 // Also save on input for real-time saving
@@ -1514,7 +2160,50 @@
         // Initialize the client when page loads
         window.addEventListener('DOMContentLoaded', () => {
             window.tribesClient = new TribesClient();
+            
+            // Add help tab event listeners
+            const helpTabs = document.querySelectorAll('.help-tab-btn');
+            helpTabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // Remove active class from all tabs
+                    helpTabs.forEach(t => t.classList.remove('active'));
+                    // Add active class to clicked tab
+                    tab.classList.add('active');
+                    
+                    // Request help content
+                    const helpType = tab.getAttribute('data-help-type');
+                    window.tribesClient.requestHelp(helpType);
+                });
+            });
+            
+            // Load initial help content
+            setTimeout(() => {
+                if (window.tribesClient && window.tribesClient.ws && window.tribesClient.ws.readyState === WebSocket.OPEN) {
+                    window.tribesClient.requestHelp('overview');
+                }
+            }, 1000);
         });
     </script>
+
+    <!-- Command Arguments Modal -->
+    <div class="modal-overlay" id="commandModal">
+        <div class="modal-popup">
+            <div class="modal-header">
+                <div class="modal-title" id="modalTitle">Command Arguments</div>
+                <button class="modal-close" id="modalClose">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="modalDescription" class="command-description" style="margin-bottom: 1rem;"></div>
+                <div class="command-form" id="modalCommandForm">
+                    <div class="command-parameters" id="modalCommandParameters"></div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" id="modalCancelBtn">Cancel</button>
+                <button class="btn" id="modalExecuteBtn">Execute Command</button>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>

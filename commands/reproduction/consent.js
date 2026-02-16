@@ -14,10 +14,21 @@ module.exports = {
         )
         ,
     async execute(interaction, gameState, bot) {
-        var sourceName = interaction.member.displayName;
-        var rawList = interaction.options.getString('consentlist');
-        var response = reproLib.consentPrep(gameState, sourceName, rawList);
-        console.log("consent updated: "+response)
-	},
+        try {
+            var sourceName = interaction.member.displayName;
+            var rawList = interaction.options.getString('consentlist');
+            
+            // Handle array parameters from WebSocket interface
+            if (Array.isArray(rawList)) {
+                rawList = rawList.length > 0 ? rawList.join(',') : null;
+            }
+            
+            var response = reproLib.consentPrep(gameState, sourceName, rawList);
+            console.log("consent updated: "+response);
+            gameState.saveRequired = true;
+        } catch (error) {
+            console.error('consent error '+error);
+        }
+    },
 };
 

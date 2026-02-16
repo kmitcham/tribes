@@ -9,7 +9,10 @@ function convertStringToArray(listString){
         return listString;
     }
     if (!listString || !(typeof listString === "string")){
-        console.log("listString neither array nor string: "+listString);
+        // Handle null, undefined, or empty string without logging error
+        if (listString !== null && listString !== undefined && listString !== "") {
+            console.log("listString neither array nor string: "+listString);
+        }
         return [];
     }
     var asArray = [];
