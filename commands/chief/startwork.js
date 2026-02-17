@@ -9,6 +9,7 @@ module.exports = {
     async execute(interaction, gameState) {
         var actorName = interaction.member.displayName
         response = chief.startWork(actorName, gameState)
+        gameState.saveRequired = true;
 	},
 };
 

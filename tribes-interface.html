@@ -23,16 +23,44 @@
             color: white;
             padding: 1rem;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+        }
+
+        .header-icons {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .header-icons img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 6px;
+            transition: transform 0.3s ease;
+        }
+
+        .header-icons img:hover {
+            transform: scale(1.1);
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .header-content {
+            flex: 1;
+            text-align: center;
         }
 
         .header h1 {
-            text-align: center;
             font-size: 2.5rem;
             margin-bottom: 0.5rem;
         }
 
         .container {
-            max-width: 1400px;
+            max-width: 2400px; /* Increased for larger screens */
             margin: 0 auto;
             padding: 1rem;
             display: grid;
@@ -241,6 +269,7 @@
         .tab-container {
             padding: 1rem;
             height: 100%;
+            min-height: 400px; /* Minimum height for better usability */
             overflow-y: auto;
         }
 
@@ -295,7 +324,7 @@
             border: 1px solid #ddd;
             border-radius: 4px;
             padding: 1rem;
-            max-height: 200px;
+            max-height: min(60vh, 800px); /* Responsive height based on viewport */
             overflow-y: auto;
             margin-top: 1rem;
         }
@@ -596,19 +625,81 @@
             border: 1px solid #ddd;
             border-radius: 4px;
             padding: 1rem;
-            max-height: 400px;
+            max-height: min(60vh, 800px); /* Responsive height based on viewport */
             overflow-y: auto;
             margin-top: 1rem;
+        }
+
+        /* Large screen optimizations */
+        @media (min-width: 1600px) {
+            .container {
+                grid-template-columns: 350px 1fr; /* Slightly wider sidebar on large screens */
+                padding: 1.5rem;
+            }
+            
+            .messages-container {
+                max-height: min(70vh, 1000px); /* More height on large screens */
+            }
+            
+            .command-panel {
+                min-height: 300px;
+            }
+            
+            .data-section {
+                min-height: 600px; /* Minimum height for game data on large screens */
+            }
+        }
+
+        @media (min-width: 2000px) {
+            .container {
+                grid-template-columns: 400px 1fr; /* Even wider sidebar on very large screens */
+                grid-gap: 2rem;
+                padding: 2rem;
+            }
+            
+            .messages-container {
+                max-height: min(75vh, 1200px); /* Maximum utilization on very large screens */
+            }
+            
+            .tab-container {
+                min-height: 600px;
+            }
+            
+            .data-section {
+                min-height: 800px; /* Generous height for game data */
+            }
+        }
+
+        /* Footer styling */
+        .footer {
+            background: #f8f9fa;
+            color: #666;
+            text-align: center;
+            padding: 1rem;
+            border-top: 1px solid #ddd;
+            margin-top: 2rem;
+        }
+
+        .footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
         }
 
         @media (max-width: 768px) {
             .container {
                 grid-template-columns: 1fr;
                 grid-template-rows: auto auto;
+                max-width: 100%;
+                padding: 0.5rem;
             }
             
             .sidebar {
                 order: 2;
+                margin-bottom: 1rem;
             }
             
             .main-content {
@@ -619,13 +710,26 @@
                 margin: 1rem;
                 width: calc(100% - 2rem);
             }
+            
+            .messages-container {
+                max-height: min(40vh, 400px); /* Smaller height on mobile */
+            }
+            
+            .data-section {
+                min-height: 300px; /* Reasonable minimum on mobile */
+            }
         }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>🏛️ Tribes Game Interface</h1>
-        <div class="connection-status" id="connectionStatus">Connecting...</div>
+        <div class="header-icons">
+            <img src="caveman.png" alt="Caveman" title="Caveman">
+        </div>
+        <div class="header-content">
+            <h1>Tribes Game Interface</h1>
+            <div class="connection-status" id="connectionStatus">Connecting...</div>
+        </div>
     </div>
 
     <div class="container">
@@ -751,6 +855,7 @@
                 this.commands = {};
                 this.selectedCommand = null;
                 this.currentPopulation = null; // Store current population for dropdowns
+                this.currentChildren = null; // Store current children for child targeting
                 this.reconnectAttempts = 0;
                 this.maxReconnectAttempts = 5;
                 this.reconnectInterval = 2000;
@@ -867,12 +972,12 @@
                         }
                         
                         const host = hosts[hostIndex];
-                        console.log(`Trying to connect to ws://${host}:${port}`);
+                        logWithTimestamp(`Trying to connect to ws://${host}:${port}`);
                         
                         this.ws = new WebSocket(`ws://${host}:${port}`);
                         
                         this.ws.onopen = () => {
-                            console.log('WebSocket connected');
+                            logWithTimestamp('WebSocket connected');
                             this.updateConnectionStatus('connected');
                             this.reconnectAttempts = 0;
                             this.requestCommandList();
@@ -890,7 +995,7 @@
                         };
                         
                         this.ws.onclose = () => {
-                            console.log('WebSocket closed');
+                            logWithTimestamp('WebSocket closed');
                             this.updateConnectionStatus('disconnected');
                             if (this.refreshTimer) {
                                 clearTimeout(this.refreshTimer);
@@ -955,7 +1060,7 @@
             }
 
             handleMessage(data) {
-                console.log('Received:', data);
+                logWithTimestamp('Received:', data);
 
                 switch (data.type) {
                     case 'commandList':
@@ -987,7 +1092,7 @@
                         this.addMessage(data.message, 'error');
                         break;
                     default:
-                        console.log('Unknown message type:', data.type);
+                        logWithTimestamp('Unknown message type:', data.type);
                 }
             }
 
@@ -1000,22 +1105,33 @@
             handleCommandResponse(data) {
                 const type = data.success ? 'success' : 'error';
                 this.addMessage(`[${data.command.toUpperCase()}] ${data.message}`, type);
-                // Auto-refresh game data after every command
-                this.refreshGameData();
+                // Server will now automatically refresh game data for all tribe members
             }
 
             handleInfoResponse(data) {
+                // Check if this is an automatic refresh from the server
+                const isAutoRefresh = data.autoRefresh === true;
+                
                 switch (data.label) {
                     case 'population':
                         this.currentPopulation = data.content;
                         this.updatePopulationTable(data.content);
-                        // Population data loaded - modals will automatically use this data when opened
+                        if (isAutoRefresh) {
+                            this.showAutoRefreshIndicator('Population updated');
+                        }
                         break;
                     case 'children':
+                        this.currentChildren = data.content; // Store for targeting dropdowns
                         this.updateChildrenTable(data.content);
+                        if (isAutoRefresh) {
+                            this.showAutoRefreshIndicator('Children data updated');
+                        }
                         break;
                     case 'status':
                         this.updateStatusText(data.content);
+                        if (isAutoRefresh) {
+                            this.showAutoRefreshIndicator('Game status updated');
+                        }
                         break;
                     case 'romance':
                         this.addMessage('Romance data updated', 'info');
@@ -1118,7 +1234,7 @@
                 
                 // If command has no parameters, execute it immediately
                 if (!command.options || command.options.length === 0) {
-                    console.log('Auto-executing command with no parameters:', commandName);
+                    logWithTimestamp('Auto-executing command with no parameters:', commandName);
                     this.send({
                         type: 'command',
                         command: commandName,
@@ -1178,7 +1294,7 @@
                 const parameters = this.collectParametersFromContainer(parametersContainer);
                 
                 if (parameters !== null) {
-                    console.log('Executing modal command:', this.selectedCommand.name, 'with parameters:', parameters);
+                    logWithTimestamp('Executing modal command:', this.selectedCommand.name, 'with parameters:', parameters);
                     this.send({
                         type: 'command',
                         command: this.selectedCommand.name,
@@ -1200,11 +1316,23 @@
                     this.isPlayerTargetingOption(option.name)
                 );
                 
+                const needsChildrenData = this.selectedCommand.options.some(option => 
+                    this.isChildTargetingOption(option.name)
+                );
+                
                 if (needsPlayerData && !this.currentPopulation) {
                     // Fetch population data first
                     this.send({ type: 'infoRequest', selection: 'population' });
                     // Show loading message
                     container.innerHTML = '<div>Loading player data...</div>';
+                    return;
+                }
+                
+                if (needsChildrenData && !this.currentChildren) {
+                    // Fetch children data first
+                    this.send({ type: 'infoRequest', selection: 'children' });
+                    // Show loading message
+                    container.innerHTML = '<div>Loading children data...</div>';
                     return;
                 }
 
@@ -1240,11 +1368,23 @@
                     this.isPlayerTargetingOption(option.name)
                 );
                 
+                const needsChildrenData = this.selectedCommand.options.some(option => 
+                    this.isChildTargetingOption(option.name)
+                );
+                
                 if (needsPlayerData && !this.currentPopulation) {
                     // Fetch population data first
                     this.send({ type: 'infoRequest', selection: 'population' });
                     // Show loading message
                     container.innerHTML = '<div>Loading player data...</div>';
+                    return;
+                }
+                
+                if (needsChildrenData && !this.currentChildren) {
+                    // Fetch children data first
+                    this.send({ type: 'infoRequest', selection: 'children' });
+                    // Show loading message
+                    container.innerHTML = '<div>Loading children data...</div>';
                     return;
                 }
                 
@@ -1363,10 +1503,21 @@
                 // List of parameter names that should show single player dropdowns
                 const playerTargetingNames = [
                     'target', 'player', 'member', 'user', 'who', 'person',
-                    'candidate', 'guardian', 'child', 'mate', 'partner'
+                    'candidate', 'guardian', 'mate', 'partner'
                 ];
                 
                 return playerTargetingNames.some(name => 
+                    optionName.toLowerCase().includes(name.toLowerCase())
+                );
+            }
+
+            isChildTargetingOption(optionName) {
+                // List of parameter names that should show child dropdowns
+                const childTargetingNames = [
+                    'child', 'children', 'baby', 'kid', 'offspring'
+                ];
+                
+                return childTargetingNames.some(name => 
                     optionName.toLowerCase().includes(name.toLowerCase())
                 );
             }
@@ -1439,6 +1590,60 @@
                             opt.textContent = choice.name;
                             input.appendChild(opt);
                         });
+                    } else if (this.isChildTargetingOption(option.name)) {
+                        // Child targeting dropdown
+                        input = document.createElement('select');
+                        input.innerHTML = '<option value="">Select a child...</option>';
+                        
+                        if (this.currentChildren) {
+                            // Add !all option for feeding all hungry children
+                            const allOption = document.createElement('option');
+                            allOption.value = '!all';
+                            allOption.textContent = '!all (all hungry children)';
+                            input.appendChild(allOption);
+                            
+                            // Add individual children
+                            Object.keys(this.currentChildren).forEach(childName => {
+                                const child = this.currentChildren[childName];
+                                const opt = document.createElement('option');
+                                opt.value = childName;
+                                
+                                // Add age and food status for context
+                                const food = child.food || 0;
+                                const age = child.age || 0;
+                                const status = food >= 2 ? '🍎' : '😋'; // Fed or hungry
+                                opt.textContent = `${childName} (age ${age}, food ${food}) ${status}`;
+                                
+                                input.appendChild(opt);
+                            });
+                        }
+                        
+                        // Also add parent names for feeding all children of a parent
+                        if (this.currentPopulation && this.currentChildren) {
+                            const parentsWithChildren = new Set();
+                            Object.values(this.currentChildren).forEach(child => {
+                                if (child.mother) parentsWithChildren.add(child.mother);
+                                if (child.father) parentsWithChildren.add(child.father);
+                            });
+                            
+                            if (parentsWithChildren.size > 0) {
+                                const separator = document.createElement('option');
+                                separator.disabled = true;
+                                separator.textContent = '--- Parents (feed all their children) ---';
+                                input.appendChild(separator);
+                                
+                                parentsWithChildren.forEach(parentName => {
+                                    if (this.currentPopulation[parentName]) {
+                                        const opt = document.createElement('option');
+                                        opt.value = parentName;
+                                        const gender = this.currentPopulation[parentName].gender;
+                                        const genderIcon = gender === 'male' ? '♂' : '♀';
+                                        opt.textContent = `${parentName} ${genderIcon} (parent)`;
+                                        input.appendChild(opt);
+                                    }
+                                });
+                            }
+                        }
                     } else if (this.isPlayerTargetingOption(option.name)) {
                         // Player targeting dropdown
                         input = document.createElement('select');
@@ -1885,6 +2090,49 @@
                 }
             }
 
+            showAutoRefreshIndicator(text) {
+                // Create a subtle visual indicator for automatic refreshes
+                const indicator = document.createElement('div');
+                indicator.className = 'auto-refresh-indicator';
+                indicator.textContent = `🔄 ${text}`;
+                indicator.style.cssText = `
+                    position: fixed;
+                    top: 80px;
+                    right: 20px;
+                    background: rgba(40, 167, 69, 0.9);
+                    color: white;
+                    padding: 8px 12px;
+                    border-radius: 4px;
+                    font-size: 0.9rem;
+                    z-index: 1001;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+                    animation: fadeInOut 2s ease-in-out;
+                `;
+                
+                // Add CSS animation if not already exists
+                if (!document.getElementById('autoRefreshStyle')) {
+                    const style = document.createElement('style');
+                    style.id = 'autoRefreshStyle';
+                    style.textContent = `
+                        @keyframes fadeInOut {
+                            0% { opacity: 0; transform: translateY(-10px); }
+                            20%, 80% { opacity: 1; transform: translateY(0); }
+                            100% { opacity: 0; transform: translateY(-10px); }
+                        }
+                    `;
+                    document.head.appendChild(style);
+                }
+                
+                document.body.appendChild(indicator);
+                
+                // Remove after animation completes
+                setTimeout(() => {
+                    if (indicator.parentNode) {
+                        indicator.parentNode.removeChild(indicator);
+                    }
+                }, 2000);
+            }
+
             requestCommandList() {
                 const playerName = document.getElementById('playerName')?.value || '';
                 this.send({ 
@@ -2159,6 +2407,12 @@
 
         // Initialize the client when page loads
         window.addEventListener('DOMContentLoaded', () => {
+            // Add timestamped logging function
+            window.logWithTimestamp = function(message, ...args) {
+                const timestamp = new Date().toLocaleString();
+                console.log(`[${timestamp}]`, message, ...args);
+            };
+            
             window.tribesClient = new TribesClient();
             
             // Add help tab event listeners
@@ -2203,6 +2457,10 @@
                 <button class="btn" id="modalExecuteBtn">Execute Command</button>
             </div>
         </div>
+    </div>
+
+    <div class="footer">
+        <a href="https://www.flaticon.com/free-icons/caveman" title="caveman icons">Caveman icons created by Freepik - Flaticon</a>
     </div>
 
 </body>

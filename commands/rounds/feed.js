@@ -2,6 +2,7 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const pop = require("../../libs/population.js")
 const feedlib = require("../../libs/feed.js");
 const text = require("../../libs/textprocess.js")
+const referees = require("../../libs/referees.json")
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -10,7 +11,7 @@ module.exports = {
         .addStringOption(option => 
             option
             .setName('child')
-            .setDescription('name of the child to feed, or space seperated list of names. or use !all ')
+            .setDescription('name of child to feed, or parent name to feed all their children, or !all for all hungry children')
             .setRequired(true))
         .addIntegerOption(option => 
             option.setName('amount')
@@ -28,7 +29,7 @@ function feed(interaction, gameState){
     var rawList = interaction.options.getString('child');    
     player = pop.memberByName(sourceName, gameState);
 
-    if (amount < 0 &&  !util.referees.includes(sourceName) ){
+    if (amount < 0 &&  !referees.includes(sourceName) ){
         text.addMessage(gameState, sourceName, 'Only the referee can reduce amounts');
         return
     }

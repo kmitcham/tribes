@@ -12,6 +12,7 @@ module.exports = {
         var actorName = interaction.member.displayName
 
         repro.startReproductionChecks(gameState, actorName);
+        gameState.saveRequired = true;
 	},
 };
 

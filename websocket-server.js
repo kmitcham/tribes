@@ -10,16 +10,27 @@ const help = require('./libs/help.js');
 
 const logger = require('./libs/logger.js');
 const PORT = process.env.PORT || 8088;
+const referees = require('./libs/referees.json');
+
+// Timestamped logging function
+function logWithTimestamp(message, ...args) {
+    const timestamp = new Date().toLocaleString();
+    console.log(`[${timestamp}]`, message, ...args);
+}
 
 let wss;
 let allGames = {};
 let usersDict = {};
 
+// Track connected clients and their player names
+let connectedClients = new Map(); // Map of playerName -> Set of WebSocket connections
+let tribeConnections = new Map(); // Map of tribeName -> Set of WebSocket connections
+
 // Load users data
 try {
     usersDict = loadJson('./users.json');
 } catch (error) {
-    console.log('No existing users.json, starting fresh');
+    logWithTimestamp('No existing users.json, starting fresh');
     usersDict = {};
 }
 
@@ -45,9 +56,9 @@ function loadCommands() {
                         category: folder,
                         filepath: filePath
                     });
-                    console.log(`Loaded command: ${commandName} (${folder})`);
+                    logWithTimestamp(`Loaded command: ${commandName} (${folder})`);
                 } else {
-                    console.log(`[WARNING] The command at ${filePath} is missing "data" or "execute" property.`);
+                    logWithTimestamp(`[WARNING] The command at ${filePath} is missing "data" or "execute" property.`);
                 }
             } catch (error) {
                 console.error(`Error loading command ${filePath}:`, error);
@@ -56,6 +67,7 @@ function loadCommands() {
     }
 
     console.log(`Loaded ${commands.size} commands total`);
+    console.log('Tribes WebSocket Server starting...');
 }
 
 // Create mock interaction object for websocket compatibility
@@ -176,6 +188,23 @@ function startServer() {
                         res.end(data);
                     }
                 });
+            } else if (req.url.endsWith('.png') || req.url.endsWith('.jpg') || req.url.endsWith('.gif') || req.url.endsWith('.jpeg')) {
+                // Serve static image files
+                const filePath = path.join(__dirname, req.url);
+                fs.readFile(filePath, (err, data) => {
+                    if (err) {
+                        res.writeHead(404, { 'Content-Type': 'text/plain' });
+                        res.end('Image not found');
+                    } else {
+                        const ext = path.extname(req.url).toLowerCase();
+                        let contentType = 'image/png';
+                        if (ext === '.jpg' || ext === '.jpeg') contentType = 'image/jpeg';
+                        else if (ext === '.gif') contentType = 'image/gif';
+                        
+                        res.writeHead(200, { 'Content-Type': contentType });
+                        res.end(data);
+                    }
+                });
             } else {
                 res.writeHead(404, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ error: 'Not found' }));
@@ -186,23 +215,23 @@ function startServer() {
         wss = new WebSocket.Server({ server: httpServer });
 
         httpServer.listen(PORT, '0.0.0.0', () => {
-            console.log(`Tribes server (WebSocket + HTTP) started on port ${PORT}`);
-            console.log(`Local access:`);
-            console.log(`  Health check: http://localhost:${PORT}/health`);
-            console.log(`  Game interface: http://localhost:${PORT}/`);
-            console.log(`Network access:`);
-            console.log(`  Health check: http://192.168.1.20:${PORT}/health`);
-            console.log(`  Game interface: http://192.168.1.20:${PORT}/`);
-            console.log(`Share the network URL with others on your local network!`);
+            logWithTimestamp(`Tribes server (WebSocket + HTTP) started on port ${PORT}`);
+            logWithTimestamp(`Local access:`);
+            logWithTimestamp(`  Health check: http://localhost:${PORT}/health`);
+            logWithTimestamp(`  Game interface: http://localhost:${PORT}/`);
+            logWithTimestamp(`Network access:`);
+            logWithTimestamp(`  Health check: http://192.168.1.20:${PORT}/health`);
+            logWithTimestamp(`  Game interface: http://192.168.1.20:${PORT}/`);
+            logWithTimestamp(`Share the network URL with others on your local network!`);
         });
 
         wss.on('connection', ws => {
-            console.log('New client connected');
+            logWithTimestamp('New client connected');
 
             ws.on('message', async (message) => {
                 try {
                     const data = JSON.parse(message.toString());
-                    console.log('Received:', data);
+                    logWithTimestamp('Received:', data.type, data.command || '', `from ${data.playerName || 'unknown'}`);
 
                     await handleWebSocketMessage(ws, data);
                 } catch (error) {
@@ -216,7 +245,21 @@ function startServer() {
             });
 
             ws.on('close', () => {
-                console.log('Client disconnected');
+                logWithTimestamp('Client disconnected');
+                // Remove from tribe connections
+                if (ws.currentTribe && tribeConnections.has(ws.currentTribe)) {
+                    tribeConnections.get(ws.currentTribe).delete(ws);
+                    if (tribeConnections.get(ws.currentTribe).size === 0) {
+                        tribeConnections.delete(ws.currentTribe);
+                    }
+                }
+                // Remove from player connections
+                if (ws.currentPlayer && connectedClients.has(ws.currentPlayer)) {
+                    connectedClients.get(ws.currentPlayer).delete(ws);
+                    if (connectedClients.get(ws.currentPlayer).size === 0) {
+                        connectedClients.delete(ws.currentPlayer);
+                    }
+                }
             });
         });
 
@@ -229,6 +272,22 @@ function startServer() {
 async function handleWebSocketMessage(ws, data) {
     let tribe = data.tribe || 'bug';
     let gameState = await getGameState(tribe);
+
+    // Track this client's tribe connection
+    if (!tribeConnections.has(tribe)) {
+        tribeConnections.set(tribe, new Set());
+    }
+    tribeConnections.get(tribe).add(ws);
+    ws.currentTribe = tribe; // Store tribe on the websocket for cleanup
+
+    // Track this client's player name if provided
+    if (data.playerName) {
+        if (!connectedClients.has(data.playerName)) {
+            connectedClients.set(data.playerName, new Set());
+        }
+        connectedClients.get(data.playerName).add(ws);
+        ws.currentPlayer = data.playerName; // Store player name on websocket for cleanup
+    }
 
     switch (data.type) {
         case 'infoRequest':
@@ -379,6 +438,9 @@ async function handleCommandRequest(ws, data, gameState) {
         if (gameState.saveRequired) {
             savelib.saveTribe(gameState);
             gameState.saveRequired = false;
+            
+            // Refresh game data for all tribe members after state changes
+            await refreshTribeGameData(gameState, data.tribe || 'bug');
         }
 
         if (gameState.archiveRequired) {
@@ -398,16 +460,76 @@ async function handleCommandRequest(ws, data, gameState) {
     }
 }
 
+async function refreshTribeGameData(gameState, tribeName) {
+    const tribeMembers = tribeConnections.get(tribeName);
+    if (!tribeMembers || tribeMembers.size === 0) {
+        return; // No one online to refresh
+    }
+
+    logWithTimestamp(`Refreshing game data for ${tribeMembers.size} members of ${tribeName} tribe`);
+    
+    // Prepare data packages
+    const populationData = {
+        type: 'infoRequest',
+        label: 'population', 
+        content: removeClunkyKeys(gameState.population),
+        autoRefresh: true // Flag to indicate this is an automatic refresh
+    };
+    
+    const childrenData = {
+        type: 'infoRequest',
+        label: 'children',
+        content: gameState.children,
+        autoRefresh: true
+    };
+    
+    const statusData = {
+        type: 'infoRequest', 
+        label: 'status',
+        content: util.gameStateMessage(gameState),
+        autoRefresh: true
+    };
+    
+    // Send to all tribe members
+    for (const memberWs of tribeMembers) {
+        if (memberWs.readyState === 1) { // WebSocket.OPEN
+            try {
+                memberWs.send(JSON.stringify(populationData));
+                memberWs.send(JSON.stringify(childrenData));
+                memberWs.send(JSON.stringify(statusData));
+            } catch (error) {
+                console.error('Error sending refresh data to tribe member:', error);
+            }
+        }
+    }
+}
+
 async function sendGameMessages(ws, gameState, data) {
     if (!gameState.messages) return;
 
-    // Send tribe-wide messages
+    const tribe = data.tribe || 'bug';
+
+    // Send tribe-wide messages to ALL players in this tribe
     if (gameState.messages.tribe) {
-        ws.send(JSON.stringify({
-            type: 'tribeMessage',
-            message: gameState.messages.tribe,
-            clientId: data.clientId
-        }));
+        const tribeMembers = tribeConnections.get(tribe);
+        if (tribeMembers && tribeMembers.size > 0) {
+            const tribeMessage = {
+                type: 'tribeMessage',
+                message: gameState.messages.tribe,
+                clientId: data.clientId
+            };
+            
+            // Send to all connected players in this tribe
+            for (const tribeWs of tribeMembers) {
+                if (tribeWs.readyState === 1) { // WebSocket.OPEN
+                    try {
+                        tribeWs.send(JSON.stringify(tribeMessage));
+                    } catch (error) {
+                        console.error('Error sending tribe message:', error);
+                    }
+                }
+            }
+        }
         delete gameState.messages.tribe;
     }
 
@@ -422,10 +544,27 @@ async function sendGameMessages(ws, gameState, data) {
         delete gameState.messages[playerName];
     }
 
-    // Send messages to other players (for now, just log them)
+    // Send messages to other connected players
     for (const [recipient, message] of Object.entries(gameState.messages)) {
-        console.log(`Message for ${recipient}: ${message}`);
-        // In a full implementation, you'd send this to the appropriate connected client
+        const recipientConnections = connectedClients.get(recipient);
+        if (recipientConnections && recipientConnections.size > 0) {
+            // Send to all connections for this player
+            for (const recipientWs of recipientConnections) {
+                if (recipientWs.readyState === 1) { // WebSocket.OPEN
+                    try {
+                        recipientWs.send(JSON.stringify({
+                            type: 'privateMessage',
+                            message: message,
+                            clientId: data.clientId
+                        }));
+                    } catch (error) {
+                        console.error(`Error sending message to ${recipient}:`, error);
+                    }
+                }
+            }
+        } else {
+            logWithTimestamp(`Message for offline player ${recipient}: ${message}`);
+        }
     }
 
     // Clear remaining messages
@@ -480,25 +619,30 @@ function handleListCommands(ws, data, gameState) {
     
     // Check if the current player is chief
     let isChief = false;
-    console.log(`[CHIEF CHECK] Player: "${playerName}", HasGameState: ${!!gameState}, HasPopulation: ${!!(gameState && gameState.population)}`);
+    logWithTimestamp(`[CHIEF CHECK] Player: "${playerName}", HasGameState: ${!!gameState}, HasPopulation: ${!!(gameState && gameState.population)}`);
     
     if (playerName && gameState && gameState.population) {
         const pop = require('./libs/population.js');
         const player = pop.memberByName(playerName, gameState);
-        console.log(`[CHIEF CHECK] Found player: ${!!player}, Chief status: ${player ? player.chief : 'N/A'}`);
+        logWithTimestamp(`[CHIEF CHECK] Found player: ${!!player}, Chief status: ${player ? player.chief : 'N/A'}`);
         isChief = player && player.chief;
         
         if (player) {
-            console.log(`[CHIEF CHECK] Player "${playerName}" properties:`, Object.keys(player));
+            logWithTimestamp(`[CHIEF CHECK] Player "${playerName}" properties:`, Object.keys(player));
         }
     }
 
-    console.log(`[CHIEF CHECK] Final isChief status: ${isChief}`);
+    // Check if the current player is a referee
+    const isRef = playerName && referees.includes(playerName);
+    logWithTimestamp(`[REF CHECK] Player "${playerName}" isRef: ${isRef}`);
+
+    logWithTimestamp(`[CHIEF CHECK] Final isChief status: ${isChief}`);
 
     // Sort commands alphabetically by name
     const sortedCommands = Array.from(commands.entries()).sort(([a], [b]) => a.localeCompare(b));
     
     let chiefCommandsFiltered = 0;
+    let forceOptionsFiltered = 0;
     for (const [name, command] of sortedCommands) {
         // Filter out chief commands if the player is not chief
         if (command.category === 'chief' && !isChief) {
@@ -506,15 +650,27 @@ function handleListCommands(ws, data, gameState) {
             continue;
         }
         
+        let commandOptions = command.data.options || [];
+        
+        // Filter out force options if the player is not a referee
+        if (!isRef) {
+            const originalLength = commandOptions.length;
+            commandOptions = commandOptions.filter(option => option.name !== 'force');
+            if (commandOptions.length < originalLength) {
+                forceOptionsFiltered++;
+            }
+        }
+        
         commandList[name] = {
             name: name,
             description: command.data.description,
             category: command.category,
-            options: command.data.options || []
+            options: commandOptions
         };
     }
 
-    console.log(`[CHIEF CHECK] Filtered out ${chiefCommandsFiltered} chief commands, sending ${Object.keys(commandList).length} total commands`);
+    logWithTimestamp(`[CHIEF CHECK] Filtered out ${chiefCommandsFiltered} chief commands, sending ${Object.keys(commandList).length} total commands`);
+    logWithTimestamp(`[REF CHECK] Filtered out force options from ${forceOptionsFiltered} commands`);
 
     ws.send(JSON.stringify({
         type: 'commandList',
