@@ -16,6 +16,9 @@
             background-color: #f5f5f5;
             color: #333;
             line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
         .header {
@@ -27,6 +30,7 @@
             align-items: center;
             justify-content: space-between;
             position: relative;
+            flex-shrink: 0;
         }
 
         .header-icons {
@@ -66,7 +70,8 @@
             display: grid;
             grid-template-columns: 300px 1fr;
             grid-gap: 1rem;
-            height: calc(100vh - 120px);
+            flex: 1;
+            min-height: 0;
         }
 
         .sidebar {
@@ -333,6 +338,7 @@
             margin-bottom: 0.5rem;
             padding: 0.5rem;
             border-radius: 4px;
+            white-space: pre-line;
         }
 
         .message.info {
@@ -677,7 +683,8 @@
             text-align: center;
             padding: 1rem;
             border-top: 1px solid #ddd;
-            margin-top: 2rem;
+            flex-shrink: 0;
+            margin-top: auto;
         }
 
         .footer a {
@@ -856,6 +863,7 @@
                 this.selectedCommand = null;
                 this.currentPopulation = null; // Store current population for dropdowns
                 this.currentChildren = null; // Store current children for child targeting
+                this.currentRomanceLists = null; // Store current romance lists
                 this.reconnectAttempts = 0;
                 this.maxReconnectAttempts = 5;
                 this.reconnectInterval = 2000;
@@ -869,7 +877,7 @@
             }
 
             // Cookie management functions
-            setCookie(name, value, days = 30) {
+            setCookie(name, value, days = 14) {
                 const expires = new Date();
                 expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
                 document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
@@ -1134,12 +1142,56 @@
                         }
                         break;
                     case 'romance':
-                        this.addMessage('Romance data updated', 'info');
+                        this.currentRomanceLists = data.content;
+                        this.displayCurrentRomanceLists(data.content);
+                        if (isAutoRefresh) {
+                            this.showAutoRefreshIndicator('Romance lists updated');
+                        }
                         break;
                     case 'error':
                         this.addMessage(data.content, 'error');
                         break;
                 }
+            }
+
+            displayCurrentRomanceLists(romanceLists) {
+                // Only display if a romance command modal is currently open
+                const modal = document.getElementById('commandModal');
+                if (!modal.classList.contains('active') || !this.selectedCommand) {
+                    return;
+                }
+                
+                const romanceCommands = ['consent', 'decline', 'invite'];
+                if (!romanceCommands.includes(this.selectedCommand.name.toLowerCase())) {
+                    return;
+                }
+                
+                // Find the modal description area
+                const modalDescription = document.getElementById('modalDescription');
+                if (!modalDescription) {
+                    return;
+                }
+                
+                // Create current lists display
+                let currentListsText = '';
+                const commandName = this.selectedCommand.name.toLowerCase();
+                
+                if (commandName === 'invite' && romanceLists.inviteList?.length > 0) {
+                    currentListsText += `<strong>Current invite list:</strong> ${romanceLists.inviteList.join(', ')}<br>`;
+                }
+                if (commandName === 'consent' && romanceLists.consentList?.length > 0) {
+                    currentListsText += `<strong>Current consent list:</strong> ${romanceLists.consentList.join(', ')}<br>`;
+                }
+                if (commandName === 'decline' && romanceLists.declineList?.length > 0) {
+                    currentListsText += `<strong>Current decline list:</strong> ${romanceLists.declineList.join(', ')}<br>`;
+                }
+                
+                if (currentListsText === '') {
+                    currentListsText = `<em>You currently have no ${commandName} list.</em><br>`;
+                }
+                
+                // Append current lists to the existing description
+                modalDescription.innerHTML = this.selectedCommand.description + '<br><br>' + currentListsText;
             }
 
             handleRegistrationResponse(data) {
@@ -1204,8 +1256,13 @@
                 const container = document.getElementById('commandList');
                 container.innerHTML = '';
                 
-                // Sort commands alphabetically by name
-                const sortedCommands = Object.entries(this.commands).sort(([a], [b]) => a.localeCompare(b));
+                // Commands that are useless with the GUI
+                const hiddenCommands = ['Children', 'Induct', 'Inventory'];
+                
+                // Sort commands alphabetically by name and filter out hidden commands
+                const sortedCommands = Object.entries(this.commands)
+                    .filter(([name]) => !hiddenCommands.includes(name))
+                    .sort(([a], [b]) => a.localeCompare(b));
                 
                 sortedCommands.forEach(([name, command]) => {
                     const item = document.createElement('div');
@@ -1231,6 +1288,15 @@
                 
                 const command = this.commands[commandName];
                 this.selectedCommand = { name: commandName, ...command };
+                
+                // For romance list commands, request current lists to display
+                const romanceCommands = ['consent', 'decline', 'invite'];
+                if (romanceCommands.includes(commandName.toLowerCase())) {
+                    this.send({ 
+                        type: 'infoRequest', 
+                        selection: 'romance'
+                    });
+                }
                 
                 // If command has no parameters, execute it immediately
                 if (!command.options || command.options.length === 0) {
@@ -1260,6 +1326,12 @@
 
                 // Generate command form in modal
                 this.generateCommandFormInModal(parametersContainer);
+
+                // If this is a romance command and we have current lists, display them
+                const romanceCommands = ['consent', 'decline', 'invite'];
+                if (romanceCommands.includes(this.selectedCommand.name.toLowerCase()) && this.currentRomanceLists) {
+                    this.displayCurrentRomanceLists(this.currentRomanceLists);
+                }
 
                 // Setup modal event handlers
                 executeBtn.onclick = () => this.executeModalCommand();
@@ -1634,12 +1706,15 @@
                                 
                                 parentsWithChildren.forEach(parentName => {
                                     if (this.currentPopulation[parentName]) {
-                                        const opt = document.createElement('option');
-                                        opt.value = parentName;
                                         const gender = this.currentPopulation[parentName].gender;
-                                        const genderIcon = gender === 'male' ? '♂' : '♀';
-                                        opt.textContent = `${parentName} ${genderIcon} (parent)`;
-                                        input.appendChild(opt);
+                                        // Only show female parents as feeding options
+                                        if (gender !== 'male') {
+                                            const opt = document.createElement('option');
+                                            opt.value = parentName;
+                                            const genderIcon = gender === 'male' ? '♂' : '♀';
+                                            opt.textContent = `${parentName} ${genderIcon} (parent)`;
+                                            input.appendChild(opt);
+                                        }
                                     }
                                 });
                             }
@@ -1793,6 +1868,28 @@
                 playerSelect.className = 'add-player-select';
                 playerSelect.innerHTML = '<option value="">Choose a player to add...</option>';
                 
+                // Add special options for romance commands
+                if (this.isReproductionCommand(this.selectedCommand.name)) {
+                    const allOption = document.createElement('option');
+                    allOption.value = '!all';
+                    allOption.textContent = '!all (all opposite gender players)';
+                    playerSelect.appendChild(allOption);
+                    
+                    // Add different options based on command type
+                    if (this.selectedCommand.name.toLowerCase() === 'invite') {
+                        const passOption = document.createElement('option');
+                        passOption.value = '!pass';
+                        passOption.textContent = '!pass (skip this round)';
+                        playerSelect.appendChild(passOption);
+                    } else {
+                        // For consent and decline commands
+                        const noneOption = document.createElement('option');
+                        noneOption.value = '!none';
+                        noneOption.textContent = '!none (clear list)';
+                        playerSelect.appendChild(noneOption);
+                    }
+                }
+                
                 if (this.currentPopulation) {
                     const currentPlayerName = document.getElementById('playerName').value;
                     let availablePlayers = Object.keys(this.currentPopulation);
@@ -1857,6 +1954,89 @@
                 
                 console.log('Found orderList:', !!orderList, 'Found hiddenInput:', !!hiddenInput);
                 console.log('Hidden input current value:', hiddenInput ? hiddenInput.value : 'NOT FOUND');
+                
+                // Handle special options
+                if (playerName === '!none') {
+                    // Clear the list (only available for consent/decline, not invite)
+                    hiddenInput.value = '';
+                    this.updateOrderDisplay(paramName, []);
+                    const playerSelect = orderList.parentElement.querySelector('.add-player-select');
+                    playerSelect.value = '';
+                    this.addMessage('List cleared', 'info');
+                    
+                    // Execute the command immediately with empty parameter
+                    const parameters = {};
+                    parameters[paramName] = [];
+                    logWithTimestamp('Auto-executing clear command:', this.selectedCommand.name, 'with parameters:', parameters);
+                    this.send({
+                        type: 'command',
+                        command: this.selectedCommand.name,
+                        parameters: parameters
+                    });
+                    
+                    // Close modal if it's open
+                    const modal = document.getElementById('commandModal');
+                    if (modal && modal.classList.contains('active')) {
+                        this.closeCommandModal();
+                    }
+                    return;
+                }
+                
+                if (playerName === '!pass') {
+                    // Set special pass value for invite command
+                    hiddenInput.value = '!pass';
+                    this.updateOrderDisplay(paramName, ['!pass']);
+                    const playerSelect = orderList.parentElement.querySelector('.add-player-select');
+                    playerSelect.value = '';
+                    this.addMessage('Pass set - skipping this reproduction round', 'info');
+                    
+                    // Execute the command immediately with !pass parameter
+                    const parameters = {};
+                    parameters[paramName] = ['!pass'];
+                    logWithTimestamp('Auto-executing pass command:', this.selectedCommand.name, 'with parameters:', parameters);
+                    this.send({
+                        type: 'command',
+                        command: this.selectedCommand.name,
+                        parameters: parameters
+                    });
+                    
+                    // Close modal if it's open
+                    const modal = document.getElementById('commandModal');
+                    if (modal && modal.classList.contains('active')) {
+                        this.closeCommandModal();
+                    }
+                    return;
+                }
+                
+                if (playerName === '!all') {
+                    // Add all available opposite gender players for romance commands
+                    if (this.isReproductionCommand(this.selectedCommand.name)) {
+                        const currentPlayerName = document.getElementById('playerName').value;
+                        const allValidPlayers = this.getValidTargetsForReproduction(currentPlayerName);
+                        hiddenInput.value = allValidPlayers.join(',');
+                        this.updateOrderDisplay(paramName, allValidPlayers);
+                        const playerSelect = orderList.parentElement.querySelector('.add-player-select');
+                        playerSelect.value = '';
+                        this.addMessage(`Added all ${allValidPlayers.length} valid players to ${paramName} list`, 'info');
+                        
+                        // Execute the command immediately with all players
+                        const parameters = {};
+                        parameters[paramName] = allValidPlayers;
+                        logWithTimestamp('Auto-executing !all command:', this.selectedCommand.name, 'with parameters:', parameters);
+                        this.send({
+                            type: 'command',
+                            command: this.selectedCommand.name,
+                            parameters: parameters
+                        });
+                        
+                        // Close modal if it's open
+                        const modal = document.getElementById('commandModal');
+                        if (modal && modal.classList.contains('active')) {
+                            this.closeCommandModal();
+                        }
+                        return;
+                    }
+                }
                 
                 // Get current list
                 let currentList = [];
@@ -2079,7 +2259,7 @@
                 const container = document.getElementById('messagesContainer');
                 const message = document.createElement('div');
                 message.className = `message ${type}`;
-                message.textContent = `[${new Date().toLocaleTimeString()}] ${text}`;
+                message.innerText = `[${new Date().toLocaleTimeString()}] ${text}`;
                 
                 container.appendChild(message);
                 container.scrollTop = container.scrollHeight;

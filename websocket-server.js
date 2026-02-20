@@ -383,6 +383,21 @@ function handleInfoRequest(ws, data, gameState) {
             };
             break;
 
+        case 'romance':
+            const playerName = data.playerName;
+            const userData = gameState.population && gameState.population[playerName];
+            let romanceLists = {
+                inviteList: userData?.inviteList || [],
+                consentList: userData?.consentList || [],
+                declineList: userData?.declineList || []
+            };
+            messageData = {
+                type: 'infoRequest',
+                label: 'romance',
+                content: romanceLists
+            };
+            break;
+
         default:
             messageData = {
                 type: 'infoRequest',

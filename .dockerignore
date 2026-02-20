@@ -1,0 +1,74 @@
+# Node modules (will be reinstalled during build)
+node_modules
+
+# Development dependencies
+*.md
+README*
+
+# Version control files
+.git
+.gitignore
+
+# Editor and IDE files
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Coverage directory used by tools like istanbul
+coverage
+
+# Test files
+tests
+*.test.js
+setupTests.js
+
+# Archive and temporary files
+archive
+tmp*
+*.tmp
+
+# Build artifacts
+dist
+build
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Documentation
+docs
+*.txt
+
+# Original Discord bot files (keeping websocket-server.js)
+serverBot.js
+OLDtribesBot.js
+tribesBot.V2-old
+
+# Old HTML file (replaced with new interface)
+tribesPage-1.html
+tribe-page.html
+tribes.html
+
+# Development tools
+deploy-commands.js

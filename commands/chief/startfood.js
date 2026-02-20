@@ -43,7 +43,7 @@ function startFood(gameState, bot){
     gameState.foodRound = true
     gameState.reproductionRound = false;
     population = gameState.population;
-    clearWorkFlags(population);
+    clearWorkFlags(population, gameState);
     pop.decrementSickness(population, gameState, bot);
     text.addMessage(gameState, "tribe", '\n==>Starting the food and trading round.  Use /foodcheck to be sure everyone has enough to eat, or they will starve<==');
     message = util.gameStateMessage(gameState)
@@ -57,7 +57,7 @@ function startFood(gameState, bot){
     return foodMessage
 }
 
-function clearWorkFlags(population){
+function clearWorkFlags(population, gameState){
     // for every person
     // if injured and !worked, injured = false
     // worked = false
