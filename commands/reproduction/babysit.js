@@ -49,9 +49,9 @@ function babysit(gameState, actorName, babysitterName, childName){
     }
     
     console.log(" babysitter age:"+babysitter.age+" reproductionRound:"+gameState.reproductionRound)
-    if (babysitter.newAdult || ( babysitter.age == 23 && !gameState.reproductionRound )){
+    if (babysitter.age > 22){
         if (child.newAdult){
-            text.addMessage(gameState, actorName,  targetChildName+' does not need watching' );
+            text.addMessage(gameState, actorName,  childName+' does not need watching' );
             return
         }
         var response = "";

@@ -11,14 +11,16 @@ docker rm tribes-server 2>/dev/null
 docker run -d \
   --name tribes-server \
   -p 0.0.0.0:8088:8088 \
-  -v $(pwd)/bear-tribe:/app/bear-tribe \
-  -v $(pwd)/flounder-tribe:/app/flounder-tribe \
-  -v $(pwd)/bug-tribe:/app/bug-tribe \
-  -v $(pwd)/vashon-tribe:/app/vashon-tribe \
-  -v $(pwd)/mib-tribe:/app/mib-tribe \
-  -v $(pwd)/sloth-tribe:/app/sloth-tribe \
-  -v $(pwd)/wolf-tribe:/app/wolf-tribe \
+  -v $(pwd)/bear:/app/bear \
+  -v $(pwd)/flounder:/app/flounder \
+  -v $(pwd)/bug:/app/bug \
+  -v $(pwd)/vashon:/app/vashon \
+  -v $(pwd)/mib:/app/mib \
+  -v $(pwd)/sloth:/app/sloth \
+  -v $(pwd)/wolf:/app/wolf \
   -v $(pwd)/users.json:/app/users.json \
+  -v $(pwd)/archive:/app/archive \
+  -v $(pwd)/logs:/app/logs \
   --restart unless-stopped \
   tribes-game:latest
 

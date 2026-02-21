@@ -7,7 +7,7 @@ const pop = require("../../libs/population")
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('banish')
-		.setDescription('End the game.  Score the remaining children. (Chief only)')
+		.setDescription('Remove a tribe member from the tribe. (Chief only)')
         .addUserOption(option => 
             option
                 .setName('target')

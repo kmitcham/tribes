@@ -7,7 +7,7 @@ const pop = require("../../libs/population.js")
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('ignore')
-		.setDescription('Remove a child from the list of children you are guarding.  Use name "all" to stop guarding')
+		.setDescription('Remove a child from the list of children you are guarding.')
 		.addStringOption(option => 
             option
             .setName('child1')

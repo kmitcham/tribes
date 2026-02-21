@@ -11,8 +11,8 @@ RUN npm install --only=production
 # Copy the rest of the application files
 COPY . .
 
-# Create necessary directories for data persistence
-RUN mkdir -p /app/data
+# Create necessary directories for data persistence  
+RUN mkdir -p /app/archive /app/logs /app/bug /app/bear /app/sloth /app/wolf /app/vashon /app/mib /app/flounder
 
 # Expose the port the app runs on
 EXPOSE 8088

@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="interface-version" content="2026-02-21T16:50:00.000Z">
     <title>Tribes Game Interface</title>
     <style>
         * {
@@ -27,10 +28,15 @@
             padding: 1rem;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             display: flex;
-            align-items: center;
-            justify-content: space-between;
+            flex-direction: column;
             position: relative;
             flex-shrink: 0;
+        }
+
+        .header-main {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
 
         .header-icons {
@@ -61,6 +67,34 @@
         .header h1 {
             font-size: 2.5rem;
             margin-bottom: 0.5rem;
+        }
+
+        .game-status-bar {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: white;
+            padding: 8px 20px;
+            margin: 10px -1rem -1rem -1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            font-size: 0.9rem;
+            border-bottom: 2px solid #3498db;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            background: rgba(52, 152, 219, 0.2);
+            border-radius: 15px;
+            border: 1px solid rgba(52, 152, 219, 0.3);
+        }
+
+        .status-icon {
+            font-size: 1.1rem;
         }
 
         .container {
@@ -192,23 +226,76 @@
             white-space: pre-line;
         }
 
-        .command-categories {
+        .command-search {
             margin-bottom: 1rem;
+            display: flex;
+            gap: 0.5rem;
         }
 
-        .category-btn {
-            background: #f8f9fa;
-            color: #495057;
-            border: 1px solid #dee2e6;
-            margin-right: 0.5rem;
-            margin-bottom: 0.5rem;
-            width: auto;
-            display: inline-block;
+        .command-search-input {
+            flex: 1;
+            padding: 0.5rem;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
         }
 
-        .category-btn.active {
+        .command-search-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .search-go-btn {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .search-go-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .search-go-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .command-search-suggestions {
+            position: absolute;
+            background: white;
+            border: 1px solid #ddd;
+            border-top: none;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+            left: 0;
+            right: 48px;
+        }
+
+        .search-suggestion {
+            padding: 0.5rem;
+            cursor: pointer;
+            border-bottom: 1px solid #f8f9fa;
+        }
+
+        .search-suggestion:hover {
+            background: #f8f9fa;
+        }
+
+        .search-suggestion.highlighted {
+            background: #667eea;
+            color: white;
+        }
+
+        .command-search-container {
+            position: relative;
         }
 
         .command-list {
@@ -730,12 +817,30 @@
 </head>
 <body>
     <div class="header">
-        <div class="header-icons">
-            <img src="caveman.png" alt="Caveman" title="Caveman">
+        <div class="header-main">
+            <div class="header-icons">
+                <img src="caveman.png" alt="Caveman" title="Caveman">
+            </div>
+            <div class="header-content">
+                <h1>Tribes Game Interface</h1>
+                <div class="connection-status" id="connectionStatus">Connecting...</div>
+            </div>
         </div>
-        <div class="header-content">
-            <h1>Tribes Game Interface</h1>
-            <div class="connection-status" id="connectionStatus">Connecting...</div>
+        
+        <!-- Game Status Bar -->
+        <div class="game-status-bar" id="gameStatusBar">
+            <div class="status-item" id="roundStatus">
+                <span class="status-icon">⚙️</span>
+                <span>Work Round</span>
+            </div>
+            <div class="status-item" id="seasonStatus">
+                <span class="status-icon">☀️</span>
+                <span>Warm Season</span>
+            </div>
+            <div class="status-item" id="locationStatus">
+                <span class="status-icon">🌍</span>
+                <span>Location: Unknown</span>
+            </div>
         </div>
     </div>
 
@@ -774,8 +879,12 @@
             <div class="commands-section">
                 <h3>Available Commands</h3>
                 
-                <div class="command-categories" id="commandCategories">
-                    <button class="category-btn btn-small active" data-category="all">All</button>
+                <div class="command-search-container">
+                    <div class="command-search">
+                        <input type="text" id="commandSearchInput" class="command-search-input" placeholder="Type command name..." autocomplete="off">
+                        <button id="commandGoBtn" class="search-go-btn" disabled>Go</button>
+                    </div>
+                    <div id="commandSuggestions" class="command-search-suggestions"></div>
                 </div>
                 
                 <div class="command-list" id="commandList">
@@ -868,11 +977,14 @@
                 this.maxReconnectAttempts = 5;
                 this.reconnectInterval = 2000;
                 this.refreshTimer = null; // Timer for automatic refresh every 30 seconds
+                this.versionCheckTimer = null; // Timer for version checking
+                this.currentVersion = document.querySelector('meta[name="interface-version"]')?.content || 'unknown';
                 this.lastRefreshTime = 0; // Track when last refresh occurred
                 this.autoRefresh = true; // Default to true, will be overridden by server
                 
                 this.loadSavedSettings();
                 this.initializeEventListeners();
+                this.startVersionChecking();
                 this.connect();
             }
 
@@ -966,6 +1078,9 @@
             connect() {
                 try {
                     this.updateConnectionStatus('connecting');
+                    
+                    // Initialize game status bar
+                    this.updateGameStatusBar('Welcome to Tribes! Loading game status...');
                     
                     // Try to connect to localhost first, then fallback to other addresses
                     const hosts = ['localhost', '127.0.0.1', '192.168.1.20', window.location.hostname || 'localhost'];
@@ -1107,7 +1222,7 @@
             handleCommandList(commands) {
                 this.commands = commands;
                 this.updateCommandList();
-                this.updateCommandCategories();
+                this.initCommandSearch();
             }
 
             handleCommandResponse(data) {
@@ -1216,38 +1331,123 @@
                 userInfo.classList.remove('minimized');
             }
 
-            updateCommandCategories() {
-                const categories = new Set(['all']);
-                Object.values(this.commands).forEach(cmd => categories.add(cmd.category));
+            initCommandSearch() {
+                const searchInput = document.getElementById('commandSearchInput');
+                const goBtn = document.getElementById('commandGoBtn');
+                const suggestions = document.getElementById('commandSuggestions');
                 
-                const container = document.getElementById('commandCategories');
-                container.innerHTML = '';
+                let currentHighlight = -1;
+                let filteredCommands = [];
                 
-                categories.forEach(category => {
-                    const btn = document.createElement('button');
-                    btn.className = 'category-btn btn-small';
-                    btn.dataset.category = category;
-                    btn.textContent = category.charAt(0).toUpperCase() + category.slice(1);
-                    
-                    if (category === 'all') {
-                        btn.classList.add('active');
+                const hiddenCommands = ['Children', 'Induct', 'Inventory'];
+                const commandNames = Object.keys(this.commands)
+                    .filter(name => !hiddenCommands.includes(name))
+                    .sort();
+                
+                const updateSuggestions = (query) => {
+                    if (!query) {
+                        suggestions.style.display = 'none';
+                        filteredCommands = [];
+                        goBtn.disabled = true;
+                        currentHighlight = -1;
+                        return;
                     }
                     
-                    btn.onclick = () => this.filterCommands(category);
-                    container.appendChild(btn);
-                });
+                    filteredCommands = commandNames.filter(name => 
+                        name.toLowerCase().includes(query.toLowerCase())
+                    );
+                    
+                    if (filteredCommands.length === 0) {
+                        suggestions.style.display = 'none';
+                        goBtn.disabled = true;
+                        return;
+                    }
+                    
+                    suggestions.innerHTML = '';
+                    filteredCommands.forEach((name, index) => {
+                        const div = document.createElement('div');
+                        div.className = 'search-suggestion';
+                        div.textContent = name;
+                        div.onclick = () => {
+                            searchInput.value = name;
+                            suggestions.style.display = 'none';
+                            goBtn.disabled = false;
+                            currentHighlight = -1;
+                        };
+                        suggestions.appendChild(div);
+                    });
+                    
+                    suggestions.style.display = 'block';
+                    goBtn.disabled = false;
+                    currentHighlight = -1;
+                };
+                
+                const highlightSuggestion = (index) => {
+                    const suggestionElements = suggestions.querySelectorAll('.search-suggestion');
+                    suggestionElements.forEach((el, i) => {
+                        el.classList.toggle('highlighted', i === index);
+                    });
+                    
+                    if (index >= 0 && index < suggestionElements.length) {
+                        searchInput.value = filteredCommands[index];
+                    }
+                };
+                
+                searchInput.oninput = (e) => {
+                    updateSuggestions(e.target.value);
+                };
+                
+                searchInput.onkeydown = (e) => {
+                    if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        currentHighlight = Math.min(currentHighlight + 1, filteredCommands.length - 1);
+                        highlightSuggestion(currentHighlight);
+                    } else if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        currentHighlight = Math.max(currentHighlight - 1, -1);
+                        if (currentHighlight === -1) {
+                            searchInput.value = '';
+                            updateSuggestions('');
+                        } else {
+                            highlightSuggestion(currentHighlight);
+                        }
+                    } else if (e.key === 'Enter') {
+                        e.preventDefault();
+                        const commandName = searchInput.value;
+                        if (commandName && this.commands[commandName]) {
+                            suggestions.style.display = 'none';
+                            this.selectCommand(commandName);
+                            currentHighlight = -1;
+                        }
+                    } else if (e.key === 'Escape') {
+                        suggestions.style.display = 'none';
+                        currentHighlight = -1;
+                    }
+                };
+                
+                searchInput.onblur = () => {
+                    // Delay hiding to allow click on suggestions
+                    setTimeout(() => {
+                        suggestions.style.display = 'none';
+                        currentHighlight = -1;
+                    }, 200);
+                };
+                
+                goBtn.onclick = () => {
+                    const commandName = searchInput.value;
+                    if (commandName && this.commands[commandName]) {
+                        suggestions.style.display = 'none';
+                        this.selectCommand(commandName);
+                        currentHighlight = -1;
+                    }
+                };
             }
 
-            filterCommands(category) {
-                // Update category button states
-                document.querySelectorAll('.category-btn').forEach(btn => {
-                    btn.classList.toggle('active', btn.dataset.category === category);
-                });
-                
-                // Filter command list
+            filterCommands(query) {
+                // Filter command list based on search query
                 document.querySelectorAll('.command-item').forEach(item => {
-                    const commandCategory = item.dataset.category;
-                    const show = category === 'all' || commandCategory === category;
+                    const commandName = item.dataset.command;
+                    const show = !query || commandName.toLowerCase().includes(query.toLowerCase());
                     item.style.display = show ? 'block' : 'none';
                 });
             }
@@ -1300,12 +1500,17 @@
                 
                 // If command has no parameters, execute it immediately
                 if (!command.options || command.options.length === 0) {
-                    logWithTimestamp('Auto-executing command with no parameters:', commandName);
-                    this.send({
-                        type: 'command',
-                        command: commandName,
-                        parameters: {}
-                    });
+                    // Special case: ignore command needs custom interface even without server-defined options
+                    if (commandName.toLowerCase() === 'ignore') {
+                        this.showCommandModal();
+                    } else {
+                        logWithTimestamp('Auto-executing command with no parameters:', commandName);
+                        this.send({
+                            type: 'command',
+                            command: commandName,
+                            parameters: {}
+                        });
+                    }
                 } else {
                     // Show modal for commands with parameters
                     this.showCommandModal();
@@ -1388,11 +1593,14 @@
                     this.isPlayerTargetingOption(option.name)
                 );
                 
+                // Secrets command also needs population data to pre-populate current value
+                const needsPopulationForSecrets = this.selectedCommand.name.toLowerCase() === 'secrets';
+                
                 const needsChildrenData = this.selectedCommand.options.some(option => 
                     this.isChildTargetingOption(option.name)
                 );
                 
-                if (needsPlayerData && !this.currentPopulation) {
+                if ((needsPlayerData || needsPopulationForSecrets) && !this.currentPopulation) {
                     // Fetch population data first
                     this.send({ type: 'infoRequest', selection: 'population' });
                     // Show loading message
@@ -1586,7 +1794,7 @@
             isChildTargetingOption(optionName) {
                 // List of parameter names that should show child dropdowns
                 const childTargetingNames = [
-                    'child', 'children', 'baby', 'kid', 'offspring'
+                    'child', 'children', 'baby', 'kid', 'offspring', 'babysitter'
                 ];
                 
                 return childTargetingNames.some(name => 
@@ -1644,6 +1852,17 @@
             }
 
             renderParametersInContainer(container) {
+                // Special case for ignore command - create custom interface even without server options
+                if (this.selectedCommand.name.toLowerCase() === 'ignore') {
+                    this.createIgnoreInterface(container);
+                    return;
+                }
+                
+                if (!this.selectedCommand.options || this.selectedCommand.options.length === 0) {
+                    container.innerHTML = '<div style="color: #6c757d; font-style: italic;">This command has no parameters</div>';
+                    return;
+                }
+                
                 this.selectedCommand.options.forEach(option => {
                     const group = document.createElement('div');
                     group.className = 'parameter-group';
@@ -1662,32 +1881,69 @@
                             opt.textContent = choice.name;
                             input.appendChild(opt);
                         });
+                        
+                        // Pre-populate secrets command with current willTrain value
+                        if (this.selectedCommand.name.toLowerCase() === 'secrets' && option.name === 'willtrain') {
+                            const currentPlayerName = document.getElementById('playerName').value;
+                            const currentPlayer = this.currentPopulation && this.currentPopulation[currentPlayerName];
+                            
+                            if (currentPlayer) {
+                                // If noTeach exists and is true, willTrain is false; otherwise it's true
+                                const willTrain = !(currentPlayer.noTeach === true);
+                                input.value = willTrain.toString();
+                            }
+                        }
                     } else if (this.isChildTargetingOption(option.name)) {
                         // Child targeting dropdown
                         input = document.createElement('select');
                         input.innerHTML = '<option value="">Select a child...</option>';
                         
                         if (this.currentChildren) {
-                            // Add !all option for feeding all hungry children
-                            const allOption = document.createElement('option');
-                            allOption.value = '!all';
-                            allOption.textContent = '!all (all hungry children)';
-                            input.appendChild(allOption);
+                            const currentPlayerName = document.getElementById('playerName').value;
+                            const isBabysitCommand = this.selectedCommand.name.toLowerCase() === 'babysit';
+                            const isBabysitterOption = option.name.toLowerCase() === 'babysitter';
                             
-                            // Add individual children
-                            Object.keys(this.currentChildren).forEach(childName => {
-                                const child = this.currentChildren[childName];
-                                const opt = document.createElement('option');
-                                opt.value = childName;
+                            // For babysit command babysitter option, only show eligible children
+                            if (isBabysitCommand && isBabysitterOption) {
+                                // Only show children over age 22 whose mother is the logged in player
+                                Object.keys(this.currentChildren).forEach(childName => {
+                                    const child = this.currentChildren[childName];
+                                    const age = child.age || 0;
+                                    const mother = child.mother;
+                                    
+                                    // Check eligibility: age > 22 and mother is current player
+                                    if (age > 22 && mother === currentPlayerName) {
+                                        const opt = document.createElement('option');
+                                        opt.value = childName;
+                                        opt.textContent = `${childName} (age ${age})`;
+                                        input.appendChild(opt);
+                                    }
+                                });
+                            } else {
+                                // Regular child targeting - show all children or add special options
+                                if (!isBabysitterOption) {
+                                    // Add !all option for feeding all hungry children (not for babysitter)
+                                    const allOption = document.createElement('option');
+                                    allOption.value = '!all';
+                                    allOption.textContent = '!all (all hungry children)';
+                                    input.appendChild(allOption);
+                                }
                                 
-                                // Add age and food status for context
-                                const food = child.food || 0;
-                                const age = child.age || 0;
-                                const status = food >= 2 ? '🍎' : '😋'; // Fed or hungry
-                                opt.textContent = `${childName} (age ${age}, food ${food}) ${status}`;
-                                
-                                input.appendChild(opt);
-                            });
+                                // Add individual children
+                                Object.keys(this.currentChildren).forEach(childName => {
+                                    const child = this.currentChildren[childName];
+                                    const opt = document.createElement('option');
+                                    opt.value = childName;
+                                    
+                                    // Add age and food status for context
+                                    const food = child.food || 0;
+                                    const age = child.age || 0;
+                                    const status = food >= 2 ? '🍎' : '😋'; // Fed or hungry
+                                    opt.textContent = `${childName} (age ${age}, food ${food}) ${status}`;
+                                    
+                                    input.appendChild(opt);
+                                });
+                            }
                         }
                         
                         // Also add parent names for feeding all children of a parent
@@ -1797,11 +2053,124 @@
                 });
             }
 
+            createIgnoreInterface(container) {
+                const currentPlayerName = document.getElementById('playerName').value;
+                
+                if (!this.currentChildren || !currentPlayerName) {
+                    container.innerHTML = '<div style="color: #6c757d; font-style: italic;">Loading children data...</div>';
+                    // Fetch children data if not available
+                    this.send({ type: 'infoRequest', selection: 'children' });
+                    return;
+                }
+                
+                const group = document.createElement('div');
+                group.className = 'parameter-group';
+                
+                const label = document.createElement('label');
+                label.textContent = 'Children to ignore:';
+                group.appendChild(label);
+                
+                const ignoreContainer = document.createElement('div');
+                ignoreContainer.className = 'ignore-container';
+                ignoreContainer.id = 'param_child';
+                
+                const guardedChildren = [];
+                Object.keys(this.currentChildren).forEach(childName => {
+                    const child = this.currentChildren[childName];
+                    const guardians = child.guardians || {};
+                    
+                    // Check if current player is a guardian of this child
+                    if (guardians[currentPlayerName]) {
+                        guardedChildren.push({ name: childName, age: child.age || 0 });
+                    }
+                });
+                
+                if (guardedChildren.length === 0) {
+                    ignoreContainer.innerHTML = '<div style="color: #6c757d; font-style: italic;">You are not currently guarding any children</div>';
+                } else {
+                    ignoreContainer.innerHTML = '<div style="margin-bottom: 0.5rem; font-weight: 600;">Set guard status for your children:</div>';
+                    
+                    guardedChildren.forEach(child => {
+                        const childDiv = document.createElement('div');
+                        childDiv.className = 'child-guard-option';
+                        childDiv.style.cssText = `
+                            display: flex;
+                            align-items: center;
+                            justify-content: space-between;
+                            padding: 0.5rem;
+                            margin-bottom: 0.5rem;
+                            border: 1px solid #ddd;
+                            border-radius: 4px;
+                            background: #f8f9fa;
+                        `;
+                        
+                        const childLabel = document.createElement('span');
+                        childLabel.textContent = `${child.name} (age ${child.age})`;
+                        childLabel.style.fontWeight = '500';
+                        
+                        const radioGroup = document.createElement('div');
+                        radioGroup.style.cssText = 'display: flex; gap: 1rem;';
+                        
+                        const guardOption = document.createElement('label');
+                        guardOption.style.cssText = 'display: flex; align-items: center; gap: 0.25rem; cursor: pointer;';
+                        const guardRadio = document.createElement('input');
+                        guardRadio.type = 'radio';
+                        guardRadio.name = `guard_${child.name}`;
+                        guardRadio.value = 'guard';
+                        guardRadio.checked = true; // Default to guard
+                        guardOption.appendChild(guardRadio);
+                        guardOption.appendChild(document.createTextNode('Guard'));
+                        
+                        const ignoreOption = document.createElement('label');
+                        ignoreOption.style.cssText = 'display: flex; align-items: center; gap: 0.25rem; cursor: pointer;';
+                        const ignoreRadio = document.createElement('input');
+                        ignoreRadio.type = 'radio';
+                        ignoreRadio.name = `guard_${child.name}`;
+                        ignoreRadio.value = 'ignore';
+                        ignoreOption.appendChild(ignoreRadio);
+                        ignoreOption.appendChild(document.createTextNode('Ignore'));
+                        
+                        radioGroup.appendChild(guardOption);
+                        radioGroup.appendChild(ignoreOption);
+                        
+                        childDiv.appendChild(childLabel);
+                        childDiv.appendChild(radioGroup);
+                        ignoreContainer.appendChild(childDiv);
+                    });
+                }
+                
+                group.appendChild(ignoreContainer);
+                container.appendChild(group);
+            }
+
             collectParametersFromContainer(container) {
                 const parameters = {};
                 const inputs = container.querySelectorAll('input, select');
                 
                 console.log('Found', inputs.length, 'total inputs in container');
+                
+                // Handle special ignore command interface
+                const ignoreContainer = container.querySelector('.ignore-container');
+                if (ignoreContainer && this.selectedCommand.name.toLowerCase() === 'ignore') {
+                    const childrenToIgnore = [];
+                    const radioGroups = ignoreContainer.querySelectorAll('input[type="radio"]:checked');
+                    
+                    radioGroups.forEach(radio => {
+                        if (radio.value === 'ignore') {
+                            // Extract child name from radio name attribute (guard_ChildName)
+                            const childName = radio.name.replace('guard_', '');
+                            childrenToIgnore.push(childName);
+                        }
+                    });
+                    
+                    // For ignore command, send as child1, child2, child3 parameters (command expects these specific names)
+                    childrenToIgnore.forEach((childName, index) => {
+                        const paramKey = `child${index + 1}`; // child1, child2, child3
+                        parameters[paramKey] = childName;
+                    });
+                    
+                    console.log('Ignore command children to ignore:', childrenToIgnore, 'Parameters:', parameters);
+                }
                 
                 inputs.forEach(input => {
                     console.log('Processing input:', input.id, 'type:', input.type, 'value:', input.value);
@@ -1814,6 +2183,11 @@
                     
                     const paramName = input.id.replace('param_', '');
                     console.log('Parameter name:', paramName, 'isOrdering:', this.isOrderingOption(paramName));
+                    
+                    // Skip if this is the ignore container (already handled above)
+                    if (input.classList && input.classList.contains('ignore-container')) {
+                        return;
+                    }
                     
                     // Handle ordering parameters (comma-separated lists)
                     if (input.type === 'hidden' && this.isOrderingOption(paramName)) {
@@ -2476,7 +2850,14 @@
                     Array.from(allKeys).forEach(key => {
                         const cell = document.createElement('td');
                         const value = data[key];
-                        cell.textContent = Array.isArray(value) ? value.join(', ') : (value || '');
+                        if (Array.isArray(value)) {
+                            cell.textContent = value.join(', ');
+                        } else if (value && typeof value === 'object') {
+                            // Handle objects by extracting keys
+                            cell.textContent = Object.keys(value).join(', ');
+                        } else {
+                            cell.textContent = value || '';
+                        }
                         row.appendChild(cell);
                     });
                     
@@ -2523,7 +2904,14 @@
                     Array.from(allKeys).forEach(key => {
                         const cell = document.createElement('td');
                         const value = data[key];
-                        cell.textContent = Array.isArray(value) ? value.join(', ') : (value || '');
+                        if (Array.isArray(value)) {
+                            cell.textContent = value.join(', ');
+                        } else if (value && typeof value === 'object') {
+                            // Handle objects like guardians by extracting keys
+                            cell.textContent = Object.keys(value).join(', ');
+                        } else {
+                            cell.textContent = value || '';
+                        }
                         row.appendChild(cell);
                     });
                     
@@ -2533,7 +2921,78 @@
             }
 
             updateStatusText(status) {
-                document.getElementById('statusText').textContent = status;
+                // Update the old status text element if it exists
+                const statusTextElement = document.getElementById('statusText');
+                if (statusTextElement) {
+                    statusTextElement.textContent = status;
+                }
+
+                // Update the game status bar with parsed information
+                this.updateGameStatusBar(status);
+            }
+
+            updateGameStatusBar(status) {
+                // Round type detection and icons
+                const roundStatus = document.getElementById('roundStatus');
+                const seasonStatus = document.getElementById('seasonStatus');
+                const locationStatus = document.getElementById('locationStatus');
+
+                if (!roundStatus || !seasonStatus || !locationStatus) return;
+
+                let roundIcon = '⚙️';
+                let roundText = 'Unknown Round';
+                
+                if (status.toLowerCase().includes('work')) {
+                    roundIcon = '⚙️';
+                    roundText = 'Work Round';
+                } else if (status.toLowerCase().includes('food')) {
+                    roundIcon = '🍖';
+                    roundText = 'Food Round';
+                } else if (status.toLowerCase().includes('reproduction') || status.toLowerCase().includes('romance')) {
+                    roundIcon = '💕';
+                    roundText = 'Reproduction Round';
+                }
+
+                // Season detection
+                let seasonIcon = '☀️';
+                let seasonText = 'Warm Season';
+                
+                if (status.toLowerCase().includes('winter') || status.toLowerCase().includes('cold')) {
+                    seasonIcon = '❄️';
+                    seasonText = 'Cold Season';
+                } else if (status.toLowerCase().includes('summer') || status.toLowerCase().includes('warm')) {
+                    seasonIcon = '☀️';
+                    seasonText = 'Warm Season';
+                }
+
+                // Location detection (common Tribes game locations)
+                let locationIcon = '🌍';
+                let locationText = 'Unknown Location';
+                
+                if (status.toLowerCase().includes('veldt')) {
+                    locationIcon = '🌾';
+                    locationText = 'Veldt';
+                } else if (status.toLowerCase().includes('forest')) {
+                    locationIcon = '🌲';
+                    locationText = 'Forest';
+                } else if (status.toLowerCase().includes('marsh')) {
+                    locationIcon = '🐸';
+                    locationText = 'Marsh';
+                } else if (status.toLowerCase().includes('hills')) {
+                    locationIcon = '⛰️';
+                    locationText = 'Hills';
+                } else if (status.toLowerCase().includes('mountain')) {
+                    locationIcon = '🏔️';
+                    locationText = 'Mountains';
+                } else if (status.toLowerCase().includes('desert')) {
+                    locationIcon = '🏜️';
+                    locationText = 'Desert';
+                }
+
+                // Update the status bar elements
+                roundStatus.innerHTML = `<span class="status-icon">${roundIcon}</span><span>${roundText}</span>`;
+                seasonStatus.innerHTML = `<span class="status-icon">${seasonIcon}</span><span>${seasonText}</span>`;
+                locationStatus.innerHTML = `<span class="status-icon">${locationIcon}</span><span>${locationText}</span>`;
             }
 
             initializeEventListeners() {
@@ -2582,6 +3041,99 @@
                         document.getElementById(`${targetTab}Tab`).classList.add('active');
                     };
                 });
+            }
+
+            // Version checking methods for auto-refresh
+            startVersionChecking() {
+                // Check for interface updates every 30 seconds
+                this.versionCheckTimer = setInterval(() => {
+                    this.checkInterfaceVersion();
+                }, 30000); // 30 seconds
+            }
+
+            stopVersionChecking() {
+                if (this.versionCheckTimer) {
+                    clearInterval(this.versionCheckTimer);
+                    this.versionCheckTimer = null;
+                }
+            }
+
+            async checkInterfaceVersion() {
+                try {
+                    // Make a request to check if the interface file has changed
+                    const response = await fetch(window.location.href, {
+                        method: 'HEAD',
+                        cache: 'no-cache',
+                        headers: {
+                            'Cache-Control': 'no-cache'
+                        }
+                    });
+
+                    if (response.ok) {
+                        // Check last-modified header or ETag for changes
+                        const lastModified = response.headers.get('Last-Modified');
+                        const etag = response.headers.get('ETag');
+                        
+                        // Store version info based on what's available
+                        const serverVersion = etag || lastModified || 'unknown';
+                        
+                        if (this.currentVersion !== 'unknown' && 
+                            serverVersion !== 'unknown' && 
+                            serverVersion !== this.currentVersion) {
+                            this.handleVersionChange();
+                        }
+                    }
+                } catch (error) {
+                    console.log('Version check failed:', error);
+                    // Continue silently - don't disrupt user experience
+                }
+            }
+
+            handleVersionChange() {
+                // Show a non-intrusive notification about the update
+                const notification = document.createElement('div');
+                notification.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: #4CAF50;
+                    color: white;
+                    padding: 15px 20px;
+                    border-radius: 5px;
+                    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+                    z-index: 10000;
+                    font-family: Arial, sans-serif;
+                    font-size: 14px;
+                    cursor: pointer;
+                    transition: opacity 0.3s;
+                `;
+                notification.innerHTML = `
+                    Interface updated! Click to reload.
+                    <div style="font-size: 12px; opacity: 0.8; margin-top: 5px;">
+                        New features may be available
+                    </div>
+                `;
+
+                // Auto-refresh when clicked
+                notification.onclick = () => {
+                    window.location.reload();
+                };
+
+                // Add to page
+                document.body.appendChild(notification);
+
+                // Auto-remove after 10 seconds if not clicked
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.style.opacity = '0';
+                        setTimeout(() => {
+                            notification.remove();
+                        }, 300);
+                    }
+                }, 10000);
+
+                // Stop checking once we've notified the user
+                this.stopVersionChecking();
             }
         }
 
