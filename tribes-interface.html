@@ -192,6 +192,16 @@
             padding-top: 1rem;
         }
 
+        /* Hide commands section until logged in */
+        .commands-section.hidden {
+            display: none;
+        }
+
+        .commands-section.hidden + .help-section {
+            border-top: none;
+            padding-top: 0;
+        }
+
         .help-tabs {
             margin-bottom: 1rem;
         }
@@ -1046,9 +1056,11 @@
                 this.currentVersion = document.querySelector('meta[name="interface-version"]')?.content || 'unknown';
                 this.lastRefreshTime = 0; // Track when last refresh occurred
                 this.autoRefresh = true; // Default to true, will be overridden by server
+                this.isLoggedIn = false; // Track login state
                 
                 this.loadSavedSettings();
                 this.initializeEventListeners();
+                this.hideCommandsSection(); // Initially hide commands until login
                 this.startVersionChecking();
                 this.connect();
             }
@@ -1387,6 +1399,8 @@
                 
                 // Auto-refresh game data after successful registration
                 if (data.label === 'success') {
+                    this.isLoggedIn = true; // Set logged in state
+                    this.showCommandsSection(); // Show commands after successful login
                     this.refreshGameData();
                     this.requestCommandList(); // Refresh command list in case chief status changed
                     this.minimizeLoginArea(); // Minimize login area after successful registration
@@ -1401,6 +1415,18 @@
             expandLoginArea() {
                 const userInfo = document.querySelector('.user-info');
                 userInfo.classList.remove('minimized');
+                this.isLoggedIn = false; // Reset login state when expanding login area
+                this.hideCommandsSection(); // Hide commands when going back to login
+            }
+
+            hideCommandsSection() {
+                const commandsSection = document.querySelector('.commands-section');
+                commandsSection.classList.add('hidden');
+            }
+
+            showCommandsSection() {
+                const commandsSection = document.querySelector('.commands-section');
+                commandsSection.classList.remove('hidden');
             }
 
             initCommandSearch() {
@@ -1527,8 +1553,9 @@
             updateCommandList() {
                 const container = document.getElementById('commandList');
                 container.innerHTML = '';
+                const playerIsChief = this.isCurrentPlayerChief();
                 
-                // Commands that are useless with the GUI
+                // Commands that are not needed with the GUI
                 const hiddenCommands = ['Children', 'Induct', 'Inventory'];
                 
                 // Sort commands alphabetically by name and filter out hidden commands
@@ -1543,21 +1570,15 @@
                     item.dataset.category = command.category;
                     
                     const isChiefCommand = this.isChiefCommand(command.description);
-                    const playerIsChief = this.isCurrentPlayerChief();
                     
                     // Add disabled class if it's a chief command and player is not chief
                     if (isChiefCommand && !playerIsChief) {
                         item.classList.add('disabled');
                     }
-                    
                     item.innerHTML = `
                         <div class="command-name">${name}${isChiefCommand ? ' 👑' : ''}</div>
                         <div class="command-desc">${command.description}${isChiefCommand && !playerIsChief ? ' [Requires Chief]' : ''}</div>
                     `;
-                    
-                    if (isChiefCommand && !playerIsChief) {
-                        console.log('command name:', name, 'description:', command.description,'[Requires Chief]');
-                    }
                     item.onclick = () => {
                         if (isChiefCommand && !playerIsChief) {
                             this.addMessage('⚠️ This command requires chief privileges', 'error');
@@ -2381,7 +2402,7 @@
                     if (this.selectedCommand.name.toLowerCase() === 'invite') {
                         const passOption = document.createElement('option');
                         passOption.value = '!pass';
-                        passOption.textContent = '!pass (skip this round)';
+                        passOption.textContent = '!pass (if no choices above this item accept, give up)';
                         playerSelect.appendChild(passOption);
                     } else {
                         // For consent and decline commands
@@ -2465,7 +2486,7 @@
                     hiddenInput.value = clearValue;
                     this.updateOrderDisplay(paramName, clearValue ? [clearValue] : []);
                     const playerSelect = orderList.parentElement.querySelector('.add-player-select');
-                    playerSelect.value = '';
+                    playerSelect.value = '!none';
                     this.addMessage('List cleared', 'info');
                     
                     // Execute the command immediately with appropriate parameter
