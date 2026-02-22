@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="interface-version" content="2026-02-21T16:50:00.000Z">
+    <meta name="interface-version" content="2026-02-21T18:00:00.000Z">
     <title>Tribes Game Interface</title>
     <style>
         * {
@@ -336,6 +336,24 @@
             color: #e9ecef;
         }
 
+        .command-item.disabled {
+            opacity: 0.5;
+            background-color: #f5f5f5;
+            cursor: not-allowed;
+        }
+
+        .command-item.disabled:hover {
+            background-color: #f5f5f5;
+        }
+
+        .command-item.disabled .command-name {
+            color: #999;
+        }
+
+        .command-item.disabled .command-desc {
+            color: #bbb;
+        }
+
         .data-section {
             background: white;
             border-radius: 8px;
@@ -441,6 +459,48 @@
         .message.success {
             background-color: #d1ecf1;
             border-left: 4px solid #17a2b8;
+        }
+
+        .message.tribe {
+            background-color: #e8f4f8;
+            border-left: 4px solid #007bff;
+            color: #0056b3;
+        }
+
+        .message.private {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            color: #856404;
+        }
+
+        .message.command {
+            background-color: #f8f9fa;
+            border-left: 4px solid #6c757d;
+            color: #495057;
+        }
+
+        .message-type-label {
+            font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.8rem;
+            margin-right: 0.5rem;
+            display: inline-block;
+        }
+
+        .message.tribe .message-type-label {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .message.private .message-type-label {
+            background-color: #ffc107;
+            color: #212529;
+        }
+
+        .message.command .message-type-label {
+            background-color: #6c757d;
+            color: white;
         }
 
         .connection-status {
@@ -913,8 +973,13 @@
         <div class="main-content">
             <!-- Game Messages Panel -->
             <div class="command-panel">
-                <h3 id="selectedCommandName">Game Messages</h3>
-                <p id="selectedCommandDesc">Command responses and game updates will appear below.</p>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <div>
+                        <h3 id="selectedCommandName">Game Messages</h3>
+                        <p id="selectedCommandDesc" style="margin: 0;">Command responses and game updates will appear below.</p>
+                    </div>
+                    <button class="btn btn-small" id="clearMessagesBtn" title="Clear message history">🗑️ Clear</button>
+                </div>
                 
                 <div class="messages-container" id="messagesContainer"></div>
             </div>
@@ -1035,6 +1100,11 @@
                     }, 100);
                 }
                 
+                // Load message history after settings are loaded
+                setTimeout(() => {
+                    this.loadMessageHistory();
+                }, 300);
+                
                 // Show welcome back message if we loaded settings
                 if (savedTribe || savedPlayerName) {
                     setTimeout(() => {
@@ -1042,7 +1112,7 @@
                             `Welcome back, ${savedPlayerName}! 🏛️` : 
                             'Previous settings restored 🏛️';
                         this.addMessage(welcomeMsg, 'info');
-                    }, 200);
+                    }, 400);
                 }
             }
 
@@ -1200,10 +1270,10 @@
                         }
                         break;
                     case 'tribeMessage':
-                        this.addMessage(`[TRIBE] ${data.message}`, 'info');
+                        this.addMessage(data.message, 'tribe', '[EVERYONE]');
                         break;
                     case 'privateMessage':
-                        this.addMessage(`[PRIVATE] ${data.message}`, 'info');
+                        this.addMessage(data.message, 'private', '[PRIVATE]');
                         break;
                     case 'registration':
                         this.handleRegistrationResponse(data);
@@ -1227,7 +1297,7 @@
 
             handleCommandResponse(data) {
                 const type = data.success ? 'success' : 'error';
-                this.addMessage(`[${data.command.toUpperCase()}] ${data.message}`, type);
+                this.addMessage(data.message, 'command', `[${data.command.toUpperCase()}]`);
                 // Server will now automatically refresh game data for all tribe members
             }
 
@@ -1239,6 +1309,8 @@
                     case 'population':
                         this.currentPopulation = data.content;
                         this.updatePopulationTable(data.content);
+                        // Update command list when population data changes (for chief status)
+                        this.updateCommandList();
                         if (isAutoRefresh) {
                             this.showAutoRefreshIndicator('Population updated');
                         }
@@ -1470,12 +1542,29 @@
                     item.dataset.command = name;
                     item.dataset.category = command.category;
                     
+                    const isChiefCommand = this.isChiefCommand(command.description);
+                    const playerIsChief = this.isCurrentPlayerChief();
+                    
+                    // Add disabled class if it's a chief command and player is not chief
+                    if (isChiefCommand && !playerIsChief) {
+                        item.classList.add('disabled');
+                    }
+                    
                     item.innerHTML = `
-                        <div class="command-name">${name}</div>
-                        <div class="command-desc">${command.description}</div>
+                        <div class="command-name">${name}${isChiefCommand ? ' 👑' : ''}</div>
+                        <div class="command-desc">${command.description}${isChiefCommand && !playerIsChief ? ' [Requires Chief]' : ''}</div>
                     `;
                     
-                    item.onclick = () => this.selectCommand(name);
+                    if (isChiefCommand && !playerIsChief) {
+                        console.log('command name:', name, 'description:', command.description,'[Requires Chief]');
+                    }
+                    item.onclick = () => {
+                        if (isChiefCommand && !playerIsChief) {
+                            this.addMessage('⚠️ This command requires chief privileges', 'error');
+                            return;
+                        }
+                        this.selectCommand(name);
+                    };
                     container.appendChild(item);
                 });
             }
@@ -1901,33 +1990,42 @@
                         if (this.currentChildren) {
                             const currentPlayerName = document.getElementById('playerName').value;
                             const isBabysitCommand = this.selectedCommand.name.toLowerCase() === 'babysit';
+                            const isFeedingCommand = this.selectedCommand.name.toLowerCase() === 'feed';
                             const isBabysitterOption = option.name.toLowerCase() === 'babysitter';
                             
                             // For babysit command babysitter option, only show eligible children
-                            if (isBabysitCommand && isBabysitterOption) {
-                                // Only show children over age 22 whose mother is the logged in player
-                                Object.keys(this.currentChildren).forEach(childName => {
-                                    const child = this.currentChildren[childName];
-                                    const age = child.age || 0;
-                                    const mother = child.mother;
-                                    
-                                    // Check eligibility: age > 22 and mother is current player
-                                    if (age > 22 && mother === currentPlayerName) {
-                                        const opt = document.createElement('option');
-                                        opt.value = childName;
-                                        opt.textContent = `${childName} (age ${age})`;
-                                        input.appendChild(opt);
-                                    }
-                                });
+                            if (isBabysitCommand ) {
+                                if (isBabysitterOption){
+                                    // Only show children over age 22 whose mother is the logged in player
+                                    Object.keys(this.currentChildren).forEach(childName => {
+                                        const child = this.currentChildren[childName];
+                                        const age = child.age || 0;
+                                        const mother = child.mother;
+                                        console.log(`Checking child ${childName}: age ${age}, mother ${mother}`);
+                                        // Check eligibility: age > 22 and mother is current player
+                                        if (age > 22 && mother === currentPlayerName) {
+                                            const opt = document.createElement('option');
+                                            opt.value = childName;
+                                            opt.textContent = `${childName} (age ${age})`;
+                                            input.appendChild(opt);
+                                        }
+                                    });
+                                } else {
+                                    // babysit command but not babysitter option
+                                    // Show all children under age 23
+                                    Object.keys(this.currentChildren).forEach(childName => {
+                                        const child = this.currentChildren[childName];
+                                        const age = child.age || 0;
+                                        if (age <= 24) {
+                                            const opt = document.createElement('option');
+                                            opt.value = childName;
+                                            opt.textContent = `${childName} (age ${age})`;
+                                            input.appendChild(opt);
+                                        }
+                                    });
+                                }
                             } else {
                                 // Regular child targeting - show all children or add special options
-                                if (!isBabysitterOption) {
-                                    // Add !all option for feeding all hungry children (not for babysitter)
-                                    const allOption = document.createElement('option');
-                                    allOption.value = '!all';
-                                    allOption.textContent = '!all (all hungry children)';
-                                    input.appendChild(allOption);
-                                }
                                 
                                 // Add individual children
                                 Object.keys(this.currentChildren).forEach(childName => {
@@ -1944,35 +2042,32 @@
                                     input.appendChild(opt);
                                 });
                             }
-                        }
-                        
-                        // Also add parent names for feeding all children of a parent
-                        if (this.currentPopulation && this.currentChildren) {
-                            const parentsWithChildren = new Set();
-                            Object.values(this.currentChildren).forEach(child => {
-                                if (child.mother) parentsWithChildren.add(child.mother);
-                                if (child.father) parentsWithChildren.add(child.father);
-                            });
-                            
-                            if (parentsWithChildren.size > 0) {
-                                const separator = document.createElement('option');
-                                separator.disabled = true;
-                                separator.textContent = '--- Parents (feed all their children) ---';
-                                input.appendChild(separator);
-                                
-                                parentsWithChildren.forEach(parentName => {
-                                    if (this.currentPopulation[parentName]) {
-                                        const gender = this.currentPopulation[parentName].gender;
-                                        // Only show female parents as feeding options
-                                        if (gender !== 'male') {
-                                            const opt = document.createElement('option');
-                                            opt.value = parentName;
-                                            const genderIcon = gender === 'male' ? '♂' : '♀';
-                                            opt.textContent = `${parentName} ${genderIcon} (parent)`;
-                                            input.appendChild(opt);
-                                        }
+                            if (isFeedingCommand){
+                                // Also add parent names for feeding all children of a parent
+                                if (this.currentPopulation && this.currentChildren) {
+                                    const parentsWithChildren = new Set();
+                                    Object.values(this.currentChildren).forEach(child => {
+                                        // fathers are unknown during the game
+                                        if (child.mother) parentsWithChildren.add(child.mother);
+                                    });
+                                    
+                                    if (parentsWithChildren.size > 0) {
+                                        const separator = document.createElement('option');
+                                        separator.disabled = true;
+                                        separator.textContent = '--- Mothers (feed all their children) ---';
+                                        input.appendChild(separator);
+                                        
+                                        parentsWithChildren.forEach(parentName => {
+                                            if (this.currentPopulation[parentName]) {
+                                                const gender = this.currentPopulation[parentName].gender;
+                                                const opt = document.createElement('option');
+                                                opt.value = parentName;
+                                                opt.textContent = `${parentName}`;
+                                                input.appendChild(opt);
+                                            }
+                                        });
                                     }
-                                });
+                                }
                             }
                         }
                     } else if (this.isPlayerTargetingOption(option.name)) {
@@ -2141,6 +2236,39 @@
                 
                 group.appendChild(ignoreContainer);
                 container.appendChild(group);
+            }
+
+            isChiefCommand(description) {
+                // Check if command description indicates it requires chief privileges
+                return description && (
+                    description.toLowerCase().includes('(chief only)') ||
+                    description.toLowerCase().includes('chief only') ||
+                    description.toLowerCase().includes('requires chief')
+                );
+            }
+
+            isCurrentPlayerChief() {
+                const playerName = document.getElementById('playerName').value;
+                console.log('Checking chief status for player:', playerName);
+                console.log('Current population:', this.currentPopulation);
+                
+                if (!playerName || !this.currentPopulation) {
+                    console.log('Missing player name or population data - defaulting to non-chief');
+                    return false;
+                }
+                
+                const player = this.currentPopulation[playerName];
+                console.log('Player object:', player);
+                
+                if (!player) {
+                    console.log('Player not found in population - defaulting to non-chief');
+                    return false;
+                }
+                
+                const isChief = player && player.chief === true;
+                console.log('Player is chief:', isChief);
+                
+                return isChief;
             }
 
             collectParametersFromContainer(container) {
@@ -2332,15 +2460,23 @@
                 // Handle special options
                 if (playerName === '!none') {
                     // Clear the list (only available for consent/decline, not invite)
-                    hiddenInput.value = '';
-                    this.updateOrderDisplay(paramName, []);
+                    // For decline/consent commands, server expects ['!none'] not []
+                    const clearValue = (this.selectedCommand.name === 'decline' || this.selectedCommand.name === 'consent') ? '!none' : '';
+                    hiddenInput.value = clearValue;
+                    this.updateOrderDisplay(paramName, clearValue ? [clearValue] : []);
                     const playerSelect = orderList.parentElement.querySelector('.add-player-select');
                     playerSelect.value = '';
                     this.addMessage('List cleared', 'info');
                     
-                    // Execute the command immediately with empty parameter
+                    // Execute the command immediately with appropriate parameter
                     const parameters = {};
-                    parameters[paramName] = [];
+                    if (this.selectedCommand.name === 'decline' || this.selectedCommand.name === 'consent') {
+                        // Server expects ['!none'] to clear the list
+                        parameters[paramName] = ['!none'];
+                    } else {
+                        // For other commands, send empty array
+                        parameters[paramName] = [];
+                    }
                     logWithTimestamp('Auto-executing clear command:', this.selectedCommand.name, 'with parameters:', parameters);
                     this.send({
                         type: 'command',
@@ -2629,16 +2765,49 @@
                 this.addMessage('Please select a command from the sidebar to open the command modal', 'info');
             }
 
-            addMessage(text, type = 'info') {
+            addMessage(text, type = 'info', typeLabel = null, isRestored = false) {
                 const container = document.getElementById('messagesContainer');
                 const message = document.createElement('div');
                 message.className = `message ${type}`;
-                message.innerText = `[${new Date().toLocaleTimeString()}] ${text}`;
+                console.log('Adding message:', text, 'Type:', type, 'TypeLabel:', typeLabel, 'IsRestored:', isRestored);
+                text = text.trim();
+                
+                // Skip empty or whitespace-only messages
+                if (!text || text === '') {
+                    console.log('Skipping empty message');
+                    return;
+                }
+
+                if (isRestored) {
+                    message.classList.add('restored');
+                }
+                
+                const timestamp = new Date().toLocaleTimeString();
+                const labelText = typeLabel ? `${typeLabel} ` : '';
+                
+                if (typeLabel) {
+                    message.innerHTML = `
+                        <span class="message-type-label">${typeLabel}</span>
+                        <span>[${timestamp}] ${text}</span>
+                    `;
+                } else {
+                    message.innerText = `[${timestamp}] ${text}`;
+                }
                 
                 container.appendChild(message);
                 container.scrollTop = container.scrollHeight;
                 
-                // Limit to 50 messages
+                // Store message in history (don't store restored messages to avoid duplication)
+                if (!isRestored) {
+                    this.storeMessage({
+                        text: text,
+                        type: type,
+                        typeLabel: typeLabel,
+                        timestamp: Date.now()
+                    });
+                }
+                
+                // Limit to 50 messages in display
                 while (container.children.length > 50) {
                     container.removeChild(container.firstChild);
                 }
@@ -2685,6 +2854,87 @@
                         indicator.parentNode.removeChild(indicator);
                     }
                 }, 2000);
+            }
+
+            getMessageHistoryKey() {
+                const tribe = document.getElementById('tribeSelect').value || 'default';
+                const player = document.getElementById('playerName').value || 'anonymous';
+                return `tribesMessages_${tribe}_${player}`;
+            }
+
+            storeMessage(messageData) {
+                try {
+                    const key = this.getMessageHistoryKey();
+                    let messages = JSON.parse(this.getCookie(key) || '[]');
+                    
+                    // Add new message
+                    messages.push(messageData);
+                    
+                    // Keep only last 30 messages to prevent cookie size issues
+                    if (messages.length > 30) {
+                        messages = messages.slice(-30);
+                    }
+                    
+                    // Store back to cookie (expires in 7 days)
+                    this.setCookie(key, JSON.stringify(messages), 7);
+                } catch (error) {
+                    console.warn('Failed to store message history:', error);
+                }
+            }
+
+            loadMessageHistory() {
+                try {
+                    const key = this.getMessageHistoryKey();
+                    const messagesJson = this.getCookie(key);
+                    
+                    if (!messagesJson) {
+                        return;
+                    }
+                    
+                    const messages = JSON.parse(messagesJson);
+                    const currentTime = Date.now();
+                    const maxAge = 24 * 60 * 60 * 1000; // 24 hours
+                    
+                    // Filter out messages older than 24 hours
+                    const recentMessages = messages.filter(msg => 
+                        currentTime - msg.timestamp < maxAge
+                    );
+                    
+                    if (recentMessages.length > 0) {
+                        // Add separator
+                        const container = document.getElementById('messagesContainer');
+                        const separator = document.createElement('div');
+                        separator.className = 'message info';
+                        separator.style.cssText = 'text-align: center; font-style: italic; opacity: 0.7; border-top: 1px dashed #ccc; padding-top: 0.5rem;';
+                        separator.innerText = `--- Previous messages (${recentMessages.length}) ---`;
+                        container.appendChild(separator);
+                        
+                        // Restore recent messages
+                        recentMessages.forEach(msg => {
+                            this.addMessage(msg.text, msg.type, msg.typeLabel, true);
+                        });
+                        
+                        // Add another separator
+                        const endSeparator = document.createElement('div');
+                        endSeparator.className = 'message info';
+                        endSeparator.style.cssText = 'text-align: center; font-style: italic; opacity: 0.7; border-bottom: 1px dashed #ccc; padding-bottom: 0.5rem;';
+                        endSeparator.innerText = '--- Live messages ---';
+                        container.appendChild(endSeparator);
+                    }
+                } catch (error) {
+                    console.warn('Failed to load message history:', error);
+                }
+            }
+
+            clearMessageHistory() {
+                const key = this.getMessageHistoryKey();
+                this.setCookie(key, '', -1); // Expire the cookie
+                
+                // Clear current display
+                const container = document.getElementById('messagesContainer');
+                container.innerHTML = '';
+                
+                this.addMessage('Message history cleared', 'info');
             }
 
             requestCommandList() {
@@ -3005,10 +3255,21 @@
                 // Refresh data button
                 document.getElementById('refreshDataBtn').onclick = () => this.refreshGameData();
                 
+                // Clear messages button
+                document.getElementById('clearMessagesBtn').onclick = () => this.clearMessageHistory();
+                
                 // Tribe dropdown change - clear cached data when switching tribes and save setting
                 document.getElementById('tribeSelect').onchange = () => {
                     this.currentPopulation = null;
                     this.saveSettings(); // Save the new tribe selection
+                    
+                    // Clear message display when switching tribes  
+                    const container = document.getElementById('messagesContainer');
+                    container.innerHTML = '';
+                    this.addMessage('Switched tribes - loading new message history...', 'info');
+                    
+                    // Load message history for new tribe
+                    setTimeout(() => this.loadMessageHistory(), 100);
                     // Player data cleared - modals will automatically reload when needed
                 };
                 
@@ -3017,6 +3278,15 @@
                     this.saveSettings(); // Save the new player name
                     this.currentPopulation = null; // Clear population cache to trigger gender filtering refresh
                     this.requestCommandList(); // Refresh command list in case chief status changed
+                    this.updateCommandList(); // Update command list immediately for chief status
+                    
+                    // Clear message display when switching players  
+                    const container = document.getElementById('messagesContainer');
+                    container.innerHTML = '';
+                    this.addMessage('Switched players - loading message history...', 'info');
+                    
+                    // Load message history for new player
+                    setTimeout(() => this.loadMessageHistory(), 100);
                     // Player data cleared - modals will automatically reload when needed
                 };
                 
