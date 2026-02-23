@@ -177,6 +177,17 @@ function startServer() {
   try {
     // Create HTTP server for health checks and static file serving
     const httpServer = http.createServer((req, res) => {
+      // Add CORS headers for cloud deployments
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+      
+      if (req.method === 'OPTIONS') {
+        res.writeHead(200);
+        res.end();
+        return;
+      }
+      
       if (req.url === '/health') {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(
@@ -229,8 +240,12 @@ function startServer() {
       }
     });
 
-    // Create WebSocket server on the same port
-    wss = new WebSocket.Server({ server: httpServer });
+    // Create WebSocket server on the same port with cloud-friendly options
+    wss = new WebSocket.Server({ 
+      server: httpServer,
+      perMessageDeflate: false, // Disable compression for better compatibility
+      maxPayload: 16 * 1024, // 16KB max message size
+    });
 
     httpServer.listen(PORT, '0.0.0.0', () => {
       logWithTimestamp(
@@ -239,12 +254,33 @@ function startServer() {
       logWithTimestamp(`Local access:`);
       logWithTimestamp(`  Health check: http://localhost:${PORT}/health`);
       logWithTimestamp(`  Game interface: http://localhost:${PORT}/`);
-      logWithTimestamp(`Network access:`);
-      logWithTimestamp(`  Health check: http://192.168.1.20:${PORT}/health`);
-      logWithTimestamp(`  Game interface: http://192.168.1.20:${PORT}/`);
-      logWithTimestamp(
-        `Share the network URL with others on your local network!`
-      );
+      
+      // Only show network access info if we can detect a local IP
+      const os = require('os');
+      const networkInterfaces = os.networkInterfaces();
+      let localIP = null;
+      
+      for (const [name, addresses] of Object.entries(networkInterfaces)) {
+        for (const address of addresses) {
+          if (address.family === 'IPv4' && !address.internal && 
+              (address.address.startsWith('192.168.') || address.address.startsWith('10.') || address.address.startsWith('172.'))) {
+            localIP = address.address;
+            break;
+          }
+        }
+        if (localIP) break;
+      }
+      
+      if (localIP) {
+        logWithTimestamp(`Network access:`);
+        logWithTimestamp(`  Health check: http://${localIP}:${PORT}/health`);
+        logWithTimestamp(`  Game interface: http://${localIP}:${PORT}/`);
+        logWithTimestamp(
+          `Share the network URL with others on your local network!`
+        );
+      } else {
+        logWithTimestamp(`Cloud deployment detected - access via your cloud service URL`);
+      }
     });
 
     wss.on('connection', (ws) => {
@@ -270,6 +306,23 @@ function startServer() {
               clientId: data.clientId,
             })
           );
+        }
+      });
+
+      ws.on('error', (error) => {
+        logWithTimestamp('WebSocket error:', error.message);
+        // Cleanup connections on error
+        if (ws.currentTribe && tribeConnections.has(ws.currentTribe)) {
+          tribeConnections.get(ws.currentTribe).delete(ws);
+          if (tribeConnections.get(ws.currentTribe).size === 0) {
+            tribeConnections.delete(ws.currentTribe);
+          }
+        }
+        if (ws.currentPlayer && connectedClients.has(ws.currentPlayer)) {
+          connectedClients.get(ws.currentPlayer).delete(ws);
+          if (connectedClients.get(ws.currentPlayer).size === 0) {
+            connectedClients.delete(ws.currentPlayer);
+          }
         }
       });
 

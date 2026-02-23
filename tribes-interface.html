@@ -1190,9 +1190,27 @@
                     // Initialize game status bar
                     this.updateGameStatusBar('Welcome to Tribes! Loading game status...');
                     
-                    // Try to connect to localhost first, then fallback to other addresses
-                    const hosts = ['localhost', '127.0.0.1', '192.168.1.20', window.location.hostname || 'localhost'];
-                    const port = 8000;
+                    // Smart WebSocket connection logic for local and cloud deployment
+                    const currentHost = window.location.hostname;
+                    const currentPort = window.location.port || (window.location.protocol === 'https:' ? '443' : '8000');
+                    const isSecure = window.location.protocol === 'https:';
+                    
+                    // Prioritize current page's host for cloud deployments, fallback to local for development
+                    let hosts, port, protocol;
+                    
+                    if (currentHost !== 'localhost' && currentHost !== '127.0.0.1' && !currentHost.startsWith('192.168.') && !currentHost.startsWith('10.') && !currentHost.startsWith('172.')) {
+                        // Cloud deployment - use the same host and protocol as the page
+                        hosts = [currentHost];
+                        port = currentPort === '443' || currentPort === '80' ? '' : `:${currentPort}`;
+                        protocol = isSecure ? 'wss' : 'ws';
+                        logWithTimestamp(`Cloud deployment detected, connecting to ${protocol}://${currentHost}${port}`);
+                    } else {
+                        // Local development - try multiple local addresses
+                        hosts = [currentHost, 'localhost', '127.0.0.1', '192.168.1.20'];
+                        port = ':8000';
+                        protocol = 'ws';
+                        logWithTimestamp(`Local development detected, trying multiple hosts`);
+                    }
                     
                     const tryHost = (hostIndex = 0) => {
                         if (hostIndex >= hosts.length) {
@@ -1203,9 +1221,10 @@
                         }
                         
                         const host = hosts[hostIndex];
-                        logWithTimestamp(`Trying to connect to ws://${host}:${port}`);
+                        const wsUrl = `${protocol}://${host}${port}`;
+                        logWithTimestamp(`Trying to connect to ${wsUrl}`);
                         
-                        this.ws = new WebSocket(`ws://${host}:${port}`);
+                        this.ws = new WebSocket(wsUrl);
                         
                         this.ws.onopen = () => {
                             logWithTimestamp('WebSocket connected');
