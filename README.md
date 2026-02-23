@@ -17,9 +17,9 @@ A modernized version of the Tribes Discord bot, converted to a web-based interfa
    ```
 
 3. **Access the game:**
-   - Local: http://localhost:8088
-   - Network: http://[YOUR-IP]:8088 (run `./setup-network.sh` to get your network URL)
-   - Health Check: http://localhost:8088/health
+   - Local: http://localhost:8000
+   - Network: http://[YOUR-IP]:8000 (run `./setup-network.sh` to get your network URL)
+   - Health Check: http://localhost:8000/health
 
 ### Option 2: Development Mode
 
@@ -34,12 +34,12 @@ A modernized version of the Tribes Discord bot, converted to a web-based interfa
    ```
 
 3. **Access the game:**
-   - Game Interface: http://localhost:8088
-   - Health Check: http://localhost:8088/health
+   - Game Interface: http://localhost:8000
+   - Health Check: http://localhost:8000/health
 
 ## 🎮 How to Play
 
-1. **Open the web interface** at http://localhost:8088
+1. **Open the web interface** at http://localhost:8000
 2. **Select your tribe** from the dropdown (Bear, Flounder, Bug, etc.)
 3. **Enter your player name** and optional password
 4. **Register/Login** by clicking the "Register/Login" button
@@ -58,17 +58,17 @@ To allow others on your local network to join the game:
    ```
 
 2. **Share the network URL** with friends on the same WiFi/network:
-   - They visit: `http://YOUR-IP:8088` (script will show the exact URL)
+   - They visit: `http://YOUR-IP:8000` (script will show the exact URL)
    - Each player registers with their own name
    - Everyone can join the same tribes and play together
 
 3. **Requirements:**
    - All players must be on the same local network (WiFi/Ethernet)
-   - Firewall must allow connections on port 8088
+   - Firewall must allow connections on port 8000
    - Server computer must keep running the tribes server
 
 4. **Troubleshooting:**
-   - Test with: `curl http://YOUR-IP:8088/health`
+   - Test with: `curl http://YOUR-IP:8000/health`
    - Check firewall settings on host computer
    - Ensure all devices are connected to the same network
 
@@ -206,7 +206,7 @@ docker rm tribes-server
 ## 🔧 Configuration
 
 ### Environment Variables
-- `PORT` - Server port (default: 8088)
+- `PORT` - Server port (default: 8000)
 - `NODE_ENV` - Environment mode (development/production)
 
 ### Data Persistence
@@ -216,7 +216,7 @@ Game data is stored in JSON files:
 
 ## 🌐 Network Requirements
 
-- **Port 8088** - Main server (WebSocket + HTTP)
+- **Port 8000** - Main server (WebSocket + HTTP)
 - **Outbound Internet** - For npm package installation during build
 
 ## 🔄 Migration from Discord
@@ -230,9 +230,9 @@ This version maintains full compatibility with the original Discord bot logic:
 ## 🐛 Troubleshooting
 
 ### Connection Issues
-- Check if port 8088 is available
+- Check if port 8000 is available
 - Verify firewall settings
-- Try accessing http://localhost:8088/health
+- Try accessing http://localhost:8000/health
 
 ### Docker Issues
 - Ensure Docker is running

@@ -10,7 +10,7 @@ if [ $? -eq 0 ]; then
     echo "✅ Docker image built successfully!"
     echo ""
     echo "To run the container:"
-    echo "docker run -p 8088:8088 --name tribes-server tribes-game:latest"
+    echo "docker run -p 8000:8000 --name tribes-server tribes-game:latest"
     echo ""
     echo "Or use the run script: ./run-docker.sh"
 else

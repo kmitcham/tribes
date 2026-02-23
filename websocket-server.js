@@ -9,7 +9,7 @@ const pop = require('./libs/population.js');
 const help = require('./libs/help.js');
 
 const logger = require('./libs/logger.js');
-const PORT = process.env.PORT || 8088;
+const PORT = process.env.PORT || 8000;
 const referees = require('./libs/referees.json');
 
 // Timestamped logging function

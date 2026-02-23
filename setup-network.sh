@@ -42,7 +42,7 @@ echo "   OR"
 echo "   ./run-docker.sh"
 echo ""
 echo "2. Share this URL with others on your network:"
-echo "   🎮 http://$LOCAL_IP:8088"
+echo "   🎮 http://$LOCAL_IP:8000"
 echo ""
 echo "3. Others should be able to:"
 echo "   • Open the URL in their web browser"
@@ -55,22 +55,22 @@ echo "   • People outside your network cannot access the game"
 echo "   • Consider your router's firewall settings if having issues"
 echo ""
 echo "🔧 Troubleshooting:"
-echo "   • Test the connection: curl http://$LOCAL_IP:8088/health"
+echo "   • Test the connection: curl http://$LOCAL_IP:8000/health"
 echo "   • Check firewall settings on this computer"
-echo "   • Ensure port 8088 is not blocked by your router"
+echo "   • Ensure port 8000 is not blocked by your router"
 echo "   • Make sure all devices are on the same network"
 
 # Test if server is running
 echo ""
 echo "🧪 Testing server status..."
-if curl -s "http://localhost:8088/health" > /dev/null 2>&1; then
+if curl -s "http://localhost:8000/health" > /dev/null 2>&1; then
     echo "✅ Server is running locally"
     
-    if curl -s "http://$LOCAL_IP:8088/health" > /dev/null 2>&1; then
-        echo "✅ Server is accessible on network at http://$LOCAL_IP:8088"
+    if curl -s "http://$LOCAL_IP:8000/health" > /dev/null 2>&1; then
+        echo "✅ Server is accessible on network at http://$LOCAL_IP:8000"
         echo ""
         echo "🎉 Ready to share! Send this link to your friends:"
-        echo "   http://$LOCAL_IP:8088"
+        echo "   http://$LOCAL_IP:8000"
     else
         echo "⚠️  Server may not be accessible from other devices"
         echo "   Check firewall settings"

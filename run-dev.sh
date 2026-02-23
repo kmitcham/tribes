@@ -23,7 +23,7 @@ fi
 
 # Set development environment variables
 export NODE_ENV=development
-export PORT=8088
+export PORT=8000
 
 echo "🚀 Starting Tribes server on port $PORT..."
 echo ""
