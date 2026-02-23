@@ -1,1 +1,1 @@
-var referees = ["kevinmitcham", "@kevinmitcham"]
+var referees = ['kevinmitcham', '@kevinmitcham'];

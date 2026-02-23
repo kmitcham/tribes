@@ -155,6 +155,32 @@
             border-color: #667eea;
         }
 
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .checkbox-container input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+            transform: scale(1.2);
+            accent-color: #667eea;
+        }
+
+        .checkbox-label {
+            font-weight: normal;
+            color: #555;
+            cursor: pointer;
+            margin: 0;
+            user-select: none;
+        }
+
+        .checkbox-label:hover {
+            color: #333;
+        }
+
         .btn {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -888,9 +914,6 @@
 <body>
     <div class="header">
         <div class="header-main">
-            <div class="header-icons">
-                <img src="caveman.png" alt="Caveman" title="Caveman">
-            </div>
             <div class="header-content">
                 <h1>Tribes Game Interface</h1>
                 <div class="connection-status" id="connectionStatus">Connecting...</div>
@@ -899,6 +922,9 @@
         
         <!-- Game Status Bar -->
         <div class="game-status-bar" id="gameStatusBar">
+            <div class="header-icons">
+                <img src="caveman.png" alt="Caveman" title="Caveman">
+            </div>
             <div class="status-item" id="roundStatus">
                 <span class="status-icon">⚙️</span>
                 <span>Work Round</span>
@@ -1437,7 +1463,7 @@
                 let currentHighlight = -1;
                 let filteredCommands = [];
                 
-                const hiddenCommands = ['Children', 'Induct', 'Inventory'];
+                const hiddenCommands = ['children', 'induct', 'inventory'];
                 const commandNames = Object.keys(this.commands)
                     .filter(name => !hiddenCommands.includes(name))
                     .sort();
@@ -1556,7 +1582,7 @@
                 const playerIsChief = this.isCurrentPlayerChief();
                 
                 // Commands that are not needed with the GUI
-                const hiddenCommands = ['Children', 'Induct', 'Inventory'];
+                const hiddenCommands = ['children', 'induct', 'inventory'];
                 
                 // Sort commands alphabetically by name and filter out hidden commands
                 const sortedCommands = Object.entries(this.commands)
@@ -1696,6 +1722,22 @@
                     return;
                 }
 
+                // Preserve existing form values before clearing container
+                const preservedValues = {};
+                const existingInputs = container.querySelectorAll('input, select');
+                existingInputs.forEach(input => {
+                    if (input.id && input.id.startsWith('param_')) {
+                        const paramName = input.id.replace('param_', '');
+                        // Save checkbox state as checked, not value
+                        if (input.type === 'checkbox') {
+                            preservedValues[paramName] = input.checked;
+                        } else {
+                            preservedValues[paramName] = input.value;
+                        }
+                        console.log('Preserving modal value for', paramName, ':', preservedValues[paramName]);
+                    }
+                });
+
                 container.innerHTML = '';
 
                 // Check if this command needs player data and fetch it
@@ -1726,7 +1768,7 @@
                     return;
                 }
 
-                this.renderParametersInContainer(container);
+                this.renderParametersInContainer(container, preservedValues);
             }
 
             generateCommandForm() {
@@ -1746,8 +1788,13 @@
                 existingInputs.forEach(input => {
                     if (input.id && input.id.startsWith('param_')) {
                         const paramName = input.id.replace('param_', '');
-                        preservedValues[paramName] = input.value;
-                        console.log('Preserving value for', paramName, ':', input.value);
+                        // Save checkbox state as checked, not value
+                        if (input.type === 'checkbox') {
+                            preservedValues[paramName] = input.checked;
+                        } else {
+                            preservedValues[paramName] = input.value;
+                        }
+                        console.log('Preserving value for', paramName, ':', preservedValues[paramName]);
                     }
                 });
                 
@@ -1961,7 +2008,7 @@
                 });
             }
 
-            renderParametersInContainer(container) {
+            renderParametersInContainer(container, preservedValues = {}) {
                 // Special case for ignore command - create custom interface even without server options
                 if (this.selectedCommand.name.toLowerCase() === 'ignore') {
                     this.createIgnoreInterface(container);
@@ -2037,7 +2084,7 @@
                                     Object.keys(this.currentChildren).forEach(childName => {
                                         const child = this.currentChildren[childName];
                                         const age = child.age || 0;
-                                        if (age <= 24) {
+                                        if (age <= 23) {
                                             const opt = document.createElement('option');
                                             opt.value = childName;
                                             opt.textContent = `${childName} (age ${age})`;
@@ -2051,19 +2098,28 @@
                                 // Add individual children
                                 Object.keys(this.currentChildren).forEach(childName => {
                                     const child = this.currentChildren[childName];
-                                    const opt = document.createElement('option');
-                                    opt.value = childName;
-                                    
-                                    // Add age and food status for context
-                                    const food = child.food || 0;
-                                    const age = child.age || 0;
-                                    const status = food >= 2 ? '🍎' : '😋'; // Fed or hungry
-                                    opt.textContent = `${childName} (age ${age}, food ${food}) ${status}`;
-                                    
-                                    input.appendChild(opt);
+                                    if (child.age <= 23) { 
+                                        const opt = document.createElement('option');
+                                        opt.value = childName;
+                                        
+                                        // Add age and food status for context
+                                        const food = child.food || 0;
+                                        const age = child.age || 0;
+                                        const status = food >= 2 ? '🍎' : '😋'; // Fed or hungry
+                                        opt.textContent = `${childName} (age ${age}, food ${food}) ${status}`;
+                                        
+                                        input.appendChild(opt);
+                                    } else {
+                                        console.log(`Skipping adult: ${childName} (age ${child.age})`);
+                                    }
                                 });
                             }
                             if (isFeedingCommand){
+                                const opt = document.createElement('option');
+                                opt.value = '!all';
+                                opt.textContent = 'All hungry children';
+                                input.appendChild(opt);
+
                                 // Also add parent names for feeding all children of a parent
                                 if (this.currentPopulation && this.currentChildren) {
                                     const parentsWithChildren = new Set();
@@ -2136,6 +2192,36 @@
                         }
                         
                         group.appendChild(helperText);
+                    } else if (option.type === 'boolean') {
+                        // Boolean option - use checkbox
+                        const checkboxContainer = document.createElement('div');
+                        checkboxContainer.className = 'checkbox-container';
+                        
+                        input = document.createElement('input');
+                        input.type = 'checkbox';
+                        input.id = `param_${option.name}`;
+                        input.required = option.required;
+                        
+                        // Restore preserved value for checkbox
+                        if (preservedValues.hasOwnProperty(option.name)) {
+                            input.checked = preservedValues[option.name];
+                            console.log('Restored checkbox value for', option.name, ':', preservedValues[option.name]);
+                        }
+                        
+                        const checkboxLabel = document.createElement('label');
+                        checkboxLabel.setAttribute('for', input.id);
+                        checkboxLabel.textContent = option.description;
+                        checkboxLabel.className = 'checkbox-label';
+                        
+                        checkboxContainer.appendChild(input);
+                        checkboxContainer.appendChild(checkboxLabel);
+                        
+                        // Replace the regular label with the checkbox container
+                        group.removeChild(label);
+                        group.appendChild(checkboxContainer);
+                        
+                        // Don't append input separately since it's in the container
+                        input = null;
                     } else {
                         // Regular text input
                         input = document.createElement(option.type === 'number' ? 'input' : 'input');
@@ -2148,6 +2234,17 @@
                     if (input) {
                         input.id = `param_${option.name}`;
                         input.required = option.required;
+                        
+                        // Restore preserved values
+                        if (preservedValues.hasOwnProperty(option.name)) {
+                            if (input.type === 'checkbox') {
+                                input.checked = preservedValues[option.name];
+                            } else {
+                                input.value = preservedValues[option.name];
+                            }
+                            console.log('Restored value for', option.name, ':', preservedValues[option.name]);
+                        }
+                        
                         group.appendChild(input);
                     }
                     
@@ -2344,6 +2441,10 @@
                         const orderList = input.value ? input.value.split(',') : [];
                         console.log('Ordering parameter', paramName, 'raw value:', input.value, 'as array:', orderList);
                         parameters[paramName] = orderList;
+                    } else if (input.type === 'checkbox') {
+                        // Handle checkbox (boolean) inputs
+                        parameters[paramName] = input.checked;
+                        console.log('Checkbox parameter', paramName, 'checked:', input.checked);
                     } else {
                         parameters[paramName] = input.value;
                     }

@@ -1,6 +1,6 @@
 /**
  * Jest Setup File
- * 
+ *
  * Global configuration and mocks for all test files
  */
 
@@ -40,7 +40,7 @@ global.WebSocket = class MockWebSocket {
   }
 
   getAllSentMessages() {
-    return this.sentMessages.map(msg => JSON.parse(msg));
+    return this.sentMessages.map((msg) => JSON.parse(msg));
   }
 
   clearSentMessages() {
@@ -72,42 +72,44 @@ const createMockElement = (properties = {}) => ({
     add: jest.fn(),
     remove: jest.fn(),
     toggle: jest.fn(),
-    contains: jest.fn(() => false)
+    contains: jest.fn(() => false),
   },
   style: {},
   children: { length: 0 },
   onclick: null,
   onchange: null,
   oninput: null,
-  ...properties
+  ...properties,
 });
 
 global.document = {
   getElementById: jest.fn((id) => {
     const elements = {
-      'tribeSelect': createMockElement({ value: 'bear' }),
-      'playerName': createMockElement({ value: 'TestPlayer' }),
-      'playerPassword': createMockElement({ value: 'TestPassword' }),
-      'messagesContainer': createMockElement({
+      tribeSelect: createMockElement({ value: 'bear' }),
+      playerName: createMockElement({ value: 'TestPlayer' }),
+      playerPassword: createMockElement({ value: 'TestPassword' }),
+      messagesContainer: createMockElement({
         scrollTop: 0,
-        scrollHeight: 100
+        scrollHeight: 100,
       }),
-      'commandModal': createMockElement(),
-      'modalTitle': createMockElement(),
-      'modalDescription': createMockElement(),
-      'modalCommandParameters': createMockElement(),
-      'commandForm': createMockElement({ style: { display: 'none' } }),
-      'commandParameters': createMockElement(),
-      'executeCommandBtn': createMockElement(),
-      'registerBtn': createMockElement(),
-      'refreshDataBtn': createMockElement()
+      commandModal: createMockElement(),
+      modalTitle: createMockElement(),
+      modalDescription: createMockElement(),
+      modalCommandParameters: createMockElement(),
+      commandForm: createMockElement({ style: { display: 'none' } }),
+      commandParameters: createMockElement(),
+      executeCommandBtn: createMockElement(),
+      registerBtn: createMockElement(),
+      refreshDataBtn: createMockElement(),
     };
     return elements[id] || createMockElement();
   }),
-  createElement: jest.fn((tag) => createMockElement({ tagName: tag.toUpperCase() })),
+  createElement: jest.fn((tag) =>
+    createMockElement({ tagName: tag.toUpperCase() })
+  ),
   querySelectorAll: jest.fn(() => []),
   addEventListener: jest.fn(),
-  removeEventListener: jest.fn()
+  removeEventListener: jest.fn(),
 };
 
 // Mock window object
@@ -116,8 +118,8 @@ global.window = {
   WebSocket: global.WebSocket,
   location: {
     hostname: 'localhost',
-    port: '8080'
-  }
+    port: '8080',
+  },
 };
 
 // Mock setTimeout and setInterval for faster tests
@@ -141,7 +143,7 @@ global.createMockCommand = (name, options = []) => ({
   category: 'test',
   description: `Test command: ${name}`,
   options,
-  execute: jest.fn()
+  execute: jest.fn(),
 });
 
 // Helper function to create mock parameters
@@ -151,7 +153,7 @@ global.createMockParameters = (paramMap) => {
     mockInputs.push({
       id: `param_${name}`,
       value: Array.isArray(value) ? value.join(',') : value.toString(),
-      type: Array.isArray(value) ? 'hidden' : 'text'
+      type: Array.isArray(value) ? 'hidden' : 'text',
     });
   }
   return mockInputs;
@@ -161,74 +163,82 @@ global.createMockParameters = (paramMap) => {
 expect.extend({
   toHaveValidCommandStructure(received) {
     const requiredFields = ['type', 'clientId', 'tribe', 'playerName'];
-    const missingFields = requiredFields.filter(field => !(field in received));
-    
+    const missingFields = requiredFields.filter(
+      (field) => !(field in received)
+    );
+
     if (missingFields.length > 0) {
       return {
-        message: () => `Expected object to have all required command fields. Missing: ${missingFields.join(', ')}`,
-        pass: false
+        message: () =>
+          `Expected object to have all required command fields. Missing: ${missingFields.join(', ')}`,
+        pass: false,
       };
     }
-    
+
     if (received.type !== 'command' && received.type !== 'registerRequest') {
       return {
-        message: () => `Expected type to be 'command' or 'registerRequest', got '${received.type}'`,
-        pass: false
+        message: () =>
+          `Expected type to be 'command' or 'registerRequest', got '${received.type}'`,
+        pass: false,
       };
     }
-    
+
     return {
       message: () => 'Object has valid command structure',
-      pass: true
+      pass: true,
     };
   },
-  
+
   toHaveValidParameterFormat(received, expectedParams) {
     const receivedParams = received.parameters || {};
-    
+
     for (const [key, expectedValue] of Object.entries(expectedParams)) {
       const receivedValue = receivedParams[key];
-      
+
       if (Array.isArray(expectedValue)) {
         if (!Array.isArray(receivedValue)) {
           return {
-            message: () => `Expected parameter '${key}' to be an array, got ${typeof receivedValue}`,
-            pass: false
+            message: () =>
+              `Expected parameter '${key}' to be an array, got ${typeof receivedValue}`,
+            pass: false,
           };
         }
         if (JSON.stringify(receivedValue) !== JSON.stringify(expectedValue)) {
           return {
-            message: () => `Expected parameter '${key}' to equal ${JSON.stringify(expectedValue)}, got ${JSON.stringify(receivedValue)}`,
-            pass: false
+            message: () =>
+              `Expected parameter '${key}' to equal ${JSON.stringify(expectedValue)}, got ${JSON.stringify(receivedValue)}`,
+            pass: false,
           };
         }
       } else {
         if (receivedValue !== expectedValue) {
           return {
-            message: () => `Expected parameter '${key}' to equal '${expectedValue}', got '${receivedValue}'`,
-            pass: false
+            message: () =>
+              `Expected parameter '${key}' to equal '${expectedValue}', got '${receivedValue}'`,
+            pass: false,
           };
         }
       }
     }
-    
+
     return {
       message: () => 'Parameters have valid format',
-      pass: true
+      pass: true,
     };
-  }
+  },
 });
 
 // Global test configuration
 beforeEach(() => {
   // Clear all mocks before each test
   jest.clearAllMocks();
-  
+
   // Reset DOM mock state
   if (document.getElementById.mockClear) document.getElementById.mockClear();
   if (document.createElement.mockClear) document.createElement.mockClear();
-  if (document.querySelectorAll.mockClear) document.querySelectorAll.mockClear();
-  
+  if (document.querySelectorAll.mockClear)
+    document.querySelectorAll.mockClear();
+
   // Reset console mocks
   if (console.log.mockClear) console.log.mockClear();
   if (console.error.mockClear) console.error.mockClear();
@@ -244,13 +254,15 @@ afterEach(() => {
 const originalConsoleWarn = console.warn;
 console.warn = (...args) => {
   const warningString = args.join(' ');
-  
+
   // Suppress specific warnings that are expected in test environment
-  if (warningString.includes('WebSocket') || 
-      warningString.includes('DOM elements') ||
-      warningString.includes('localStorage')) {
+  if (
+    warningString.includes('WebSocket') ||
+    warningString.includes('DOM elements') ||
+    warningString.includes('localStorage')
+  ) {
     return;
   }
-  
+
   originalConsoleWarn(...args);
 };

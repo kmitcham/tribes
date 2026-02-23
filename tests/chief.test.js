@@ -9,28 +9,28 @@ beforeEach(() => {
   // Set up a fresh gameState before each test
   gameState = {
     population: {
-      'Alice': { food: 10, strength: 'strong', name:'Alice' },
-      'Bob': { food: 8 , name:'Bob'},
-      'Charlie': { food: 5, strength: 'weak', name:'Charlie' },
-      'Dave': { food: 12, spearhead: 0, name:'Dave' }
+      Alice: { food: 10, strength: 'strong', name: 'Alice' },
+      Bob: { food: 8, name: 'Bob' },
+      Charlie: { food: 5, strength: 'weak', name: 'Charlie' },
+      Dave: { food: 12, spearhead: 0, name: 'Dave' },
     },
     children: {
-      'Child1': { "name": "Child1", age: 10, mother: 'Alice' },
-      'Child2': { "name": "Child2", age: 6, mother: 'Bob' },
-      'Child3': { "name": "Child3", age: 4, mother: 'Charlie' },
-      'NewAdult': { "name": "NewAdult",age: 16, mother: 'Dave', newAdult: true }
+      Child1: { name: 'Child1', age: 10, mother: 'Alice' },
+      Child2: { name: 'Child2', age: 6, mother: 'Bob' },
+      Child3: { name: 'Child3', age: 4, mother: 'Charlie' },
+      NewAdult: { name: 'NewAdult', age: 16, mother: 'Dave', newAdult: true },
     },
     needChanceRoll: true,
     saveRequired: false,
-    gameTrack: { 'marsh': 10, 'hills': 12, 'forest': 8 },
+    gameTrack: { marsh: 10, hills: 12, forest: 8 },
     currentLocationName: 'forest',
-    season: 'summer'
+    season: 'summer',
   };
 });
 
 test('should handle a person growing stronger (roll 16-18)', () => {
-  delete gameState['population']['Charlie'].strength
-  const result =  chiefLib.doChance(17, gameState);
+  delete gameState['population']['Charlie'].strength;
+  const result = chiefLib.doChance(17, gameState);
   assert(result.includes('grows stronger'));
   // Check that a person was modified correctly
   // If a strong person was picked first, it should have tried a different person
@@ -44,7 +44,7 @@ test('should handle a person growing stronger (roll 16-18)', () => {
 });
 
 test('should handle fungus spoiling all food (roll 15)', () => {
-  const result =  chiefLib.doChance(15, gameState);
+  const result = chiefLib.doChance(15, gameState);
   assert(result.includes('Fungus!'));
   // Verify all food is set to 0
   for (const name in gameState.population) {
@@ -54,13 +54,13 @@ test('should handle fungus spoiling all food (roll 15)', () => {
   assert.strictEqual(gameState.saveRequired, true);
 });
 
-test('should handle rats spoiling one or two people\'s food (roll 14)', () => {
-  const result =  chiefLib.doChance(14, gameState);
+test("should handle rats spoiling one or two people's food (roll 14)", () => {
+  const result = chiefLib.doChance(14, gameState);
   assert(result.includes('Rats!'));
   // Check that at least one person's food was set to 0
-  const firstPersonName = result.split('Rats! All ')[1].split('\'s')[0];
+  const firstPersonName = result.split('Rats! All ')[1].split("'s")[0];
   assert.strictEqual(gameState.population[firstPersonName].food, 0);
-  
+
   // If there are 8+ people, a second person should also lose food
   if (Object.keys(gameState.population).length >= 8) {
     const pattern = /Also (.*?)'s \[\d+\] food is also spoiled/;
@@ -70,13 +70,13 @@ test('should handle rats spoiling one or two people\'s food (roll 14)', () => {
       assert.strictEqual(gameState.population[secondPersonName].food, 0);
     }
   }
-  
+
   assert.strictEqual(gameState.needChanceRoll, false);
   assert.strictEqual(gameState.saveRequired, true);
 });
 
 test('should handle finding a spearhead (roll 13)', () => {
-  const result =  chiefLib.doChance(13, gameState);
+  const result = chiefLib.doChance(13, gameState);
   assert(result.includes('finds a spearhead'));
   const personName = result.split(' ')[2];
   assert(gameState.population[personName].spearhead >= 1);
@@ -85,11 +85,11 @@ test('should handle finding a spearhead (roll 13)', () => {
 });
 
 test('should handle children gathering food (roll 12)', () => {
-  const result =  chiefLib.doChance(12, gameState);
+  const result = chiefLib.doChance(12, gameState);
   assert(result.includes('The younger tribesfolk gather food'));
   // Check that mothers received food from eligible children
   assert(gameState.population['Alice'].food > 10); // Child1 gives 2
-  assert(gameState.population['Bob'].food  = 8);   // Child2 too young
+  assert((gameState.population['Bob'].food = 8)); // Child2 too young
   assert.strictEqual(gameState.population['Charlie'].food, 5); // Child3 too young
   assert(gameState.population['Dave'].food > 12); // NewAdult gives 4
   assert.strictEqual(gameState.needChanceRoll, false);
@@ -98,40 +98,46 @@ test('should handle children gathering food (roll 12)', () => {
 
 test('should handle locusts eating food (roll 11)', () => {
   // Mock dice roll to return a predictable value for food loss
-  const result =  chiefLib.doChance(11, gameState);
+  const result = chiefLib.doChance(11, gameState);
   assert(result.includes('Locusts!'));
   // Each person should lose 2 food (our mocked dice roll value)
   assert(gameState.population['Alice'].food < 10);
   assert(gameState.population['Bob'].food < 8);
   assert(gameState.population['Charlie'].food < 5);
   assert(gameState.population['Dave'].food < 12);
-  
+
   assert.strictEqual(gameState.needChanceRoll, false);
   assert.strictEqual(gameState.saveRequired, true);
 });
 
 test('should handle predator attack (roll 10)', () => {
-  const result =  chiefLib.doChance(10, gameState);
+  const result = chiefLib.doChance(10, gameState);
   assert(result.includes('devoured'));
   assert.strictEqual(gameState.needChanceRoll, false);
   assert.strictEqual(gameState.saveRequired, true);
 });
 
-test('should handle weevils eating one person\'s food (roll 9)', () => {
-  const result =  chiefLib.doChance(9, gameState);
+test("should handle weevils eating one person's food (roll 9)", () => {
+  const result = chiefLib.doChance(9, gameState);
   assert(result.includes('weevils'));
   const personName = result.split(' ')[2];
-  assert(gameState.population[personName].food <
-                      (personName === 'Alice' ? 10 : 
-                      personName === 'Bob' ? 8 : 
-                      personName === 'Charlie' ? 5 : 12));
-  
+  assert(
+    gameState.population[personName].food <
+      (personName === 'Alice'
+        ? 10
+        : personName === 'Bob'
+          ? 8
+          : personName === 'Charlie'
+            ? 5
+            : 12)
+  );
+
   assert.strictEqual(gameState.needChanceRoll, false);
   assert.strictEqual(gameState.saveRequired, true);
 });
 
 test('should handle favorable jerky conditions (roll 8)', () => {
-  const result =  chiefLib.doChance(8, gameState);
+  const result = chiefLib.doChance(8, gameState);
   assert(result.includes('Favorable weather conditions'));
   assert.strictEqual(gameState.canJerky, true);
   assert.strictEqual(gameState.needChanceRoll, false);
@@ -139,7 +145,7 @@ test('should handle favorable jerky conditions (roll 8)', () => {
 });
 
 test('should handle fire (roll 7)', () => {
-  const result =  chiefLib.doChance(7, gameState);
+  const result = chiefLib.doChance(7, gameState);
   assert(result.includes('FIRE!'));
   assert.strictEqual(gameState.gameTrack['forest'], 20);
   assert.strictEqual(gameState.needChanceRoll, false);
@@ -147,7 +153,7 @@ test('should handle fire (roll 7)', () => {
 });
 
 test('should handle injury (roll 6)', () => {
-  const result =  chiefLib.doChance(6, gameState);
+  const result = chiefLib.doChance(6, gameState);
   assert(result.includes('injured – miss next turn'));
   const personName = result.split(' ')[2];
   assert.strictEqual(gameState.population[personName].isInjured, 4);
@@ -156,47 +162,54 @@ test('should handle injury (roll 6)', () => {
 });
 
 test('should handle sickness (roll 5)', () => {
-  const result =  chiefLib.doChance(5, gameState);
+  const result = chiefLib.doChance(5, gameState);
   assert(result.includes('got sick'));
   const personName = result.split(' ')[2];
   assert.strictEqual(gameState.population[personName].isSick, 3);
-  assert(gameState.population[personName].food <= 
-          (personName === 'Alice' ? 8 : 
-          personName === 'Bob' ? 6 : 
-          personName === 'Dave' ? 10 :
-          personName === 'Charlie' ? 3 : 10));
+  assert(
+    gameState.population[personName].food <=
+      (personName === 'Alice'
+        ? 8
+        : personName === 'Bob'
+          ? 6
+          : personName === 'Dave'
+            ? 10
+            : personName === 'Charlie'
+              ? 3
+              : 10)
+  );
   assert.strictEqual(gameState.needChanceRoll, false);
   assert.strictEqual(gameState.saveRequired, true);
 });
 
 test('should handle sickness (roll 5) with no food', () => {
-  gameState.population["Alice"]["food"]=0;
-  delete gameState.population["Bob"];
-  delete gameState.population["Dave"];
-  delete gameState.population["Charlie"];
-  const result =  chiefLib.doChance(5, gameState);
+  gameState.population['Alice']['food'] = 0;
+  delete gameState.population['Bob'];
+  delete gameState.population['Dave'];
+  delete gameState.population['Charlie'];
+  const result = chiefLib.doChance(5, gameState);
   assert(result.includes('got sick'));
   const personName = result.split(' ')[2];
   assert.strictEqual(gameState.population[personName].isSick, 3);
-  assert(gameState.population['Alice'].food ==0 );
+  assert(gameState.population['Alice'].food == 0);
   assert.strictEqual(gameState.needChanceRoll, false);
   assert.strictEqual(gameState.saveRequired, true);
-  assert.strictEqual(gameState.population["Alice"].payTwoOrDie, true);
-  console.log("last test in chief complete");
+  assert.strictEqual(gameState.population['Alice'].payTwoOrDie, true);
+  console.log('last test in chief complete');
 });
 
-test('PayTwoOrDie should kill you', ()=>{
-  gameState.population["Alice"]["food"]=0;
-  gameState.population["Alice"]["grain"]=0;
-  gameState.population["Bob"]["food"]=0;
-  gameState.population["Bob"]["grain"]=2;
-  delete gameState.population["Dave"];
-  delete gameState.population["Charlie"];
-  gameState.population["Alice"].payTwoOrDie = true;
-  gameState.population["Bob"].payTwoOrDie = true;
-  gameState.population["Alice"].chief = true;
-  result = chiefLib.startWork("Alice", gameState);
-  var deadAlice = gameState.graveyard["Alice"];
-  assert.equal(deadAlice.deathMessage, "lack of extra sustenance while ill");
-  assert.equal(gameState.population["Bob"]["grain"],0);
+test('PayTwoOrDie should kill you', () => {
+  gameState.population['Alice']['food'] = 0;
+  gameState.population['Alice']['grain'] = 0;
+  gameState.population['Bob']['food'] = 0;
+  gameState.population['Bob']['grain'] = 2;
+  delete gameState.population['Dave'];
+  delete gameState.population['Charlie'];
+  gameState.population['Alice'].payTwoOrDie = true;
+  gameState.population['Bob'].payTwoOrDie = true;
+  gameState.population['Alice'].chief = true;
+  result = chiefLib.startWork('Alice', gameState);
+  var deadAlice = gameState.graveyard['Alice'];
+  assert.equal(deadAlice.deathMessage, 'lack of extra sustenance while ill');
+  assert.equal(gameState.population['Bob']['grain'], 0);
 });
