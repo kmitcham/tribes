@@ -77,7 +77,6 @@ function feed(unused, player, amount, inputChildList, gameState) {
           childName + ' can not need to eat that much.  '
         );
       }
-      continue
     }
     if (child.newAdult && child.newAdult == true) {
       if (showErrors) {
