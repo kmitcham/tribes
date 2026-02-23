@@ -10,6 +10,15 @@ function feed(unused, player, amount, inputChildList, gameState) {
   children = gameState.children;
   let message = player['name'] + ' goes to feed the children.  \n';
   var showErrors = true;
+  if (amount == 0 || amount > 2) {
+    text.addMessage(
+      gameState,
+      'tribe',
+      player.name + ' fails to overfeed the children.'
+    );
+    return;
+  }
+  
   feedAtLeastOneChild = false;
   for (cName of inputChildList) {
     childName = text.capitalizeFirstLetter(cName);
@@ -65,9 +74,10 @@ function feed(unused, player, amount, inputChildList, gameState) {
         text.addMessage(
           gameState,
           player.name,
-          childName + ' does not need to eat that much.  '
+          childName + ' can not need to eat that much.  '
         );
       }
+      continue
     }
     if (child.newAdult && child.newAdult == true) {
       if (showErrors) {

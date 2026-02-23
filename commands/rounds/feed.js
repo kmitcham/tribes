@@ -54,6 +54,14 @@ function feed(interaction, gameState) {
     );
     return;
   }
+  if (amount == 0 || amount > 2) {
+    text.addMessage(
+      gameState,
+      sourceName,
+      'Amount must be between 1 and 2.'
+    );
+    return;
+  }
   if (gameState.reproductionRound && gameState.needChanceRoll) {
     text.addMessage(
       gameState,
