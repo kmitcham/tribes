@@ -193,3 +193,7 @@ copied an alias to the TribeServer dir
 //		add wss to tribe pop for player
 
 https://app.koyeb.com/services/16204d44-40f0-4bda-845d-be8a287c21b9?deploymentId=a1f9bb5f-dc9d-4542-bb7c-9850d48131ca
+
+koyeb service update your-app-name/your-service-name --volumes your-volume-name:/path/in/container
+
+koyeb service update tribes/

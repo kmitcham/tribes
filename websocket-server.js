@@ -646,7 +646,6 @@ function handleInfoRequest(ws, data, gameState) {
         content: cleanPop,
       };
       break;
-
     case 'children':
       messageData = {
         type: 'infoRequest',
