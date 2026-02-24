@@ -307,16 +307,28 @@ function startServer() {
           })
         );
       } else if (req.url === '/' || req.url === '/index.html') {
-        // Serve the HTML interface
+        // Serve the HTML interface with WebSocket configuration
         fs.readFile(
           path.join(__dirname, 'tribes-interface.html'),
+          'utf8',  // Read as text to allow modifications
           (err, data) => {
             if (err) {
               res.writeHead(404, { 'Content-Type': 'text/plain' });
               res.end('Interface not found');
             } else {
+              // Inject WebSocket configuration into the HTML
+              const wsConfig = {
+                port: PORT,
+                protocol: req.headers['x-forwarded-proto'] || (req.connection.encrypted ? 'https' : 'http'),
+                host: req.headers.host || req.headers['x-forwarded-host']
+              };
+              
+              // Insert WebSocket config right after the <head> tag
+              const configScript = `<script>window.TRIBES_WS_CONFIG = ${JSON.stringify(wsConfig)};</script>`;
+              const modifiedData = data.replace('<head>', '<head>\n    ' + configScript);
+              
               res.writeHead(200, { 'Content-Type': 'text/html' });
-              res.end(data);
+              res.end(modifiedData);
             }
           }
         );

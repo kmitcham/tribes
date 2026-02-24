@@ -915,7 +915,7 @@
     <div class="header">
         <div class="header-main">
             <div class="header-content">
-                <h1><a href="https://www.sjgames.com/tribes/"><img src="https://www.sjgames.com/tribes/img/logo.png" alt="Tribes Logo"></a> <br>(online)</h1>
+                <h1><a href="https://www.sjgames.com/tribes/"><img src="https://www.sjgames.com/tribes/img/logo.png" alt="Tribes Logo"></a>
                 <div class="connection-status" id="connectionStatus">Connecting...</div>
             </div>
         </div>
@@ -1252,9 +1252,67 @@
                     // Initialize game status bar
                     this.updateGameStatusBar('Welcome to Tribes! Loading game status...');
                     
+                    // Check if server provided WebSocket configuration
+                    const serverConfig = window.TRIBES_WS_CONFIG;
+                    if (serverConfig) {
+                        logWithTimestamp('Using server-provided WebSocket configuration:', serverConfig);
+                        const wsProtocol = serverConfig.protocol === 'https' ? 'wss' : 'ws';
+                        const wsHost = serverConfig.host.split(':')[0]; // Remove port from host if present
+                        const wsPort = serverConfig.port !== '80' && serverConfig.port !== '443' ? `:${serverConfig.port}` : '';
+                        const wsUrl = `${wsProtocol}://${wsHost}${wsPort}`;
+                        
+                        logWithTimestamp(`Connecting to server-configured WebSocket: ${wsUrl}`);
+                        this.ws = new WebSocket(wsUrl);
+                        this.setupWebSocketHandlers(() => {
+                            logWithTimestamp('Server-configured WebSocket failed, falling back to auto-detection');
+                            this.connectWithFallback();
+                        });
+                        return;
+                    }
+                    
+                    this.connectWithFallback();
+                } catch (error) {
+                    console.error('Error connecting:', error);
+                    this.updateConnectionStatus('disconnected');
+                    this.scheduleReconnect();
+                }
+            }
+            
+            setupWebSocketHandlers(onCloseCallback) {
+                this.ws.onopen = () => {
+                    logWithTimestamp('WebSocket connected');
+                    this.updateConnectionStatus('connected');
+                    this.reconnectAttempts = 0;
+                    this.requestCommandList();
+                    this.requestSettings();
+                    // Auto-refresh game data on connection
+                    this.refreshGameData();
+                };
+                
+                this.ws.onmessage = (event) => {
+                    this.handleMessage(JSON.parse(event.data));
+                };
+                
+                this.ws.onerror = (error) => {
+                    console.error('WebSocket error:', error);
+                };
+                
+                this.ws.onclose = () => {
+                    logWithTimestamp('WebSocket closed');
+                    this.updateConnectionStatus('disconnected');
+                    if (this.refreshTimer) {
+                        clearTimeout(this.refreshTimer);
+                        this.refreshTimer = null;
+                    }
+                    if (onCloseCallback) onCloseCallback();
+                };
+            }
+                
+            connectWithFallback() {
+                try {
                     // Smart WebSocket connection logic for local and cloud deployment
                     const currentHost = window.location.hostname;
-                    const currentPort = window.location.port || (window.location.protocol === 'https:' ? '443' : '8000');
+                    const currentPort = window.location.port;
                     const isSecure = window.location.protocol === 'https:';
                     
                     // Prioritize current page's host for cloud deployments, fallback to local for development
@@ -1263,7 +1321,15 @@
                     if (currentHost !== 'localhost' && currentHost !== '127.0.0.1' && !currentHost.startsWith('192.168.') && !currentHost.startsWith('10.') && !currentHost.startsWith('172.')) {
                         // Cloud deployment - use the same host and protocol as the page
                         hosts = [currentHost];
-                        port = currentPort === '443' || currentPort === '80' ? '' : `:${currentPort}`;
+                        // For cloud deployments, always try the same port as the page first, then fallback to common ports
+                        let portToTry;
+                        if (currentPort) {
+                            portToTry = `:${currentPort}`;
+                        } else {
+                            // If no explicit port, try without port first (default 80/443), then try common app ports
+                            portToTry = '';
+                        }
+                        port = portToTry;
                         protocol = isSecure ? 'wss' : 'ws';
                         logWithTimestamp(`Cloud deployment detected, connecting to ${protocol}://${currentHost}${port}`);
                     } else {
@@ -1274,20 +1340,7 @@
                         logWithTimestamp(`Local development detected, trying multiple hosts`);
                     }
                     
-                    const tryHost = (hostIndex = 0) => {
-                        if (hostIndex >= hosts.length) {
-                            console.error('Failed to connect to any host');
-                            this.updateConnectionStatus('disconnected');
-                            this.scheduleReconnect();
-                            return;
-                        }
-                        
-                        const host = hosts[hostIndex];
-                        const wsUrl = `${protocol}://${host}${port}`;
-                        logWithTimestamp(`Trying to connect to ${wsUrl}`);
-                        
-                        this.ws = new WebSocket(wsUrl);
-                        
+                    const setupWebSocketHandlers = (successCallback) => {
                         this.ws.onopen = () => {
                             logWithTimestamp('WebSocket connected');
                             this.updateConnectionStatus('connected');
@@ -1313,8 +1366,59 @@
                                 clearTimeout(this.refreshTimer);
                                 this.refreshTimer = null;
                             }
-                            tryHost(hostIndex + 1);
+                            if (successCallback) successCallback();
                         };
+                    };
+
+                    const tryHost = (hostIndex = 0) => {
+                        if (hostIndex >= hosts.length) {
+                            // If all hosts failed and we're in cloud deployment, try alternative ports
+                            if (currentHost !== 'localhost' && currentHost !== '127.0.0.1' && !currentHost.startsWith('192.168.') && !currentHost.startsWith('10.') && !currentHost.startsWith('172.')) {
+                                // Cloud deployment fallback - try common ports if original failed
+                                const fallbackPorts = ['', ':8000', ':3000', ':80', ':443'];
+                                let currentFallbackIndex = 0;
+                                
+                                const tryFallbackPort = () => {
+                                    if (currentFallbackIndex >= fallbackPorts.length) {
+                                        console.error('Failed to connect to any host or port combination');
+                                        this.updateConnectionStatus('disconnected');
+                                        this.scheduleReconnect();
+                                        return;
+                                    }
+                                    
+                                    const fallbackPort = fallbackPorts[currentFallbackIndex];
+                                    const wsUrl = `${protocol}://${currentHost}${fallbackPort}`;
+                                    logWithTimestamp(`Trying fallback port: ${wsUrl}`);
+                                    
+                                    this.ws = new WebSocket(wsUrl);
+                                    setupWebSocketHandlers(() => {
+                                        currentFallbackIndex++;
+                                        setTimeout(tryFallbackPort, 1000);
+                                    });
+                                    
+                                    // If connection doesn't open in 3 seconds, try next fallback port
+                                    setTimeout(() => {
+                                        if (this.ws.readyState !== WebSocket.OPEN) {
+                                            this.ws.close();
+                                        }
+                                    }, 3000);
+                                };
+                                
+                                tryFallbackPort();
+                            } else {
+                                console.error('Failed to connect to any host');
+                                this.updateConnectionStatus('disconnected');
+                                this.scheduleReconnect();
+                            }
+                            return;
+                        }
+                        
+                        const host = hosts[hostIndex];
+                        const wsUrl = `${protocol}://${host}${port}`;
+                        logWithTimestamp(`Trying to connect to ${wsUrl}`);
+                        
+                        this.ws = new WebSocket(wsUrl);
+                        setupWebSocketHandlers(() => tryHost(hostIndex + 1));
                         
                         // If connection doesn't open in 2 seconds, try next host
                         setTimeout(() => {
@@ -1447,7 +1551,6 @@
                 this.expandLoginArea();
                 this.hideCommandsSection();
                 this.addMessage(data.message, 'info');
-            }
                 this.commands = commands;
                 this.updateCommandList();
                 this.initCommandSearch();
