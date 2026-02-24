@@ -1551,6 +1551,9 @@
                 this.expandLoginArea();
                 this.hideCommandsSection();
                 this.addMessage(data.message, 'info');
+            }
+            
+            handleCommandList(commands) {
                 this.commands = commands;
                 this.updateCommandList();
                 this.initCommandSearch();
