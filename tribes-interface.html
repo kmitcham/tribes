@@ -968,6 +968,8 @@
                 </div>
                 
                 <button class="btn" id="registerBtn">Register/Login</button>
+                <button class="btn" id="logoutBtn" onclick="window.tribesClient.logout()" style="display: none; background: #dc3545;">Logout</button>
+                <button class="btn" id="logoutAllBtn" onclick="window.tribesClient.logout(true)" style="display: none; background: #6f42c1; margin-top: 0.25rem;">Logout All Devices</button>
                 <button class="btn btn-small" id="expandLoginBtn" style="display: none; margin-top: 0.5rem; font-size: 0.8rem;">✏️ Edit Login</button>
             </div>
 
@@ -1091,7 +1093,67 @@
                 this.connect();
             }
 
-            // Cookie management functions
+            // Session management functions
+            storeSession(token, playerName) {
+                this.currentSessionToken = token;
+                this.currentPlayerName = playerName;
+                localStorage.setItem('tribesSessionToken', token);
+                localStorage.setItem('tribesPlayerName', playerName);
+                console.log('Session stored:', playerName);
+            }
+            
+            restoreSession() {
+                const token = localStorage.getItem('tribesSessionToken');
+                const playerName = localStorage.getItem('tribesPlayerName');
+                
+                if (token && playerName) {
+                    this.currentSessionToken = token;
+                    this.currentPlayerName = playerName;
+                    
+                    // Pre-fill the login form
+                    const playerNameInput = document.getElementById('playerName');
+                    if (playerNameInput) {
+                        playerNameInput.value = playerName;
+                    }
+                    
+                    console.log('Session restored for:', playerName);
+                    return true;
+                }
+                return false;
+            }
+            
+            clearSession() {
+                this.currentSessionToken = null;
+                this.currentPlayerName = null;
+                localStorage.removeItem('tribesSessionToken');
+                localStorage.removeItem('tribesPlayerName');
+            }
+            
+            authenticateWithSession() {
+                if (this.currentSessionToken && this.ws && this.ws.readyState === WebSocket.OPEN) {
+                    this.send({
+                        type: 'authenticateSession',
+                        token: this.currentSessionToken
+                    });
+                    return true;
+                }
+                return false;
+            }
+            
+            logout(logoutAll = false) {
+                if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+                    this.send({
+                        type: 'logout',
+                        logoutAll: logoutAll
+                    });
+                }
+                
+                this.clearSession();
+                this.isLoggedIn = false;
+                this.expandLoginArea();
+                this.hideCommandsSection();
+                this.addMessage('Logged out successfully', 'info');
+            }
             setCookie(name, value, days = 14) {
                 const expires = new Date();
                 expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
@@ -1313,6 +1375,18 @@
                 logWithTimestamp('Received:', data);
 
                 switch (data.type) {
+                    case 'sessionAuthResponse':
+                        this.handleSessionAuthResponse(data);
+                        break;
+                        
+                    case 'logoutResponse':
+                        this.handleLogoutResponse(data);
+                        break;
+                        
+                    case 'forceLogout':
+                        this.handleForceLogout(data);
+                        break;
+                        
                     case 'commandList':
                         this.handleCommandList(data.commands);
                         break;
@@ -1346,7 +1420,34 @@
                 }
             }
 
-            handleCommandList(commands) {
+            handleSessionAuthResponse(data) {
+                if (data.success) {
+                    this.isLoggedIn = true;
+                    this.currentPlayerName = data.playerName;
+                    this.showCommandsSection();
+                    this.minimizeLoginArea();
+                    this.addMessage(`Welcome back, ${data.playerName}!`, 'success');
+                    this.requestCommandList();
+                    this.refreshGameData();
+                } else {
+                    // Session invalid, clear it and show login
+                    this.clearSession();
+                    this.addMessage('Session expired. Please log in again.', 'error');
+                    this.expandLoginArea();
+                }
+            }
+            
+            handleLogoutResponse(data) {
+                this.addMessage(data.message, 'success');
+            }
+            
+            handleForceLogout(data) {
+                this.clearSession();
+                this.isLoggedIn = false;
+                this.expandLoginArea();
+                this.hideCommandsSection();
+                this.addMessage(data.message, 'info');
+            }
                 this.commands = commands;
                 this.updateCommandList();
                 this.initCommandSearch();
@@ -1444,6 +1545,11 @@
                 
                 // Auto-refresh game data after successful registration
                 if (data.label === 'success') {
+                    // Store session token if provided
+                    if (data.sessionToken && data.playerName) {
+                        this.storeSession(data.sessionToken, data.playerName);
+                    }
+                    
                     this.isLoggedIn = true; // Set logged in state
                     this.showCommandsSection(); // Show commands after successful login
                     this.refreshGameData();

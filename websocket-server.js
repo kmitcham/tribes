@@ -3,6 +3,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const bcrypt = require('bcrypt');
+const crypto = require('crypto');
 const savelib = require('./libs/save.js');
 const util = require('./libs/util.js');
 const pop = require('./libs/population.js');
@@ -26,6 +27,15 @@ let usersDict = {};
 let connectedClients = new Map(); // Map of playerName -> Set of WebSocket connections
 let tribeConnections = new Map(); // Map of tribeName -> Set of WebSocket connections
 
+// Rate limiting for authentication attempts
+let loginAttempts = new Map(); // Map of identifier -> { count, lastAttempt, lockoutUntil }
+
+// Session management
+let activeSessions = new Map(); // token -> { playerName, createdAt, lastActivity, ipAddress }
+let playerSessions = new Map(); // playerName -> Set of tokens
+const SESSION_TIMEOUT = 24 * 60 * 60 * 1000; // 24 hours
+const SESSION_CLEANUP_INTERVAL = 5 * 60 * 1000; // Clean up every 5 minutes
+
 // Load users data
 try {
   usersDict = loadJson('./users.json');
@@ -36,6 +46,104 @@ try {
 
 // Load all commands dynamically from the commands folder
 const commands = new Map();
+
+// Session management functions
+function generateSessionToken() {
+  return crypto.randomBytes(32).toString('hex');
+}
+
+function createSession(playerName, ipAddress = 'unknown') {
+  const token = generateSessionToken();
+  const session = {
+    playerName,
+    createdAt: Date.now(),
+    lastActivity: Date.now(),
+    ipAddress
+  };
+  
+  activeSessions.set(token, session);
+  
+  if (!playerSessions.has(playerName)) {
+    playerSessions.set(playerName, new Set());
+  }
+  playerSessions.get(playerName).add(token);
+  
+  logWithTimestamp(`[SESSION] Created session for ${playerName} from ${ipAddress}`);
+  return token;
+}
+
+function validateSession(token) {
+  const session = activeSessions.get(token);
+  if (!session) {
+    return null;
+  }
+  
+  // Check if session has expired
+  if (Date.now() - session.lastActivity > SESSION_TIMEOUT) {
+    destroySession(token);
+    return null;
+  }
+  
+  // Update last activity
+  session.lastActivity = Date.now();
+  return session;
+}
+
+function destroySession(token) {
+  const session = activeSessions.get(token);
+  if (session) {
+    const playerName = session.playerName;
+    activeSessions.delete(token);
+    
+    if (playerSessions.has(playerName)) {
+      playerSessions.get(playerName).delete(token);
+      if (playerSessions.get(playerName).size === 0) {
+        playerSessions.delete(playerName);
+      }
+    }
+    
+    logWithTimestamp(`[SESSION] Destroyed session for ${playerName}`);
+  }
+}
+
+function destroyAllPlayerSessions(playerName) {
+  const playerTokens = playerSessions.get(playerName);
+  if (playerTokens) {
+    for (const token of playerTokens) {
+      activeSessions.delete(token);
+    }
+    playerSessions.delete(playerName);
+    logWithTimestamp(`[SESSION] Destroyed all sessions for ${playerName}`);
+  }
+}
+
+function cleanupExpiredSessions() {
+  const now = Date.now();
+  const expiredTokens = [];
+  
+  for (const [token, session] of activeSessions) {
+    if (now - session.lastActivity > SESSION_TIMEOUT) {
+      expiredTokens.push(token);
+    }
+  }
+  
+  for (const token of expiredTokens) {
+    destroySession(token);
+  }
+  
+  if (expiredTokens.length > 0) {
+    logWithTimestamp(`[SESSION] Cleaned up ${expiredTokens.length} expired sessions`);
+  }
+}
+
+// Start session cleanup timer
+setInterval(cleanupExpiredSessions, SESSION_CLEANUP_INTERVAL);
+
+function getClientIP(ws, req) {
+  return req?.socket?.remoteAddress || 
+         req?.headers['x-forwarded-for']?.split(',')[0] || 
+         'unknown';
+}
 
 function loadCommands() {
   const commandsPath = path.join(__dirname, 'commands');
@@ -283,8 +391,9 @@ function startServer() {
       }
     });
 
-    wss.on('connection', (ws) => {
-      logWithTimestamp('New client connected');
+    wss.on('connection', (ws, req) => {
+      const clientIP = getClientIP(ws, req);
+      logWithTimestamp(`New client connected from ${clientIP}`);
 
       ws.on('message', async (message) => {
         try {
@@ -293,8 +402,13 @@ function startServer() {
             'Received:',
             data.type,
             data.command || '',
-            `from ${data.playerName || 'unknown'}`
+            `from ${data.playerName || ws.playerName || 'unknown'}`
           );
+
+          // Store client IP for session management
+          if (!ws.clientIP) {
+            ws.clientIP = clientIP;
+          }
 
           await handleWebSocketMessage(ws, data);
         } catch (error) {
@@ -327,7 +441,7 @@ function startServer() {
       });
 
       ws.on('close', () => {
-        logWithTimestamp('Client disconnected');
+        logWithTimestamp(`Client disconnected: ${ws.playerName || 'unknown'}`);
         // Remove from tribe connections
         if (ws.currentTribe && tribeConnections.has(ws.currentTribe)) {
           tribeConnections.get(ws.currentTribe).delete(ws);
@@ -342,6 +456,7 @@ function startServer() {
             connectedClients.delete(ws.currentPlayer);
           }
         }
+        // Note: We don't destroy sessions on disconnect - they persist for reconnection
       });
     });
   } catch (error) {
@@ -371,6 +486,14 @@ async function handleWebSocketMessage(ws, data) {
   }
 
   switch (data.type) {
+    case 'authenticateSession':
+      handleSessionAuthentication(ws, data);
+      break;
+      
+    case 'logout':
+      handleLogout(ws, data);
+      break;
+      
     case 'infoRequest':
       handleInfoRequest(ws, data, gameState);
       break;
@@ -423,6 +546,91 @@ async function getGameState(tribeName) {
 
   allGames[tribeName] = gameState;
   return gameState;
+}
+
+function handleSessionAuthentication(ws, data) {
+  const { token } = data;
+  
+  if (!token) {
+    ws.send(JSON.stringify({
+      type: 'sessionAuthResponse',
+      success: false,
+      message: 'Session token required',
+      clientId: data.clientId
+    }));
+    return;
+  }
+  
+  const session = validateSession(token);
+  if (!session) {
+    ws.send(JSON.stringify({
+      type: 'sessionAuthResponse', 
+      success: false,
+      message: 'Invalid or expired session token',
+      clientId: data.clientId
+    }));
+    return;
+  }
+  
+  // Associate this WebSocket with the session
+  ws.sessionToken = token;
+  ws.playerName = session.playerName;
+  ws.currentPlayer = session.playerName;
+  
+  // Track this client's player connections
+  if (!connectedClients.has(session.playerName)) {
+    connectedClients.set(session.playerName, new Set());
+  }
+  connectedClients.get(session.playerName).add(ws);
+  
+  logWithTimestamp(`[SESSION] ${session.playerName} authenticated with existing session`);
+  
+  ws.send(JSON.stringify({
+    type: 'sessionAuthResponse',
+    success: true,
+    playerName: session.playerName,
+    message: 'Session authenticated successfully',
+    clientId: data.clientId
+  }));
+}
+
+function handleLogout(ws, data) {
+  const { logoutAll = false } = data;
+  
+  if (ws.sessionToken) {
+    if (logoutAll && ws.playerName) {
+      // Destroy all sessions for this player
+      destroyAllPlayerSessions(ws.playerName);
+      
+      // Disconnect all WebSockets for this player
+      const playerConnections = connectedClients.get(ws.playerName);
+      if (playerConnections) {
+        for (const connection of playerConnections) {
+          if (connection !== ws) {
+            connection.send(JSON.stringify({
+              type: 'forceLogout',
+              message: 'Logged out from another device'
+            }));
+            connection.close();
+          }
+        }
+      }
+    } else {
+      // Destroy only this session
+      destroySession(ws.sessionToken);
+    }
+    
+    ws.sessionToken = null;
+    ws.playerName = null;
+    ws.currentPlayer = null;
+  }
+  
+  ws.send(JSON.stringify({
+    type: 'logoutResponse',
+    success: true,
+    message: logoutAll ? 'Logged out from all devices' : 'Logged out successfully',
+    clientId: data.clientId
+  }));
 }
 
 function handleInfoRequest(ws, data, gameState) {
@@ -510,13 +718,26 @@ async function handleCommandRequest(ws, data, gameState) {
   }
 
   // Validate user if required
-  if (!validateUser(data)) {
+  try {
+    if (!(await validateUser(data))) {
+      ws.send(
+        JSON.stringify({
+          type: 'commandResponse',
+          command: commandName,
+          success: false,
+          message: 'Invalid user credentials',
+          clientId: data.clientId,
+        })
+      );
+      return;
+    }
+  } catch (error) {
     ws.send(
       JSON.stringify({
         type: 'commandResponse',
         command: commandName,
         success: false,
-        message: 'Invalid user credentials',
+        message: error.message,
         clientId: data.clientId,
       })
     );
@@ -812,7 +1033,24 @@ function handleListCommands(ws, data, gameState) {
 
 async function handleRegisterRequest(ws, data, gameState) {
   try {
+    // Add client IP for session creation
+    data.clientIP = ws.clientIP;
+    
     const result = await registerUser(data);
+    
+    // If registration/login successful, associate WebSocket with session
+    if (result.label === 'success' && result.sessionToken) {
+      ws.sessionToken = result.sessionToken;
+      ws.playerName = result.playerName;
+      ws.currentPlayer = result.playerName;
+      
+      // Track this client's player connections
+      if (!connectedClients.has(result.playerName)) {
+        connectedClients.set(result.playerName, new Set());
+      }
+      connectedClients.get(result.playerName).add(ws);
+    }
+    
     ws.send(JSON.stringify(result));
 
     // Send any secret/private data after successful registration
@@ -831,15 +1069,25 @@ async function handleRegisterRequest(ws, data, gameState) {
   }
 }
 
-function handleRomanceRequest(ws, data, gameState) {
-  if (validateUser(data)) {
-    const romanceUpdate = processRomance(data, gameState);
-    ws.send(JSON.stringify(romanceUpdate));
-  } else {
+async function handleRomanceRequest(ws, data, gameState) {
+  try {
+    if (await validateUser(data)) {
+      const romanceUpdate = processRomance(data, gameState);
+      ws.send(JSON.stringify(romanceUpdate));
+    } else {
+      ws.send(
+        JSON.stringify({
+          type: 'error',
+          message: 'Invalid user credentials for romance request',
+          clientId: data.clientId,
+        })
+      );
+    }
+  } catch (error) {
     ws.send(
       JSON.stringify({
         type: 'error',
-        message: 'Invalid user credentials for romance request',
+        message: error.message,
         clientId: data.clientId,
       })
     );
@@ -888,54 +1136,169 @@ function processRomance(data, gameState) {
   }
 }
 
-function validateUser(userData) {
-  // For now, simplified validation
-  // In production, you'd want proper password checking
-  return userData.playerName && userData.playerName.length > 0;
+async function validateUser(userData) {
+  // Check if user has a valid session token
+  if (userData.sessionToken) {
+    const session = validateSession(userData.sessionToken);
+    if (session && session.playerName === userData.playerName) {
+      return true;
+    }
+    // If session is invalid, fall through to password authentication
+  }
+
+  if (!userData.playerName || userData.playerName.length === 0) {
+    return false;
+  }
+
+  // Check rate limiting
+  const identifier = userData.playerName;
+  const attemptData = loginAttempts.get(identifier) || { count: 0, lastAttempt: 0, lockoutUntil: 0 };
+  
+  if (Date.now() < attemptData.lockoutUntil) {
+    throw new Error(`Account locked. Try again later.`);
+  }
+
+  const user = usersDict[userData.playerName];
+  if (!user) {
+    return false; // User doesn't exist
+  }
+
+  // If user has no password set, they can login without password (legacy compatibility)
+  if (!user.password || user.password === '') {
+    return true;
+  }
+
+  // If user has password set, require password authentication
+  if (!userData.password) {
+    recordFailedAttempt(identifier);
+    return false;
+  }
+
+  try {
+    const isValid = await verifyPassword(userData.password, user.password);
+    if (isValid) {
+      clearFailedAttempts(identifier);
+      return true;
+    } else {
+      recordFailedAttempt(identifier);
+      return false;
+    }
+  } catch (error) {
+    recordFailedAttempt(identifier);
+    return false;
+  }
 }
 
 async function registerUser(userData) {
   const name = userData.playerName || userData.name;
   const email = userData.email;
   let password = userData.password;
+  const clientIP = userData.clientIP || 'unknown';
+
+  if (!name || name.length === 0) {
+    throw new Error('Player name is required');
+  }
 
   if (usersDict[name]) {
-    // User exists, validate password if provided
-    if (
-      password &&
-      !(await verifyPassword(password, usersDict[name].password))
-    ) {
+    // User exists - this is a login attempt
+    const user = usersDict[name];
+    
+    // If existing user has no password, they can login without password (legacy)
+    if (!user.password || user.password === '') {
+      const token = createSession(name, clientIP);
+      return {
+        type: 'registration',
+        label: 'success',
+        content: 'success',
+        sessionToken: token,
+        playerName: name
+      };
+    }
+    
+    // If existing user has password, require authentication
+    if (!password) {
+      throw new Error('Password required for existing player');
+    }
+    
+    if (!(await verifyPassword(password, user.password))) {
       throw new Error('Invalid password for existing player');
     }
+    
+    const token = createSession(name, clientIP);
+    return {
+      type: 'registration',
+      label: 'success',
+      content: 'success',
+      sessionToken: token,
+      playerName: name
+    };
   } else {
-    // New user, hash password
-    if (password) {
+    // New user registration
+    if (!password || password.trim() === '') {
+      // Allow new users without password for now (legacy compatibility)
+      // But log this for security awareness
+      logWithTimestamp(`[SECURITY] New user '${name}' registered without password`);
+      password = '';
+    } else {
+      // Validate password strength for new users who choose to set one
+      validatePassword(password);
       password = await hashPassword(password);
     }
 
     usersDict[name] = {
       name: name,
-      email: email,
+      email: email || `${name}@tribes.local`,
       password: password,
+      registeredAt: new Date().toISOString()
     };
 
     actuallyWriteToDisk('users.json', usersDict);
+    logWithTimestamp(`[SECURITY] New user registered: ${name}`);
+    
+    const token = createSession(name, clientIP);
+    return {
+      type: 'registration',
+      label: 'success',
+      content: 'success',
+      sessionToken: token,
+      playerName: name
+    };
   }
-
-  return {
-    type: 'registration',
-    label: 'success',
-    content: 'success',
-  };
 }
 
 async function hashPassword(password) {
-  const saltRounds = 3;
+  const saltRounds = 12; // Increased from 3 to 12 for better security
   return await bcrypt.hash(password, saltRounds);
 }
 
 async function verifyPassword(input, hash) {
   return await bcrypt.compare(input, hash);
+}
+
+function validatePassword(password) {
+  if (!password || typeof password !== 'string') {
+    throw new Error('Password is required');
+  }
+    
+  return true;
+}
+
+function recordFailedAttempt(identifier) {
+  const attemptData = loginAttempts.get(identifier) || { count: 0, lastAttempt: 0, lockoutUntil: 0 };
+  attemptData.count++;
+  attemptData.lastAttempt = Date.now();
+  
+  // Lockout after 5 failed attempts for 15 minutes
+  if (attemptData.count >= 5) {
+    attemptData.lockoutUntil = Date.now() + (15 * 60 * 1000); // 15 minutes
+  }
+  
+  loginAttempts.set(identifier, attemptData);
+  logWithTimestamp(`Failed login attempt for ${identifier}. Count: ${attemptData.count}`);
+}
+
+function clearFailedAttempts(identifier) {
+  loginAttempts.delete(identifier);
 }
 
 function removeClunkyKeys(population) {
