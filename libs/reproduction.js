@@ -169,7 +169,14 @@ function handleReproductionList(actorName, arrayOfNames, listName, gameState) {
       break;
     } else if (targetName.toLowerCase() == '!all') {
       if (listName == 'inviteList') {
-        errors.push('!all is only valid in the consentList and declineList.');
+        // get all the members of the tribe of the opposite gender as the actingMember
+        for (var personName in population) {
+          var person = population[personName];
+          if (person.gender !== actingMember.gender) {
+            list.push(personName);
+          }
+        }
+        list.push('!pass');
       } else {
         list.push(targetName);
       }

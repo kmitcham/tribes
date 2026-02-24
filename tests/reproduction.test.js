@@ -231,6 +231,44 @@ test('make a invitelist, with pass', () => {
   );
 });
 
+test('make a invitelist, with !all', () => {
+  var gameState = {
+    population: {
+      p1: {
+        name: 'p1',
+        gender: 'female',
+      },
+      p2: {
+        name: 'p2',
+        gender: 'male',
+      },
+      p3: {
+        name: 'p3',
+        gender: 'male',
+      },
+      p4: {
+        name: 'p4',
+        gender: 'female',
+      },
+    },
+    round: 'reproduction',
+  };
+  //function handleReproductionList(actorName, args, listName, gameState, bot){
+  expectedList = ['p2', 'p3', '!pass'];
+  response = reproLib.handleReproductionList(
+    'p1',
+    ['!all'],
+    'inviteList',
+    gameState,
+    {}
+  );
+  exp = 'Setting your inviteList list to:p2,p3,!pass\n';
+  expect(response).toBe(exp);
+  expect(gameState['population']['p1']['inviteList']).toStrictEqual(
+    expectedList
+  );
+});
+
 test('make a invitelist, with Pass', () => {
   var gameState = {
     population: {
