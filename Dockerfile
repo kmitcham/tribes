@@ -8,8 +8,14 @@ WORKDIR /app
 COPY package.json* ./
 RUN npm install --only=production
 
+# Copy the main server file explicitly
+COPY websocket-server.js ./
+
 # Copy the rest of the application files
 COPY . .
+
+# Verify critical files exist (for debugging)
+RUN ls -la /app/ && echo "Checking for websocket-server.js:" && ls -la /app/websocket-server.js
 
 # Create necessary directories for data persistence  
 RUN mkdir -p /app/archive /app/logs /app/bug /app/bear /app/sloth /app/wolf /app/vashon /app/mib /app/flounder

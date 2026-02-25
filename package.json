@@ -9,6 +9,7 @@
     "url": "https://kevinmitcham.com"
   },
   "scripts": {
+    "start": "node websocket-server.js",
     "test": "jest",
     "clear_jest": "jest --clearCache"
   },
