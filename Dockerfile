@@ -35,5 +35,6 @@ RUN chown -R tribesuser:tribesuser /app
 # Switch to non-root user
 USER tribesuser
 
+CMD echo "Starting Tribes WebSocket Server..." \
 # Command to run the application
-CMD ["node", "websocket-server.js"]
+    CMD ["node", "websocket-server.js"]
