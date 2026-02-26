@@ -11,13 +11,13 @@ docker rm tribes-server 2>/dev/null
 docker run -d \
   --name tribes-server \
   -p 0.0.0.0:8000:8000 \
-  -v $(pwd)/bear:/app/bear \
-  -v $(pwd)/flounder:/app/flounder \
-  -v $(pwd)/bug:/app/bug \
-  -v $(pwd)/vashon:/app/vashon \
-  -v $(pwd)/mib:/app/mib \
-  -v $(pwd)/sloth:/app/sloth \
-  -v $(pwd)/wolf:/app/wolf \
+  -v $(pwd)/tribe-data/bear:/app/tribe-data/bear \
+  -v $(pwd)/tribe-data/flounder:/app/tribe-data/flounder \
+  -v $(pwd)/tribe-data/bug:/app/tribe-data/bug \
+  -v $(pwd)/tribe-data/vashon:/app/tribe-data/vashon \
+  -v $(pwd)/tribe-data/mib:/app/tribe-data/mib \
+  -v $(pwd)/tribe-data/sloth:/app/tribe-data/sloth \
+  -v $(pwd)/tribe-data/wolf:/app/tribe-data/wolf \
   -v $(pwd)/users.json:/app/users.json \
   -v $(pwd)/archive:/app/archive \
   -v $(pwd)/logs:/app/logs \

@@ -61,7 +61,7 @@ function loadJson(fileName) {
 module.exports.loadJson = loadJson;
 
 function loadTribe(tribeName) {
-  fileName = './' + tribeName + '/' + tribeName + '.json';
+  fileName = './tribe-data/' + tribeName + '/' + tribeName + '.json';
   if (fs.existsSync(fileName)) {
     try {
       gameState = loadJson(fileName);
@@ -115,7 +115,7 @@ async function saveGameState(gameState, tribeName) {
   saveTime = saveTime.replace(/\//g, '-');
   gameState.lastSaved = saveTime;
   console.log('trying to save ' + tribeName);
-  saveFileName = './' + tribeName + '/' + tribeName + '.json';
+  saveFileName = './tribe-data/' + tribeName + '/' + tribeName + '.json';
   console.log('trying to save ' + tribeName + ' as ' + saveFileName);
   actuallyWriteToDisk(saveFileName, gameState);
   try {
@@ -138,7 +138,7 @@ async function archiveTribe(gameState) {
   saveTime = saveTime.replace(/\//g, '-');
   gameState.lastSaved = saveTime;
   archiveName = gameState.name + '-' + saveTime;
-  saveFileName = './' + gameState.name + '/' + archiveName + '.json';
+  saveFileName = './tribe-data/' + gameState.name + '/' + archiveName + '.json';
   actuallyWriteToDisk(saveFileName, gameState);
 }
 module.exports.archiveTribe = archiveTribe;

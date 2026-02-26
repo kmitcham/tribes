@@ -2,7 +2,7 @@
   "name": "tribesbot0.5",
   "version": "0.0.1",
   "description": "A bot to handle the rules for playing Tribes",
-  "main": "tribesBot.js",
+  "main": "websocket-server.js",
   "author": {
     "name": "Kevin Mitcham",
     "email": "kmitcham@gmail.com",

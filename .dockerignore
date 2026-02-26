@@ -41,7 +41,7 @@ tests
 setupTests.js
 
 # Archive and temporary files
-archive
+# archive - commented out as needed by application
 tmp*
 *.tmp
 

@@ -18,7 +18,7 @@ COPY . .
 RUN ls -la /app/ && echo "Checking for websocket-server.js:" && ls -la /app/websocket-server.js
 
 # Create necessary directories for data persistence  
-RUN mkdir -p /app/archive /app/logs /app/bug /app/bear /app/sloth /app/wolf /app/vashon /app/mib /app/flounder
+RUN mkdir -p /app/archive /app/logs /app/tribe-data/bug /app/tribe-data/bear /app/tribe-data/sloth /app/tribe-data/wolf /app/tribe-data/vashon /app/tribe-data/mib /app/tribe-data/flounder
 
 # Expose the port the app runs on
 EXPOSE 8000
@@ -29,7 +29,9 @@ ENV NODE_ENV=production
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD node -e "require('http').get('http://localhost:8000/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })" || exit 1
+CMD node -e "require('http').get('http://localhost:8000/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })" || exit 1
+
+RUN ls -la /app/ && echo "Checking for websocket-server.js:" && ls -la /app/websocket-server.js
 
 # Create a non-root user for security
 RUN addgroup -g 1001 -S tribesuser && \
