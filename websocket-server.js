@@ -480,7 +480,7 @@ function startServer() {
 async function handleWebSocketMessage(ws, data) {
   let tribe = data.tribe || 'bug';
   let gameState = await getGameState(tribe);
-
+  logWithTimestamp('got gamestate for', tribe);
   // Track this client's tribe connection
   if (!tribeConnections.has(tribe)) {
     tribeConnections.set(tribe, new Set());
@@ -496,6 +496,8 @@ async function handleWebSocketMessage(ws, data) {
     connectedClients.get(data.playerName).add(ws);
     ws.currentPlayer = data.playerName; // Store player name on websocket for cleanup
   }
+  logWithTimestamp('added a client record  for', data.playerName);
+  logWithTimestamp('data type', data.type);
 
   switch (data.type) {
     case 'authenticateSession':
@@ -531,6 +533,8 @@ async function handleWebSocketMessage(ws, data) {
       break;
 
     default:
+      logWithTimestamp('default case ', data.playerName);
+
       ws.send(
         JSON.stringify({
           type: 'error',
@@ -570,6 +574,8 @@ function handleSessionAuthentication(ws, data) {
       message: 'Session token required',
       clientId: data.clientId
     }));
+    logWithTimestamp('sent sessionAuthResponse', data.clientId);
+
     return;
   }
   

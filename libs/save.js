@@ -70,7 +70,17 @@ function loadTribe(tribeName) {
       console.log('the json file load of ' + fileName + ' failed ' + err);
     }
   } else {
-    console.log('No file found for ' + fileName);
+    console.log('No file found for ' + fileName + ', initializing new tribe: ' + tribeName);
+    
+    // Ensure tribe directory exists
+    const tribeDir = './tribe-data/' + tribeName;
+    if (!fs.existsSync(tribeDir)) {
+      fs.mkdirSync(tribeDir, { recursive: true });
+      console.log('Created directory: ' + tribeDir);
+    }
+    
+    // Initialize new tribe using existing initGame function  
+    return initGame(tribeName);
   }
   return null;
 }
