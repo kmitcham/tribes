@@ -18,7 +18,7 @@ docker run -d \
   -v $(pwd)/tribe-data/mib:/app/tribe-data/mib \
   -v $(pwd)/tribe-data/sloth:/app/tribe-data/sloth \
   -v $(pwd)/tribe-data/wolf:/app/tribe-data/wolf \
-  -v $(pwd)/users.json:/app/users.json \
+  -v $(pwd)/tribe-data/users.json:/app/tribe-data/users.json \
   -v $(pwd)/archive:/app/archive \
   -v $(pwd)/logs:/app/logs \
   --restart unless-stopped \

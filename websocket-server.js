@@ -16,7 +16,29 @@ const referees = require('./libs/referees.json');
 // Timestamped logging function
 function logWithTimestamp(message, ...args) {
   const timestamp = new Date().toLocaleString();
+  const logMessage = `[${timestamp}] ${message} ${args.join(' ')}`;
+  
+  // Log to console
   console.log(`[${timestamp}]`, message, ...args);
+  
+  // Log to file
+  try {
+    // Ensure logs directory exists
+    const logsDir = path.join(__dirname, 'logs');
+    if (!fs.existsSync(logsDir)) {
+      fs.mkdirSync(logsDir, { recursive: true });
+    }
+    
+    // Create daily log file name
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+    const logFile = path.join(logsDir, `tribes-${today}.log`);
+    
+    // Append to log file
+    fs.appendFileSync(logFile, logMessage + '\n');
+  } catch (error) {
+    // If logging to file fails, at least log the error to console
+    console.error('[LOG ERROR] Failed to write to log file:', error.message);
+  }
 }
 
 let wss;
@@ -38,7 +60,13 @@ const SESSION_CLEANUP_INTERVAL = 5 * 60 * 1000; // Clean up every 5 minutes
 
 // Load users data
 try {
-  usersDict = loadJson('./users.json');
+  // Ensure tribe-data directory exists
+  if (!fs.existsSync('./tribe-data')) {
+    fs.mkdirSync('./tribe-data', { recursive: true });
+    logWithTimestamp('Created tribe-data directory');
+  }
+  
+  usersDict = loadJson('./tribe-data/users.json');
 } catch (error) {
   logWithTimestamp('No existing users.json, starting fresh');
   usersDict = {};
@@ -1269,7 +1297,12 @@ async function registerUser(userData) {
       registeredAt: new Date().toISOString()
     };
 
-    actuallyWriteToDisk('users.json', usersDict);
+    // Ensure tribe-data directory exists before saving
+    if (!fs.existsSync('./tribe-data')) {
+      fs.mkdirSync('./tribe-data', { recursive: true });
+    }
+
+    actuallyWriteToDisk('./tribe-data/users.json', usersDict);
     logWithTimestamp(`[SECURITY] New user registered: ${name}`);
     
     const token = createSession(name, clientIP);
