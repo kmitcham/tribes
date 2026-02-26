@@ -1447,6 +1447,10 @@
             }
 
             send(data) {
+                if (!this.ws){
+                    this.addMessage('WebSocket not initialized', 'error');
+                    this.connect()
+                }
                 if (this.ws && this.ws.readyState === WebSocket.OPEN) {
                     data.clientId = this.clientId;
                     data.tribe = document.getElementById('tribeSelect').value;
