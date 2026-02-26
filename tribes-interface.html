@@ -1261,12 +1261,14 @@
                             logWithTimestamp('Server-configured WebSocket failed, falling back to auto-detection');
                             this.connectWithFallback();
                         });
+                        logWithTimestamp('WebSocket connection established');
                         return;
                     }
                     
                     this.connectWithFallback();
                 } catch (error) {
                     console.error('Error connecting:', error);
+                    logWithTimestamp('WebSocket connection failed with error');
                     this.updateConnectionStatus('disconnected');
                     this.scheduleReconnect();
                 }
@@ -1335,8 +1337,6 @@
                             this.reconnectAttempts = 0;
                             this.requestCommandList();
                             this.requestSettings();
-                            // Auto-refresh game data on connection
-                            this.refreshGameData();
                         };
                         
                         this.ws.onmessage = (event) => {
@@ -1423,6 +1423,7 @@
             }
 
             scheduleReconnect() {
+                logWithTimestamp('Scheduled reconnect');
                 if (this.reconnectAttempts < this.maxReconnectAttempts) {
                     this.reconnectAttempts++;
                     setTimeout(() => this.connect(), this.reconnectInterval);
@@ -1448,8 +1449,12 @@
 
             send(data) {
                 if (!this.ws){
-                    this.addMessage('WebSocket not initialized', 'error');
-                    this.connect()
+                    this.addMessage('WebSocket not initialized; attempting to connect', 'error');
+                    this.connectWithFallback()
+                }
+                if (this.ws && !this.ws.readyState === WebSocket.OPEN) {
+                    this.addMessage('WebSocket not open; attempting to reconnect', 'error');
+                    this.connectWithFallback();
                 }
                 if (this.ws && this.ws.readyState === WebSocket.OPEN) {
                     data.clientId = this.clientId;
