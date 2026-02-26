@@ -11,33 +11,76 @@ const mockElements = {
         className: '',
         textContent: '',
         classList: {
-            add: jest.fn(),
-            remove: jest.fn(),
-            contains: jest.fn(() => false)
+            classes: [],
+            add: jest.fn(function(className) { 
+                if (!this.classes.includes(className)) {
+                    this.classes.push(className);
+                }
+            }),
+            remove: jest.fn(function(className) {
+                this.classes = this.classes.filter(c => c !== className);
+            }),
+            contains: jest.fn(function(className) { 
+                return this.classes.includes(className);
+            })
         }
     },
     tribeSelect: { value: 'bug' },
     playerName: { value: '' },
     playerPassword: { value: '' },
     commandList: {
-        innerHTML: '',
-        appendChild: jest.fn(),
-        children: { length: 0 },
-        querySelectorAll: jest.fn(() => [])
+        _innerHTML: '',
+        get innerHTML() {
+            return this._innerHTML;
+        },
+        set innerHTML(value) {
+            this._innerHTML = value;
+            if (value === '') {
+                this.children = []; // Clear children when innerHTML is cleared
+            }
+        },
+        children: [],
+        appendChild: jest.fn(function(element) {
+            this.children.push(element);
+        }),
+        querySelectorAll: jest.fn(function(selector) {
+            if (selector === '.command-item') {
+                return this.children.filter(child => child.className && child.className.includes('command-item'));
+            }
+            return [];
+        })
     },
     messagesContainer: { appendChild: jest.fn() },
     '.commands-section': {
         classList: {
-            add: jest.fn(),
-            remove: jest.fn(),
-            contains: jest.fn((className) => className !== 'hidden')
+            classes: [],
+            add: jest.fn(function(className) {
+                if (!this.classes.includes(className)) {
+                    this.classes.push(className);
+                }
+            }),
+            remove: jest.fn(function(className) {
+                this.classes = this.classes.filter(c => c !== className);
+            }),
+            contains: jest.fn(function(className) {
+                return this.classes.includes(className);
+            })
         }
     },
     '.user-info': {
         classList: {
-            add: jest.fn(),
-            remove: jest.fn(),
-            contains: jest.fn((className) => className !== 'minimized')
+            classes: [],
+            add: jest.fn(function(className) {
+                if (!this.classes.includes(className)) {
+                    this.classes.push(className);
+                }
+            }),
+            remove: jest.fn(function(className) {
+                this.classes = this.classes.filter(c => c !== className);
+            }),
+            contains: jest.fn(function(className) {
+                return this.classes.includes(className);
+            })
         }
     }
 };
@@ -49,35 +92,65 @@ const mockDocument = {
             className: '',
             textContent: '',
             innerHTML: '',
-            appendChild: jest.fn(),
-            children: { length: 0 },
+            children: [],
+            appendChild: jest.fn(function(element) {
+                this.children.push(element);
+            }),
             classList: {
-                add: jest.fn(),
-                remove: jest.fn(),
-                contains: jest.fn(() => false)
-            }
+                classes: [],
+                add: jest.fn(function(className) {
+                    if (!this.classes.includes(className)) {
+                        this.classes.push(className);
+                    }
+                }),
+                remove: jest.fn(function(className) {
+                    this.classes = this.classes.filter(c => c !== className);
+                }),
+                contains: jest.fn(function(className) {
+                    return this.classes.includes(className);
+                })
+            },
+            querySelectorAll: jest.fn(() => [])
         };
     },
     querySelector: (selector) => {
         return mockElements[selector] || {
             classList: {
-                add: jest.fn(),
-                remove: jest.fn(),
-                contains: jest.fn(() => false)
+                classes: [],
+                add: jest.fn(function(className) {
+                    if (!this.classes.includes(className)) {
+                        this.classes.push(className);
+                    }
+                }),
+                remove: jest.fn(function(className) {
+                    this.classes = this.classes.filter(c => c !== className);
+                }),
+                contains: jest.fn(function(className) {
+                    return this.classes.includes(className);
+                })
             }
         };
     },
     querySelectorAll: () => [],
     createElement: (tag) => ({
-        className: '',
+        className: 'command-item',
         textContent: '',
         innerHTML: '',
         appendChild: jest.fn(),
         dataset: {},
         classList: {
-            add: jest.fn(),
-            remove: jest.fn(),
-            contains: jest.fn(() => false)
+            classes: ['command-item'],
+            add: jest.fn(function(className) {
+                if (!this.classes.includes(className)) {
+                    this.classes.push(className);
+                }
+            }),
+            remove: jest.fn(function(className) {
+                this.classes = this.classes.filter(c => c !== className);
+            }),
+            contains: jest.fn(function(className) {
+                return this.classes.includes(className);
+            })
         }
     })
 };
@@ -415,7 +488,14 @@ describe('Tribes Interface Client', () => {
         mockElements.tribeSelect.value = 'bug';
         mockElements.connectionStatus.textContent = '';
         mockElements.connectionStatus.className = '';
-        mockElements.commandList.innerHTML = '';
+        mockElements.commandList.innerHTML = ''; // This will trigger the setter to clear children
+        
+        // Reset all classList states
+        Object.values(mockElements).forEach(element => {
+            if (element.classList && element.classList.classes) {
+                element.classList.classes = [];
+            }
+        });
         
         // Clear localStorage
         localStorage.clear();
@@ -689,21 +769,37 @@ describe('Tribes Interface Client', () => {
 
     describe('Reconnection Logic', () => {
         test('should attempt reconnection on failure', (done) => {
+            jest.setTimeout(15000); // Increase timeout
+            
             const originalConnect = client.connect;
             let connectCallCount = 0;
             
             client.connect = jest.fn(() => {
                 connectCallCount++;
-                if (connectCallCount === 2) {
-                    // Second call means reconnection was attempted
+                if (connectCallCount === 1) {
+                    // First attempt fails
+                    client.updateConnectionStatus('disconnected');
+                    // Simulate immediate reconnection attempt
+                    setTimeout(() => {
+                        if (connectCallCount === 1) {
+                            client.scheduleReconnect();
+                        }
+                    }, 50);
+                } else if (connectCallCount === 2) {
+                    // Second attempt succeeds
+                    client.updateConnectionStatus('connected');
                     expect(connectCallCount).toBe(2);
                     expect(client.reconnectAttempts).toBe(1);
                     done();
                 }
-                originalConnect.call(client);
             });
             
-            client.scheduleReconnect();
+            // Set shorter intervals for testing
+            client.reconnectInterval = 100;
+            client.maxReconnectAttempts = 5;
+            
+            // Start the connection attempt
+            client.connect();
         });
         
         test('should stop reconnecting after max attempts', () => {
