@@ -1280,7 +1280,6 @@
                     this.updateConnectionStatus('connected');
                     this.reconnectAttempts = 0;
                     this.requestCommandList();
-                    this.requestSettings();
                 };
                 
                 this.ws.onmessage = (event) => {
@@ -1336,7 +1335,6 @@
                             this.updateConnectionStatus('connected');
                             this.reconnectAttempts = 0;
                             this.requestCommandList();
-                            this.requestSettings();
                         };
                         
                         this.ws.onmessage = (event) => {
@@ -1491,11 +1489,7 @@
                         this.handleCommandResponse(data);
                         break;
                     case 'infoRequest':
-                        if (data.label === 'settings') {
-                            this.handleSettingsResponse(data);
-                        } else {
-                            this.handleInfoResponse(data);
-                        }
+                        this.handleInfoResponse(data);
                         break;
                     case 'tribeMessage':
                         this.addMessage(data.message, 'tribe', '[EVERYONE]');
@@ -3151,10 +3145,33 @@
             storeMessage(messageData) {
                 try {
                     const key = this.getMessageHistoryKey();
-                    let messages = JSON.parse(this.getCookie(key) || '[]');
+                    let messages = [];
+                    
+                    // Try to parse existing messages, fallback to empty array if corrupted
+                    try {
+                        const existingData = this.getCookie(key);
+                        if (existingData) {
+                            messages = JSON.parse(existingData);
+                            // Validate that it's an array
+                            if (!Array.isArray(messages)) {
+                                messages = [];
+                            }
+                        }
+                    } catch (parseError) {
+                        console.warn('Existing message history corrupted, starting fresh:', parseError.message);
+                        messages = [];
+                    }
+                    
+                    // Sanitize message data to prevent JSON corruption
+                    const sanitizedMessage = {
+                        text: String(messageData.text || '').replace(/[\u0000-\u001f\u007f]/g, ''), // Remove control characters
+                        type: String(messageData.type || 'info'),
+                        typeLabel: messageData.typeLabel ? String(messageData.typeLabel) : null,
+                        timestamp: Number(messageData.timestamp) || Date.now()
+                    };
                     
                     // Add new message
-                    messages.push(messageData);
+                    messages.push(sanitizedMessage);
                     
                     // Keep only last 30 messages to prevent cookie size issues
                     if (messages.length > 30) {
@@ -3165,6 +3182,13 @@
                     this.setCookie(key, JSON.stringify(messages), 7);
                 } catch (error) {
                     console.warn('Failed to store message history:', error);
+                    // Clear corrupted cookie data to prevent future errors
+                    try {
+                        const key = this.getMessageHistoryKey();
+                        this.setCookie(key, '[]', 7);
+                    } catch (clearError) {
+                        console.warn('Failed to clear corrupted message history:', clearError);
+                    }
                 }
             }
 
@@ -3177,13 +3201,31 @@
                         return;
                     }
                     
-                    const messages = JSON.parse(messagesJson);
+                    let messages;
+                    try {
+                        messages = JSON.parse(messagesJson);
+                        // Validate that it's an array
+                        if (!Array.isArray(messages)) {
+                            console.warn('Invalid message history format, ignoring');
+                            return;
+                        }
+                    } catch (parseError) {
+                        console.warn('Corrupted message history found, clearing it:', parseError.message);
+                        // Clear corrupted data
+                        this.setCookie(key, '[]', 7);
+                        return;
+                    }
+                    
                     const currentTime = Date.now();
                     const maxAge = 24 * 60 * 60 * 1000; // 24 hours
                     
-                    // Filter out messages older than 24 hours
+                    // Filter out messages older than 24 hours and validate message structure
                     const recentMessages = messages.filter(msg => 
-                        currentTime - msg.timestamp < maxAge
+                        msg && 
+                        typeof msg.timestamp === 'number' && 
+                        currentTime - msg.timestamp < maxAge &&
+                        typeof msg.text === 'string' &&
+                        msg.text.trim().length > 0
                     );
                     
                     if (recentMessages.length > 0) {
@@ -3236,18 +3278,6 @@
                     type: 'helpRequest',
                     helpType: helpType
                 });
-            }
-
-            requestSettings() {
-                this.send({
-                    type: 'infoRequest',
-                    selection: 'settings'
-                });
-            }
-
-            handleSettingsResponse(data) {
-                // Settings response handler - autorefresh functionality removed
-                // Settings can be extended here for other configuration options
             }
 
             handleHelpContent(data) {

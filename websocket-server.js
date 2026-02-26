@@ -691,7 +691,7 @@ function handleInfoRequest(ws, data, gameState) {
       messageData = {
         type: 'infoRequest',
         label: 'children',
-        content: gameState.children,
+        content: removeFatherReferences(gameState.children),
       };
       break;
 
@@ -834,7 +834,7 @@ async function refreshTribeGameData(gameState, tribeName) {
   const childrenData = {
     type: 'infoRequest',
     label: 'children',
-    content: gameState.children,
+    content: removeFatherReferences(gameState.children),
   };
 
   const statusData = {
@@ -1355,6 +1355,25 @@ function removeClunkyKeys(population) {
     cleanedPop[name] = cleaned;
   }
   return cleanedPop;
+}
+
+function removeFatherReferences(children) {
+  const cleanedChildren = {};
+  const excludeKeys = [
+    'father',
+    'fatherName',
+  ];
+
+  for (const [name, childData] of Object.entries(children || {})) {
+    const cleaned = {};
+    for (const [key, value] of Object.entries(childData)) {
+      if (excludeKeys.indexOf(key) === -1) {
+        cleaned[key] = value;
+      }
+    }
+    cleanedChildren[name] = cleaned;
+  }
+  return cleanedChildren;
 }
 
 function arrayMatch(array1, array2) {
