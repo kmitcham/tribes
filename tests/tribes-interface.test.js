@@ -240,7 +240,6 @@ class TribesClient {
         this.refreshTimer = null;
         this.currentVersion = document.querySelector('meta[name="interface-version"]')?.content || 'unknown';
         this.lastRefreshTime = 0;
-        this.autoRefresh = true;
         this.isLoggedIn = false;
         this.currentSessionToken = null;
         this.currentPlayerName = null;

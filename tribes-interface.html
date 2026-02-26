@@ -1079,17 +1079,11 @@
                 this.reconnectAttempts = 0;
                 this.maxReconnectAttempts = 5;
                 this.reconnectInterval = 2000;
-                this.refreshTimer = null; // Timer for automatic refresh every 30 seconds
-                this.versionCheckTimer = null; // Timer for version checking
-                this.currentVersion = document.querySelector('meta[name="interface-version"]')?.content || 'unknown';
-                this.lastRefreshTime = 0; // Track when last refresh occurred
-                this.autoRefresh = true; // Default to true, will be overridden by server
                 this.isLoggedIn = false; // Track login state
                 
                 this.loadSavedSettings();
                 this.initializeEventListeners();
                 this.hideCommandsSection(); // Initially hide commands until login
-                this.startVersionChecking();
                 this.connect();
             }
 
@@ -1285,8 +1279,6 @@
                     this.reconnectAttempts = 0;
                     this.requestCommandList();
                     this.requestSettings();
-                    // Auto-refresh game data on connection
-                    this.refreshGameData();
                 };
                 
                 this.ws.onmessage = (event) => {
@@ -1300,10 +1292,6 @@
                 this.ws.onclose = () => {
                     logWithTimestamp('WebSocket closed');
                     this.updateConnectionStatus('disconnected');
-                    if (this.refreshTimer) {
-                        clearTimeout(this.refreshTimer);
-                        this.refreshTimer = null;
-                    }
                     if (onCloseCallback) onCloseCallback();
                 };
             }
@@ -1362,10 +1350,6 @@
                         this.ws.onclose = () => {
                             logWithTimestamp('WebSocket closed');
                             this.updateConnectionStatus('disconnected');
-                            if (this.refreshTimer) {
-                                clearTimeout(this.refreshTimer);
-                                this.refreshTimer = null;
-                            }
                             if (successCallback) successCallback();
                         };
                     };
@@ -1532,7 +1516,6 @@
                     this.minimizeLoginArea();
                     this.addMessage(`Welcome back, ${data.playerName}!`, 'success');
                     this.requestCommandList();
-                    this.refreshGameData();
                 } else {
                     // Session invalid, clear it and show login
                     this.clearSession();
@@ -1566,38 +1549,23 @@
             }
 
             handleInfoResponse(data) {
-                // Check if this is an automatic refresh from the server
-                const isAutoRefresh = data.autoRefresh === true;
-                
                 switch (data.label) {
                     case 'population':
                         this.currentPopulation = data.content;
                         this.updatePopulationTable(data.content);
                         // Update command list when population data changes (for chief status)
                         this.updateCommandList();
-                        if (isAutoRefresh) {
-                            this.showAutoRefreshIndicator('Population updated');
-                        }
                         break;
                     case 'children':
                         this.currentChildren = data.content; // Store for targeting dropdowns
                         this.updateChildrenTable(data.content);
-                        if (isAutoRefresh) {
-                            this.showAutoRefreshIndicator('Children data updated');
-                        }
                         break;
                     case 'status':
                         this.updateStatusText(data.content);
-                        if (isAutoRefresh) {
-                            this.showAutoRefreshIndicator('Game status updated');
-                        }
                         break;
                     case 'romance':
                         this.currentRomanceLists = data.content;
                         this.displayCurrentRomanceLists(data.content);
-                        if (isAutoRefresh) {
-                            this.showAutoRefreshIndicator('Romance lists updated');
-                        }
                         break;
                     case 'error':
                         this.addMessage(data.content, 'error');
@@ -1658,7 +1626,6 @@
                     
                     this.isLoggedIn = true; // Set logged in state
                     this.showCommandsSection(); // Show commands after successful login
-                    this.refreshGameData();
                     this.requestCommandList(); // Refresh command list in case chief status changed
                     this.minimizeLoginArea(); // Minimize login area after successful registration
                 }
@@ -3166,49 +3133,6 @@
                 }
             }
 
-            showAutoRefreshIndicator(text) {
-                // Create a subtle visual indicator for automatic refreshes
-                const indicator = document.createElement('div');
-                indicator.className = 'auto-refresh-indicator';
-                indicator.textContent = `🔄 ${text}`;
-                indicator.style.cssText = `
-                    position: fixed;
-                    top: 80px;
-                    right: 20px;
-                    background: rgba(40, 167, 69, 0.9);
-                    color: white;
-                    padding: 8px 12px;
-                    border-radius: 4px;
-                    font-size: 0.9rem;
-                    z-index: 1001;
-                    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-                    animation: fadeInOut 2s ease-in-out;
-                `;
-                
-                // Add CSS animation if not already exists
-                if (!document.getElementById('autoRefreshStyle')) {
-                    const style = document.createElement('style');
-                    style.id = 'autoRefreshStyle';
-                    style.textContent = `
-                        @keyframes fadeInOut {
-                            0% { opacity: 0; transform: translateY(-10px); }
-                            20%, 80% { opacity: 1; transform: translateY(0); }
-                            100% { opacity: 0; transform: translateY(-10px); }
-                        }
-                    `;
-                    document.head.appendChild(style);
-                }
-                
-                document.body.appendChild(indicator);
-                
-                // Remove after animation completes
-                setTimeout(() => {
-                    if (indicator.parentNode) {
-                        indicator.parentNode.removeChild(indicator);
-                    }
-                }, 2000);
-            }
-
             getMessageHistoryKey() {
                 const tribe = document.getElementById('tribeSelect').value || 'default';
                 const player = document.getElementById('playerName').value || 'anonymous';
@@ -3313,19 +3237,14 @@
             }
 
             handleSettingsResponse(data) {
-                if (data.content && typeof data.content.autoRefresh !== 'undefined') {
-                    this.autoRefresh = data.content.autoRefresh;
-                    console.log(`Auto-refresh ${this.autoRefresh ? 'enabled' : 'disabled'} by server`);
-                    
-                    // Set up or clear the timer based on the setting
-                    if (this.autoRefresh) {
-                        this.setupAutoRefreshTimer();
-                    } else {
-                        if (this.refreshTimer) {
-                            clearTimeout(this.refreshTimer);
-                            this.refreshTimer = null;
-                        }
-                    }
+                // Settings response handler - autorefresh functionality removed
+                // Settings can be extended here for other configuration options
+            }
+
+            handleHelpContent(data) {
+                const helpContent = document.getElementById('helpContent');
+                if (helpContent) {
+                    helpContent.textContent = data.content;
                 }
             }
 
@@ -3336,59 +3255,11 @@
                 }
             }
 
-            requestSettings() {
-                this.send({
-                    type: 'infoRequest',
-                    selection: 'settings'
-                });
-            }
-
-            handleSettingsResponse(data) {
-                if (data.content && typeof data.content.autoRefresh !== 'undefined') {
-                    this.autoRefresh = data.content.autoRefresh;
-                    console.log(`Auto-refresh ${this.autoRefresh ? 'enabled' : 'disabled'} by server`);
-                    
-                    // Set up or clear the timer based on the setting
-                    if (this.autoRefresh) {
-                        this.setupAutoRefreshTimer();
-                    } else {
-                        if (this.refreshTimer) {
-                            clearTimeout(this.refreshTimer);
-                            this.refreshTimer = null;
-                        }
-                    }
-                }
-            }
-
             refreshGameData() {
                 this.currentPopulation = null; // Clear cached population when refreshing
                 this.send({ type: 'infoRequest', selection: 'population' });
                 this.send({ type: 'infoRequest', selection: 'children' });
                 this.send({ type: 'infoRequest', selection: 'status' });
-                this.lastRefreshTime = Date.now();
-                this.resetAutoRefreshTimer();
-            }
-
-            setupAutoRefreshTimer() {
-                // Only set up timer if autoRefresh is enabled
-                if (this.autoRefresh) {
-                    this.resetAutoRefreshTimer();
-                }
-            }
-
-            resetAutoRefreshTimer() {
-                if (this.refreshTimer) {
-                    clearTimeout(this.refreshTimer);
-                }
-                
-                // Only set up timer if autoRefresh is enabled
-                if (this.autoRefresh) {
-                    this.refreshTimer = setTimeout(() => {
-                        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-                            this.refreshGameData();
-                        }
-                    }, 30000); // 30 seconds
-                }
             }
 
             registerPlayer() {
@@ -3664,99 +3535,6 @@
                         document.getElementById(`${targetTab}Tab`).classList.add('active');
                     };
                 });
-            }
-
-            // Version checking methods for auto-refresh
-            startVersionChecking() {
-                // Check for interface updates every 30 seconds
-                this.versionCheckTimer = setInterval(() => {
-                    this.checkInterfaceVersion();
-                }, 30000); // 30 seconds
-            }
-
-            stopVersionChecking() {
-                if (this.versionCheckTimer) {
-                    clearInterval(this.versionCheckTimer);
-                    this.versionCheckTimer = null;
-                }
-            }
-
-            async checkInterfaceVersion() {
-                try {
-                    // Make a request to check if the interface file has changed
-                    const response = await fetch(window.location.href, {
-                        method: 'HEAD',
-                        cache: 'no-cache',
-                        headers: {
-                            'Cache-Control': 'no-cache'
-                        }
-                    });
-
-                    if (response.ok) {
-                        // Check last-modified header or ETag for changes
-                        const lastModified = response.headers.get('Last-Modified');
-                        const etag = response.headers.get('ETag');
-                        
-                        // Store version info based on what's available
-                        const serverVersion = etag || lastModified || 'unknown';
-                        
-                        if (this.currentVersion !== 'unknown' && 
-                            serverVersion !== 'unknown' && 
-                            serverVersion !== this.currentVersion) {
-                            this.handleVersionChange();
-                        }
-                    }
-                } catch (error) {
-                    console.log('Version check failed:', error);
-                    // Continue silently - don't disrupt user experience
-                }
-            }
-
-            handleVersionChange() {
-                // Show a non-intrusive notification about the update
-                const notification = document.createElement('div');
-                notification.style.cssText = `
-                    position: fixed;
-                    top: 20px;
-                    right: 20px;
-                    background: #4CAF50;
-                    color: white;
-                    padding: 15px 20px;
-                    border-radius: 5px;
-                    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-                    z-index: 10000;
-                    font-family: Arial, sans-serif;
-                    font-size: 14px;
-                    cursor: pointer;
-                    transition: opacity 0.3s;
-                `;
-                notification.innerHTML = `
-                    Interface updated! Click to reload.
-                    <div style="font-size: 12px; opacity: 0.8; margin-top: 5px;">
-                        New features may be available
-                    </div>
-                `;
-
-                // Auto-refresh when clicked
-                notification.onclick = () => {
-                    window.location.reload();
-                };
-
-                // Add to page
-                document.body.appendChild(notification);
-
-                // Auto-remove after 10 seconds if not clicked
-                setTimeout(() => {
-                    if (notification.parentNode) {
-                        notification.style.opacity = '0';
-                        setTimeout(() => {
-                            notification.remove();
-                        }, 300);
-                    }
-                }, 10000);
-
-                // Stop checking once we've notified the user
-                this.stopVersionChecking();
             }
         }
 

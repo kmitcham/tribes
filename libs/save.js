@@ -27,7 +27,6 @@ function initGame(gameName) {
   gameState.population = {};
   gameState.graveyard = {};
   gameState.children = {};
-  gameState.autoRefresh = true; // Default to auto-refresh enabled
   messages = {};
   for (locationName in locations) {
     gameState.gameTrack[locationName] = 1;

@@ -583,11 +583,6 @@ async function getGameState(tribeName) {
     gameState = savelib.initGame(tribeName);
   }
 
-  // Ensure autoRefresh flag exists (for backward compatibility)
-  if (typeof gameState.autoRefresh === 'undefined') {
-    gameState.autoRefresh = true;
-  }
-
   allGames[tribeName] = gameState;
   return gameState;
 }
@@ -706,16 +701,6 @@ function handleInfoRequest(ws, data, gameState) {
         type: 'infoRequest',
         label: 'status',
         content: statusMessage,
-      };
-      break;
-
-    case 'settings':
-      messageData = {
-        type: 'infoRequest',
-        label: 'settings',
-        content: {
-          autoRefresh: gameState.autoRefresh || true,
-        },
       };
       break;
 
@@ -844,21 +829,18 @@ async function refreshTribeGameData(gameState, tribeName) {
     type: 'infoRequest',
     label: 'population',
     content: removeClunkyKeys(gameState.population),
-    autoRefresh: true, // Flag to indicate this is an automatic refresh
   };
 
   const childrenData = {
     type: 'infoRequest',
     label: 'children',
     content: gameState.children,
-    autoRefresh: true,
   };
 
   const statusData = {
     type: 'infoRequest',
     label: 'status',
     content: util.gameStateMessage(gameState),
-    autoRefresh: true,
   };
 
   // Send to all tribe members
