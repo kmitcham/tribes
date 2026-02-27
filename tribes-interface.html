@@ -1252,16 +1252,30 @@
                         logWithTimestamp('Using server-provided WebSocket configuration:', serverConfig);
                         const wsProtocol = serverConfig.protocol === 'https' ? 'wss' : 'ws';
                         const wsHost = serverConfig.host.split(':')[0]; // Remove port from host if present
-                        const wsPort = serverConfig.port !== '80' && serverConfig.port !== '443' ? `:${serverConfig.port}` : '';
+                        
+                        // For cloud deployments with HTTPS, don't include custom ports as they're typically proxied
+                        let wsPort = '';
+                        if (serverConfig.protocol === 'http' && serverConfig.port !== '80') {
+                            wsPort = `:${serverConfig.port}`;
+                        } else if (serverConfig.protocol === 'https' && serverConfig.port !== '443') {
+                            // For HTTPS cloud deployments, only include port if it's not the default
+                            // Most cloud platforms proxy to standard ports
+                            const isCloudHost = !wsHost.includes('localhost') && !wsHost.includes('127.0.0.1') && 
+                                              !wsHost.startsWith('192.168.') && !wsHost.startsWith('10.') && 
+                                              !wsHost.startsWith('172.');
+                            if (!isCloudHost) {
+                                wsPort = `:${serverConfig.port}`;
+                            }
+                        }
+                        
                         const wsUrl = `${wsProtocol}://${wsHost}${wsPort}`;
                         
-                        logWithTimestamp(`Connecting to server-configured WebSocket: ${wsUrl}`);
+                        logWithTimestamp(`Attempting WebSocket connection: ${wsUrl}`);
                         this.ws = new WebSocket(wsUrl);
                         this.setupWebSocketHandlers(() => {
                             logWithTimestamp('Server-configured WebSocket failed, falling back to auto-detection');
                             this.connectWithFallback();
                         });
-                        logWithTimestamp('WebSocket connection established');
                         return;
                     }
                     
