@@ -701,6 +701,15 @@ function handleInfoRequest(ws, data, gameState) {
         type: 'infoRequest',
         label: 'status',
         content: statusMessage,
+        gameState: {
+          round: gameState.round || 'work',
+          workRound: gameState.workRound,
+          foodRound: gameState.foodRound, 
+          reproductionRound: gameState.reproductionRound,
+          seasonCounter: gameState.seasonCounter,
+          currentLocationName: gameState.currentLocationName,
+          year: Math.floor(gameState.seasonCounter / 2)
+        }
       };
       break;
 
@@ -794,6 +803,12 @@ async function handleCommandRequest(ws, data, gameState) {
 
       // Refresh game data for all tribe members after state changes
       await refreshTribeGameData(gameState, data.tribe || 'bug');
+      
+      // Check if commands need refreshing (e.g., after chief change)
+      if (gameState.commandsNeedRefresh) {
+        await refreshTribeCommandLists(gameState, data.tribe || 'bug');
+        delete gameState.commandsNeedRefresh;
+      }
     }
 
     if (gameState.archiveRequired) {
@@ -811,6 +826,35 @@ async function handleCommandRequest(ws, data, gameState) {
         clientId: data.clientId,
       })
     );
+  }
+}
+
+async function refreshTribeCommandLists(gameState, tribeName) {
+  const tribeMembers = tribeConnections.get(tribeName);
+  if (!tribeMembers || tribeMembers.size === 0) {
+    return; // No one online to refresh
+  }
+
+  logWithTimestamp(
+    `Refreshing command lists for ${tribeMembers.size} members of ${tribeName} tribe`
+  );
+
+  // Send updated command lists to all tribe members
+  for (const memberWs of tribeMembers) {
+    if (memberWs.readyState === WebSocket.OPEN && memberWs.currentPlayer) {
+      try {
+        // Create a mock data object for handleListCommands
+        const mockData = {
+          playerName: memberWs.currentPlayer,
+          clientId: memberWs.clientId || 'refresh'
+        };
+        
+        // Call handleListCommands to generate and send the updated command list
+        handleListCommands(memberWs, mockData, gameState);
+      } catch (error) {
+        console.error(`Error refreshing commands for ${memberWs.currentPlayer}:`, error);
+      }
+    }
   }
 }
 
@@ -841,6 +885,15 @@ async function refreshTribeGameData(gameState, tribeName) {
     type: 'infoRequest',
     label: 'status',
     content: util.gameStateMessage(gameState),
+    gameState: {
+      round: gameState.round || 'work',
+      workRound: gameState.workRound,
+      foodRound: gameState.foodRound,
+      reproductionRound: gameState.reproductionRound, 
+      seasonCounter: gameState.seasonCounter,
+      currentLocationName: gameState.currentLocationName,
+      year: Math.floor(gameState.seasonCounter / 2)
+    }
   };
 
   // Send to all tribe members
@@ -1053,6 +1106,8 @@ function handleListCommands(ws, data, gameState) {
     JSON.stringify({
       type: 'commandList',
       commands: commandList,
+      isReferee: isRef,
+      isChief: isChief,
       clientId: data.clientId,
     })
   );

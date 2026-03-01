@@ -423,6 +423,9 @@ function vote(gameState, actorName, candidateName) {
     text.addMessage(gameState, 'tribe', candidate.name + ' is the new chief');
     var chiefHelp = help.chiefHelp();
     text.addMessage(gameState, candidate.name, chiefHelp);
+    
+    // Flag that command lists need to be refreshed for all tribe members
+    gameState.commandsNeedRefresh = true;
   }
   gameState.saveRequired = true;
 

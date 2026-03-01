@@ -78,7 +78,7 @@ function chiefHelp() {
   text = '\n### Chief Commands ###\n';
   text += ' induct|banish <player> add|remove a tribe member\n';
   text +=
-    ' open|close  toggle if people can join with "!join" or only with "!induct" by the chief\n';
+    ' open|close  toggle if people can join with "join" or only with "induct" by the chief\n';
   //text+=' drone <gender> <profession> <name>  adds a worker to the tribe that takes commands but is sterile. [non-standard]\n'
   text +=
     ' startwork begins the work round, enabling work attempts and rolls\n';

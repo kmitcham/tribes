@@ -1080,6 +1080,8 @@
                 this.maxReconnectAttempts = 5;
                 this.reconnectInterval = 2000;
                 this.isLoggedIn = false; // Track login state
+                this.isReferee = false; // Track referee status
+                this.chiefStatus = false; // Track chief status
                 
                 this.loadSavedSettings();
                 this.initializeEventListeners();
@@ -1497,7 +1499,7 @@
                         break;
                         
                     case 'commandList':
-                        this.handleCommandList(data.commands);
+                        this.handleCommandList(data);
                         break;
                     case 'commandResponse':
                         this.handleCommandResponse(data);
@@ -1553,8 +1555,10 @@
                 this.addMessage(data.message, 'info');
             }
             
-            handleCommandList(commands) {
-                this.commands = commands;
+            handleCommandList(data) {
+                this.commands = data.commands;
+                this.isReferee = data.isReferee || false;
+                this.chiefStatus = data.isChief || false;
                 this.updateCommandList();
                 this.initCommandSearch();
             }
@@ -1579,6 +1583,12 @@
                         break;
                     case 'status':
                         this.updateStatusText(data.content);
+                        // Update status bar with structured data if available
+                        if (data.gameState) {
+                            this.updateGameStatusBarWithData(data.gameState);
+                        } else {
+                            this.updateGameStatusBar(data.content);
+                        }
                         break;
                     case 'romance':
                         this.currentRomanceLists = data.content;
@@ -2236,6 +2246,11 @@
                 }
                 
                 this.selectedCommand.options.forEach(option => {
+                    // Skip force options if player is not a referee
+                    if (option.name === 'force' && !this.isReferee) {
+                        return;
+                    }
+                    
                     const group = document.createElement('div');
                     group.className = 'parameter-group';
                     
@@ -2581,6 +2596,12 @@
             }
 
             isCurrentPlayerChief() {
+                // Use server-provided chief status if available
+                if (typeof this.chiefStatus === 'boolean') {
+                    return this.chiefStatus;
+                }
+                
+                // Fallback: check population data
                 const playerName = document.getElementById('playerName').value;
                 console.log('Checking chief status for player:', playerName);
                 console.log('Current population:', this.currentPopulation);
@@ -3456,6 +3477,81 @@
 
                 // Update the game status bar with parsed information
                 this.updateGameStatusBar(status);
+            }
+
+            updateGameStatusBarWithData(gameState) {
+                const roundStatus = document.getElementById('roundStatus');
+                const seasonStatus = document.getElementById('seasonStatus');
+                const locationStatus = document.getElementById('locationStatus');
+
+                if (!roundStatus || !seasonStatus || !locationStatus) return;
+
+                // Round type detection using structured data
+                let roundIcon = '⚙️';
+                let roundText = 'Work Round';
+                
+                if (gameState.workRound) {
+                    roundIcon = '⚙️';
+                    roundText = 'Work Round';
+                } else if (gameState.foodRound) {
+                    roundIcon = '🍖';
+                    roundText = 'Food Round';
+                } else if (gameState.reproductionRound) {
+                    roundIcon = '💕';
+                    roundText = 'Reproduction Round';
+                } else if (gameState.round) {
+                    // Fallback to round string if boolean flags not set
+                    if (gameState.round.toLowerCase().includes('food')) {
+                        roundIcon = '🍖';
+                        roundText = 'Food Round';
+                    } else if (gameState.round.toLowerCase().includes('repro')) {
+                        roundIcon = '💕';
+                        roundText = 'Reproduction Round';
+                    }
+                }
+
+                // Season detection using structured data  
+                let seasonIcon = '☀️';
+                let seasonText = 'Warm Season';
+                
+                if (gameState.seasonCounter && gameState.seasonCounter % 2 === 0) {
+                    seasonIcon = '❄️';
+                    seasonText = 'Cold Season';
+                }
+
+                // Location detection using structured data
+                let locationIcon = '🌍';
+                let locationText = 'Unknown Location';
+                
+                if (gameState.currentLocationName) {
+                    const location = gameState.currentLocationName.toLowerCase();
+                    if (location === 'veldt') {
+                        locationIcon = '🌾';
+                        locationText = 'Veldt';
+                    } else if (location === 'forest') {
+                        locationIcon = '🌲';
+                        locationText = 'Forest';
+                    } else if (location === 'marsh') {
+                        locationIcon = '🐸';
+                        locationText = 'Marsh';
+                    } else if (location === 'hills') {
+                        locationIcon = '⛰️';
+                        locationText = 'Hills';
+                    } else if (location.includes('mountain')) {
+                        locationIcon = '🏔️';
+                        locationText = 'Mountains';
+                    } else if (location === 'desert') {
+                        locationIcon = '🏜️';
+                        locationText = 'Desert';
+                    } else {
+                        locationText = gameState.currentLocationName;
+                    }
+                }
+
+                // Update the status bar elements
+                roundStatus.innerHTML = `<span class="status-icon">${roundIcon}</span><span>${roundText}</span>`;
+                seasonStatus.innerHTML = `<span class="status-icon">${seasonIcon}</span><span>${seasonText}</span>`;
+                locationStatus.innerHTML = `<span class="status-icon">${locationIcon}</span><span>${locationText}</span>`;
             }
 
             updateGameStatusBar(status) {
