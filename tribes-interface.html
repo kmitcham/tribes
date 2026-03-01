@@ -977,6 +977,21 @@
             <div class="commands-section">
                 <h3>Available Commands</h3>
                 
+                <!-- Referee Admin Section -->
+                <div id="refereeAdminSection" style="display: none; margin-bottom: 1rem; padding: 1rem; border: 2px solid #dc3545; border-radius: 8px; background: #f8f9fa;">
+                    <h4 style="color: #dc3545; margin-bottom: 1rem;">🛡️ Referee Tools</h4>
+                    
+                    <div class="form-group">
+                        <button class="btn btn-small" onclick="tribesClient.exportGame()" style="background: #28a745; margin-bottom: 0.5rem;">
+                            📤 Export Game Data
+                        </button>
+                        <button class="btn btn-small" onclick="document.getElementById('importFileInput').click()" style="background: #ffc107; color: #212529;">
+                            📥 Import Game Data
+                        </button>
+                        <input type="file" id="importFileInput" accept=".json" style="display: none;" onchange="tribesClient.handleImportFile(event)">
+                    </div>
+                </div>
+                
                 <div class="command-search-container">
                     <div class="command-search">
                         <input type="text" id="commandSearchInput" class="command-search-input" placeholder="Type command name..." autocomplete="off">
@@ -1519,6 +1534,12 @@
                     case 'helpContent':
                         this.handleHelpContent(data);
                         break;
+                    case 'exportGameResponse':
+                        this.handleExportGameResponse(data);
+                        break;
+                    case 'importGameResponse':
+                        this.handleImportGameResponse(data);
+                        break;
                     case 'error':
                         this.addMessage(data.message, 'error');
                         break;
@@ -1561,6 +1582,12 @@
                 this.chiefStatus = data.isChief || false;
                 this.updateCommandList();
                 this.initCommandSearch();
+                
+                // Show/hide referee tools based on referee status
+                const refereeSection = document.getElementById('refereeAdminSection');
+                if (refereeSection) {
+                    refereeSection.style.display = this.isReferee ? 'block' : 'none';
+                }
             }
 
             handleCommandResponse(data) {
@@ -3683,6 +3710,132 @@
                         });
                         document.getElementById(`${targetTab}Tab`).classList.add('active');
                     };
+                });
+            }
+
+            // Handle export game response
+            handleExportGameResponse(data) {
+                if (data.success) {
+                    this.addMessage(`Game data exported successfully for tribe: ${data.tribeName}`, 'success');
+                    
+                    // Create and download the file
+                    const blob = new Blob([JSON.stringify(data.exportData, null, 2)], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = data.filename || `${data.tribeName}-export.json`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    
+                    this.addMessage(`File downloaded: ${data.filename}`, 'info');
+                } else {
+                    this.addMessage(`Export failed: ${data.message}`, 'error');
+                }
+            }
+
+            // Handle import game response
+            handleImportGameResponse(data) {
+                if (data.success) {
+                    this.addMessage(`Game data imported successfully for tribe: ${data.tribeName}`, 'success');
+                    if (data.backupFilename) {
+                        this.addMessage(`Backup saved as: ${data.backupFilename}`, 'info');
+                    }
+                    
+                    // Refresh the display after successful import
+                    this.refreshGameData();
+                } else {
+                    this.addMessage(`Import failed: ${data.message}`, 'error');
+                }
+            }
+
+            // Export game data (referee only)
+            exportGame() {
+                if (!this.isReferee) {
+                    this.addMessage('Access denied: Referee privileges required', 'error');
+                    return;
+                }
+                
+                const currentTribe = document.getElementById('tribeSelect').value;
+                if (!currentTribe) {
+                    this.addMessage('Please select a tribe first', 'error');
+                    return;
+                }
+                
+                this.addMessage(`Exporting game data for tribe: ${currentTribe}...`, 'info');
+                
+                this.send({
+                    type: 'exportGame',
+                    tribe: currentTribe,
+                    tribeName: currentTribe,
+                    playerName: this.currentPlayerName,
+                    sessionToken: this.sessionToken,
+                    clientId: Date.now().toString()
+                });
+            }
+            
+            // Handle file selection for import
+            handleImportFile(event) {
+                if (!this.isReferee) {
+                    this.addMessage('Access denied: Referee privileges required', 'error');
+                    return;
+                }
+                
+                const file = event.target.files[0];
+                if (!file) return;
+                
+                if (!file.name.endsWith('.json')) {
+                    this.addMessage('Please select a JSON file', 'error');
+                    return;
+                }
+                
+                this.addMessage(`Reading file: ${file.name}...`, 'info');
+                
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const importData = JSON.parse(e.target.result);
+                        this.importGame(importData);
+                    } catch (error) {
+                        this.addMessage('Invalid JSON file: ' + error.message, 'error');
+                    }
+                };
+                reader.readAsText(file);
+                
+                // Reset file input
+                event.target.value = '';
+            }
+            
+            // Import game data (referee only)
+            importGame(importData) {
+                if (!this.isReferee) {
+                    this.addMessage('Access denied: Referee privileges required', 'error');
+                    return;
+                }
+                
+                const currentTribe = document.getElementById('tribeSelect').value;
+                if (!currentTribe) {
+                    this.addMessage('Please select a tribe first', 'error');
+                    return;
+                }
+                
+                // Confirm import action
+                if (!confirm(`Are you sure you want to import game data for tribe '${currentTribe}'?\n\nThis will replace all current game data. A backup will be created automatically.`)) {
+                    this.addMessage('Import cancelled by user', 'info');
+                    return;
+                }
+                
+                this.addMessage(`Importing game data for tribe: ${currentTribe}...`, 'info');
+                
+                this.send({
+                    type: 'importGame',
+                    tribe: currentTribe,
+                    tribeName: currentTribe,
+                    importData: importData,
+                    playerName: this.currentPlayerName,
+                    sessionToken: this.sessionToken,
+                    clientId: Date.now().toString()
                 });
             }
         }

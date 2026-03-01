@@ -560,6 +560,14 @@ async function handleWebSocketMessage(ws, data) {
       handleHelpRequest(ws, data);
       break;
 
+    case 'exportGame':
+      await handleExportGame(ws, data);
+      break;
+
+    case 'importGame':
+      await handleImportGame(ws, data, gameState);
+      break;
+
     default:
       logWithTimestamp('default case ', data.playerName);
 
@@ -1215,6 +1223,254 @@ function processRomance(data, gameState) {
       label: 'romance',
       content: 'No such user in tribe',
     };
+  }
+}
+
+async function handleExportGame(ws, data) {
+  try {
+    // Validate user authentication
+    if (!(await validateUser(data))) {
+      ws.send(
+        JSON.stringify({
+          type: 'exportGameResponse',
+          success: false,
+          message: 'Authentication failed',
+          clientId: data.clientId,
+        })
+      );
+      return;
+    }
+
+    // Check if user is a referee
+    const isRef = data.playerName && referees.includes(data.playerName);
+    if (!isRef) {
+      ws.send(
+        JSON.stringify({
+          type: 'exportGameResponse',
+          success: false,
+          message: 'Access denied: Referee privileges required',
+          clientId: data.clientId,
+        })
+      );
+      logWithTimestamp(`[SECURITY] Non-referee ${data.playerName} attempted to export game data`);
+      return;
+    }
+
+    const tribeName = data.tribeName || data.tribe;
+    if (!tribeName) {
+      ws.send(
+        JSON.stringify({
+          type: 'exportGameResponse',
+          success: false,
+          message: 'Tribe name is required',
+          clientId: data.clientId,
+        })
+      );
+      return;
+    }
+
+    // Get the complete game state
+    const gameState = await getGameState(tribeName);
+    if (!gameState) {
+      ws.send(
+        JSON.stringify({
+          type: 'exportGameResponse',
+          success: false,
+          message: `No game data found for tribe: ${tribeName}`,
+          clientId: data.clientId,
+        })
+      );
+      return;
+    }
+
+    // Create export data with metadata
+    const exportData = {
+      metadata: {
+        tribeName: tribeName,
+        exportedBy: data.playerName,
+        exportedAt: new Date().toISOString(),
+        exportVersion: '1.0',
+        serverVersion: process.env.npm_package_version || 'dev'
+      },
+      gameData: gameState
+    };
+
+    logWithTimestamp(`[REFEREE] ${data.playerName} exported game data for tribe: ${tribeName}`);
+
+    ws.send(
+      JSON.stringify({
+        type: 'exportGameResponse',
+        success: true,
+        tribeName: tribeName,
+        exportData: exportData,
+        filename: `${tribeName}-export-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.json`,
+        clientId: data.clientId,
+      })
+    );
+  } catch (error) {
+    console.error('Error exporting game data:', error);
+    ws.send(
+      JSON.stringify({
+        type: 'exportGameResponse',
+        success: false,
+        message: 'Export failed: ' + error.message,
+        clientId: data.clientId,
+      })
+    );
+  }
+}
+
+async function handleImportGame(ws, data, currentGameState) {
+  try {
+    // Validate user authentication
+    if (!(await validateUser(data))) {
+      ws.send(
+        JSON.stringify({
+          type: 'importGameResponse',
+          success: false,
+          message: 'Authentication failed',
+          clientId: data.clientId,
+        })
+      );
+      return;
+    }
+
+    // Check if user is a referee
+    const isRef = data.playerName && referees.includes(data.playerName);
+    if (!isRef) {
+      ws.send(
+        JSON.stringify({
+          type: 'importGameResponse',
+          success: false,
+          message: 'Access denied: Referee privileges required',
+          clientId: data.clientId,
+        })
+      );
+      logWithTimestamp(`[SECURITY] Non-referee ${data.playerName} attempted to import game data`);
+      return;
+    }
+
+    const tribeName = data.tribeName || data.tribe;
+    const importData = data.importData;
+
+    if (!tribeName) {
+      ws.send(
+        JSON.stringify({
+          type: 'importGameResponse',
+          success: false,
+          message: 'Tribe name is required',
+          clientId: data.clientId,
+        })
+      );
+      return;
+    }
+
+    if (!importData) {
+      ws.send(
+        JSON.stringify({
+          type: 'importGameResponse',
+          success: false,
+          message: 'Import data is required',
+          clientId: data.clientId,
+        })
+      );
+      return;
+    }
+
+    // Validate import data structure
+    let gameDataToImport;
+    if (importData.gameData) {
+      // New format with metadata
+      gameDataToImport = importData.gameData;
+      logWithTimestamp(`[REFEREE] Importing with metadata - exported by: ${importData.metadata?.exportedBy}, exported at: ${importData.metadata?.exportedAt}`);
+    } else if (importData.name || importData.population) {
+      // Legacy direct game state format
+      gameDataToImport = importData;
+      logWithTimestamp(`[REFEREE] Importing legacy format game data`);
+    } else {
+      ws.send(
+        JSON.stringify({
+          type: 'importGameResponse',
+          success: false,
+          message: 'Invalid import data format',
+          clientId: data.clientId,
+        })
+      );
+      return;
+    }
+
+    // Validate essential game data properties
+    if (!gameDataToImport.population || typeof gameDataToImport.population !== 'object') {
+      ws.send(
+        JSON.stringify({
+          type: 'importGameResponse',
+          success: false,
+          message: 'Invalid game data: missing or invalid population data',
+          clientId: data.clientId,
+        })
+      );
+      return;
+    }
+
+    // Create backup before import
+    const backupData = {
+      metadata: {
+        tribeName: tribeName,
+        backedUpBy: data.playerName,
+        backedUpAt: new Date().toISOString(),
+        reason: 'Pre-import backup'
+      },
+      gameData: currentGameState
+    };
+
+    // Ensure archive directory exists
+    const archiveDir = path.join(__dirname, 'archive', tribeName);
+    if (!fs.existsSync(archiveDir)) {
+      fs.mkdirSync(archiveDir, { recursive: true });
+    }
+
+    // Save backup
+    const backupFilename = `${tribeName}-pre-import-backup-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.json`;
+    const backupPath = path.join(archiveDir, backupFilename);
+    actuallyWriteToDisk(backupPath, backupData);
+
+    // Set the tribe name in the imported data
+    gameDataToImport.name = tribeName;
+
+    // Update in-memory game state
+    allGames[tribeName] = gameDataToImport;
+
+    // Save to disk
+    savelib.saveTribe(gameDataToImport);
+
+    logWithTimestamp(`[REFEREE] ${data.playerName} successfully imported game data for tribe: ${tribeName}`);
+    logWithTimestamp(`[REFEREE] Backup saved as: ${backupFilename}`);
+
+    ws.send(
+      JSON.stringify({
+        type: 'importGameResponse',
+        success: true,
+        tribeName: tribeName,
+        message: `Game data imported successfully. Backup saved as: ${backupFilename}`,
+        backupFilename: backupFilename,
+        clientId: data.clientId,
+      })
+    );
+
+    // Refresh game data for all connected clients of this tribe
+    await refreshTribeGameData(gameDataToImport, tribeName);
+    await refreshTribeCommandLists(gameDataToImport, tribeName);
+
+  } catch (error) {
+    console.error('Error importing game data:', error);
+    ws.send(
+      JSON.stringify({
+        type: 'importGameResponse',
+        success: false,
+        message: 'Import failed: ' + error.message,
+        clientId: data.clientId,
+      })
+    );
   }
 }
 
