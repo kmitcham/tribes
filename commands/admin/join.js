@@ -56,6 +56,7 @@ function join(actorName, gameState, gender, profession, handle) {
   console.log(
     'display name is ' + actorName + ' username:' + actorName.username
   );
+
   pop.addToPopulation(gameState, actorName, gender, profession, handle);
   gameState.saveRequired = true;
   return;

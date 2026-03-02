@@ -1479,6 +1479,12 @@ async function validateUser(userData) {
   if (userData.sessionToken) {
     const session = validateSession(userData.sessionToken);
     if (session && session.playerName === userData.playerName) {
+      // Update last connected time for session authentication
+      const user = usersDict[userData.playerName];
+      if (user) {
+        user.lastConnected = new Date().toISOString();
+        actuallyWriteToDisk('./tribe-data/users.json', usersDict);
+      }
       return true;
     }
     // If session is invalid, fall through to password authentication
@@ -1503,6 +1509,9 @@ async function validateUser(userData) {
 
   // If user has no password set, they can login without password (legacy compatibility)
   if (!user.password || user.password === '') {
+    // Update last connected time for legacy authentication
+    user.lastConnected = new Date().toISOString();
+    actuallyWriteToDisk('./tribe-data/users.json', usersDict);
     return true;
   }
 
@@ -1516,6 +1525,9 @@ async function validateUser(userData) {
     const isValid = await verifyPassword(userData.password, user.password);
     if (isValid) {
       clearFailedAttempts(identifier);
+      // Update last connected time for successful authentication
+      user.lastConnected = new Date().toISOString();
+      actuallyWriteToDisk('./tribe-data/users.json', usersDict);
       return true;
     } else {
       recordFailedAttempt(identifier);
@@ -1543,6 +1555,10 @@ async function registerUser(userData) {
     
     // If existing user has no password, they can login without password (legacy)
     if (!user.password || user.password === '') {
+      // Update last connected time for existing user
+      user.lastConnected = new Date().toISOString();
+      actuallyWriteToDisk('./tribe-data/users.json', usersDict);
+      
       const token = createSession(name, clientIP);
       return {
         type: 'registration',
@@ -1561,6 +1577,10 @@ async function registerUser(userData) {
     if (!(await verifyPassword(password, user.password))) {
       throw new Error('Invalid password for existing player');
     }
+    
+    // Update last connected time for successful authentication
+    user.lastConnected = new Date().toISOString();
+    actuallyWriteToDisk('./tribe-data/users.json', usersDict);
     
     const token = createSession(name, clientIP);
     return {
@@ -1587,7 +1607,8 @@ async function registerUser(userData) {
       name: name,
       email: email || `${name}@tribes.local`,
       password: password,
-      registeredAt: new Date().toISOString()
+      registeredAt: new Date().toISOString(),
+      lastConnected: new Date().toISOString()
     };
 
     // Ensure tribe-data directory exists before saving
