@@ -3,6 +3,12 @@
 // obey is undone
 // do not crash on errors
 
+// ✓ COMPLETED: Enhanced game snapshot management (March 2026)
+//   - Each tribe limited to 3 snapshots max (auto-cleanup old ones)
+//   - Final games saved as 'tribe-name-final-YYYY-MM-DD.json'
+//   - Main game file cleared when game ends for fresh starts
+//   - See SNAPSHOT-MANAGEMENT.md for full details
+
 
 
 // Might there possibly be a !feed 2 !hungry option?

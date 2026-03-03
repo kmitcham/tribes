@@ -198,4 +198,3 @@ koyeb service update your-app-name/your-service-name --volumes your-volume-name:
 
 koyeb service update tribes/
 
-instead of accumulating copies of the game, each tribe should have at most 3 snapshots of the gamestate.  When a game ends, write the final game state to 'tribe-name-final-YYYY-MM-DD.json' and erase the gamefile so the tribe is ready for another game.
