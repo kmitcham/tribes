@@ -4,6 +4,9 @@
  * Global configuration and mocks for all test files
  */
 
+// Set test environment before anything else loads
+process.env.NODE_ENV = 'test';
+
 // Mock console methods to reduce noise in tests
 global.console = {
   ...console,

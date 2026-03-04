@@ -164,8 +164,11 @@ function cleanupExpiredSessions() {
   }
 }
 
-// Start session cleanup timer
-setInterval(cleanupExpiredSessions, SESSION_CLEANUP_INTERVAL);
+// Start session cleanup timer only when not in test mode
+let sessionCleanupTimer = null;
+if (process.env.NODE_ENV !== 'test') {
+  sessionCleanupTimer = setInterval(cleanupExpiredSessions, SESSION_CLEANUP_INTERVAL);
+}
 
 function getClientIP(ws, req) {
   return req?.socket?.remoteAddress || 
@@ -1737,9 +1740,63 @@ function actuallyWriteToDisk(fileName, jsonData) {
   }
 }
 
-// Initialize
-loadCommands();
-startServer();
+// Initialize only when run directly (not when imported as a module or testing)
+const isMainModule = require.main === module;
+const isTesting = process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID !== undefined;
+if (isMainModule && !isTesting) {
+  loadCommands();
+  startServer();
+  console.log('Tribes WebSocket Server starting...');
+  console.log(`Available commands: ${Array.from(commands.keys()).join(', ')}`);
+}
 
-console.log('Tribes WebSocket Server starting...');
-console.log(`Available commands: ${Array.from(commands.keys()).join(', ')}`);
+// Export functions for testing
+module.exports = {
+  // Session management
+  generateSessionToken,
+  createSession,
+  validateSession,
+  destroySession,
+  destroyAllPlayerSessions,
+  cleanupExpiredSessions,
+  
+  // Authentication helpers
+  validatePassword,
+  recordFailedAttempt,
+  clearFailedAttempts,
+  
+  // Utility functions
+  removeClunkyKeys,
+  removeFatherReferences,
+  arrayMatch,
+  loadJson,
+  
+  // Request handlers 
+  handleInfoRequest,
+  handleHelpRequest,
+  handleLogout,
+  handleSessionAuthentication,
+  handleListCommands,
+  
+  // Core functions
+  createMockInteraction,
+  loadCommands,
+  startServer,
+  logWithTimestamp,
+  getClientIP,
+  sendSecrets,
+  processRomance,
+  
+  // Expose state for testing
+  get activeSessions() { return activeSessions; },
+  get playerSessions() { return playerSessions; },
+  get loginAttempts() { return loginAttempts; },
+  get connectedClients() { return connectedClients; },
+  get tribeConnections() { return tribeConnections; },
+  get allGames() { return allGames; },
+  get usersDict() { return usersDict; },
+  get commands() { return commands; },
+  
+  // Constants
+  SESSION_TIMEOUT,
+};

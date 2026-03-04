@@ -3,9 +3,8 @@ const path = require('path');
 const WebSocket = require('ws');
 const locations = require('./locations.json');
 
-const server = new WebSocket.Server({
-  port: 8383,
-});
+// NOTE: Removed unused WebSocket server creation that was causing test failures
+// const server = new WebSocket.Server({ port: 8383 });
 
 function initGame(gameName) {
   gameState = {};

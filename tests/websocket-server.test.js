@@ -8,6 +8,9 @@
 const path = require('path');
 const fs = require('fs');
 
+// Import the actual websocket-server module (server won't start when imported)
+const wsServer = require('../websocket-server.js');
+
 // Mock WebSocket for server testing
 class MockWebSocket {
   constructor() {
@@ -845,6 +848,369 @@ describe('WebSocket Server Command Processing', () => {
       expect(gameState.messages.tribe).toBeUndefined();
     });
   });
+});
+
+// Additional Tests for Utility Functions and Session Management
+describe('WebSocket Server Utility Functions', () => {
+  describe('removeClunkyKeys', () => {
+    test('should remove clunky keys from population data', () => {
+      const population = {
+        player1: {
+          name: 'player1',
+          food: 10,
+          handle: '@player1',
+          history: ['action1', 'action2'],
+          inviteList: ['player2'],
+          consentList: [],
+          declineList: [],
+        },
+      };
+
+      const cleaned = wsServer.removeClunkyKeys(population);
+
+      expect(cleaned.player1.name).toBe('player1');
+      expect(cleaned.player1.food).toBe(10);
+      expect(cleaned.player1.handle).toBeUndefined();
+      expect(cleaned.player1.history).toBeUndefined();
+      expect(cleaned.player1.inviteList).toBeUndefined();
+      expect(cleaned.player1.consentList).toBeUndefined();
+      expect(cleaned.player1.declineList).toBeUndefined();
+    });
+
+    test('should handle empty population', () => {
+      const cleaned = wsServer.removeClunkyKeys({});
+      expect(cleaned).toEqual({});
+    });
+
+    test('should handle null/undefined population', () => {
+      expect(wsServer.removeClunkyKeys(null)).toEqual({});
+      expect(wsServer.removeClunkyKeys(undefined)).toEqual({});
+    });
+
+    test('should preserve non-clunky keys', () => {
+      const population = {
+        player1: {
+          name: 'player1',
+          gender: 'male',
+          food: 5,
+          grain: 3,
+          pregnant: false,
+          chief: true,
+        },
+      };
+
+      const cleaned = wsServer.removeClunkyKeys(population);
+
+      expect(cleaned.player1).toEqual({
+        name: 'player1',
+        gender: 'male',
+        food: 5,
+        grain: 3,
+        pregnant: false,
+        chief: true,
+      });
+    });
+  });
+
+  describe('removeFatherReferences', () => {
+    test('should remove father references from children data', () => {
+      const children = {
+        child1: {
+          name: 'child1',
+          age: 5,
+          mother: 'player1',
+          father: 'player2',
+          fatherName: 'Player Two',
+          food: 2,
+        },
+      };
+
+      const cleaned = wsServer.removeFatherReferences(children);
+
+      expect(cleaned.child1.name).toBe('child1');
+      expect(cleaned.child1.age).toBe(5);
+      expect(cleaned.child1.mother).toBe('player1');
+      expect(cleaned.child1.father).toBeUndefined();
+      expect(cleaned.child1.fatherName).toBeUndefined();
+    });
+
+    test('should handle empty children', () => {
+      expect(wsServer.removeFatherReferences({})).toEqual({});
+    });
+
+    test('should handle null/undefined children', () => {
+      expect(wsServer.removeFatherReferences(null)).toEqual({});
+      expect(wsServer.removeFatherReferences(undefined)).toEqual({});
+    });
+  });
+
+  describe('arrayMatch', () => {
+    test('should return true for matching arrays', () => {
+      expect(wsServer.arrayMatch(['a', 'b', 'c'], ['a', 'b', 'c'])).toBe(true);
+    });
+
+    test('should return true for arrays with same elements in different order', () => {
+      expect(wsServer.arrayMatch(['c', 'a', 'b'], ['a', 'b', 'c'])).toBe(true);
+    });
+
+    test('should return false for different arrays', () => {
+      expect(wsServer.arrayMatch(['a', 'b'], ['a', 'c'])).toBe(false);
+    });
+
+    test('should return true if both arrays are null/undefined', () => {
+      expect(wsServer.arrayMatch(null, null)).toBe(true);
+      expect(wsServer.arrayMatch(undefined, undefined)).toBe(true);
+    });
+
+    test('should return false if only one array is null/undefined', () => {
+      expect(wsServer.arrayMatch(['a'], null)).toBe(false);
+      expect(wsServer.arrayMatch(null, ['a'])).toBe(false);
+    });
+
+    test('should handle empty arrays', () => {
+      expect(wsServer.arrayMatch([], [])).toBe(true);
+    });
+  });
+
+  describe('validatePassword', () => {
+    test('should return true for valid password', () => {
+      expect(wsServer.validatePassword('validpassword123')).toBe(true);
+    });
+
+    test('should throw error for empty password', () => {
+      expect(() => wsServer.validatePassword('')).toThrow('Password is required');
+    });
+
+    test('should throw error for null password', () => {
+      expect(() => wsServer.validatePassword(null)).toThrow('Password is required');
+    });
+
+    test('should throw error for undefined password', () => {
+      expect(() => wsServer.validatePassword(undefined)).toThrow('Password is required');
+    });
+
+    test('should throw error for non-string password', () => {
+      expect(() => wsServer.validatePassword(12345)).toThrow('Password is required');
+    });
+  });
+});
+
+describe('Session Management (using actual exports)', () => {
+  beforeEach(() => {
+    // Clear sessions before each test
+    wsServer.activeSessions.clear();
+    wsServer.playerSessions.clear();
+  });
+
+  describe('createSession', () => {
+    test('should create a session with correct properties', () => {
+      const token = wsServer.createSession('testPlayer', '192.168.1.1');
+
+      expect(token).toBeDefined();
+      expect(typeof token).toBe('string');
+
+      const session = wsServer.activeSessions.get(token);
+      expect(session.playerName).toBe('testPlayer');
+      expect(session.ipAddress).toBe('192.168.1.1');
+      expect(session.createdAt).toBeDefined();
+      expect(session.lastActivity).toBeDefined();
+    });
+
+    test('should track session in playerSessions', () => {
+      const token = wsServer.createSession('testPlayer');
+
+      expect(wsServer.playerSessions.has('testPlayer')).toBe(true);
+      expect(wsServer.playerSessions.get('testPlayer').has(token)).toBe(true);
+    });
+
+    test('should allow multiple sessions per player', () => {
+      const token1 = wsServer.createSession('testPlayer');
+      const token2 = wsServer.createSession('testPlayer');
+
+      expect(wsServer.playerSessions.get('testPlayer').size).toBe(2);
+      expect(wsServer.activeSessions.size).toBe(2);
+    });
+  });
+
+  describe('validateSession', () => {
+    test('should return session for valid token', () => {
+      const token = wsServer.createSession('testPlayer');
+      const session = wsServer.validateSession(token);
+
+      expect(session).toBeDefined();
+      expect(session.playerName).toBe('testPlayer');
+    });
+
+    test('should return null for invalid token', () => {
+      expect(wsServer.validateSession('nonexistent-token')).toBeNull();
+    });
+
+    test('should update lastActivity on validation', () => {
+      const token = wsServer.createSession('testPlayer');
+      const originalActivity = wsServer.activeSessions.get(token).lastActivity;
+
+      const session = wsServer.validateSession(token);
+
+      expect(session.lastActivity).toBeGreaterThanOrEqual(originalActivity);
+    });
+  });
+
+  describe('destroySession', () => {
+    test('should remove session from activeSessions', () => {
+      const token = wsServer.createSession('testPlayer');
+      expect(wsServer.activeSessions.has(token)).toBe(true);
+
+      wsServer.destroySession(token);
+
+      expect(wsServer.activeSessions.has(token)).toBe(false);
+    });
+
+    test('should remove session from playerSessions', () => {
+      const token = wsServer.createSession('testPlayer');
+      wsServer.destroySession(token);
+
+      expect(wsServer.playerSessions.has('testPlayer')).toBe(false);
+    });
+
+    test('should handle non-existent token gracefully', () => {
+      expect(() => wsServer.destroySession('nonexistent')).not.toThrow();
+    });
+
+    test('should keep other player sessions when one is destroyed', () => {
+      const token1 = wsServer.createSession('testPlayer');
+      const token2 = wsServer.createSession('testPlayer');
+
+      wsServer.destroySession(token1);
+
+      expect(wsServer.activeSessions.has(token2)).toBe(true);
+      expect(wsServer.playerSessions.get('testPlayer').has(token2)).toBe(true);
+    });
+  });
+
+  describe('destroyAllPlayerSessions', () => {
+    test('should remove all sessions for a player', () => {
+      wsServer.createSession('testPlayer');
+      wsServer.createSession('testPlayer');
+      wsServer.createSession('testPlayer');
+
+      expect(wsServer.activeSessions.size).toBe(3);
+
+      wsServer.destroyAllPlayerSessions('testPlayer');
+
+      expect(wsServer.activeSessions.size).toBe(0);
+      expect(wsServer.playerSessions.has('testPlayer')).toBe(false);
+    });
+
+    test('should not affect other players sessions', () => {
+      wsServer.createSession('player1');
+      wsServer.createSession('player2');
+
+      wsServer.destroyAllPlayerSessions('player1');
+
+      expect(wsServer.activeSessions.size).toBe(1);
+      expect(wsServer.playerSessions.has('player2')).toBe(true);
+    });
+
+    test('should handle non-existent player gracefully', () => {
+      expect(() => wsServer.destroyAllPlayerSessions('nonexistent')).not.toThrow();
+    });
+  });
+
+  describe('generateSessionToken', () => {
+    test('should generate unique tokens', () => {
+      const token1 = wsServer.generateSessionToken();
+      const token2 = wsServer.generateSessionToken();
+
+      expect(token1).not.toBe(token2);
+    });
+
+    test('should generate string tokens', () => {
+      const token = wsServer.generateSessionToken();
+      expect(typeof token).toBe('string');
+    });
+  });
+});
+
+describe('Rate Limiting (using actual exports)', () => {
+  beforeEach(() => {
+    // Clear login attempts before each test
+    wsServer.loginAttempts.clear();
+  });
+
+  test('should track failed login attempts', () => {
+    wsServer.recordFailedAttempt('testUser');
+
+    const attemptData = wsServer.loginAttempts.get('testUser');
+    expect(attemptData.count).toBe(1);
+  });
+
+  test('should increment count on multiple failures', () => {
+    wsServer.recordFailedAttempt('testUser');
+    wsServer.recordFailedAttempt('testUser');
+    wsServer.recordFailedAttempt('testUser');
+
+    expect(wsServer.loginAttempts.get('testUser').count).toBe(3);
+  });
+
+  test('should lockout after 5 failed attempts', () => {
+    for (let i = 0; i < 5; i++) {
+      wsServer.recordFailedAttempt('testUser');
+    }
+
+    const attemptData = wsServer.loginAttempts.get('testUser');
+    expect(attemptData.lockoutUntil).toBeGreaterThan(Date.now());
+  });
+
+  test('should clear failed attempts', () => {
+    wsServer.recordFailedAttempt('testUser');
+    wsServer.recordFailedAttempt('testUser');
+
+    wsServer.clearFailedAttempts('testUser');
+
+    expect(wsServer.loginAttempts.has('testUser')).toBe(false);
+  });
+});
+
+describe('Info Request Handling (using actual exports)', () => {
+  let mockWs;
+  
+  beforeEach(() => {
+    mockWs = {
+      sentMessages: [],
+      send: function(data) {
+        this.sentMessages.push(JSON.parse(data));
+      },
+      getLastSentMessage: function() {
+        return this.sentMessages[this.sentMessages.length - 1];
+      }
+    };
+  });
+
+  test('should handle population request', () => {
+    const gameState = {
+      population: { player1: { name: 'player1', food: 10 } },
+    };
+
+    wsServer.handleInfoRequest(mockWs, { selection: 'population' }, gameState);
+
+    const response = mockWs.getLastSentMessage();
+    expect(response.type).toBe('infoRequest');
+    expect(response.label).toBe('population');
+  });
+
+  test('should handle children request', () => {
+    const gameState = {
+      children: { child1: { name: 'child1', age: 5 } },
+    };
+
+    wsServer.handleInfoRequest(mockWs, { selection: 'children' }, gameState);
+
+    const response = mockWs.getLastSentMessage();
+    expect(response.type).toBe('infoRequest');
+    expect(response.label).toBe('children');
+  });
+
+  // Note: status request test omitted as it requires full gameState with gameTrack, locations, etc.
 });
 
 module.exports = {

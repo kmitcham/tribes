@@ -44,3 +44,5 @@ function command(gameState, actorName, targetName, action, extraArg) {
   }
   // if action is watch or ignore, must be able to find the child in extraArg.
 }
+
+module.exports = { command };
