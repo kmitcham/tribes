@@ -1,3 +1,5 @@
+const fs = require('fs');
+const path = require('path');
 const guardlib = require('./guardCode.js');
 const dice = require('./dice.js');
 const tribeUtil = require('./util.js');
@@ -60,7 +62,7 @@ function decree(gameState, actorName, number, lawText) {
 }
 module.exports.decree = decree;
 
-function induct(gameState, sourceName, targetName, gender, profession) {
+function induct(gameState, sourceName, targetName, gender) {
   var chief = pop.memberByName(sourceName, gameState);
 
   if (!chief) {
@@ -82,9 +84,31 @@ function induct(gameState, sourceName, targetName, gender, profession) {
     return;
   }
 
-  console.log('message b');
+  // Check if target user exists in users.json (case-insensitive)
+  try {
+    const usersFilePath = path.join(__dirname, '..', 'tribe-data', 'users.json');
+    const usersData = JSON.parse(fs.readFileSync(usersFilePath, 'utf8'));
+    const normalizedTarget = targetName.trim().toLowerCase();
+    const matchedKey = Object.keys(usersData).find(
+      (name) => name.toLowerCase() === normalizedTarget
+    );
 
-  pop.addToPopulation(gameState, targetName, gender, profession, targetObject);
+    if (!matchedKey) {
+      const response = `Cannot induct ${targetName}: User not found in the system. They must register first.`;
+      text.addMessage(gameState, sourceName, response);
+      return;
+    }
+    targetName = matchedKey;
+  } catch (error) {
+    console.error('Error checking users.json:', error);
+    const response = 'Error validating user. Please try again.';
+    text.addMessage(gameState, sourceName, response);
+    return;
+  }
+
+  console.log('message b');
+  profession = null; // default to no profession
+  pop.addToPopulation(gameState, targetName, gender, profession, null);
 }
 module.exports.induct = induct;
 

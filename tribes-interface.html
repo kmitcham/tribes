@@ -967,6 +967,11 @@
                     <input type="password" id="playerPassword" placeholder="Optional password">
                 </div>
                 
+                <div class="form-group">
+                    <label for="playerEmail">Email (optional):</label>
+                    <input type="email" id="playerEmail" placeholder="Optional email" title="Email is only for account recovery">
+                </div>
+                
                 <button class="btn" id="registerBtn">Register/Login</button>
                 <button class="btn" id="logoutBtn" onclick="window.tribesClient.logout()" style="display: none; background: #dc3545;">Logout</button>
                 <button class="btn" id="logoutAllBtn" onclick="window.tribesClient.logout(true)" style="display: none; background: #6f42c1; margin-top: 0.25rem;">Logout All Devices</button>
@@ -1715,7 +1720,7 @@
                 let currentHighlight = -1;
                 let filteredCommands = [];
                 
-                const hiddenCommands = ['children', 'induct', 'inventory'];
+                const hiddenCommands = ['children', 'inventory'];
                 const commandNames = Object.keys(this.commands)
                     .filter(name => !hiddenCommands.includes(name))
                     .sort();
@@ -1834,7 +1839,7 @@
                 const playerIsChief = this.isCurrentPlayerChief();
                 
                 // Commands that are not needed with the GUI
-                const hiddenCommands = ['children', 'induct', 'inventory'];
+                const hiddenCommands = ['children', 'inventory'];
                 
                 // Sort commands alphabetically by name and filter out hidden commands
                 const sortedCommands = Object.entries(this.commands)
@@ -1993,9 +1998,11 @@
                 container.innerHTML = '';
 
                 // Check if this command needs player data and fetch it
-                const needsPlayerData = this.selectedCommand.options.some(option => 
-                    this.isPlayerTargetingOption(option.name)
-                );
+                // Exclude induct command - it uses simple text input, not player dropdown
+                const needsPlayerData = this.selectedCommand.name.toLowerCase() !== 'induct' && 
+                    this.selectedCommand.options.some(option => 
+                        this.isPlayerTargetingOption(option.name)
+                    );
                 
                 // Secrets command also needs population data to pre-populate current value
                 const needsPopulationForSecrets = this.selectedCommand.name.toLowerCase() === 'secrets';
@@ -2186,6 +2193,11 @@
             isPlayerTargetingOption(optionName) {
                 // Exclude ordering options from regular player targeting
                 if (this.isOrderingOption(optionName)) {
+                    return false;
+                }
+                
+                // Exclude induct command target - it should be a text input, not dropdown
+                if (this.selectedCommand && this.selectedCommand.name.toLowerCase() === 'induct') {
                     return false;
                 }
                 
@@ -3155,13 +3167,13 @@
                 const message = document.createElement('div');
                 message.className = `message ${type}`;
                 console.log('Adding message:', text, 'Type:', type, 'TypeLabel:', typeLabel, 'IsRestored:', isRestored);
-                text = text.trim();
                 
                 // Skip empty or whitespace-only messages
                 if (!text || text === '') {
                     console.log('Skipping empty message');
                     return;
                 }
+                text = text.trim();
 
                 if (isRestored) {
                     message.classList.add('restored');
@@ -3366,6 +3378,7 @@
             registerPlayer() {
                 const name = document.getElementById('playerName').value;
                 const password = document.getElementById('playerPassword').value;
+                const email = document.getElementById('playerEmail').value;
                 
                 if (!name) {
                     this.addMessage('Player name is required', 'error');
@@ -3379,7 +3392,7 @@
                     type: 'registerRequest',
                     playerName: name,
                     password: password,
-                    email: `${name}@tribes.local`
+                    email: email || ''
                 });
             }
 

@@ -1,14 +1,17 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder } = require('discord.js');
+const fs = require('fs');
+const path = require('path');
 const chief = require('../../libs/chief.js');
+const text = require('../../libs/textprocess');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('induct')
-    .setDescription('add a person to the tribe. (Chief only')
-    .addUserOption((option) =>
+    .setDescription('add a person to the tribe. (Chief only)')
+    .addStringOption((option) =>
       option
         .setName('target')
-        .setDescription('Discord user to add to the tribe')
+        .setDescription('Registered user name to add to the tribe')
         .setRequired(true)
     )
     .addStringOption((option) =>
@@ -20,24 +23,43 @@ module.exports = {
           { name: 'female', value: 'female' }
         )
         .setRequired(true)
-    )
-    .addStringOption((option) =>
-      option
-        .setName('profession')
-        .setDescription('one of (hunter, gatherer, crafter)')
-        .addChoices(
-          { name: 'hunter', value: 'hunter' },
-          { name: 'crafter', value: 'crafter' },
-          { name: 'gatherer', value: 'gatherer' }
-        )
-        .setRequired(false)
     ),
   async execute(interaction, gameState) {
-    targetObject = interaction.options.getMember('target');
-    var targetName = targetObject.displayName;
+    var targetName = interaction.options.getString('target');
     var gender = interaction.options.getString('gender');
-    var profession = interaction.options.getString('profession');
     var sourceName = interaction.member.displayName;
-    chief.induct(gameState, sourceName, targetName, gender, profession);
+    try {
+      const usersFilePath = path.join(
+        __dirname,
+        '..',
+        '..',
+        'tribe-data',
+        'users.json'
+      );
+      const usersData = JSON.parse(fs.readFileSync(usersFilePath, 'utf8'));
+      const normalizedTarget = targetName.trim().toLowerCase();
+      const matchedKey = Object.keys(usersData).find(
+        (name) => name.toLowerCase() === normalizedTarget
+      );
+      if (!matchedKey) {
+        text.addMessage(
+          gameState,
+          sourceName,
+          `Cannot induct ${targetName}: user not found in users.json. They must register first.`
+        );
+        return;
+      }
+      targetName = matchedKey;
+    } catch (error) {
+      console.error('Error validating users.json for induct:', error);
+      text.addMessage(
+        gameState,
+        sourceName,
+        'Error validating user. Please try again.'
+      );
+      return;
+    }
+
+    chief.induct(gameState, sourceName, targetName, gender);
   },
 };

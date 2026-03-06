@@ -1,0 +1,63 @@
+{
+  "sockpuppet": {
+    "type": "registerRequest",
+    "name": "sockpuppet",
+    "email": "asdf",
+    "tribe": "bug",
+    "password": "$2b$04$O1bUMrl/K9Wf58ioo4lnU.0qKO1PMJUVrLW7zKNFy/jYPL/gMGA/e",
+    "clientId": "1750532942349-0q2mljynh"
+  },
+  "jonayla": {
+    "type": "registerRequest",
+    "name": "jonayla",
+    "email": "",
+    "tribe": "flounder",
+    "password": "",
+    "clientId": "1751228280235-zn063hdi0"
+  },
+  "Jonayla": {
+    "type": "registerRequest",
+    "name": "Jonayla",
+    "email": "",
+    "tribe": "bug",
+    "password": "",
+    "clientId": "1751509873875-p1ad03stm"
+  },
+  "kevinmitcham": {
+    "type": "registerRequest",
+    "name": "kevinmitcham",
+    "email": "",
+    "tribe": "bug",
+    "password": "",
+    "clientId": "1752357136418-g9g3ss8nu"
+  },
+  "boy1": {
+    "type": "registerRequest",
+    "name": "boy1",
+    "email": "",
+    "tribe": "bug",
+    "password": "",
+    "clientId": "1752358523197-bo5jrgz9u"
+  },
+  "Kevin": {
+    "name": "Kevin",
+    "email": "Kevin@tribes.local",
+    "password": "$2b$04$peb0yO.vBCdZs8mjJ.nn5O1vDqA1VKnfbGbhYfMnD9dPyvet7dOz2"
+  },
+  "sock puppet": {
+    "name": "sock puppet",
+    "email": "sock puppet@tribes.local",
+    "password": ""
+  },
+  "kevin": {
+    "name": "kevin",
+    "email": "kevin@tribes.local",
+    "password": "$2b$04$DBtRGj0Yzuua7BU05ln0POBNRBmhBKzDEme6XOyYuaKF5eWqcP9PO"
+  },
+  "elephant": {
+    "name": "elephant",
+    "email": "elephant@tribes.local",
+    "password": "$2b$12$S6xUNY8Qy2cLhWyiMTbuRec/nSihryntTmMRspfEv4CZTq9bo9qYG",
+    "registeredAt": "2026-02-26T04:38:39.008Z"
+  }
+}

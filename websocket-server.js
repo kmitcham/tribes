@@ -1552,6 +1552,19 @@ async function registerUser(userData) {
     throw new Error('Player name is required');
   }
 
+  // Check for case-insensitive name collision
+  const normalizedName = name.trim().toLowerCase();
+  const caseInsensitiveMatch = Object.keys(usersDict).find(
+    (existingName) => existingName.toLowerCase() === normalizedName
+  );
+  
+  if (caseInsensitiveMatch && caseInsensitiveMatch !== name) {
+    logWithTimestamp(
+      `[SECURITY] Registration failed: name already exists with different case '${caseInsensitiveMatch}'`
+    );
+    throw new Error('Name already registered (case-insensitive match)');
+  }
+
   if (usersDict[name]) {
     // User exists - this is a login attempt
     const user = usersDict[name];
@@ -1608,7 +1621,7 @@ async function registerUser(userData) {
 
     usersDict[name] = {
       name: name,
-      email: email || `${name}@tribes.local`,
+      email: email || '',
       password: password,
       registeredAt: new Date().toISOString(),
       lastConnected: new Date().toISOString()

@@ -404,11 +404,17 @@ function vote(gameState, actorName, candidateName) {
     }
   }
   console.log('Drone count while voting is ' + droneCount);
-  text.addMessage(
-    gameState,
-    'tribe',
-    player.name + ' supports ' + candidate.name + ' as chief'
-  );
+  
+  // Find current chief (before any changes)
+  var currentChief = null;
+  for (personName in gameState.population) {
+    person = memberByName(personName, gameState);
+    if (person.chief) {
+      currentChief = person.name;
+      break;
+    }
+  }
+  
   // count all existing votes
   if (totalVotes >= (2 / 3) * (tribeSize - droneCount)) {
     // clear the previous chief
@@ -420,9 +426,13 @@ function vote(gameState, actorName, candidateName) {
     }
     candidate.chief = true;
     history(candidate.name, 'became chief', gameState);
-    text.addMessage(gameState, 'tribe', candidate.name + ' is the new chief');
-    var chiefHelp = help.chiefHelp();
-    text.addMessage(gameState, candidate.name, chiefHelp);
+    
+    // Only send message if chief actually changed (none to chief, or one chief to another)
+    if (currentChief === null || currentChief !== candidate.name) {
+      text.addMessage(gameState, 'tribe', candidate.name + ' is the new chief');
+      var chiefHelp = help.chiefHelp();
+      text.addMessage(gameState, candidate.name, chiefHelp);
+    }
     
     // Flag that command lists need to be refreshed for all tribe members
     gameState.commandsNeedRefresh = true;

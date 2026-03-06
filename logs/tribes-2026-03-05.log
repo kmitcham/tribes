@@ -1,0 +1,399 @@
+[3/4/2026, 9:12:07 PM] [SESSION] Created session for testPlayer from 192.168.1.1 
+[3/4/2026, 9:12:07 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 9:12:07 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 9:12:07 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 9:12:07 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 9:12:07 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 9:12:07 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 9:12:07 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 9:12:07 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 9:12:07 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 9:12:07 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 9:12:07 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 9:12:07 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 9:12:07 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 9:12:07 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 9:12:07 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 9:12:07 PM] [SESSION] Destroyed all sessions for testPlayer 
+[3/4/2026, 9:12:07 PM] [SESSION] Created session for player1 from unknown 
+[3/4/2026, 9:12:07 PM] [SESSION] Created session for player2 from unknown 
+[3/4/2026, 9:12:07 PM] [SESSION] Destroyed all sessions for player1 
+[3/4/2026, 9:12:07 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 9:12:07 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 9:12:07 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 9:12:07 PM] Failed login attempt for testUser. Count: 3 
+[3/4/2026, 9:12:07 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 9:12:07 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 9:12:07 PM] Failed login attempt for testUser. Count: 3 
+[3/4/2026, 9:12:07 PM] Failed login attempt for testUser. Count: 4 
+[3/4/2026, 9:12:07 PM] Failed login attempt for testUser. Count: 5 
+[3/4/2026, 9:12:07 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 9:12:07 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 9:12:08 PM] [SESSION] Created session for testPlayer from 192.168.1.1 
+[3/4/2026, 9:12:08 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 9:12:08 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 9:12:08 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 9:12:08 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 9:12:08 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 9:12:08 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 9:12:08 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 9:12:08 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 9:12:08 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 9:12:08 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 9:12:08 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 9:12:08 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 9:12:08 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 9:12:08 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 9:12:08 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 9:12:08 PM] [SESSION] Destroyed all sessions for testPlayer 
+[3/4/2026, 9:12:08 PM] [SESSION] Created session for player1 from unknown 
+[3/4/2026, 9:12:08 PM] [SESSION] Created session for player2 from unknown 
+[3/4/2026, 9:12:08 PM] [SESSION] Destroyed all sessions for player1 
+[3/4/2026, 9:12:08 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 9:12:08 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 9:12:08 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 9:12:08 PM] Failed login attempt for testUser. Count: 3 
+[3/4/2026, 9:12:08 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 9:12:08 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 9:12:08 PM] Failed login attempt for testUser. Count: 3 
+[3/4/2026, 9:12:08 PM] Failed login attempt for testUser. Count: 4 
+[3/4/2026, 9:12:08 PM] Failed login attempt for testUser. Count: 5 
+[3/4/2026, 9:12:08 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 9:12:08 PM] Failed login attempt for testUser. Count: 2 
+[3/5/2026, 12:31:00 PM] [SESSION] Created session for testPlayer from 192.168.1.1 
+[3/5/2026, 12:31:00 PM] [SESSION] Created session for testPlayer from unknown 
+[3/5/2026, 12:31:00 PM] [SESSION] Created session for testPlayer from unknown 
+[3/5/2026, 12:31:00 PM] [SESSION] Created session for testPlayer from unknown 
+[3/5/2026, 12:31:00 PM] [SESSION] Created session for testPlayer from unknown 
+[3/5/2026, 12:31:00 PM] [SESSION] Created session for testPlayer from unknown 
+[3/5/2026, 12:31:00 PM] [SESSION] Created session for testPlayer from unknown 
+[3/5/2026, 12:31:00 PM] [SESSION] Destroyed session for testPlayer 
+[3/5/2026, 12:31:00 PM] [SESSION] Created session for testPlayer from unknown 
+[3/5/2026, 12:31:00 PM] [SESSION] Destroyed session for testPlayer 
+[3/5/2026, 12:31:00 PM] [SESSION] Created session for testPlayer from unknown 
+[3/5/2026, 12:31:00 PM] [SESSION] Created session for testPlayer from unknown 
+[3/5/2026, 12:31:00 PM] [SESSION] Destroyed session for testPlayer 
+[3/5/2026, 12:31:00 PM] [SESSION] Created session for testPlayer from unknown 
+[3/5/2026, 12:31:00 PM] [SESSION] Created session for testPlayer from unknown 
+[3/5/2026, 12:31:00 PM] [SESSION] Created session for testPlayer from unknown 
+[3/5/2026, 12:31:00 PM] [SESSION] Destroyed all sessions for testPlayer 
+[3/5/2026, 12:31:00 PM] [SESSION] Created session for player1 from unknown 
+[3/5/2026, 12:31:00 PM] [SESSION] Created session for player2 from unknown 
+[3/5/2026, 12:31:00 PM] [SESSION] Destroyed all sessions for player1 
+[3/5/2026, 12:31:00 PM] Failed login attempt for testUser. Count: 1 
+[3/5/2026, 12:31:00 PM] Failed login attempt for testUser. Count: 1 
+[3/5/2026, 12:31:00 PM] Failed login attempt for testUser. Count: 2 
+[3/5/2026, 12:31:00 PM] Failed login attempt for testUser. Count: 3 
+[3/5/2026, 12:31:00 PM] Failed login attempt for testUser. Count: 1 
+[3/5/2026, 12:31:00 PM] Failed login attempt for testUser. Count: 2 
+[3/5/2026, 12:31:00 PM] Failed login attempt for testUser. Count: 3 
+[3/5/2026, 12:31:00 PM] Failed login attempt for testUser. Count: 4 
+[3/5/2026, 12:31:00 PM] Failed login attempt for testUser. Count: 5 
+[3/5/2026, 12:31:00 PM] Failed login attempt for testUser. Count: 1 
+[3/5/2026, 12:31:00 PM] Failed login attempt for testUser. Count: 2 
+[3/5/2026, 12:31:00 PM] [SESSION] Created session for testPlayer from 192.168.1.1 
+[3/5/2026, 12:31:00 PM] [SESSION] Created session for testPlayer from unknown 
+[3/5/2026, 12:31:00 PM] [SESSION] Created session for testPlayer from unknown 
+[3/5/2026, 12:31:00 PM] [SESSION] Created session for testPlayer from unknown 
+[3/5/2026, 12:31:00 PM] [SESSION] Created session for testPlayer from unknown 
+[3/5/2026, 12:31:00 PM] [SESSION] Created session for testPlayer from unknown 
+[3/5/2026, 12:31:00 PM] [SESSION] Created session for testPlayer from unknown 
+[3/5/2026, 12:31:00 PM] [SESSION] Destroyed session for testPlayer 
+[3/5/2026, 12:31:00 PM] [SESSION] Created session for testPlayer from unknown 
+[3/5/2026, 12:31:00 PM] [SESSION] Destroyed session for testPlayer 
+[3/5/2026, 12:31:00 PM] [SESSION] Created session for testPlayer from unknown 
+[3/5/2026, 12:31:00 PM] [SESSION] Created session for testPlayer from unknown 
+[3/5/2026, 12:31:00 PM] [SESSION] Destroyed session for testPlayer 
+[3/5/2026, 12:31:00 PM] [SESSION] Created session for testPlayer from unknown 
+[3/5/2026, 12:31:00 PM] [SESSION] Created session for testPlayer from unknown 
+[3/5/2026, 12:31:00 PM] [SESSION] Created session for testPlayer from unknown 
+[3/5/2026, 12:31:00 PM] [SESSION] Destroyed all sessions for testPlayer 
+[3/5/2026, 12:31:00 PM] [SESSION] Created session for player1 from unknown 
+[3/5/2026, 12:31:00 PM] [SESSION] Created session for player2 from unknown 
+[3/5/2026, 12:31:00 PM] [SESSION] Destroyed all sessions for player1 
+[3/5/2026, 12:31:00 PM] Failed login attempt for testUser. Count: 1 
+[3/5/2026, 12:31:00 PM] Failed login attempt for testUser. Count: 1 
+[3/5/2026, 12:31:00 PM] Failed login attempt for testUser. Count: 2 
+[3/5/2026, 12:31:00 PM] Failed login attempt for testUser. Count: 3 
+[3/5/2026, 12:31:00 PM] Failed login attempt for testUser. Count: 1 
+[3/5/2026, 12:31:00 PM] Failed login attempt for testUser. Count: 2 
+[3/5/2026, 12:31:00 PM] Failed login attempt for testUser. Count: 3 
+[3/5/2026, 12:31:00 PM] Failed login attempt for testUser. Count: 4 
+[3/5/2026, 12:31:00 PM] Failed login attempt for testUser. Count: 5 
+[3/5/2026, 12:31:00 PM] Failed login attempt for testUser. Count: 1 
+[3/5/2026, 12:31:00 PM] Failed login attempt for testUser. Count: 2 
+[3/5/2026, 12:53:03 PM] Loaded command: exportgame (admin) 
+[3/5/2026, 12:53:03 PM] Loaded command: importgame (admin) 
+[3/5/2026, 12:53:03 PM] Loaded command: join (admin) 
+[3/5/2026, 12:53:03 PM] Loaded command: secrets (admin) 
+[3/5/2026, 12:53:03 PM] Loaded command: specialize (admin) 
+[3/5/2026, 12:53:03 PM] Loaded command: vote (admin) 
+[3/5/2026, 12:53:03 PM] Loaded command: banish (chief) 
+[3/5/2026, 12:53:03 PM] Loaded command: chance (chief) 
+[3/5/2026, 12:53:03 PM] Loaded command: close (chief) 
+[3/5/2026, 12:53:03 PM] Loaded command: decree (chief) 
+[3/5/2026, 12:53:03 PM] Loaded command: endgame (chief) 
+[3/5/2026, 12:53:03 PM] Loaded command: induct (chief) 
+[3/5/2026, 12:53:03 PM] Loaded command: migrate (chief) 
+[3/5/2026, 12:53:03 PM] Loaded command: open (chief) 
+[3/5/2026, 12:53:03 PM] Loaded command: skip (chief) 
+[3/5/2026, 12:53:03 PM] Loaded command: startfood (chief) 
+[3/5/2026, 12:53:03 PM] Loaded command: startreproduction (chief) 
+[3/5/2026, 12:53:03 PM] Loaded command: startwork (chief) 
+[3/5/2026, 12:53:03 PM] Loaded command: attack (conflict) 
+[3/5/2026, 12:53:03 PM] Loaded command: defend (conflict) 
+[3/5/2026, 12:53:03 PM] Loaded command: demand (conflict) 
+[3/5/2026, 12:53:03 PM] Loaded command: faction (conflict) 
+[3/5/2026, 12:53:03 PM] Loaded command: run (conflict) 
+[3/5/2026, 12:53:03 PM] Loaded command: give (general) 
+[3/5/2026, 12:53:03 PM] Loaded command: graveyard (general) 
+[3/5/2026, 12:53:03 PM] Loaded command: help (general) 
+[3/5/2026, 12:53:03 PM] Loaded command: history (general) 
+[3/5/2026, 12:53:03 PM] Loaded command: inventory (general) 
+[3/5/2026, 12:53:03 PM] Loaded command: jerky (general) 
+[3/5/2026, 12:53:03 PM] Loaded command: law (general) 
+[3/5/2026, 12:53:03 PM] Loaded command: ping (general) 
+[3/5/2026, 12:53:03 PM] Loaded command: rollsomedice (general) 
+[3/5/2026, 12:53:03 PM] Loaded command: sacrifice (general) 
+[3/5/2026, 12:53:03 PM] Loaded command: scout (general) 
+[3/5/2026, 12:53:03 PM] Loaded command: status (general) 
+[3/5/2026, 12:53:03 PM] Loaded command: babysit (reproduction) 
+[3/5/2026, 12:53:03 PM] Loaded command: checkmating (reproduction) 
+[3/5/2026, 12:53:03 PM] Loaded command: children (reproduction) 
+[3/5/2026, 12:53:03 PM] Loaded command: consent (reproduction) 
+[3/5/2026, 12:53:03 PM] Loaded command: decline (reproduction) 
+[3/5/2026, 12:53:03 PM] Loaded command: invite (reproduction) 
+[3/5/2026, 12:53:03 PM] Loaded command: pass (reproduction) 
+[3/5/2026, 12:53:03 PM] Loaded command: romance (reproduction) 
+[3/5/2026, 12:53:03 PM] Loaded command: scorechildren (reproduction) 
+[3/5/2026, 12:53:03 PM] Loaded command: feed (rounds) 
+[3/5/2026, 12:53:03 PM] Loaded command: foodcheck (rounds) 
+[3/5/2026, 12:53:03 PM] Loaded command: leastguarded (rounds) 
+[3/5/2026, 12:53:03 PM] Loaded command: ready (rounds) 
+[3/5/2026, 12:53:03 PM] Loaded command: craft (work) 
+[3/5/2026, 12:53:03 PM] Loaded command: gather (work) 
+[3/5/2026, 12:53:03 PM] Loaded command: guard (work) 
+[3/5/2026, 12:53:03 PM] Loaded command: hunt (work) 
+[3/5/2026, 12:53:03 PM] Loaded command: idle (work) 
+[3/5/2026, 12:53:03 PM] Loaded command: ignore (work) 
+[3/5/2026, 12:53:03 PM] Loaded command: train (work) 
+[3/5/2026, 12:53:03 PM] Tribes server (WebSocket + HTTP) started on port 8000 
+[3/5/2026, 12:53:03 PM] Local access: 
+[3/5/2026, 12:53:03 PM]   Health check: http://localhost:8000/health 
+[3/5/2026, 12:53:03 PM]   Game interface: http://localhost:8000/ 
+[3/5/2026, 12:53:03 PM] Network access: 
+[3/5/2026, 12:53:03 PM]   Health check: http://192.168.1.20:8000/health 
+[3/5/2026, 12:53:03 PM]   Game interface: http://192.168.1.20:8000/ 
+[3/5/2026, 12:53:03 PM] Share the network URL with others on your local network! 
+[3/5/2026, 12:53:10 PM] New client connected from unknown 
+[3/5/2026, 12:53:10 PM] Received: listCommands  from kevinmitcham
+[3/5/2026, 12:53:10 PM] got gamestate for bug
+[3/5/2026, 12:53:10 PM] added a client record  for kevinmitcham
+[3/5/2026, 12:53:10 PM] data type listCommands
+[3/5/2026, 12:53:10 PM] [CHIEF CHECK] Player: "kevinmitcham", HasGameState: true, HasPopulation: true 
+[3/5/2026, 12:53:10 PM] [CHIEF CHECK] Found player: false, Chief status: N/A 
+[3/5/2026, 12:53:10 PM] [REF CHECK] Player "kevinmitcham" isRef: true 
+[3/5/2026, 12:53:10 PM] [CHIEF CHECK] Final isChief status: null 
+[3/5/2026, 12:53:10 PM] [CHIEF CHECK] Filtered out 12 chief commands, sending 43 total commands 
+[3/5/2026, 12:53:10 PM] [REF CHECK] Filtered out force options from 0 commands 
+[3/5/2026, 12:53:11 PM] Received: helpRequest  from kevinmitcham
+[3/5/2026, 12:53:11 PM] got gamestate for bug
+[3/5/2026, 12:53:11 PM] added a client record  for kevinmitcham
+[3/5/2026, 12:53:11 PM] data type helpRequest
+[3/5/2026, 12:53:16 PM] Received: registerRequest  from kevinmitcham
+[3/5/2026, 12:53:16 PM] got gamestate for bug
+[3/5/2026, 12:53:16 PM] added a client record  for kevinmitcham
+[3/5/2026, 12:53:16 PM] data type registerRequest
+[3/5/2026, 12:53:16 PM] [SESSION] Created session for kevinmitcham from unknown 
+[3/5/2026, 12:53:16 PM] Received: listCommands  from kevinmitcham
+[3/5/2026, 12:53:16 PM] got gamestate for bug
+[3/5/2026, 12:53:16 PM] added a client record  for kevinmitcham
+[3/5/2026, 12:53:16 PM] data type listCommands
+[3/5/2026, 12:53:16 PM] [CHIEF CHECK] Player: "kevinmitcham", HasGameState: true, HasPopulation: true 
+[3/5/2026, 12:53:16 PM] [CHIEF CHECK] Found player: false, Chief status: N/A 
+[3/5/2026, 12:53:16 PM] [REF CHECK] Player "kevinmitcham" isRef: true 
+[3/5/2026, 12:53:16 PM] [CHIEF CHECK] Final isChief status: null 
+[3/5/2026, 12:53:16 PM] [CHIEF CHECK] Filtered out 12 chief commands, sending 43 total commands 
+[3/5/2026, 12:53:16 PM] [REF CHECK] Filtered out force options from 0 commands 
+[3/5/2026, 12:53:26 PM] Received: listCommands  from ursa
+[3/5/2026, 12:53:26 PM] got gamestate for bug
+[3/5/2026, 12:53:26 PM] added a client record  for ursa
+[3/5/2026, 12:53:26 PM] data type listCommands
+[3/5/2026, 12:53:26 PM] [CHIEF CHECK] Player: "ursa", HasGameState: true, HasPopulation: true 
+[3/5/2026, 12:53:26 PM] [CHIEF CHECK] Found player: false, Chief status: N/A 
+[3/5/2026, 12:53:26 PM] [REF CHECK] Player "ursa" isRef: false 
+[3/5/2026, 12:53:26 PM] [CHIEF CHECK] Final isChief status: null 
+[3/5/2026, 12:53:26 PM] [CHIEF CHECK] Filtered out 12 chief commands, sending 43 total commands 
+[3/5/2026, 12:53:26 PM] [REF CHECK] Filtered out force options from 4 commands 
+[3/5/2026, 12:53:28 PM] Received: registerRequest  from ursa
+[3/5/2026, 12:53:28 PM] got gamestate for bug
+[3/5/2026, 12:53:28 PM] added a client record  for ursa
+[3/5/2026, 12:53:28 PM] data type registerRequest
+[3/5/2026, 12:53:28 PM] [SECURITY] New user registered: ursa 
+[3/5/2026, 12:53:28 PM] [SESSION] Created session for ursa from unknown 
+[3/5/2026, 12:53:28 PM] Received: listCommands  from ursa
+[3/5/2026, 12:53:28 PM] got gamestate for bug
+[3/5/2026, 12:53:28 PM] added a client record  for ursa
+[3/5/2026, 12:53:28 PM] data type listCommands
+[3/5/2026, 12:53:28 PM] [CHIEF CHECK] Player: "ursa", HasGameState: true, HasPopulation: true 
+[3/5/2026, 12:53:28 PM] [CHIEF CHECK] Found player: false, Chief status: N/A 
+[3/5/2026, 12:53:28 PM] [REF CHECK] Player "ursa" isRef: false 
+[3/5/2026, 12:53:28 PM] [CHIEF CHECK] Final isChief status: null 
+[3/5/2026, 12:53:28 PM] [CHIEF CHECK] Filtered out 12 chief commands, sending 43 total commands 
+[3/5/2026, 12:53:28 PM] [REF CHECK] Filtered out force options from 4 commands 
+[3/5/2026, 12:53:50 PM] New client connected from unknown 
+[3/5/2026, 12:53:50 PM] Received: listCommands  from kevinmitcham
+[3/5/2026, 12:53:50 PM] got gamestate for bug
+[3/5/2026, 12:53:50 PM] added a client record  for kevinmitcham
+[3/5/2026, 12:53:50 PM] data type listCommands
+[3/5/2026, 12:53:50 PM] [CHIEF CHECK] Player: "kevinmitcham", HasGameState: true, HasPopulation: true 
+[3/5/2026, 12:53:50 PM] [CHIEF CHECK] Found player: false, Chief status: N/A 
+[3/5/2026, 12:53:50 PM] [REF CHECK] Player "kevinmitcham" isRef: true 
+[3/5/2026, 12:53:50 PM] [CHIEF CHECK] Final isChief status: null 
+[3/5/2026, 12:53:50 PM] [CHIEF CHECK] Filtered out 12 chief commands, sending 43 total commands 
+[3/5/2026, 12:53:50 PM] [REF CHECK] Filtered out force options from 0 commands 
+[3/5/2026, 12:53:51 PM] Received: helpRequest  from ursa
+[3/5/2026, 12:53:51 PM] got gamestate for bug
+[3/5/2026, 12:53:51 PM] added a client record  for ursa
+[3/5/2026, 12:53:51 PM] data type helpRequest
+[3/5/2026, 12:53:56 PM] Received: listCommands  from sock puppet
+[3/5/2026, 12:53:56 PM] got gamestate for bug
+[3/5/2026, 12:53:56 PM] added a client record  for sock puppet
+[3/5/2026, 12:53:56 PM] data type listCommands
+[3/5/2026, 12:53:56 PM] [CHIEF CHECK] Player: "sock puppet", HasGameState: true, HasPopulation: true 
+[3/5/2026, 12:53:56 PM] [CHIEF CHECK] Found player: true, Chief status: undefined 
+[3/5/2026, 12:53:56 PM] [CHIEF CHECK] Player "sock puppet" properties: gender,food,grain,basket,spearhead,handle,name,strength,profession,canCraft,history,vote,worked,consentList,inviteIndex,inviteList,guarding,activity,cannotInvite,isPregnant
+[3/5/2026, 12:53:56 PM] [REF CHECK] Player "sock puppet" isRef: false 
+[3/5/2026, 12:53:56 PM] [CHIEF CHECK] Final isChief status: undefined 
+[3/5/2026, 12:53:56 PM] [CHIEF CHECK] Filtered out 12 chief commands, sending 43 total commands 
+[3/5/2026, 12:53:56 PM] [REF CHECK] Filtered out force options from 4 commands 
+[3/5/2026, 12:53:59 PM] Received: listCommands  from sockpuppet
+[3/5/2026, 12:53:59 PM] got gamestate for bug
+[3/5/2026, 12:53:59 PM] added a client record  for sockpuppet
+[3/5/2026, 12:53:59 PM] data type listCommands
+[3/5/2026, 12:53:59 PM] [CHIEF CHECK] Player: "sockpuppet", HasGameState: true, HasPopulation: true 
+[3/5/2026, 12:53:59 PM] [CHIEF CHECK] Found player: true, Chief status: undefined 
+[3/5/2026, 12:53:59 PM] [CHIEF CHECK] Player "sockpuppet" properties: gender,food,grain,basket,spearhead,handle,name,strength,profession,canCraft,history,vote,worked,consentList,inviteIndex,inviteList,guarding,activity,cannotInvite,isPregnant
+[3/5/2026, 12:53:59 PM] [REF CHECK] Player "sockpuppet" isRef: false 
+[3/5/2026, 12:53:59 PM] [CHIEF CHECK] Final isChief status: undefined 
+[3/5/2026, 12:53:59 PM] [CHIEF CHECK] Filtered out 12 chief commands, sending 43 total commands 
+[3/5/2026, 12:53:59 PM] [REF CHECK] Filtered out force options from 4 commands 
+[3/5/2026, 12:53:59 PM] Received: registerRequest  from sockpuppet
+[3/5/2026, 12:53:59 PM] got gamestate for bug
+[3/5/2026, 12:53:59 PM] added a client record  for sockpuppet
+[3/5/2026, 12:53:59 PM] data type registerRequest
+[3/5/2026, 12:54:04 PM] Received: registerRequest  from sockpuppet
+[3/5/2026, 12:54:04 PM] got gamestate for bug
+[3/5/2026, 12:54:04 PM] added a client record  for sockpuppet
+[3/5/2026, 12:54:04 PM] data type registerRequest
+[3/5/2026, 12:54:04 PM] [SESSION] Created session for sockpuppet from unknown 
+[3/5/2026, 12:54:04 PM] Received: listCommands  from sockpuppet
+[3/5/2026, 12:54:04 PM] got gamestate for bug
+[3/5/2026, 12:54:04 PM] added a client record  for sockpuppet
+[3/5/2026, 12:54:04 PM] data type listCommands
+[3/5/2026, 12:54:04 PM] [CHIEF CHECK] Player: "sockpuppet", HasGameState: true, HasPopulation: true 
+[3/5/2026, 12:54:04 PM] [CHIEF CHECK] Found player: true, Chief status: undefined 
+[3/5/2026, 12:54:04 PM] [CHIEF CHECK] Player "sockpuppet" properties: gender,food,grain,basket,spearhead,handle,name,strength,profession,canCraft,history,vote,worked,consentList,inviteIndex,inviteList,guarding,activity,cannotInvite,isPregnant
+[3/5/2026, 12:54:04 PM] [REF CHECK] Player "sockpuppet" isRef: false 
+[3/5/2026, 12:54:04 PM] [CHIEF CHECK] Final isChief status: undefined 
+[3/5/2026, 12:54:04 PM] [CHIEF CHECK] Filtered out 12 chief commands, sending 43 total commands 
+[3/5/2026, 12:54:04 PM] [REF CHECK] Filtered out force options from 4 commands 
+[3/5/2026, 12:54:08 PM] Received: infoRequest  from sockpuppet
+[3/5/2026, 12:54:08 PM] Received: infoRequest  from sockpuppet
+[3/5/2026, 12:54:08 PM] got gamestate for bug
+[3/5/2026, 12:54:08 PM] added a client record  for sockpuppet
+[3/5/2026, 12:54:08 PM] data type infoRequest
+[3/5/2026, 12:54:08 PM] got gamestate for bug
+[3/5/2026, 12:54:08 PM] added a client record  for sockpuppet
+[3/5/2026, 12:54:08 PM] data type infoRequest
+[3/5/2026, 12:54:08 PM] Received: infoRequest  from sockpuppet
+[3/5/2026, 12:54:08 PM] got gamestate for bug
+[3/5/2026, 12:54:08 PM] added a client record  for sockpuppet
+[3/5/2026, 12:54:08 PM] data type infoRequest
+[3/5/2026, 12:54:17 PM] New client connected from unknown 
+[3/5/2026, 12:54:17 PM] Received: listCommands  from unknown
+[3/5/2026, 12:54:17 PM] got gamestate for bear
+[3/5/2026, 12:54:17 PM] added a client record  for 
+[3/5/2026, 12:54:17 PM] data type listCommands
+[3/5/2026, 12:54:17 PM] [CHIEF CHECK] Player: "", HasGameState: true, HasPopulation: true 
+[3/5/2026, 12:54:17 PM] [REF CHECK] Player "" isRef:  
+[3/5/2026, 12:54:17 PM] [CHIEF CHECK] Final isChief status: false 
+[3/5/2026, 12:54:17 PM] [CHIEF CHECK] Filtered out 12 chief commands, sending 43 total commands 
+[3/5/2026, 12:54:17 PM] [REF CHECK] Filtered out force options from 4 commands 
+[3/5/2026, 12:54:17 PM] Client disconnected: unknown 
+[3/5/2026, 12:54:17 PM] New client connected from unknown 
+[3/5/2026, 12:54:18 PM] Received: listCommands  from unknown
+[3/5/2026, 12:54:18 PM] got gamestate for bear
+[3/5/2026, 12:54:18 PM] added a client record  for 
+[3/5/2026, 12:54:18 PM] data type listCommands
+[3/5/2026, 12:54:18 PM] [CHIEF CHECK] Player: "", HasGameState: true, HasPopulation: true 
+[3/5/2026, 12:54:18 PM] [REF CHECK] Player "" isRef:  
+[3/5/2026, 12:54:18 PM] [CHIEF CHECK] Final isChief status: false 
+[3/5/2026, 12:54:18 PM] [CHIEF CHECK] Filtered out 12 chief commands, sending 43 total commands 
+[3/5/2026, 12:54:18 PM] [REF CHECK] Filtered out force options from 4 commands 
+[3/5/2026, 12:54:18 PM] Received: helpRequest  from sockpuppet
+[3/5/2026, 12:54:18 PM] got gamestate for bug
+[3/5/2026, 12:54:18 PM] added a client record  for sockpuppet
+[3/5/2026, 12:54:18 PM] data type helpRequest
+[3/5/2026, 12:54:22 PM] Received: listCommands  from kevin
+[3/5/2026, 12:54:22 PM] got gamestate for bug
+[3/5/2026, 12:54:22 PM] added a client record  for kevin
+[3/5/2026, 12:54:22 PM] data type listCommands
+[3/5/2026, 12:54:22 PM] [CHIEF CHECK] Player: "kevin", HasGameState: true, HasPopulation: true 
+[3/5/2026, 12:54:22 PM] [CHIEF CHECK] Found player: true, Chief status: true 
+[3/5/2026, 12:54:22 PM] [CHIEF CHECK] Player "kevin" properties: gender,food,grain,basket,spearhead,handle,name,profession,history,vote,chief,worked,consentList,inviteIndex,inviteList,canCraft,strategy,activity,cannotInvite,isInjured
+[3/5/2026, 12:54:22 PM] [REF CHECK] Player "kevin" isRef: false 
+[3/5/2026, 12:54:22 PM] [CHIEF CHECK] Final isChief status: true 
+[3/5/2026, 12:54:22 PM] [CHIEF CHECK] Filtered out 0 chief commands, sending 55 total commands 
+[3/5/2026, 12:54:22 PM] [REF CHECK] Filtered out force options from 5 commands 
+[3/5/2026, 12:54:25 PM] Received: registerRequest  from kevin
+[3/5/2026, 12:54:25 PM] got gamestate for bug
+[3/5/2026, 12:54:25 PM] added a client record  for kevin
+[3/5/2026, 12:54:25 PM] data type registerRequest
+[3/5/2026, 12:54:25 PM] [SESSION] Created session for kevin from unknown 
+[3/5/2026, 12:54:25 PM] Received: listCommands  from kevin
+[3/5/2026, 12:54:25 PM] got gamestate for bug
+[3/5/2026, 12:54:25 PM] added a client record  for kevin
+[3/5/2026, 12:54:25 PM] data type listCommands
+[3/5/2026, 12:54:25 PM] [CHIEF CHECK] Player: "kevin", HasGameState: true, HasPopulation: true 
+[3/5/2026, 12:54:25 PM] [CHIEF CHECK] Found player: true, Chief status: true 
+[3/5/2026, 12:54:25 PM] [CHIEF CHECK] Player "kevin" properties: gender,food,grain,basket,spearhead,handle,name,profession,history,vote,chief,worked,consentList,inviteIndex,inviteList,canCraft,strategy,activity,cannotInvite,isInjured
+[3/5/2026, 12:54:25 PM] [REF CHECK] Player "kevin" isRef: false 
+[3/5/2026, 12:54:25 PM] [CHIEF CHECK] Final isChief status: true 
+[3/5/2026, 12:54:25 PM] [CHIEF CHECK] Filtered out 0 chief commands, sending 55 total commands 
+[3/5/2026, 12:54:25 PM] [REF CHECK] Filtered out force options from 5 commands 
+[3/5/2026, 12:54:49 PM] Client disconnected: kevin 
+[3/5/2026, 12:54:49 PM] New client connected from unknown 
+[3/5/2026, 12:54:49 PM] Received: listCommands  from unknown
+[3/5/2026, 12:54:49 PM] got gamestate for bear
+[3/5/2026, 12:54:49 PM] added a client record  for 
+[3/5/2026, 12:54:49 PM] data type listCommands
+[3/5/2026, 12:54:49 PM] [CHIEF CHECK] Player: "", HasGameState: true, HasPopulation: true 
+[3/5/2026, 12:54:49 PM] [REF CHECK] Player "" isRef:  
+[3/5/2026, 12:54:49 PM] [CHIEF CHECK] Final isChief status: false 
+[3/5/2026, 12:54:49 PM] [CHIEF CHECK] Filtered out 12 chief commands, sending 43 total commands 
+[3/5/2026, 12:54:49 PM] [REF CHECK] Filtered out force options from 4 commands 
+[3/5/2026, 12:54:50 PM] Received: helpRequest  from kevin
+[3/5/2026, 12:54:50 PM] got gamestate for bug
+[3/5/2026, 12:54:50 PM] added a client record  for kevin
+[3/5/2026, 12:54:50 PM] data type helpRequest
+[3/5/2026, 12:54:55 PM] Received: registerRequest  from kevin
+[3/5/2026, 12:54:55 PM] got gamestate for bug
+[3/5/2026, 12:54:55 PM] added a client record  for kevin
+[3/5/2026, 12:54:55 PM] data type registerRequest
+[3/5/2026, 12:54:55 PM] [SESSION] Created session for kevin from unknown 
+[3/5/2026, 12:54:55 PM] Received: listCommands  from kevin
+[3/5/2026, 12:54:55 PM] got gamestate for bug
+[3/5/2026, 12:54:55 PM] added a client record  for kevin
+[3/5/2026, 12:54:55 PM] data type listCommands
+[3/5/2026, 12:54:55 PM] [CHIEF CHECK] Player: "kevin", HasGameState: true, HasPopulation: true 
+[3/5/2026, 12:54:55 PM] [CHIEF CHECK] Found player: true, Chief status: true 
+[3/5/2026, 12:54:55 PM] [CHIEF CHECK] Player "kevin" properties: gender,food,grain,basket,spearhead,handle,name,profession,history,vote,chief,worked,consentList,inviteIndex,inviteList,canCraft,strategy,activity,cannotInvite,isInjured
+[3/5/2026, 12:54:55 PM] [REF CHECK] Player "kevin" isRef: false 
+[3/5/2026, 12:54:55 PM] [CHIEF CHECK] Final isChief status: true 
+[3/5/2026, 12:54:55 PM] [CHIEF CHECK] Filtered out 0 chief commands, sending 55 total commands 
+[3/5/2026, 12:54:55 PM] [REF CHECK] Filtered out force options from 5 commands 
+[3/5/2026, 12:55:01 PM] Received: infoRequest  from kevin
+[3/5/2026, 12:55:01 PM] got gamestate for bug
+[3/5/2026, 12:55:01 PM] added a client record  for kevin
+[3/5/2026, 12:55:01 PM] data type infoRequest

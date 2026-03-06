@@ -38,12 +38,12 @@ function specialize(playerName, profession, gameState) {
 
   helpMessage = 'Welcome new hunter.  \n';
   helpMessage +=
-    'To hunt, do /hunt and the bot rolls 3d6.  Higher numbers are bigger animals, and very low numbers are bad - you could get injured. \n';
+    'To hunt, use hunt and the bot rolls 3d6.  Higher numbers are bigger animals, and very low numbers are bad - you could get injured. \n';
   helpMessage += 'You cannot guard children while hunting. \n';
   helpMessage +=
     'Before you set out, you might consider waiting for a crafter to make you a spearhead which gives you a bonus to your roll. \n';
   helpMessage +=
-    'You can also `/gather`, but at a penalty. If your tribe has someone who knows how to craft, you can try to learn that skill with `/train`';
+    'You can also gather, but at a penalty. If your tribe has someone who knows how to craft, you can try to learn that skill with `/train`';
   helpMessage += 'A hunting result looks like this: \n';
   helpMessage +=
     'playername goes hunting. [13] +strong +spearhead\n    sturgeon +40 food\n The spearhead broke! (roll 1)\nThe game track goes from 1 to 2\n\n';
@@ -59,9 +59,9 @@ function specialize(playerName, profession, gameState) {
     profession = 'crafter';
     person.profession = profession;
     helpMessage =
-      'Welcome new crafter.  To craft, do `/craft basket` or `/craft spearhead`.  There is a 1/6 (basket) or 1/3 (spearhead) chance of failing. \n';
+      'Welcome new crafter.  To craft, use the craft command to create a basket or spearhead.  There is a 1/6 (basket) or 1/3 (spearhead) chance of failing. \n';
     helpMessage += 'You can guard up to two children while crafting. \n';
-    helpMessage += 'You can also `/gather`  or `/hunt`, but at a penalty. \n';
+    helpMessage += 'You can also gather  or hunt, but at a penalty. \n';
     helpMessage +=
       'By default, you will train others in crafting if they take a season to train.  To toggle this setting, use `/secrets`.';
   }
@@ -69,13 +69,13 @@ function specialize(playerName, profession, gameState) {
     profession = 'gatherer';
     person.profession = profession;
     helpMessage =
-      'Welcome new gatherer.  To gather, do `/gather`, and the bot rolls 3d6.  Higher numbers generally produce more food. \n';
+      'Welcome new gatherer.  To gather, use the gather command, and the bot rolls 3d6.  Higher numbers generally produce more food. \n';
     helpMessage +=
       'You can guard 2 children without penalty; watching 3 or 4 gives an increasing penalty; 5 is too many to gather with. \n';
     helpMessage +=
       'Before you set out, you might consider waiting for a crafter to make you a basket which gives you an additional gather attempt. \n';
     helpMessage +=
-      'You can also `/hunt`, but at a penalty. If your tribe has someone who knows how to craft, you can try to learn that skill with `/train`\n';
+      'You can also hunt, but at a penalty. If your tribe has someone who knows how to craft, you can try to learn that skill with `/train`\n';
     helpMessage += 'A gathering result looks like this:\n';
     helpMessage +=
       'playername gathers [11]-season mushrooms (6) basket: [4]clams (4)\n';

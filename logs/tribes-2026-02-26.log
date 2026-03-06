@@ -1,0 +1,918 @@
+[2/26/2026, 8:23:05 AM] Loaded command: autorefresh (admin) 
+[2/26/2026, 8:23:05 AM] Loaded command: join (admin) 
+[2/26/2026, 8:23:05 AM] Loaded command: secrets (admin) 
+[2/26/2026, 8:23:05 AM] Loaded command: specialize (admin) 
+[2/26/2026, 8:23:05 AM] Loaded command: vote (admin) 
+[2/26/2026, 8:23:05 AM] Loaded command: banish (chief) 
+[2/26/2026, 8:23:05 AM] Loaded command: chance (chief) 
+[2/26/2026, 8:23:05 AM] Loaded command: close (chief) 
+[2/26/2026, 8:23:05 AM] Loaded command: decree (chief) 
+[2/26/2026, 8:23:05 AM] Loaded command: endgame (chief) 
+[2/26/2026, 8:23:05 AM] Loaded command: induct (chief) 
+[2/26/2026, 8:23:05 AM] Loaded command: migrate (chief) 
+[2/26/2026, 8:23:05 AM] Loaded command: open (chief) 
+[2/26/2026, 8:23:05 AM] Loaded command: skip (chief) 
+[2/26/2026, 8:23:05 AM] Loaded command: startfood (chief) 
+[2/26/2026, 8:23:05 AM] Loaded command: startreproduction (chief) 
+[2/26/2026, 8:23:05 AM] Loaded command: startwork (chief) 
+[2/26/2026, 8:23:05 AM] Loaded command: attack (conflict) 
+[2/26/2026, 8:23:05 AM] Loaded command: defend (conflict) 
+[2/26/2026, 8:23:05 AM] Loaded command: demand (conflict) 
+[2/26/2026, 8:23:05 AM] Loaded command: faction (conflict) 
+[2/26/2026, 8:23:05 AM] Loaded command: run (conflict) 
+[2/26/2026, 8:23:05 AM] Loaded command: give (general) 
+[2/26/2026, 8:23:05 AM] Loaded command: graveyard (general) 
+[2/26/2026, 8:23:05 AM] Loaded command: help (general) 
+[2/26/2026, 8:23:05 AM] Loaded command: history (general) 
+[2/26/2026, 8:23:05 AM] Loaded command: inventory (general) 
+[2/26/2026, 8:23:05 AM] Loaded command: jerky (general) 
+[2/26/2026, 8:23:05 AM] Loaded command: law (general) 
+[2/26/2026, 8:23:05 AM] Loaded command: ping (general) 
+[2/26/2026, 8:23:05 AM] Loaded command: rollsomedice (general) 
+[2/26/2026, 8:23:05 AM] Loaded command: sacrifice (general) 
+[2/26/2026, 8:23:05 AM] Loaded command: scout (general) 
+[2/26/2026, 8:23:05 AM] Loaded command: status (general) 
+[2/26/2026, 8:23:05 AM] Loaded command: babysit (reproduction) 
+[2/26/2026, 8:23:05 AM] Loaded command: checkmating (reproduction) 
+[2/26/2026, 8:23:05 AM] Loaded command: children (reproduction) 
+[2/26/2026, 8:23:05 AM] Loaded command: consent (reproduction) 
+[2/26/2026, 8:23:05 AM] Loaded command: decline (reproduction) 
+[2/26/2026, 8:23:05 AM] Loaded command: invite (reproduction) 
+[2/26/2026, 8:23:05 AM] Loaded command: pass (reproduction) 
+[2/26/2026, 8:23:05 AM] Loaded command: romance (reproduction) 
+[2/26/2026, 8:23:05 AM] Loaded command: scorechildren (reproduction) 
+[2/26/2026, 8:23:05 AM] Loaded command: feed (rounds) 
+[2/26/2026, 8:23:05 AM] Loaded command: foodcheck (rounds) 
+[2/26/2026, 8:23:05 AM] Loaded command: leastguarded (rounds) 
+[2/26/2026, 8:23:05 AM] Loaded command: ready (rounds) 
+[2/26/2026, 8:23:05 AM] Loaded command: craft (work) 
+[2/26/2026, 8:23:05 AM] Loaded command: gather (work) 
+[2/26/2026, 8:23:05 AM] Loaded command: guard (work) 
+[2/26/2026, 8:23:05 AM] Loaded command: hunt (work) 
+[2/26/2026, 8:23:05 AM] Loaded command: idle (work) 
+[2/26/2026, 8:23:05 AM] Loaded command: ignore (work) 
+[2/26/2026, 8:23:05 AM] Loaded command: train (work) 
+[2/26/2026, 4:27:18 PM] Loaded command: autorefresh (admin) 
+[2/26/2026, 4:27:18 PM] Loaded command: join (admin) 
+[2/26/2026, 4:27:18 PM] Loaded command: secrets (admin) 
+[2/26/2026, 4:27:18 PM] Loaded command: specialize (admin) 
+[2/26/2026, 4:27:18 PM] Loaded command: vote (admin) 
+[2/26/2026, 4:27:18 PM] Loaded command: banish (chief) 
+[2/26/2026, 4:27:18 PM] Loaded command: chance (chief) 
+[2/26/2026, 4:27:18 PM] Loaded command: close (chief) 
+[2/26/2026, 4:27:18 PM] Loaded command: decree (chief) 
+[2/26/2026, 4:27:18 PM] Loaded command: endgame (chief) 
+[2/26/2026, 4:27:18 PM] Loaded command: induct (chief) 
+[2/26/2026, 4:27:18 PM] Loaded command: migrate (chief) 
+[2/26/2026, 4:27:18 PM] Loaded command: open (chief) 
+[2/26/2026, 4:27:18 PM] Loaded command: skip (chief) 
+[2/26/2026, 4:27:18 PM] Loaded command: startfood (chief) 
+[2/26/2026, 4:27:18 PM] Loaded command: startreproduction (chief) 
+[2/26/2026, 4:27:18 PM] Loaded command: startwork (chief) 
+[2/26/2026, 4:27:18 PM] Loaded command: attack (conflict) 
+[2/26/2026, 4:27:18 PM] Loaded command: defend (conflict) 
+[2/26/2026, 4:27:18 PM] Loaded command: demand (conflict) 
+[2/26/2026, 4:27:18 PM] Loaded command: faction (conflict) 
+[2/26/2026, 4:27:18 PM] Loaded command: run (conflict) 
+[2/26/2026, 4:27:18 PM] Loaded command: give (general) 
+[2/26/2026, 4:27:18 PM] Loaded command: graveyard (general) 
+[2/26/2026, 4:27:18 PM] Loaded command: help (general) 
+[2/26/2026, 4:27:18 PM] Loaded command: history (general) 
+[2/26/2026, 4:27:18 PM] Loaded command: inventory (general) 
+[2/26/2026, 4:27:18 PM] Loaded command: jerky (general) 
+[2/26/2026, 4:27:18 PM] Loaded command: law (general) 
+[2/26/2026, 4:27:18 PM] Loaded command: ping (general) 
+[2/26/2026, 4:27:18 PM] Loaded command: rollsomedice (general) 
+[2/26/2026, 4:27:18 PM] Loaded command: sacrifice (general) 
+[2/26/2026, 4:27:18 PM] Loaded command: scout (general) 
+[2/26/2026, 4:27:18 PM] Loaded command: status (general) 
+[2/26/2026, 4:27:18 PM] Loaded command: babysit (reproduction) 
+[2/26/2026, 4:27:18 PM] Loaded command: checkmating (reproduction) 
+[2/26/2026, 4:27:18 PM] Loaded command: children (reproduction) 
+[2/26/2026, 4:27:18 PM] Loaded command: consent (reproduction) 
+[2/26/2026, 4:27:18 PM] Loaded command: decline (reproduction) 
+[2/26/2026, 4:27:18 PM] Loaded command: invite (reproduction) 
+[2/26/2026, 4:27:18 PM] Loaded command: pass (reproduction) 
+[2/26/2026, 4:27:18 PM] Loaded command: romance (reproduction) 
+[2/26/2026, 4:27:18 PM] Loaded command: scorechildren (reproduction) 
+[2/26/2026, 4:27:18 PM] Loaded command: feed (rounds) 
+[2/26/2026, 4:27:18 PM] Loaded command: foodcheck (rounds) 
+[2/26/2026, 4:27:18 PM] Loaded command: leastguarded (rounds) 
+[2/26/2026, 4:27:18 PM] Loaded command: ready (rounds) 
+[2/26/2026, 4:27:18 PM] Loaded command: craft (work) 
+[2/26/2026, 4:27:18 PM] Loaded command: gather (work) 
+[2/26/2026, 4:27:18 PM] Loaded command: guard (work) 
+[2/26/2026, 4:27:18 PM] Loaded command: hunt (work) 
+[2/26/2026, 4:27:18 PM] Loaded command: idle (work) 
+[2/26/2026, 4:27:18 PM] Loaded command: ignore (work) 
+[2/26/2026, 4:27:18 PM] Loaded command: train (work) 
+[2/26/2026, 4:27:18 PM] Tribes server (WebSocket + HTTP) started on port 8000 
+[2/26/2026, 4:27:18 PM] Local access: 
+[2/26/2026, 4:27:18 PM]   Health check: http://localhost:8000/health 
+[2/26/2026, 4:27:18 PM]   Game interface: http://localhost:8000/ 
+[2/26/2026, 4:27:18 PM] Network access: 
+[2/26/2026, 4:27:18 PM]   Health check: http://172.17.0.2:8000/health 
+[2/26/2026, 4:27:18 PM]   Game interface: http://172.17.0.2:8000/ 
+[2/26/2026, 4:27:18 PM] Share the network URL with others on your local network! 
+[2/26/2026, 4:27:19 PM] New client connected from unknown 
+[2/26/2026, 4:27:19 PM] Received: listCommands  from sockpuppet
+[2/26/2026, 4:27:19 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:27:19 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:27:19 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:27:19 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:27:19 PM] got gamestate for bug
+[2/26/2026, 4:27:19 PM] added a client record  for sockpuppet
+[2/26/2026, 4:27:19 PM] data type listCommands
+[2/26/2026, 4:27:19 PM] [CHIEF CHECK] Player: "sockpuppet", HasGameState: true, HasPopulation: true 
+[2/26/2026, 4:27:19 PM] [CHIEF CHECK] Found player: true, Chief status: undefined 
+[2/26/2026, 4:27:19 PM] [CHIEF CHECK] Player "sockpuppet" properties: gender,food,grain,basket,spearhead,handle,name,strength,profession,canCraft,history,vote,worked,consentList,inviteIndex,inviteList,guarding,activity
+[2/26/2026, 4:27:19 PM] [REF CHECK] Player "sockpuppet" isRef: false 
+[2/26/2026, 4:27:19 PM] [CHIEF CHECK] Final isChief status: undefined 
+[2/26/2026, 4:27:19 PM] [CHIEF CHECK] Filtered out 12 chief commands, sending 42 total commands 
+[2/26/2026, 4:27:19 PM] [REF CHECK] Filtered out force options from 4 commands 
+[2/26/2026, 4:27:19 PM] got gamestate for bug
+[2/26/2026, 4:27:19 PM] added a client record  for sockpuppet
+[2/26/2026, 4:27:19 PM] data type infoRequest
+[2/26/2026, 4:27:19 PM] got gamestate for bug
+[2/26/2026, 4:27:19 PM] added a client record  for sockpuppet
+[2/26/2026, 4:27:19 PM] data type infoRequest
+[2/26/2026, 4:27:19 PM] got gamestate for bug
+[2/26/2026, 4:27:19 PM] added a client record  for sockpuppet
+[2/26/2026, 4:27:19 PM] data type infoRequest
+[2/26/2026, 4:27:19 PM] got gamestate for bug
+[2/26/2026, 4:27:19 PM] added a client record  for sockpuppet
+[2/26/2026, 4:27:19 PM] data type infoRequest
+[2/26/2026, 4:27:49 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:27:49 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:27:49 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:27:49 PM] got gamestate for bug
+[2/26/2026, 4:27:49 PM] added a client record  for sockpuppet
+[2/26/2026, 4:27:49 PM] data type infoRequest
+[2/26/2026, 4:27:49 PM] got gamestate for bug
+[2/26/2026, 4:27:49 PM] added a client record  for sockpuppet
+[2/26/2026, 4:27:49 PM] data type infoRequest
+[2/26/2026, 4:27:49 PM] got gamestate for bug
+[2/26/2026, 4:27:49 PM] added a client record  for sockpuppet
+[2/26/2026, 4:27:49 PM] data type infoRequest
+[2/26/2026, 4:28:19 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:28:19 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:28:19 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:28:19 PM] got gamestate for bug
+[2/26/2026, 4:28:19 PM] added a client record  for sockpuppet
+[2/26/2026, 4:28:19 PM] data type infoRequest
+[2/26/2026, 4:28:19 PM] got gamestate for bug
+[2/26/2026, 4:28:19 PM] added a client record  for sockpuppet
+[2/26/2026, 4:28:19 PM] data type infoRequest
+[2/26/2026, 4:28:19 PM] got gamestate for bug
+[2/26/2026, 4:28:19 PM] added a client record  for sockpuppet
+[2/26/2026, 4:28:19 PM] data type infoRequest
+[2/26/2026, 4:28:49 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:28:49 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:28:49 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:28:49 PM] got gamestate for bug
+[2/26/2026, 4:28:49 PM] added a client record  for sockpuppet
+[2/26/2026, 4:28:49 PM] data type infoRequest
+[2/26/2026, 4:28:49 PM] got gamestate for bug
+[2/26/2026, 4:28:49 PM] added a client record  for sockpuppet
+[2/26/2026, 4:28:49 PM] data type infoRequest
+[2/26/2026, 4:28:49 PM] got gamestate for bug
+[2/26/2026, 4:28:49 PM] added a client record  for sockpuppet
+[2/26/2026, 4:28:49 PM] data type infoRequest
+[2/26/2026, 4:29:19 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:29:19 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:29:19 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:29:19 PM] got gamestate for bug
+[2/26/2026, 4:29:19 PM] added a client record  for sockpuppet
+[2/26/2026, 4:29:19 PM] data type infoRequest
+[2/26/2026, 4:29:19 PM] got gamestate for bug
+[2/26/2026, 4:29:19 PM] added a client record  for sockpuppet
+[2/26/2026, 4:29:19 PM] data type infoRequest
+[2/26/2026, 4:29:19 PM] got gamestate for bug
+[2/26/2026, 4:29:19 PM] added a client record  for sockpuppet
+[2/26/2026, 4:29:19 PM] data type infoRequest
+[2/26/2026, 4:29:49 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:29:49 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:29:49 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:29:49 PM] got gamestate for bug
+[2/26/2026, 4:29:49 PM] added a client record  for sockpuppet
+[2/26/2026, 4:29:49 PM] data type infoRequest
+[2/26/2026, 4:29:49 PM] got gamestate for bug
+[2/26/2026, 4:29:49 PM] added a client record  for sockpuppet
+[2/26/2026, 4:29:49 PM] data type infoRequest
+[2/26/2026, 4:29:49 PM] got gamestate for bug
+[2/26/2026, 4:29:49 PM] added a client record  for sockpuppet
+[2/26/2026, 4:29:49 PM] data type infoRequest
+[2/26/2026, 4:30:19 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:30:19 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:30:19 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:30:19 PM] got gamestate for bug
+[2/26/2026, 4:30:19 PM] added a client record  for sockpuppet
+[2/26/2026, 4:30:19 PM] data type infoRequest
+[2/26/2026, 4:30:19 PM] got gamestate for bug
+[2/26/2026, 4:30:19 PM] added a client record  for sockpuppet
+[2/26/2026, 4:30:19 PM] data type infoRequest
+[2/26/2026, 4:30:19 PM] got gamestate for bug
+[2/26/2026, 4:30:19 PM] added a client record  for sockpuppet
+[2/26/2026, 4:30:19 PM] data type infoRequest
+[2/26/2026, 4:30:49 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:30:49 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:30:49 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:30:49 PM] got gamestate for bug
+[2/26/2026, 4:30:49 PM] added a client record  for sockpuppet
+[2/26/2026, 4:30:49 PM] data type infoRequest
+[2/26/2026, 4:30:49 PM] got gamestate for bug
+[2/26/2026, 4:30:49 PM] added a client record  for sockpuppet
+[2/26/2026, 4:30:49 PM] data type infoRequest
+[2/26/2026, 4:30:49 PM] got gamestate for bug
+[2/26/2026, 4:30:49 PM] added a client record  for sockpuppet
+[2/26/2026, 4:30:49 PM] data type infoRequest
+[2/26/2026, 4:31:19 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:31:19 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:31:19 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:31:19 PM] got gamestate for bug
+[2/26/2026, 4:31:19 PM] added a client record  for sockpuppet
+[2/26/2026, 4:31:19 PM] data type infoRequest
+[2/26/2026, 4:31:19 PM] got gamestate for bug
+[2/26/2026, 4:31:19 PM] added a client record  for sockpuppet
+[2/26/2026, 4:31:19 PM] data type infoRequest
+[2/26/2026, 4:31:19 PM] got gamestate for bug
+[2/26/2026, 4:31:19 PM] added a client record  for sockpuppet
+[2/26/2026, 4:31:19 PM] data type infoRequest
+[2/26/2026, 4:31:49 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:31:49 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:31:49 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:31:49 PM] got gamestate for bug
+[2/26/2026, 4:31:49 PM] added a client record  for sockpuppet
+[2/26/2026, 4:31:49 PM] data type infoRequest
+[2/26/2026, 4:31:49 PM] got gamestate for bug
+[2/26/2026, 4:31:49 PM] added a client record  for sockpuppet
+[2/26/2026, 4:31:49 PM] data type infoRequest
+[2/26/2026, 4:31:49 PM] got gamestate for bug
+[2/26/2026, 4:31:49 PM] added a client record  for sockpuppet
+[2/26/2026, 4:31:49 PM] data type infoRequest
+[2/26/2026, 4:32:19 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:32:19 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:32:19 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:32:19 PM] got gamestate for bug
+[2/26/2026, 4:32:19 PM] added a client record  for sockpuppet
+[2/26/2026, 4:32:19 PM] data type infoRequest
+[2/26/2026, 4:32:19 PM] got gamestate for bug
+[2/26/2026, 4:32:19 PM] added a client record  for sockpuppet
+[2/26/2026, 4:32:19 PM] data type infoRequest
+[2/26/2026, 4:32:19 PM] got gamestate for bug
+[2/26/2026, 4:32:19 PM] added a client record  for sockpuppet
+[2/26/2026, 4:32:19 PM] data type infoRequest
+[2/26/2026, 4:32:49 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:32:49 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:32:49 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:32:49 PM] got gamestate for bug
+[2/26/2026, 4:32:49 PM] added a client record  for sockpuppet
+[2/26/2026, 4:32:49 PM] data type infoRequest
+[2/26/2026, 4:32:49 PM] got gamestate for bug
+[2/26/2026, 4:32:49 PM] added a client record  for sockpuppet
+[2/26/2026, 4:32:49 PM] data type infoRequest
+[2/26/2026, 4:32:49 PM] got gamestate for bug
+[2/26/2026, 4:32:49 PM] added a client record  for sockpuppet
+[2/26/2026, 4:32:49 PM] data type infoRequest
+[2/26/2026, 4:33:19 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:33:19 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:33:19 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:33:19 PM] got gamestate for bug
+[2/26/2026, 4:33:19 PM] added a client record  for sockpuppet
+[2/26/2026, 4:33:19 PM] data type infoRequest
+[2/26/2026, 4:33:19 PM] got gamestate for bug
+[2/26/2026, 4:33:19 PM] added a client record  for sockpuppet
+[2/26/2026, 4:33:19 PM] data type infoRequest
+[2/26/2026, 4:33:19 PM] got gamestate for bug
+[2/26/2026, 4:33:19 PM] added a client record  for sockpuppet
+[2/26/2026, 4:33:19 PM] data type infoRequest
+[2/26/2026, 4:33:49 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:33:49 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:33:49 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:33:49 PM] got gamestate for bug
+[2/26/2026, 4:33:49 PM] added a client record  for sockpuppet
+[2/26/2026, 4:33:49 PM] data type infoRequest
+[2/26/2026, 4:33:49 PM] got gamestate for bug
+[2/26/2026, 4:33:49 PM] added a client record  for sockpuppet
+[2/26/2026, 4:33:49 PM] data type infoRequest
+[2/26/2026, 4:33:49 PM] got gamestate for bug
+[2/26/2026, 4:33:49 PM] added a client record  for sockpuppet
+[2/26/2026, 4:33:49 PM] data type infoRequest
+[2/26/2026, 4:34:19 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:34:19 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:34:19 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:34:19 PM] got gamestate for bug
+[2/26/2026, 4:34:19 PM] added a client record  for sockpuppet
+[2/26/2026, 4:34:19 PM] data type infoRequest
+[2/26/2026, 4:34:19 PM] got gamestate for bug
+[2/26/2026, 4:34:19 PM] added a client record  for sockpuppet
+[2/26/2026, 4:34:19 PM] data type infoRequest
+[2/26/2026, 4:34:19 PM] got gamestate for bug
+[2/26/2026, 4:34:19 PM] added a client record  for sockpuppet
+[2/26/2026, 4:34:19 PM] data type infoRequest
+[2/26/2026, 4:34:49 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:34:49 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:34:49 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:34:49 PM] got gamestate for bug
+[2/26/2026, 4:34:49 PM] added a client record  for sockpuppet
+[2/26/2026, 4:34:49 PM] data type infoRequest
+[2/26/2026, 4:34:49 PM] got gamestate for bug
+[2/26/2026, 4:34:49 PM] added a client record  for sockpuppet
+[2/26/2026, 4:34:49 PM] data type infoRequest
+[2/26/2026, 4:34:49 PM] got gamestate for bug
+[2/26/2026, 4:34:49 PM] added a client record  for sockpuppet
+[2/26/2026, 4:34:49 PM] data type infoRequest
+[2/26/2026, 4:35:19 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:35:19 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:35:19 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:35:19 PM] got gamestate for bug
+[2/26/2026, 4:35:19 PM] added a client record  for sockpuppet
+[2/26/2026, 4:35:19 PM] data type infoRequest
+[2/26/2026, 4:35:19 PM] got gamestate for bug
+[2/26/2026, 4:35:19 PM] added a client record  for sockpuppet
+[2/26/2026, 4:35:19 PM] data type infoRequest
+[2/26/2026, 4:35:19 PM] got gamestate for bug
+[2/26/2026, 4:35:19 PM] added a client record  for sockpuppet
+[2/26/2026, 4:35:19 PM] data type infoRequest
+[2/26/2026, 4:35:49 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:35:49 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:35:49 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:35:49 PM] got gamestate for bug
+[2/26/2026, 4:35:49 PM] added a client record  for sockpuppet
+[2/26/2026, 4:35:49 PM] data type infoRequest
+[2/26/2026, 4:35:49 PM] got gamestate for bug
+[2/26/2026, 4:35:49 PM] added a client record  for sockpuppet
+[2/26/2026, 4:35:49 PM] data type infoRequest
+[2/26/2026, 4:35:49 PM] got gamestate for bug
+[2/26/2026, 4:35:49 PM] added a client record  for sockpuppet
+[2/26/2026, 4:35:49 PM] data type infoRequest
+[2/26/2026, 4:36:19 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:36:19 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:36:19 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:36:19 PM] got gamestate for bug
+[2/26/2026, 4:36:19 PM] added a client record  for sockpuppet
+[2/26/2026, 4:36:19 PM] data type infoRequest
+[2/26/2026, 4:36:19 PM] got gamestate for bug
+[2/26/2026, 4:36:19 PM] added a client record  for sockpuppet
+[2/26/2026, 4:36:19 PM] data type infoRequest
+[2/26/2026, 4:36:19 PM] got gamestate for bug
+[2/26/2026, 4:36:19 PM] added a client record  for sockpuppet
+[2/26/2026, 4:36:19 PM] data type infoRequest
+[2/26/2026, 4:36:49 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:36:49 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:36:49 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:36:49 PM] got gamestate for bug
+[2/26/2026, 4:36:49 PM] added a client record  for sockpuppet
+[2/26/2026, 4:36:49 PM] data type infoRequest
+[2/26/2026, 4:36:49 PM] got gamestate for bug
+[2/26/2026, 4:36:49 PM] added a client record  for sockpuppet
+[2/26/2026, 4:36:49 PM] data type infoRequest
+[2/26/2026, 4:36:49 PM] got gamestate for bug
+[2/26/2026, 4:36:49 PM] added a client record  for sockpuppet
+[2/26/2026, 4:36:49 PM] data type infoRequest
+[2/26/2026, 4:37:19 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:37:19 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:37:19 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:37:19 PM] got gamestate for bug
+[2/26/2026, 4:37:19 PM] added a client record  for sockpuppet
+[2/26/2026, 4:37:19 PM] data type infoRequest
+[2/26/2026, 4:37:19 PM] got gamestate for bug
+[2/26/2026, 4:37:19 PM] added a client record  for sockpuppet
+[2/26/2026, 4:37:19 PM] data type infoRequest
+[2/26/2026, 4:37:19 PM] got gamestate for bug
+[2/26/2026, 4:37:19 PM] added a client record  for sockpuppet
+[2/26/2026, 4:37:19 PM] data type infoRequest
+[2/26/2026, 4:37:49 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:37:49 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:37:49 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:37:49 PM] got gamestate for bug
+[2/26/2026, 4:37:49 PM] added a client record  for sockpuppet
+[2/26/2026, 4:37:49 PM] data type infoRequest
+[2/26/2026, 4:37:49 PM] got gamestate for bug
+[2/26/2026, 4:37:49 PM] added a client record  for sockpuppet
+[2/26/2026, 4:37:49 PM] data type infoRequest
+[2/26/2026, 4:37:49 PM] got gamestate for bug
+[2/26/2026, 4:37:49 PM] added a client record  for sockpuppet
+[2/26/2026, 4:37:49 PM] data type infoRequest
+[2/26/2026, 4:38:19 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:38:19 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:38:19 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:38:19 PM] got gamestate for bug
+[2/26/2026, 4:38:19 PM] added a client record  for sockpuppet
+[2/26/2026, 4:38:19 PM] data type infoRequest
+[2/26/2026, 4:38:19 PM] got gamestate for bug
+[2/26/2026, 4:38:19 PM] added a client record  for sockpuppet
+[2/26/2026, 4:38:19 PM] data type infoRequest
+[2/26/2026, 4:38:19 PM] got gamestate for bug
+[2/26/2026, 4:38:19 PM] added a client record  for sockpuppet
+[2/26/2026, 4:38:19 PM] data type infoRequest
+[2/26/2026, 4:38:49 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:38:49 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:38:49 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:38:49 PM] got gamestate for bug
+[2/26/2026, 4:38:49 PM] added a client record  for sockpuppet
+[2/26/2026, 4:38:49 PM] data type infoRequest
+[2/26/2026, 4:38:49 PM] got gamestate for bug
+[2/26/2026, 4:38:49 PM] added a client record  for sockpuppet
+[2/26/2026, 4:38:49 PM] data type infoRequest
+[2/26/2026, 4:38:49 PM] got gamestate for bug
+[2/26/2026, 4:38:49 PM] added a client record  for sockpuppet
+[2/26/2026, 4:38:49 PM] data type infoRequest
+[2/26/2026, 4:39:19 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:39:19 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:39:19 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:39:19 PM] got gamestate for bug
+[2/26/2026, 4:39:19 PM] added a client record  for sockpuppet
+[2/26/2026, 4:39:19 PM] data type infoRequest
+[2/26/2026, 4:39:19 PM] got gamestate for bug
+[2/26/2026, 4:39:19 PM] added a client record  for sockpuppet
+[2/26/2026, 4:39:19 PM] data type infoRequest
+[2/26/2026, 4:39:19 PM] got gamestate for bug
+[2/26/2026, 4:39:19 PM] added a client record  for sockpuppet
+[2/26/2026, 4:39:19 PM] data type infoRequest
+[2/26/2026, 4:39:49 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:39:49 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:39:49 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:39:49 PM] got gamestate for bug
+[2/26/2026, 4:39:49 PM] added a client record  for sockpuppet
+[2/26/2026, 4:39:49 PM] data type infoRequest
+[2/26/2026, 4:39:49 PM] got gamestate for bug
+[2/26/2026, 4:39:49 PM] added a client record  for sockpuppet
+[2/26/2026, 4:39:49 PM] data type infoRequest
+[2/26/2026, 4:39:49 PM] got gamestate for bug
+[2/26/2026, 4:39:49 PM] added a client record  for sockpuppet
+[2/26/2026, 4:39:49 PM] data type infoRequest
+[2/26/2026, 4:40:19 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:40:19 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:40:19 PM] Received: infoRequest  from sockpuppet
+[2/26/2026, 4:40:19 PM] got gamestate for bug
+[2/26/2026, 4:40:19 PM] added a client record  for sockpuppet
+[2/26/2026, 4:40:19 PM] data type infoRequest
+[2/26/2026, 4:40:19 PM] got gamestate for bug
+[2/26/2026, 4:40:19 PM] added a client record  for sockpuppet
+[2/26/2026, 4:40:19 PM] data type infoRequest
+[2/26/2026, 4:40:19 PM] got gamestate for bug
+[2/26/2026, 4:40:19 PM] added a client record  for sockpuppet
+[2/26/2026, 4:40:19 PM] data type infoRequest
+[2/26/2026, 8:40:59 AM] Loaded command: autorefresh (admin) 
+[2/26/2026, 8:40:59 AM] Loaded command: join (admin) 
+[2/26/2026, 8:40:59 AM] Loaded command: secrets (admin) 
+[2/26/2026, 8:40:59 AM] Loaded command: specialize (admin) 
+[2/26/2026, 8:40:59 AM] Loaded command: vote (admin) 
+[2/26/2026, 8:40:59 AM] Loaded command: banish (chief) 
+[2/26/2026, 8:40:59 AM] Loaded command: chance (chief) 
+[2/26/2026, 8:40:59 AM] Loaded command: close (chief) 
+[2/26/2026, 8:40:59 AM] Loaded command: decree (chief) 
+[2/26/2026, 8:40:59 AM] Loaded command: endgame (chief) 
+[2/26/2026, 8:40:59 AM] Loaded command: induct (chief) 
+[2/26/2026, 8:40:59 AM] Loaded command: migrate (chief) 
+[2/26/2026, 8:40:59 AM] Loaded command: open (chief) 
+[2/26/2026, 8:40:59 AM] Loaded command: skip (chief) 
+[2/26/2026, 8:40:59 AM] Loaded command: startfood (chief) 
+[2/26/2026, 8:40:59 AM] Loaded command: startreproduction (chief) 
+[2/26/2026, 8:40:59 AM] Loaded command: startwork (chief) 
+[2/26/2026, 8:40:59 AM] Loaded command: attack (conflict) 
+[2/26/2026, 8:40:59 AM] Loaded command: defend (conflict) 
+[2/26/2026, 8:40:59 AM] Loaded command: demand (conflict) 
+[2/26/2026, 8:40:59 AM] Loaded command: faction (conflict) 
+[2/26/2026, 8:40:59 AM] Loaded command: run (conflict) 
+[2/26/2026, 8:40:59 AM] Loaded command: give (general) 
+[2/26/2026, 8:40:59 AM] Loaded command: graveyard (general) 
+[2/26/2026, 8:40:59 AM] Loaded command: help (general) 
+[2/26/2026, 8:40:59 AM] Loaded command: history (general) 
+[2/26/2026, 8:40:59 AM] Loaded command: inventory (general) 
+[2/26/2026, 8:40:59 AM] Loaded command: jerky (general) 
+[2/26/2026, 8:40:59 AM] Loaded command: law (general) 
+[2/26/2026, 8:40:59 AM] Loaded command: ping (general) 
+[2/26/2026, 8:40:59 AM] Loaded command: rollsomedice (general) 
+[2/26/2026, 8:40:59 AM] Loaded command: sacrifice (general) 
+[2/26/2026, 8:40:59 AM] Loaded command: scout (general) 
+[2/26/2026, 8:40:59 AM] Loaded command: status (general) 
+[2/26/2026, 8:40:59 AM] Loaded command: babysit (reproduction) 
+[2/26/2026, 8:40:59 AM] Loaded command: checkmating (reproduction) 
+[2/26/2026, 8:40:59 AM] Loaded command: children (reproduction) 
+[2/26/2026, 8:40:59 AM] Loaded command: consent (reproduction) 
+[2/26/2026, 8:40:59 AM] Loaded command: decline (reproduction) 
+[2/26/2026, 8:40:59 AM] Loaded command: invite (reproduction) 
+[2/26/2026, 8:40:59 AM] Loaded command: pass (reproduction) 
+[2/26/2026, 8:40:59 AM] Loaded command: romance (reproduction) 
+[2/26/2026, 8:40:59 AM] Loaded command: scorechildren (reproduction) 
+[2/26/2026, 8:40:59 AM] Loaded command: feed (rounds) 
+[2/26/2026, 8:40:59 AM] Loaded command: foodcheck (rounds) 
+[2/26/2026, 8:40:59 AM] Loaded command: leastguarded (rounds) 
+[2/26/2026, 8:40:59 AM] Loaded command: ready (rounds) 
+[2/26/2026, 8:40:59 AM] Loaded command: craft (work) 
+[2/26/2026, 8:40:59 AM] Loaded command: gather (work) 
+[2/26/2026, 8:40:59 AM] Loaded command: guard (work) 
+[2/26/2026, 8:40:59 AM] Loaded command: hunt (work) 
+[2/26/2026, 8:40:59 AM] Loaded command: idle (work) 
+[2/26/2026, 8:40:59 AM] Loaded command: ignore (work) 
+[2/26/2026, 8:40:59 AM] Loaded command: train (work) 
+[2/26/2026, 8:40:59 AM] Tribes server (WebSocket + HTTP) started on port 8000 
+[2/26/2026, 8:40:59 AM] Local access: 
+[2/26/2026, 8:40:59 AM]   Health check: http://localhost:8000/health 
+[2/26/2026, 8:40:59 AM]   Game interface: http://localhost:8000/ 
+[2/26/2026, 8:40:59 AM] Network access: 
+[2/26/2026, 8:40:59 AM]   Health check: http://192.168.1.20:8000/health 
+[2/26/2026, 8:40:59 AM]   Game interface: http://192.168.1.20:8000/ 
+[2/26/2026, 8:40:59 AM] Share the network URL with others on your local network! 
+[2/26/2026, 8:41:05 AM] New client connected from unknown 
+[2/26/2026, 8:41:05 AM] Received: listCommands  from sockpuppet
+[2/26/2026, 8:41:05 AM] Received: infoRequest  from sockpuppet
+[2/26/2026, 8:41:05 AM] got gamestate for bug
+[2/26/2026, 8:41:05 AM] added a client record  for sockpuppet
+[2/26/2026, 8:41:05 AM] data type listCommands
+[2/26/2026, 8:41:05 AM] [CHIEF CHECK] Player: "sockpuppet", HasGameState: true, HasPopulation: true 
+[2/26/2026, 8:41:05 AM] [CHIEF CHECK] Found player: true, Chief status: undefined 
+[2/26/2026, 8:41:05 AM] [CHIEF CHECK] Player "sockpuppet" properties: gender,food,grain,basket,spearhead,handle,name,strength,profession,canCraft,history,vote,worked,consentList,inviteIndex,inviteList,guarding,activity
+[2/26/2026, 8:41:05 AM] [REF CHECK] Player "sockpuppet" isRef: false 
+[2/26/2026, 8:41:05 AM] [CHIEF CHECK] Final isChief status: undefined 
+[2/26/2026, 8:41:05 AM] [CHIEF CHECK] Filtered out 12 chief commands, sending 42 total commands 
+[2/26/2026, 8:41:05 AM] [REF CHECK] Filtered out force options from 4 commands 
+[2/26/2026, 8:41:05 AM] got gamestate for bug
+[2/26/2026, 8:41:05 AM] added a client record  for sockpuppet
+[2/26/2026, 8:41:05 AM] data type infoRequest
+[2/26/2026, 8:41:06 AM] Received: helpRequest  from sockpuppet
+[2/26/2026, 8:41:06 AM] got gamestate for bug
+[2/26/2026, 8:41:06 AM] added a client record  for sockpuppet
+[2/26/2026, 8:41:06 AM] data type helpRequest
+[2/26/2026, 8:41:29 AM] Received: registerRequest  from sockpuppet
+[2/26/2026, 8:41:29 AM] got gamestate for bug
+[2/26/2026, 8:41:29 AM] added a client record  for sockpuppet
+[2/26/2026, 8:41:29 AM] data type registerRequest
+[2/26/2026, 8:41:35 AM] Received: registerRequest  from sockpuppet
+[2/26/2026, 8:41:35 AM] got gamestate for bug
+[2/26/2026, 8:41:35 AM] added a client record  for sockpuppet
+[2/26/2026, 8:41:35 AM] data type registerRequest
+[2/26/2026, 8:41:35 AM] [SESSION] Created session for sockpuppet from unknown 
+[2/26/2026, 8:41:35 AM] Received: listCommands  from sockpuppet
+[2/26/2026, 8:41:35 AM] got gamestate for bug
+[2/26/2026, 8:41:35 AM] added a client record  for sockpuppet
+[2/26/2026, 8:41:35 AM] data type listCommands
+[2/26/2026, 8:41:35 AM] [CHIEF CHECK] Player: "sockpuppet", HasGameState: true, HasPopulation: true 
+[2/26/2026, 8:41:35 AM] [CHIEF CHECK] Found player: true, Chief status: undefined 
+[2/26/2026, 8:41:35 AM] [CHIEF CHECK] Player "sockpuppet" properties: gender,food,grain,basket,spearhead,handle,name,strength,profession,canCraft,history,vote,worked,consentList,inviteIndex,inviteList,guarding,activity
+[2/26/2026, 8:41:35 AM] [REF CHECK] Player "sockpuppet" isRef: false 
+[2/26/2026, 8:41:35 AM] [CHIEF CHECK] Final isChief status: undefined 
+[2/26/2026, 8:41:35 AM] [CHIEF CHECK] Filtered out 12 chief commands, sending 42 total commands 
+[2/26/2026, 8:41:35 AM] [REF CHECK] Filtered out force options from 4 commands 
+[2/26/2026, 12:39:36 PM] Client disconnected: sockpuppet 
+[2/26/2026, 12:39:37 PM] New client connected from unknown 
+[2/26/2026, 12:39:37 PM] Received: listCommands  from unknown
+[2/26/2026, 12:39:37 PM] Received: infoRequest  from unknown
+[2/26/2026, 12:39:37 PM] got gamestate for bear
+[2/26/2026, 12:39:37 PM] added a client record  for 
+[2/26/2026, 12:39:37 PM] data type listCommands
+[2/26/2026, 12:39:37 PM] [CHIEF CHECK] Player: "", HasGameState: true, HasPopulation: true 
+[2/26/2026, 12:39:37 PM] [REF CHECK] Player "" isRef:  
+[2/26/2026, 12:39:37 PM] [CHIEF CHECK] Final isChief status: false 
+[2/26/2026, 12:39:37 PM] [CHIEF CHECK] Filtered out 12 chief commands, sending 42 total commands 
+[2/26/2026, 12:39:37 PM] [REF CHECK] Filtered out force options from 4 commands 
+[2/26/2026, 12:39:37 PM] got gamestate for bear
+[2/26/2026, 12:39:37 PM] added a client record  for 
+[2/26/2026, 12:39:37 PM] data type infoRequest
+[2/26/2026, 12:39:38 PM] Received: helpRequest  from sockpuppet
+[2/26/2026, 12:39:38 PM] got gamestate for bug
+[2/26/2026, 12:39:38 PM] added a client record  for sockpuppet
+[2/26/2026, 12:39:38 PM] data type helpRequest
+[2/26/2026, 12:39:40 PM] New client connected from unknown 
+[2/26/2026, 12:39:40 PM] Received: listCommands  from Kevin
+[2/26/2026, 12:39:40 PM] Received: infoRequest  from Kevin
+[2/26/2026, 12:39:40 PM] Received: infoRequest  from Kevin
+[2/26/2026, 12:39:40 PM] Received: infoRequest  from Kevin
+[2/26/2026, 12:39:40 PM] Received: infoRequest  from Kevin
+[2/26/2026, 12:39:40 PM] got gamestate for bug
+[2/26/2026, 12:39:40 PM] added a client record  for Kevin
+[2/26/2026, 12:39:40 PM] data type listCommands
+[2/26/2026, 12:39:40 PM] [CHIEF CHECK] Player: "Kevin", HasGameState: true, HasPopulation: true 
+[2/26/2026, 12:39:40 PM] [CHIEF CHECK] Found player: true, Chief status: true 
+[2/26/2026, 12:39:40 PM] [CHIEF CHECK] Player "Kevin" properties: gender,food,grain,basket,spearhead,handle,name,profession,history,vote,chief,worked,consentList,inviteIndex,inviteList,strength,canCraft,strategy,activity
+[2/26/2026, 12:39:40 PM] [REF CHECK] Player "Kevin" isRef: true 
+[2/26/2026, 12:39:40 PM] [CHIEF CHECK] Final isChief status: true 
+[2/26/2026, 12:39:40 PM] [CHIEF CHECK] Filtered out 0 chief commands, sending 54 total commands 
+[2/26/2026, 12:39:40 PM] [REF CHECK] Filtered out force options from 0 commands 
+[2/26/2026, 12:39:40 PM] got gamestate for bug
+[2/26/2026, 12:39:40 PM] added a client record  for Kevin
+[2/26/2026, 12:39:40 PM] data type infoRequest
+[2/26/2026, 12:39:40 PM] got gamestate for bug
+[2/26/2026, 12:39:40 PM] added a client record  for Kevin
+[2/26/2026, 12:39:40 PM] data type infoRequest
+[2/26/2026, 12:39:40 PM] got gamestate for bug
+[2/26/2026, 12:39:40 PM] added a client record  for Kevin
+[2/26/2026, 12:39:40 PM] data type infoRequest
+[2/26/2026, 12:39:40 PM] got gamestate for bug
+[2/26/2026, 12:39:40 PM] added a client record  for Kevin
+[2/26/2026, 12:39:40 PM] data type infoRequest
+[2/26/2026, 12:39:41 PM] Client disconnected: unknown 
+[2/26/2026, 12:39:41 PM] New client connected from unknown 
+[2/26/2026, 12:39:41 PM] Received: listCommands  from unknown
+[2/26/2026, 12:39:41 PM] Received: infoRequest  from unknown
+[2/26/2026, 12:39:41 PM] got gamestate for bear
+[2/26/2026, 12:39:41 PM] added a client record  for 
+[2/26/2026, 12:39:41 PM] data type listCommands
+[2/26/2026, 12:39:41 PM] [CHIEF CHECK] Player: "", HasGameState: true, HasPopulation: true 
+[2/26/2026, 12:39:41 PM] [REF CHECK] Player "" isRef:  
+[2/26/2026, 12:39:41 PM] [CHIEF CHECK] Final isChief status: false 
+[2/26/2026, 12:39:41 PM] [CHIEF CHECK] Filtered out 12 chief commands, sending 42 total commands 
+[2/26/2026, 12:39:41 PM] [REF CHECK] Filtered out force options from 4 commands 
+[2/26/2026, 12:39:41 PM] got gamestate for bear
+[2/26/2026, 12:39:41 PM] added a client record  for 
+[2/26/2026, 12:39:41 PM] data type infoRequest
+[2/26/2026, 12:39:42 PM] Received: helpRequest  from sockpuppet
+[2/26/2026, 12:39:42 PM] got gamestate for bug
+[2/26/2026, 12:39:42 PM] added a client record  for sockpuppet
+[2/26/2026, 12:39:42 PM] data type helpRequest
+[2/26/2026, 12:39:55 PM] Received: listCommands  from Kevin
+[2/26/2026, 12:39:55 PM] got gamestate for bug
+[2/26/2026, 12:39:55 PM] added a client record  for Kevin
+[2/26/2026, 12:39:55 PM] data type listCommands
+[2/26/2026, 12:39:55 PM] [CHIEF CHECK] Player: "Kevin", HasGameState: true, HasPopulation: true 
+[2/26/2026, 12:39:55 PM] [CHIEF CHECK] Found player: true, Chief status: true 
+[2/26/2026, 12:39:55 PM] [CHIEF CHECK] Player "Kevin" properties: gender,food,grain,basket,spearhead,handle,name,profession,history,vote,chief,worked,consentList,inviteIndex,inviteList,strength,canCraft,strategy,activity
+[2/26/2026, 12:39:55 PM] [REF CHECK] Player "Kevin" isRef: true 
+[2/26/2026, 12:39:55 PM] [CHIEF CHECK] Final isChief status: true 
+[2/26/2026, 12:39:55 PM] [CHIEF CHECK] Filtered out 0 chief commands, sending 54 total commands 
+[2/26/2026, 12:39:55 PM] [REF CHECK] Filtered out force options from 0 commands 
+[2/26/2026, 12:39:59 PM] Received: registerRequest  from Kevin
+[2/26/2026, 12:39:59 PM] got gamestate for bug
+[2/26/2026, 12:39:59 PM] added a client record  for Kevin
+[2/26/2026, 12:39:59 PM] data type registerRequest
+[2/26/2026, 12:39:59 PM] [SESSION] Created session for Kevin from unknown 
+[2/26/2026, 12:39:59 PM] Received: listCommands  from Kevin
+[2/26/2026, 12:39:59 PM] got gamestate for bug
+[2/26/2026, 12:39:59 PM] added a client record  for Kevin
+[2/26/2026, 12:39:59 PM] data type listCommands
+[2/26/2026, 12:39:59 PM] [CHIEF CHECK] Player: "Kevin", HasGameState: true, HasPopulation: true 
+[2/26/2026, 12:39:59 PM] [CHIEF CHECK] Found player: true, Chief status: true 
+[2/26/2026, 12:39:59 PM] [CHIEF CHECK] Player "Kevin" properties: gender,food,grain,basket,spearhead,handle,name,profession,history,vote,chief,worked,consentList,inviteIndex,inviteList,strength,canCraft,strategy,activity
+[2/26/2026, 12:39:59 PM] [REF CHECK] Player "Kevin" isRef: true 
+[2/26/2026, 12:39:59 PM] [CHIEF CHECK] Final isChief status: true 
+[2/26/2026, 12:39:59 PM] [CHIEF CHECK] Filtered out 0 chief commands, sending 54 total commands 
+[2/26/2026, 12:39:59 PM] [REF CHECK] Filtered out force options from 0 commands 
+[2/26/2026, 12:40:02 PM] Received: infoRequest  from Kevin
+[2/26/2026, 12:40:02 PM] Received: infoRequest  from Kevin
+[2/26/2026, 12:40:02 PM] Received: infoRequest  from Kevin
+[2/26/2026, 12:40:02 PM] got gamestate for bug
+[2/26/2026, 12:40:02 PM] added a client record  for Kevin
+[2/26/2026, 12:40:02 PM] data type infoRequest
+[2/26/2026, 12:40:02 PM] got gamestate for bug
+[2/26/2026, 12:40:02 PM] added a client record  for Kevin
+[2/26/2026, 12:40:02 PM] data type infoRequest
+[2/26/2026, 12:40:02 PM] got gamestate for bug
+[2/26/2026, 12:40:02 PM] added a client record  for Kevin
+[2/26/2026, 12:40:02 PM] data type infoRequest
+[2/26/2026, 1:13:53 PM] Loaded command: join (admin) 
+[2/26/2026, 1:13:53 PM] Loaded command: secrets (admin) 
+[2/26/2026, 1:13:53 PM] Loaded command: specialize (admin) 
+[2/26/2026, 1:13:53 PM] Loaded command: vote (admin) 
+[2/26/2026, 1:13:53 PM] Loaded command: banish (chief) 
+[2/26/2026, 1:13:53 PM] Loaded command: chance (chief) 
+[2/26/2026, 1:13:53 PM] Loaded command: close (chief) 
+[2/26/2026, 1:13:53 PM] Loaded command: decree (chief) 
+[2/26/2026, 1:13:53 PM] Loaded command: endgame (chief) 
+[2/26/2026, 1:13:53 PM] Loaded command: induct (chief) 
+[2/26/2026, 1:13:53 PM] Loaded command: migrate (chief) 
+[2/26/2026, 1:13:53 PM] Loaded command: open (chief) 
+[2/26/2026, 1:13:53 PM] Loaded command: skip (chief) 
+[2/26/2026, 1:13:53 PM] Loaded command: startfood (chief) 
+[2/26/2026, 1:13:53 PM] Loaded command: startreproduction (chief) 
+[2/26/2026, 1:13:53 PM] Loaded command: startwork (chief) 
+[2/26/2026, 1:13:53 PM] Loaded command: attack (conflict) 
+[2/26/2026, 1:13:53 PM] Loaded command: defend (conflict) 
+[2/26/2026, 1:13:53 PM] Loaded command: demand (conflict) 
+[2/26/2026, 1:13:53 PM] Loaded command: faction (conflict) 
+[2/26/2026, 1:13:53 PM] Loaded command: run (conflict) 
+[2/26/2026, 1:13:53 PM] Loaded command: give (general) 
+[2/26/2026, 1:13:53 PM] Loaded command: graveyard (general) 
+[2/26/2026, 1:13:53 PM] Loaded command: help (general) 
+[2/26/2026, 1:13:53 PM] Loaded command: history (general) 
+[2/26/2026, 1:13:53 PM] Loaded command: inventory (general) 
+[2/26/2026, 1:13:53 PM] Loaded command: jerky (general) 
+[2/26/2026, 1:13:53 PM] Loaded command: law (general) 
+[2/26/2026, 1:13:53 PM] Loaded command: ping (general) 
+[2/26/2026, 1:13:53 PM] Loaded command: rollsomedice (general) 
+[2/26/2026, 1:13:53 PM] Loaded command: sacrifice (general) 
+[2/26/2026, 1:13:53 PM] Loaded command: scout (general) 
+[2/26/2026, 1:13:53 PM] Loaded command: status (general) 
+[2/26/2026, 1:13:53 PM] Loaded command: babysit (reproduction) 
+[2/26/2026, 1:13:53 PM] Loaded command: checkmating (reproduction) 
+[2/26/2026, 1:13:53 PM] Loaded command: children (reproduction) 
+[2/26/2026, 1:13:53 PM] Loaded command: consent (reproduction) 
+[2/26/2026, 1:13:53 PM] Loaded command: decline (reproduction) 
+[2/26/2026, 1:13:53 PM] Loaded command: invite (reproduction) 
+[2/26/2026, 1:13:53 PM] Loaded command: pass (reproduction) 
+[2/26/2026, 1:13:53 PM] Loaded command: romance (reproduction) 
+[2/26/2026, 1:13:53 PM] Loaded command: scorechildren (reproduction) 
+[2/26/2026, 1:13:53 PM] Loaded command: feed (rounds) 
+[2/26/2026, 1:13:53 PM] Loaded command: foodcheck (rounds) 
+[2/26/2026, 1:13:53 PM] Loaded command: leastguarded (rounds) 
+[2/26/2026, 1:13:53 PM] Loaded command: ready (rounds) 
+[2/26/2026, 1:13:53 PM] Loaded command: craft (work) 
+[2/26/2026, 1:13:53 PM] Loaded command: gather (work) 
+[2/26/2026, 1:13:53 PM] Loaded command: guard (work) 
+[2/26/2026, 1:13:53 PM] Loaded command: hunt (work) 
+[2/26/2026, 1:13:53 PM] Loaded command: idle (work) 
+[2/26/2026, 1:13:53 PM] Loaded command: ignore (work) 
+[2/26/2026, 1:13:53 PM] Loaded command: train (work) 
+[2/26/2026, 1:13:53 PM] Tribes server (WebSocket + HTTP) started on port 8000 
+[2/26/2026, 1:13:53 PM] Local access: 
+[2/26/2026, 1:13:53 PM]   Health check: http://localhost:8000/health 
+[2/26/2026, 1:13:53 PM]   Game interface: http://localhost:8000/ 
+[2/26/2026, 1:13:53 PM] Network access: 
+[2/26/2026, 1:13:53 PM]   Health check: http://192.168.1.20:8000/health 
+[2/26/2026, 1:13:53 PM]   Game interface: http://192.168.1.20:8000/ 
+[2/26/2026, 1:13:53 PM] Share the network URL with others on your local network! 
+[2/26/2026, 1:13:54 PM] New client connected from unknown 
+[2/26/2026, 1:13:54 PM] Received: listCommands  from Kevin
+[2/26/2026, 1:13:54 PM] Received: infoRequest  from Kevin
+[2/26/2026, 1:13:54 PM] Received: infoRequest  from Kevin
+[2/26/2026, 1:13:54 PM] got gamestate for bug
+[2/26/2026, 1:13:54 PM] added a client record  for Kevin
+[2/26/2026, 1:13:54 PM] data type listCommands
+[2/26/2026, 1:13:54 PM] [CHIEF CHECK] Player: "Kevin", HasGameState: true, HasPopulation: true 
+[2/26/2026, 1:13:54 PM] [CHIEF CHECK] Found player: true, Chief status: true 
+[2/26/2026, 1:13:54 PM] [CHIEF CHECK] Player "Kevin" properties: gender,food,grain,basket,spearhead,handle,name,profession,history,vote,chief,worked,consentList,inviteIndex,inviteList,strength,canCraft,strategy,activity
+[2/26/2026, 1:13:54 PM] [REF CHECK] Player "Kevin" isRef: true 
+[2/26/2026, 1:13:54 PM] [CHIEF CHECK] Final isChief status: true 
+[2/26/2026, 1:13:54 PM] [CHIEF CHECK] Filtered out 0 chief commands, sending 53 total commands 
+[2/26/2026, 1:13:54 PM] [REF CHECK] Filtered out force options from 0 commands 
+[2/26/2026, 1:13:54 PM] got gamestate for bug
+[2/26/2026, 1:13:54 PM] added a client record  for Kevin
+[2/26/2026, 1:13:54 PM] data type infoRequest
+[2/26/2026, 1:13:54 PM] got gamestate for bug
+[2/26/2026, 1:13:54 PM] added a client record  for Kevin
+[2/26/2026, 1:13:54 PM] data type infoRequest
+[2/26/2026, 1:13:54 PM] Received: infoRequest  from Kevin
+[2/26/2026, 1:13:54 PM] Received: infoRequest  from Kevin
+[2/26/2026, 1:13:54 PM] got gamestate for bug
+[2/26/2026, 1:13:54 PM] added a client record  for Kevin
+[2/26/2026, 1:13:54 PM] data type infoRequest
+[2/26/2026, 1:13:54 PM] got gamestate for bug
+[2/26/2026, 1:13:54 PM] added a client record  for Kevin
+[2/26/2026, 1:13:54 PM] data type infoRequest
+[2/26/2026, 1:13:54 PM] New client connected from unknown 
+[2/26/2026, 1:13:54 PM] Received: listCommands  from Kevin
+[2/26/2026, 1:13:54 PM] Received: infoRequest  from Kevin
+[2/26/2026, 1:13:54 PM] got gamestate for bug
+[2/26/2026, 1:13:54 PM] added a client record  for Kevin
+[2/26/2026, 1:13:54 PM] data type listCommands
+[2/26/2026, 1:13:54 PM] [CHIEF CHECK] Player: "Kevin", HasGameState: true, HasPopulation: true 
+[2/26/2026, 1:13:54 PM] [CHIEF CHECK] Found player: true, Chief status: true 
+[2/26/2026, 1:13:54 PM] [CHIEF CHECK] Player "Kevin" properties: gender,food,grain,basket,spearhead,handle,name,profession,history,vote,chief,worked,consentList,inviteIndex,inviteList,strength,canCraft,strategy,activity
+[2/26/2026, 1:13:54 PM] [REF CHECK] Player "Kevin" isRef: true 
+[2/26/2026, 1:13:54 PM] [CHIEF CHECK] Final isChief status: true 
+[2/26/2026, 1:13:54 PM] [CHIEF CHECK] Filtered out 0 chief commands, sending 53 total commands 
+[2/26/2026, 1:13:54 PM] [REF CHECK] Filtered out force options from 0 commands 
+[2/26/2026, 1:13:54 PM] got gamestate for bug
+[2/26/2026, 1:13:54 PM] added a client record  for Kevin
+[2/26/2026, 1:13:54 PM] data type infoRequest
+[2/26/2026, 1:13:59 PM] Client disconnected: unknown 
+[2/26/2026, 1:13:59 PM] Client disconnected: unknown 
+[2/26/2026, 1:13:59 PM] New client connected from unknown 
+[2/26/2026, 1:13:59 PM] Received: listCommands  from unknown
+[2/26/2026, 1:13:59 PM] got gamestate for bear
+[2/26/2026, 1:13:59 PM] added a client record  for 
+[2/26/2026, 1:13:59 PM] data type listCommands
+[2/26/2026, 1:13:59 PM] [CHIEF CHECK] Player: "", HasGameState: true, HasPopulation: true 
+[2/26/2026, 1:13:59 PM] [REF CHECK] Player "" isRef:  
+[2/26/2026, 1:13:59 PM] [CHIEF CHECK] Final isChief status: false 
+[2/26/2026, 1:13:59 PM] [CHIEF CHECK] Filtered out 12 chief commands, sending 41 total commands 
+[2/26/2026, 1:13:59 PM] [REF CHECK] Filtered out force options from 4 commands 
+[2/26/2026, 1:14:00 PM] Received: helpRequest  from Kevin
+[2/26/2026, 1:14:00 PM] got gamestate for bug
+[2/26/2026, 1:14:00 PM] added a client record  for Kevin
+[2/26/2026, 1:14:00 PM] data type helpRequest
+[2/26/2026, 1:14:07 PM] Received: registerRequest  from Kevin
+[2/26/2026, 1:14:07 PM] got gamestate for bug
+[2/26/2026, 1:14:07 PM] added a client record  for Kevin
+[2/26/2026, 1:14:07 PM] data type registerRequest
+[2/26/2026, 1:14:07 PM] [SESSION] Created session for Kevin from unknown 
+[2/26/2026, 1:14:07 PM] Received: listCommands  from Kevin
+[2/26/2026, 1:14:07 PM] got gamestate for bug
+[2/26/2026, 1:14:07 PM] added a client record  for Kevin
+[2/26/2026, 1:14:07 PM] data type listCommands
+[2/26/2026, 1:14:07 PM] [CHIEF CHECK] Player: "Kevin", HasGameState: true, HasPopulation: true 
+[2/26/2026, 1:14:07 PM] [CHIEF CHECK] Found player: true, Chief status: true 
+[2/26/2026, 1:14:07 PM] [CHIEF CHECK] Player "Kevin" properties: gender,food,grain,basket,spearhead,handle,name,profession,history,vote,chief,worked,consentList,inviteIndex,inviteList,strength,canCraft,strategy,activity
+[2/26/2026, 1:14:07 PM] [REF CHECK] Player "Kevin" isRef: true 
+[2/26/2026, 1:14:07 PM] [CHIEF CHECK] Final isChief status: true 
+[2/26/2026, 1:14:07 PM] [CHIEF CHECK] Filtered out 0 chief commands, sending 53 total commands 
+[2/26/2026, 1:14:07 PM] [REF CHECK] Filtered out force options from 0 commands 
+[2/26/2026, 1:14:09 PM] Received: infoRequest  from Kevin
+[2/26/2026, 1:14:09 PM] Received: infoRequest  from Kevin
+[2/26/2026, 1:14:09 PM] got gamestate for bug
+[2/26/2026, 1:14:09 PM] added a client record  for Kevin
+[2/26/2026, 1:14:09 PM] data type infoRequest
+[2/26/2026, 1:14:09 PM] got gamestate for bug
+[2/26/2026, 1:14:09 PM] added a client record  for Kevin
+[2/26/2026, 1:14:09 PM] data type infoRequest
+[2/26/2026, 1:14:09 PM] Received: infoRequest  from Kevin
+[2/26/2026, 1:14:09 PM] got gamestate for bug
+[2/26/2026, 1:14:09 PM] added a client record  for Kevin
+[2/26/2026, 1:14:09 PM] data type infoRequest
+[2/26/2026, 1:14:20 PM] Received: command foodcheck from Kevin
+[2/26/2026, 1:14:20 PM] got gamestate for bug
+[2/26/2026, 1:14:20 PM] added a client record  for Kevin
+[2/26/2026, 1:14:20 PM] data type command
+[2/26/2026, 1:14:20 PM] Refreshing game data for 1 members of bug tribe 
+[2/26/2026, 1:14:25 PM] Received: command startfood from Kevin
+[2/26/2026, 1:14:25 PM] got gamestate for bug
+[2/26/2026, 1:14:25 PM] added a client record  for Kevin
+[2/26/2026, 1:14:25 PM] data type command
+[2/26/2026, 1:14:25 PM] Message for offline player sockpuppet: Kevin flirts with you, and you are interested.
+You share good feelings with Kevin [5]
+Kevin is impressed by your flirtation.
+You share good feelings with Kevin [6]
+Reproduction round activities are over.
+You have been blessed with the child East 
+[2/26/2026, 1:14:25 PM] Refreshing game data for 1 members of bug tribe 
+[2/26/2026, 1:14:51 PM] Received: command chance from Kevin
+[2/26/2026, 1:14:51 PM] got gamestate for bug
+[2/26/2026, 1:14:51 PM] added a client record  for Kevin
+[2/26/2026, 1:14:51 PM] data type command
+[2/26/2026, 1:14:51 PM] Refreshing game data for 1 members of bug tribe 
+[2/26/2026, 1:17:54 PM] Loaded command: join (admin) 
+[2/26/2026, 1:17:54 PM] Loaded command: secrets (admin) 
+[2/26/2026, 1:17:54 PM] Loaded command: specialize (admin) 
+[2/26/2026, 1:17:54 PM] Loaded command: vote (admin) 
+[2/26/2026, 1:17:54 PM] Loaded command: banish (chief) 
+[2/26/2026, 1:17:54 PM] Loaded command: chance (chief) 
+[2/26/2026, 1:17:54 PM] Loaded command: close (chief) 
+[2/26/2026, 1:17:54 PM] Loaded command: decree (chief) 
+[2/26/2026, 1:17:54 PM] Loaded command: endgame (chief) 
+[2/26/2026, 1:17:54 PM] Loaded command: induct (chief) 
+[2/26/2026, 1:17:54 PM] Loaded command: migrate (chief) 
+[2/26/2026, 1:17:54 PM] Loaded command: open (chief) 
+[2/26/2026, 1:17:54 PM] Loaded command: skip (chief) 
+[2/26/2026, 1:17:54 PM] Loaded command: startfood (chief) 
+[2/26/2026, 1:17:54 PM] Loaded command: startreproduction (chief) 
+[2/26/2026, 1:17:54 PM] Loaded command: startwork (chief) 
+[2/26/2026, 1:17:54 PM] Loaded command: attack (conflict) 
+[2/26/2026, 1:17:54 PM] Loaded command: defend (conflict) 
+[2/26/2026, 1:17:54 PM] Loaded command: demand (conflict) 
+[2/26/2026, 1:17:54 PM] Loaded command: faction (conflict) 
+[2/26/2026, 1:17:54 PM] Loaded command: run (conflict) 
+[2/26/2026, 1:17:54 PM] Loaded command: give (general) 
+[2/26/2026, 1:17:54 PM] Loaded command: graveyard (general) 
+[2/26/2026, 1:17:54 PM] Loaded command: help (general) 
+[2/26/2026, 1:17:54 PM] Loaded command: history (general) 
+[2/26/2026, 1:17:54 PM] Loaded command: inventory (general) 
+[2/26/2026, 1:17:54 PM] Loaded command: jerky (general) 
+[2/26/2026, 1:17:54 PM] Loaded command: law (general) 
+[2/26/2026, 1:17:54 PM] Loaded command: ping (general) 
+[2/26/2026, 1:17:54 PM] Loaded command: rollsomedice (general) 
+[2/26/2026, 1:17:54 PM] Loaded command: sacrifice (general) 
+[2/26/2026, 1:17:54 PM] Loaded command: scout (general) 
+[2/26/2026, 1:17:54 PM] Loaded command: status (general) 
+[2/26/2026, 1:17:54 PM] Loaded command: babysit (reproduction) 
+[2/26/2026, 1:17:54 PM] Loaded command: checkmating (reproduction) 
+[2/26/2026, 1:17:54 PM] Loaded command: children (reproduction) 
+[2/26/2026, 1:17:54 PM] Loaded command: consent (reproduction) 
+[2/26/2026, 1:17:54 PM] Loaded command: decline (reproduction) 
+[2/26/2026, 1:17:54 PM] Loaded command: invite (reproduction) 
+[2/26/2026, 1:17:54 PM] Loaded command: pass (reproduction) 
+[2/26/2026, 1:17:54 PM] Loaded command: romance (reproduction) 
+[2/26/2026, 1:17:54 PM] Loaded command: scorechildren (reproduction) 
+[2/26/2026, 1:17:54 PM] Loaded command: feed (rounds) 
+[2/26/2026, 1:17:54 PM] Loaded command: foodcheck (rounds) 
+[2/26/2026, 1:17:54 PM] Loaded command: leastguarded (rounds) 
+[2/26/2026, 1:17:54 PM] Loaded command: ready (rounds) 
+[2/26/2026, 1:17:54 PM] Loaded command: craft (work) 
+[2/26/2026, 1:17:54 PM] Loaded command: gather (work) 
+[2/26/2026, 1:17:54 PM] Loaded command: guard (work) 
+[2/26/2026, 1:17:54 PM] Loaded command: hunt (work) 
+[2/26/2026, 1:17:54 PM] Loaded command: idle (work) 
+[2/26/2026, 1:17:54 PM] Loaded command: ignore (work) 
+[2/26/2026, 1:17:54 PM] Loaded command: train (work) 
+[2/26/2026, 1:17:54 PM] Tribes server (WebSocket + HTTP) started on port 8000 
+[2/26/2026, 1:17:54 PM] Local access: 
+[2/26/2026, 1:17:54 PM]   Health check: http://localhost:8000/health 
+[2/26/2026, 1:17:54 PM]   Game interface: http://localhost:8000/ 
+[2/26/2026, 1:17:54 PM] Network access: 
+[2/26/2026, 1:17:54 PM]   Health check: http://192.168.1.20:8000/health 
+[2/26/2026, 1:17:54 PM]   Game interface: http://192.168.1.20:8000/ 
+[2/26/2026, 1:17:54 PM] Share the network URL with others on your local network! 
+[2/26/2026, 1:17:55 PM] New client connected from unknown 
+[2/26/2026, 1:17:55 PM] Received: listCommands  from Kevin
+[2/26/2026, 1:17:55 PM] got gamestate for bug
+[2/26/2026, 1:17:55 PM] added a client record  for Kevin
+[2/26/2026, 1:17:55 PM] data type listCommands
+[2/26/2026, 1:17:55 PM] [CHIEF CHECK] Player: "Kevin", HasGameState: true, HasPopulation: true 
+[2/26/2026, 1:17:55 PM] [CHIEF CHECK] Found player: true, Chief status: true 
+[2/26/2026, 1:17:55 PM] [CHIEF CHECK] Player "Kevin" properties: gender,food,grain,basket,spearhead,handle,name,profession,history,vote,chief,worked,consentList,inviteIndex,inviteList,canCraft,strategy,activity,cannotInvite,isInjured
+[2/26/2026, 1:17:55 PM] [REF CHECK] Player "Kevin" isRef: true 
+[2/26/2026, 1:17:55 PM] [CHIEF CHECK] Final isChief status: true 
+[2/26/2026, 1:17:55 PM] [CHIEF CHECK] Filtered out 0 chief commands, sending 53 total commands 
+[2/26/2026, 1:17:55 PM] [REF CHECK] Filtered out force options from 0 commands 
+[2/26/2026, 1:17:55 PM] New client connected from unknown 
+[2/26/2026, 1:17:55 PM] Received: listCommands  from Kevin
+[2/26/2026, 1:17:55 PM] got gamestate for bug
+[2/26/2026, 1:17:55 PM] added a client record  for Kevin
+[2/26/2026, 1:17:55 PM] data type listCommands
+[2/26/2026, 1:17:55 PM] [CHIEF CHECK] Player: "Kevin", HasGameState: true, HasPopulation: true 
+[2/26/2026, 1:17:55 PM] [CHIEF CHECK] Found player: true, Chief status: true 
+[2/26/2026, 1:17:55 PM] [CHIEF CHECK] Player "Kevin" properties: gender,food,grain,basket,spearhead,handle,name,profession,history,vote,chief,worked,consentList,inviteIndex,inviteList,canCraft,strategy,activity,cannotInvite,isInjured
+[2/26/2026, 1:17:55 PM] [REF CHECK] Player "Kevin" isRef: true 
+[2/26/2026, 1:17:55 PM] [CHIEF CHECK] Final isChief status: true 
+[2/26/2026, 1:17:55 PM] [CHIEF CHECK] Filtered out 0 chief commands, sending 53 total commands 
+[2/26/2026, 1:17:55 PM] [REF CHECK] Filtered out force options from 0 commands 

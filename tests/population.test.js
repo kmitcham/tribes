@@ -366,3 +366,137 @@ describe('nameFromAtNumber function (revised)', () => {
     );
   });
 });
+
+describe('vote function', () => {
+  test('should set chief when there is no current chief and majority is reached', () => {
+    const gameState = {
+      population: {
+        player1: {
+          name: 'player1',
+          gender: 'male',
+          food: 5,
+          grain: 5,
+          vote: 'player2',
+        },
+        player2: {
+          name: 'player2',
+          gender: 'female',
+          food: 5,
+          grain: 5,
+          vote: 'player2',
+        },
+      },
+      saveRequired: false,
+    };
+
+    pop.vote(gameState, 'player1', 'player2');
+
+    // Both voting for player2 = 2 votes, 2/3 of 2 = 1.33, so 2 >= 1.33 = majority
+    expect(gameState.population.player2.chief).toBe(true);
+    expect(gameState.saveRequired).toBe(true);
+  });
+
+  test('should set chief and change from one chief to another with majority', () => {
+    const gameState = {
+      population: {
+        player1: {
+          name: 'player1',
+          gender: 'male',
+          food: 5,
+          grain: 5,
+          chief: true,
+          vote: 'player1',
+        },
+        player2: {
+          name: 'player2',
+          gender: 'female',
+          food: 5,
+          grain: 5,
+          vote: 'player3',
+        },
+        player3: {
+          name: 'player3',
+          gender: 'male',
+          food: 5,
+          grain: 5,
+          vote: 'player3',
+        },
+      },
+      saveRequired: false,
+    };
+
+    pop.vote(gameState, 'player2', 'player3');
+
+    // player2 and player3 voting for player3 = 2 votes, 2/3 of 3 = 2, so 2 >= 2 = majority
+    expect(gameState.population.player3.chief).toBe(true);
+    expect(gameState.population.player1.chief).toBeUndefined();
+    expect(gameState.saveRequired).toBe(true);
+  });
+
+  test('should NOT change chief when voting for same chief that is already in place', () => {
+    const gameState = {
+      population: {
+        player1: {
+          name: 'player1',
+          gender: 'male',
+          food: 5,
+          grain: 5,
+          chief: true,
+          vote: 'player1',
+        },
+        player2: {
+          name: 'player2',
+          gender: 'female',
+          food: 5,
+          grain: 5,
+          vote: 'player1',
+        },
+      },
+      saveRequired: false,
+    };
+
+    pop.vote(gameState, 'player2', 'player1');
+
+    // Both voting for player1 = 2 votes, 2/3 of 2 = 1.33, so 2 >= 1.33 = majority
+    // But player1 is already chief, so no new chief message
+    expect(gameState.population.player1.chief).toBe(true);
+    expect(gameState.saveRequired).toBe(true);
+  });
+
+  test('should not reach majority threshold and not set chief', () => {
+    const gameState = {
+      population: {
+        player1: {
+          name: 'player1',
+          gender: 'male',
+          food: 5,
+          grain: 5,
+          vote: 'player2',
+        },
+        player2: {
+          name: 'player2',
+          gender: 'female',
+          food: 5,
+          grain: 5,
+          vote: 'player1',
+        },
+        player3: {
+          name: 'player3',
+          gender: 'male',
+          food: 5,
+          grain: 5,
+          vote: 'player1',
+        },
+      },
+      saveRequired: false,
+    };
+
+    pop.vote(gameState, 'player1', 'player2');
+
+    // Only 1 vote for player2, 2/3 of 3 = 2, so 1 < 2 = no majority
+    expect(gameState.population.player1.chief).toBeUndefined();
+    expect(gameState.population.player2.chief).toBeUndefined();
+    expect(gameState.saveRequired).toBe(true);
+    expect(gameState.population.player1.vote).toBe('player2');
+  });
+});

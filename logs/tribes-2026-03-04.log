@@ -1,0 +1,806 @@
+[3/4/2026, 12:54:19 PM] [SESSION] Created session for testPlayer from 192.168.1.1 
+[3/4/2026, 12:54:19 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:54:19 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:54:19 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:54:19 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:54:19 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:54:19 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:54:19 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 12:54:19 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:54:19 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 12:54:19 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:54:19 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:54:19 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 12:54:19 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:54:19 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:54:19 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:54:19 PM] [SESSION] Destroyed all sessions for testPlayer 
+[3/4/2026, 12:54:19 PM] [SESSION] Created session for player1 from unknown 
+[3/4/2026, 12:54:19 PM] [SESSION] Created session for player2 from unknown 
+[3/4/2026, 12:54:19 PM] [SESSION] Destroyed all sessions for player1 
+[3/4/2026, 12:54:19 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 12:54:19 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 12:54:19 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 12:54:19 PM] Failed login attempt for testUser. Count: 3 
+[3/4/2026, 12:54:19 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 12:54:19 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 12:54:19 PM] Failed login attempt for testUser. Count: 3 
+[3/4/2026, 12:54:19 PM] Failed login attempt for testUser. Count: 4 
+[3/4/2026, 12:54:19 PM] Failed login attempt for testUser. Count: 5 
+[3/4/2026, 12:54:19 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 12:54:19 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 12:55:55 PM] [SESSION] Created session for testPlayer from 192.168.1.1 
+[3/4/2026, 12:55:55 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:55:55 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:55:55 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:55:55 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:55:55 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:55:55 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:55:55 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 12:55:55 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:55:55 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 12:55:55 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:55:55 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:55:55 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 12:55:55 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:55:55 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:55:55 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:55:55 PM] [SESSION] Destroyed all sessions for testPlayer 
+[3/4/2026, 12:55:55 PM] [SESSION] Created session for player1 from unknown 
+[3/4/2026, 12:55:55 PM] [SESSION] Created session for player2 from unknown 
+[3/4/2026, 12:55:55 PM] [SESSION] Destroyed all sessions for player1 
+[3/4/2026, 12:55:55 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 12:55:55 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 12:55:55 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 12:55:55 PM] Failed login attempt for testUser. Count: 3 
+[3/4/2026, 12:55:55 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 12:55:55 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 12:55:55 PM] Failed login attempt for testUser. Count: 3 
+[3/4/2026, 12:55:55 PM] Failed login attempt for testUser. Count: 4 
+[3/4/2026, 12:55:55 PM] Failed login attempt for testUser. Count: 5 
+[3/4/2026, 12:55:55 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 12:55:55 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 12:56:25 PM] [SESSION] Created session for testPlayer from 192.168.1.1 
+[3/4/2026, 12:56:25 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:25 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:25 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:25 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:25 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:25 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:25 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 12:56:25 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:25 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 12:56:25 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:25 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:25 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 12:56:25 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:25 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:25 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:25 PM] [SESSION] Destroyed all sessions for testPlayer 
+[3/4/2026, 12:56:25 PM] [SESSION] Created session for player1 from unknown 
+[3/4/2026, 12:56:25 PM] [SESSION] Created session for player2 from unknown 
+[3/4/2026, 12:56:25 PM] [SESSION] Destroyed all sessions for player1 
+[3/4/2026, 12:56:25 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 12:56:25 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 12:56:25 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 12:56:25 PM] Failed login attempt for testUser. Count: 3 
+[3/4/2026, 12:56:25 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 12:56:25 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 12:56:25 PM] Failed login attempt for testUser. Count: 3 
+[3/4/2026, 12:56:25 PM] Failed login attempt for testUser. Count: 4 
+[3/4/2026, 12:56:25 PM] Failed login attempt for testUser. Count: 5 
+[3/4/2026, 12:56:25 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 12:56:25 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 12:56:36 PM] [SESSION] Created session for testPlayer from 192.168.1.1 
+[3/4/2026, 12:56:36 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:36 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:36 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:36 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:36 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:36 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:36 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 12:56:36 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:36 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 12:56:36 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:36 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:36 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 12:56:36 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:36 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:36 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:36 PM] [SESSION] Destroyed all sessions for testPlayer 
+[3/4/2026, 12:56:36 PM] [SESSION] Created session for player1 from unknown 
+[3/4/2026, 12:56:36 PM] [SESSION] Created session for player2 from unknown 
+[3/4/2026, 12:56:36 PM] [SESSION] Destroyed all sessions for player1 
+[3/4/2026, 12:56:36 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 12:56:36 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 12:56:36 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 12:56:36 PM] Failed login attempt for testUser. Count: 3 
+[3/4/2026, 12:56:36 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 12:56:36 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 12:56:36 PM] Failed login attempt for testUser. Count: 3 
+[3/4/2026, 12:56:36 PM] Failed login attempt for testUser. Count: 4 
+[3/4/2026, 12:56:36 PM] Failed login attempt for testUser. Count: 5 
+[3/4/2026, 12:56:36 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 12:56:36 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 12:56:36 PM] [SESSION] Created session for testPlayer from 192.168.1.1 
+[3/4/2026, 12:56:36 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:36 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:36 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:36 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:36 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:36 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:36 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 12:56:36 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:36 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 12:56:36 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:36 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:36 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 12:56:36 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:36 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:36 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:36 PM] [SESSION] Destroyed all sessions for testPlayer 
+[3/4/2026, 12:56:36 PM] [SESSION] Created session for player1 from unknown 
+[3/4/2026, 12:56:36 PM] [SESSION] Created session for player2 from unknown 
+[3/4/2026, 12:56:36 PM] [SESSION] Destroyed all sessions for player1 
+[3/4/2026, 12:56:36 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 12:56:36 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 12:56:36 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 12:56:36 PM] Failed login attempt for testUser. Count: 3 
+[3/4/2026, 12:56:36 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 12:56:36 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 12:56:36 PM] Failed login attempt for testUser. Count: 3 
+[3/4/2026, 12:56:36 PM] Failed login attempt for testUser. Count: 4 
+[3/4/2026, 12:56:36 PM] Failed login attempt for testUser. Count: 5 
+[3/4/2026, 12:56:36 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 12:56:36 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 12:56:36 PM] [SESSION] Created session for testPlayer from 192.168.1.1 
+[3/4/2026, 12:56:36 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:36 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:36 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:36 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:36 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:36 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:36 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 12:56:36 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:36 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 12:56:36 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:36 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:36 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 12:56:36 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:36 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:36 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:36 PM] [SESSION] Destroyed all sessions for testPlayer 
+[3/4/2026, 12:56:36 PM] [SESSION] Created session for player1 from unknown 
+[3/4/2026, 12:56:36 PM] [SESSION] Created session for player2 from unknown 
+[3/4/2026, 12:56:36 PM] [SESSION] Destroyed all sessions for player1 
+[3/4/2026, 12:56:36 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 12:56:36 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 12:56:36 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 12:56:36 PM] Failed login attempt for testUser. Count: 3 
+[3/4/2026, 12:56:36 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 12:56:36 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 12:56:36 PM] Failed login attempt for testUser. Count: 3 
+[3/4/2026, 12:56:36 PM] Failed login attempt for testUser. Count: 4 
+[3/4/2026, 12:56:36 PM] Failed login attempt for testUser. Count: 5 
+[3/4/2026, 12:56:36 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 12:56:36 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 12:56:37 PM] [SESSION] Created session for testPlayer from 192.168.1.1 
+[3/4/2026, 12:56:37 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:37 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:37 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:37 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:37 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:37 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:37 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 12:56:37 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:37 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 12:56:37 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:37 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:37 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 12:56:37 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:37 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:37 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:37 PM] [SESSION] Destroyed all sessions for testPlayer 
+[3/4/2026, 12:56:37 PM] [SESSION] Created session for player1 from unknown 
+[3/4/2026, 12:56:37 PM] [SESSION] Created session for player2 from unknown 
+[3/4/2026, 12:56:37 PM] [SESSION] Destroyed all sessions for player1 
+[3/4/2026, 12:56:37 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 12:56:37 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 12:56:37 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 12:56:37 PM] Failed login attempt for testUser. Count: 3 
+[3/4/2026, 12:56:37 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 12:56:37 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 12:56:37 PM] Failed login attempt for testUser. Count: 3 
+[3/4/2026, 12:56:37 PM] Failed login attempt for testUser. Count: 4 
+[3/4/2026, 12:56:37 PM] Failed login attempt for testUser. Count: 5 
+[3/4/2026, 12:56:37 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 12:56:37 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 12:56:37 PM] [SESSION] Created session for testPlayer from 192.168.1.1 
+[3/4/2026, 12:56:37 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:37 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:37 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:37 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:37 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:37 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:37 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 12:56:37 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:37 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 12:56:37 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:37 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:37 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 12:56:37 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:37 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:37 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:56:37 PM] [SESSION] Destroyed all sessions for testPlayer 
+[3/4/2026, 12:56:37 PM] [SESSION] Created session for player1 from unknown 
+[3/4/2026, 12:56:37 PM] [SESSION] Created session for player2 from unknown 
+[3/4/2026, 12:56:37 PM] [SESSION] Destroyed all sessions for player1 
+[3/4/2026, 12:56:37 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 12:56:37 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 12:56:37 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 12:56:37 PM] Failed login attempt for testUser. Count: 3 
+[3/4/2026, 12:56:37 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 12:56:37 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 12:56:37 PM] Failed login attempt for testUser. Count: 3 
+[3/4/2026, 12:56:37 PM] Failed login attempt for testUser. Count: 4 
+[3/4/2026, 12:56:37 PM] Failed login attempt for testUser. Count: 5 
+[3/4/2026, 12:56:37 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 12:56:37 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 12:57:12 PM] [SESSION] Created session for testPlayer from 192.168.1.1 
+[3/4/2026, 12:57:12 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:57:12 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:57:12 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:57:12 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:57:12 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:57:12 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:57:12 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 12:57:12 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:57:12 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 12:57:12 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:57:12 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:57:12 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 12:57:12 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:57:12 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:57:12 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:57:12 PM] [SESSION] Destroyed all sessions for testPlayer 
+[3/4/2026, 12:57:12 PM] [SESSION] Created session for player1 from unknown 
+[3/4/2026, 12:57:12 PM] [SESSION] Created session for player2 from unknown 
+[3/4/2026, 12:57:12 PM] [SESSION] Destroyed all sessions for player1 
+[3/4/2026, 12:57:12 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 12:57:12 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 12:57:12 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 12:57:12 PM] Failed login attempt for testUser. Count: 3 
+[3/4/2026, 12:57:12 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 12:57:12 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 12:57:12 PM] Failed login attempt for testUser. Count: 3 
+[3/4/2026, 12:57:12 PM] Failed login attempt for testUser. Count: 4 
+[3/4/2026, 12:57:12 PM] Failed login attempt for testUser. Count: 5 
+[3/4/2026, 12:57:12 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 12:57:12 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 12:57:13 PM] [SESSION] Created session for testPlayer from 192.168.1.1 
+[3/4/2026, 12:57:13 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:57:13 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:57:13 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:57:13 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:57:13 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:57:13 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:57:13 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 12:57:13 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:57:13 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 12:57:13 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:57:13 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:57:13 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 12:57:13 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:57:13 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:57:13 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:57:13 PM] [SESSION] Destroyed all sessions for testPlayer 
+[3/4/2026, 12:57:13 PM] [SESSION] Created session for player1 from unknown 
+[3/4/2026, 12:57:13 PM] [SESSION] Created session for player2 from unknown 
+[3/4/2026, 12:57:13 PM] [SESSION] Destroyed all sessions for player1 
+[3/4/2026, 12:57:13 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 12:57:13 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 12:57:13 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 12:57:13 PM] Failed login attempt for testUser. Count: 3 
+[3/4/2026, 12:57:13 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 12:57:13 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 12:57:13 PM] Failed login attempt for testUser. Count: 3 
+[3/4/2026, 12:57:13 PM] Failed login attempt for testUser. Count: 4 
+[3/4/2026, 12:57:13 PM] Failed login attempt for testUser. Count: 5 
+[3/4/2026, 12:57:13 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 12:57:13 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 12:57:37 PM] [SESSION] Created session for testPlayer from 192.168.1.1 
+[3/4/2026, 12:57:37 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:57:37 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:57:37 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:57:37 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:57:37 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:57:37 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:57:37 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 12:57:37 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:57:37 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 12:57:37 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:57:37 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:57:37 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 12:57:37 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:57:37 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:57:37 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:57:37 PM] [SESSION] Destroyed all sessions for testPlayer 
+[3/4/2026, 12:57:37 PM] [SESSION] Created session for player1 from unknown 
+[3/4/2026, 12:57:37 PM] [SESSION] Created session for player2 from unknown 
+[3/4/2026, 12:57:37 PM] [SESSION] Destroyed all sessions for player1 
+[3/4/2026, 12:57:37 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 12:57:37 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 12:57:37 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 12:57:37 PM] Failed login attempt for testUser. Count: 3 
+[3/4/2026, 12:57:37 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 12:57:37 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 12:57:37 PM] Failed login attempt for testUser. Count: 3 
+[3/4/2026, 12:57:37 PM] Failed login attempt for testUser. Count: 4 
+[3/4/2026, 12:57:37 PM] Failed login attempt for testUser. Count: 5 
+[3/4/2026, 12:57:37 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 12:57:37 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 12:57:38 PM] [SESSION] Created session for testPlayer from 192.168.1.1 
+[3/4/2026, 12:57:38 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:57:38 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:57:38 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:57:38 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:57:38 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:57:38 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:57:38 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 12:57:38 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:57:38 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 12:57:38 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:57:38 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:57:38 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 12:57:38 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:57:38 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:57:38 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 12:57:38 PM] [SESSION] Destroyed all sessions for testPlayer 
+[3/4/2026, 12:57:38 PM] [SESSION] Created session for player1 from unknown 
+[3/4/2026, 12:57:38 PM] [SESSION] Created session for player2 from unknown 
+[3/4/2026, 12:57:38 PM] [SESSION] Destroyed all sessions for player1 
+[3/4/2026, 12:57:38 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 12:57:38 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 12:57:38 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 12:57:38 PM] Failed login attempt for testUser. Count: 3 
+[3/4/2026, 12:57:38 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 12:57:38 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 12:57:38 PM] Failed login attempt for testUser. Count: 3 
+[3/4/2026, 12:57:38 PM] Failed login attempt for testUser. Count: 4 
+[3/4/2026, 12:57:38 PM] Failed login attempt for testUser. Count: 5 
+[3/4/2026, 12:57:38 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 12:57:38 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 1:00:42 PM] [SESSION] Created session for testPlayer from 192.168.1.1 
+[3/4/2026, 1:00:42 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:00:42 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:00:42 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:00:42 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:00:42 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:00:42 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:00:42 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 1:00:42 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:00:42 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 1:00:42 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:00:42 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:00:42 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 1:00:42 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:00:42 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:00:42 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:00:42 PM] [SESSION] Destroyed all sessions for testPlayer 
+[3/4/2026, 1:00:42 PM] [SESSION] Created session for player1 from unknown 
+[3/4/2026, 1:00:42 PM] [SESSION] Created session for player2 from unknown 
+[3/4/2026, 1:00:42 PM] [SESSION] Destroyed all sessions for player1 
+[3/4/2026, 1:00:42 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 1:00:42 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 1:00:42 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 1:00:42 PM] Failed login attempt for testUser. Count: 3 
+[3/4/2026, 1:00:42 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 1:00:42 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 1:00:42 PM] Failed login attempt for testUser. Count: 3 
+[3/4/2026, 1:00:42 PM] Failed login attempt for testUser. Count: 4 
+[3/4/2026, 1:00:42 PM] Failed login attempt for testUser. Count: 5 
+[3/4/2026, 1:00:42 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 1:00:42 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 1:00:43 PM] [SESSION] Created session for testPlayer from 192.168.1.1 
+[3/4/2026, 1:00:43 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:00:43 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:00:43 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:00:43 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:00:43 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:00:43 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:00:43 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 1:00:43 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:00:43 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 1:00:43 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:00:43 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:00:43 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 1:00:43 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:00:43 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:00:43 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:00:43 PM] [SESSION] Destroyed all sessions for testPlayer 
+[3/4/2026, 1:00:43 PM] [SESSION] Created session for player1 from unknown 
+[3/4/2026, 1:00:43 PM] [SESSION] Created session for player2 from unknown 
+[3/4/2026, 1:00:43 PM] [SESSION] Destroyed all sessions for player1 
+[3/4/2026, 1:00:43 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 1:00:43 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 1:00:43 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 1:00:43 PM] Failed login attempt for testUser. Count: 3 
+[3/4/2026, 1:00:43 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 1:00:43 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 1:00:43 PM] Failed login attempt for testUser. Count: 3 
+[3/4/2026, 1:00:43 PM] Failed login attempt for testUser. Count: 4 
+[3/4/2026, 1:00:43 PM] Failed login attempt for testUser. Count: 5 
+[3/4/2026, 1:00:43 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 1:00:43 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 1:01:25 PM] [SESSION] Created session for testPlayer from 192.168.1.1 
+[3/4/2026, 1:01:25 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:01:25 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:01:25 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:01:25 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:01:25 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:01:25 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:01:25 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 1:01:25 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:01:25 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 1:01:25 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:01:25 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:01:25 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 1:01:25 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:01:25 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:01:25 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:01:25 PM] [SESSION] Destroyed all sessions for testPlayer 
+[3/4/2026, 1:01:25 PM] [SESSION] Created session for player1 from unknown 
+[3/4/2026, 1:01:25 PM] [SESSION] Created session for player2 from unknown 
+[3/4/2026, 1:01:25 PM] [SESSION] Destroyed all sessions for player1 
+[3/4/2026, 1:01:25 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 1:01:25 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 1:01:25 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 1:01:25 PM] Failed login attempt for testUser. Count: 3 
+[3/4/2026, 1:01:25 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 1:01:25 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 1:01:25 PM] Failed login attempt for testUser. Count: 3 
+[3/4/2026, 1:01:25 PM] Failed login attempt for testUser. Count: 4 
+[3/4/2026, 1:01:25 PM] Failed login attempt for testUser. Count: 5 
+[3/4/2026, 1:01:25 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 1:01:25 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 1:01:25 PM] [SESSION] Created session for testPlayer from 192.168.1.1 
+[3/4/2026, 1:01:25 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:01:25 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:01:25 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:01:25 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:01:25 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:01:25 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:01:25 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 1:01:25 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:01:25 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 1:01:25 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:01:25 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:01:25 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 1:01:25 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:01:25 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:01:25 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:01:25 PM] [SESSION] Destroyed all sessions for testPlayer 
+[3/4/2026, 1:01:25 PM] [SESSION] Created session for player1 from unknown 
+[3/4/2026, 1:01:25 PM] [SESSION] Created session for player2 from unknown 
+[3/4/2026, 1:01:25 PM] [SESSION] Destroyed all sessions for player1 
+[3/4/2026, 1:01:25 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 1:01:25 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 1:01:25 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 1:01:25 PM] Failed login attempt for testUser. Count: 3 
+[3/4/2026, 1:01:25 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 1:01:25 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 1:01:25 PM] Failed login attempt for testUser. Count: 3 
+[3/4/2026, 1:01:25 PM] Failed login attempt for testUser. Count: 4 
+[3/4/2026, 1:01:25 PM] Failed login attempt for testUser. Count: 5 
+[3/4/2026, 1:01:25 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 1:01:25 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 1:04:05 PM] [SESSION] Created session for testPlayer from 192.168.1.1 
+[3/4/2026, 1:04:05 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:04:05 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:04:05 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:04:05 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:04:05 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:04:05 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:04:05 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 1:04:05 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:04:05 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 1:04:05 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:04:05 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:04:05 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 1:04:05 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:04:05 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:04:05 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:04:05 PM] [SESSION] Destroyed all sessions for testPlayer 
+[3/4/2026, 1:04:05 PM] [SESSION] Created session for player1 from unknown 
+[3/4/2026, 1:04:05 PM] [SESSION] Created session for player2 from unknown 
+[3/4/2026, 1:04:05 PM] [SESSION] Destroyed all sessions for player1 
+[3/4/2026, 1:04:05 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 1:04:05 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 1:04:05 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 1:04:05 PM] Failed login attempt for testUser. Count: 3 
+[3/4/2026, 1:04:05 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 1:04:05 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 1:04:05 PM] Failed login attempt for testUser. Count: 3 
+[3/4/2026, 1:04:05 PM] Failed login attempt for testUser. Count: 4 
+[3/4/2026, 1:04:05 PM] Failed login attempt for testUser. Count: 5 
+[3/4/2026, 1:04:05 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 1:04:05 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 1:04:06 PM] [SESSION] Created session for testPlayer from 192.168.1.1 
+[3/4/2026, 1:04:06 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:04:06 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:04:06 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:04:06 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:04:06 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:04:06 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:04:06 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 1:04:06 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:04:06 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 1:04:06 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:04:06 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:04:06 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 1:04:06 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:04:06 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:04:06 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:04:06 PM] [SESSION] Destroyed all sessions for testPlayer 
+[3/4/2026, 1:04:06 PM] [SESSION] Created session for player1 from unknown 
+[3/4/2026, 1:04:06 PM] [SESSION] Created session for player2 from unknown 
+[3/4/2026, 1:04:06 PM] [SESSION] Destroyed all sessions for player1 
+[3/4/2026, 1:04:06 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 1:04:06 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 1:04:06 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 1:04:06 PM] Failed login attempt for testUser. Count: 3 
+[3/4/2026, 1:04:06 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 1:04:06 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 1:04:06 PM] Failed login attempt for testUser. Count: 3 
+[3/4/2026, 1:04:06 PM] Failed login attempt for testUser. Count: 4 
+[3/4/2026, 1:04:06 PM] Failed login attempt for testUser. Count: 5 
+[3/4/2026, 1:04:06 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 1:04:06 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 1:04:54 PM] [SESSION] Created session for testPlayer from 192.168.1.1 
+[3/4/2026, 1:04:54 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:04:54 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:04:54 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:04:54 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:04:54 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:04:54 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:04:54 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 1:04:54 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:04:54 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 1:04:54 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:04:54 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:04:54 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 1:04:54 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:04:54 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:04:54 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:04:54 PM] [SESSION] Destroyed all sessions for testPlayer 
+[3/4/2026, 1:04:54 PM] [SESSION] Created session for player1 from unknown 
+[3/4/2026, 1:04:54 PM] [SESSION] Created session for player2 from unknown 
+[3/4/2026, 1:04:54 PM] [SESSION] Destroyed all sessions for player1 
+[3/4/2026, 1:04:54 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 1:04:54 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 1:04:54 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 1:04:54 PM] Failed login attempt for testUser. Count: 3 
+[3/4/2026, 1:04:54 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 1:04:54 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 1:04:54 PM] Failed login attempt for testUser. Count: 3 
+[3/4/2026, 1:04:54 PM] Failed login attempt for testUser. Count: 4 
+[3/4/2026, 1:04:54 PM] Failed login attempt for testUser. Count: 5 
+[3/4/2026, 1:04:54 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 1:04:54 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 1:04:55 PM] [SESSION] Created session for testPlayer from 192.168.1.1 
+[3/4/2026, 1:04:55 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:04:55 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:04:55 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:04:55 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:04:55 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:04:55 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:04:55 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 1:04:55 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:04:55 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 1:04:55 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:04:55 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:04:55 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 1:04:55 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:04:55 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:04:55 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:04:55 PM] [SESSION] Destroyed all sessions for testPlayer 
+[3/4/2026, 1:04:55 PM] [SESSION] Created session for player1 from unknown 
+[3/4/2026, 1:04:55 PM] [SESSION] Created session for player2 from unknown 
+[3/4/2026, 1:04:55 PM] [SESSION] Destroyed all sessions for player1 
+[3/4/2026, 1:04:55 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 1:04:55 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 1:04:55 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 1:04:55 PM] Failed login attempt for testUser. Count: 3 
+[3/4/2026, 1:04:55 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 1:04:55 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 1:04:55 PM] Failed login attempt for testUser. Count: 3 
+[3/4/2026, 1:04:55 PM] Failed login attempt for testUser. Count: 4 
+[3/4/2026, 1:04:55 PM] Failed login attempt for testUser. Count: 5 
+[3/4/2026, 1:04:55 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 1:04:55 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 1:07:31 PM] [SESSION] Created session for testPlayer from 192.168.1.1 
+[3/4/2026, 1:07:31 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:07:31 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:07:31 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:07:31 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:07:31 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:07:31 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:07:31 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 1:07:31 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:07:31 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 1:07:31 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:07:31 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:07:31 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 1:07:31 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:07:31 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:07:31 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:07:31 PM] [SESSION] Destroyed all sessions for testPlayer 
+[3/4/2026, 1:07:31 PM] [SESSION] Created session for player1 from unknown 
+[3/4/2026, 1:07:31 PM] [SESSION] Created session for player2 from unknown 
+[3/4/2026, 1:07:31 PM] [SESSION] Destroyed all sessions for player1 
+[3/4/2026, 1:07:31 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 1:07:31 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 1:07:31 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 1:07:31 PM] Failed login attempt for testUser. Count: 3 
+[3/4/2026, 1:07:31 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 1:07:31 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 1:07:31 PM] Failed login attempt for testUser. Count: 3 
+[3/4/2026, 1:07:31 PM] Failed login attempt for testUser. Count: 4 
+[3/4/2026, 1:07:31 PM] Failed login attempt for testUser. Count: 5 
+[3/4/2026, 1:07:31 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 1:07:31 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 1:07:31 PM] [SESSION] Created session for testPlayer from 192.168.1.1 
+[3/4/2026, 1:07:31 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:07:31 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:07:31 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:07:31 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:07:31 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:07:31 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:07:31 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 1:07:31 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:07:31 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 1:07:31 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:07:31 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:07:31 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 1:07:31 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:07:31 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:07:31 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:07:31 PM] [SESSION] Destroyed all sessions for testPlayer 
+[3/4/2026, 1:07:31 PM] [SESSION] Created session for player1 from unknown 
+[3/4/2026, 1:07:31 PM] [SESSION] Created session for player2 from unknown 
+[3/4/2026, 1:07:31 PM] [SESSION] Destroyed all sessions for player1 
+[3/4/2026, 1:07:31 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 1:07:31 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 1:07:31 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 1:07:31 PM] Failed login attempt for testUser. Count: 3 
+[3/4/2026, 1:07:31 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 1:07:31 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 1:07:31 PM] Failed login attempt for testUser. Count: 3 
+[3/4/2026, 1:07:31 PM] Failed login attempt for testUser. Count: 4 
+[3/4/2026, 1:07:31 PM] Failed login attempt for testUser. Count: 5 
+[3/4/2026, 1:07:31 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 1:07:31 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 1:09:02 PM] [SESSION] Created session for testPlayer from 192.168.1.1 
+[3/4/2026, 1:09:02 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:09:02 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:09:02 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:09:02 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:09:02 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:09:02 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:09:02 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 1:09:02 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:09:02 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 1:09:02 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:09:02 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:09:02 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 1:09:02 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:09:02 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:09:02 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:09:02 PM] [SESSION] Destroyed all sessions for testPlayer 
+[3/4/2026, 1:09:02 PM] [SESSION] Created session for player1 from unknown 
+[3/4/2026, 1:09:02 PM] [SESSION] Created session for player2 from unknown 
+[3/4/2026, 1:09:02 PM] [SESSION] Destroyed all sessions for player1 
+[3/4/2026, 1:09:02 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 1:09:02 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 1:09:02 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 1:09:02 PM] Failed login attempt for testUser. Count: 3 
+[3/4/2026, 1:09:02 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 1:09:02 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 1:09:02 PM] Failed login attempt for testUser. Count: 3 
+[3/4/2026, 1:09:02 PM] Failed login attempt for testUser. Count: 4 
+[3/4/2026, 1:09:02 PM] Failed login attempt for testUser. Count: 5 
+[3/4/2026, 1:09:02 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 1:09:02 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 1:09:02 PM] [SESSION] Created session for testPlayer from 192.168.1.1 
+[3/4/2026, 1:09:02 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:09:02 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:09:02 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:09:02 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:09:02 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:09:02 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:09:02 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 1:09:02 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:09:02 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 1:09:02 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:09:02 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:09:02 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 1:09:02 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:09:02 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:09:02 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:09:02 PM] [SESSION] Destroyed all sessions for testPlayer 
+[3/4/2026, 1:09:02 PM] [SESSION] Created session for player1 from unknown 
+[3/4/2026, 1:09:02 PM] [SESSION] Created session for player2 from unknown 
+[3/4/2026, 1:09:02 PM] [SESSION] Destroyed all sessions for player1 
+[3/4/2026, 1:09:02 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 1:09:02 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 1:09:02 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 1:09:02 PM] Failed login attempt for testUser. Count: 3 
+[3/4/2026, 1:09:02 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 1:09:02 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 1:09:02 PM] Failed login attempt for testUser. Count: 3 
+[3/4/2026, 1:09:02 PM] Failed login attempt for testUser. Count: 4 
+[3/4/2026, 1:09:02 PM] Failed login attempt for testUser. Count: 5 
+[3/4/2026, 1:09:02 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 1:09:02 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 1:10:00 PM] [SESSION] Created session for testPlayer from 192.168.1.1 
+[3/4/2026, 1:10:00 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:10:00 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:10:00 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:10:00 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:10:00 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:10:00 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:10:00 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 1:10:00 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:10:00 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 1:10:00 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:10:00 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:10:00 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 1:10:00 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:10:00 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:10:00 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:10:00 PM] [SESSION] Destroyed all sessions for testPlayer 
+[3/4/2026, 1:10:00 PM] [SESSION] Created session for player1 from unknown 
+[3/4/2026, 1:10:00 PM] [SESSION] Created session for player2 from unknown 
+[3/4/2026, 1:10:00 PM] [SESSION] Destroyed all sessions for player1 
+[3/4/2026, 1:10:00 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 1:10:00 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 1:10:00 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 1:10:00 PM] Failed login attempt for testUser. Count: 3 
+[3/4/2026, 1:10:00 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 1:10:00 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 1:10:00 PM] Failed login attempt for testUser. Count: 3 
+[3/4/2026, 1:10:00 PM] Failed login attempt for testUser. Count: 4 
+[3/4/2026, 1:10:00 PM] Failed login attempt for testUser. Count: 5 
+[3/4/2026, 1:10:00 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 1:10:00 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 1:10:00 PM] [SESSION] Created session for testPlayer from 192.168.1.1 
+[3/4/2026, 1:10:00 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:10:00 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:10:00 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:10:00 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:10:00 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:10:00 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:10:00 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 1:10:00 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:10:00 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 1:10:00 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:10:00 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:10:00 PM] [SESSION] Destroyed session for testPlayer 
+[3/4/2026, 1:10:00 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:10:00 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:10:00 PM] [SESSION] Created session for testPlayer from unknown 
+[3/4/2026, 1:10:00 PM] [SESSION] Destroyed all sessions for testPlayer 
+[3/4/2026, 1:10:00 PM] [SESSION] Created session for player1 from unknown 
+[3/4/2026, 1:10:00 PM] [SESSION] Created session for player2 from unknown 
+[3/4/2026, 1:10:00 PM] [SESSION] Destroyed all sessions for player1 
+[3/4/2026, 1:10:00 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 1:10:00 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 1:10:00 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 1:10:00 PM] Failed login attempt for testUser. Count: 3 
+[3/4/2026, 1:10:00 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 1:10:00 PM] Failed login attempt for testUser. Count: 2 
+[3/4/2026, 1:10:00 PM] Failed login attempt for testUser. Count: 3 
+[3/4/2026, 1:10:00 PM] Failed login attempt for testUser. Count: 4 
+[3/4/2026, 1:10:00 PM] Failed login attempt for testUser. Count: 5 
+[3/4/2026, 1:10:00 PM] Failed login attempt for testUser. Count: 1 
+[3/4/2026, 1:10:00 PM] Failed login attempt for testUser. Count: 2 

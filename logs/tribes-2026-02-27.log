@@ -1,0 +1,203 @@
+[2/26/2026, 6:18:09 PM] Loaded command: join (admin) 
+[2/26/2026, 6:18:09 PM] Loaded command: secrets (admin) 
+[2/26/2026, 6:18:09 PM] Loaded command: specialize (admin) 
+[2/26/2026, 6:18:09 PM] Loaded command: vote (admin) 
+[2/26/2026, 6:18:09 PM] Loaded command: banish (chief) 
+[2/26/2026, 6:18:09 PM] Loaded command: chance (chief) 
+[2/26/2026, 6:18:09 PM] Loaded command: close (chief) 
+[2/26/2026, 6:18:09 PM] Loaded command: decree (chief) 
+[2/26/2026, 6:18:09 PM] Loaded command: endgame (chief) 
+[2/26/2026, 6:18:09 PM] Loaded command: induct (chief) 
+[2/26/2026, 6:18:09 PM] Loaded command: migrate (chief) 
+[2/26/2026, 6:18:09 PM] Loaded command: open (chief) 
+[2/26/2026, 6:18:09 PM] Loaded command: skip (chief) 
+[2/26/2026, 6:18:09 PM] Loaded command: startfood (chief) 
+[2/26/2026, 6:18:09 PM] Loaded command: startreproduction (chief) 
+[2/26/2026, 6:18:09 PM] Loaded command: startwork (chief) 
+[2/26/2026, 6:18:09 PM] Loaded command: attack (conflict) 
+[2/26/2026, 6:18:09 PM] Loaded command: defend (conflict) 
+[2/26/2026, 6:18:09 PM] Loaded command: demand (conflict) 
+[2/26/2026, 6:18:09 PM] Loaded command: faction (conflict) 
+[2/26/2026, 6:18:09 PM] Loaded command: run (conflict) 
+[2/26/2026, 6:18:09 PM] Loaded command: give (general) 
+[2/26/2026, 6:18:09 PM] Loaded command: graveyard (general) 
+[2/26/2026, 6:18:09 PM] Loaded command: help (general) 
+[2/26/2026, 6:18:09 PM] Loaded command: history (general) 
+[2/26/2026, 6:18:09 PM] Loaded command: inventory (general) 
+[2/26/2026, 6:18:09 PM] Loaded command: jerky (general) 
+[2/26/2026, 6:18:09 PM] Loaded command: law (general) 
+[2/26/2026, 6:18:09 PM] Loaded command: ping (general) 
+[2/26/2026, 6:18:09 PM] Loaded command: rollsomedice (general) 
+[2/26/2026, 6:18:09 PM] Loaded command: sacrifice (general) 
+[2/26/2026, 6:18:09 PM] Loaded command: scout (general) 
+[2/26/2026, 6:18:09 PM] Loaded command: status (general) 
+[2/26/2026, 6:18:09 PM] Loaded command: babysit (reproduction) 
+[2/26/2026, 6:18:09 PM] Loaded command: checkmating (reproduction) 
+[2/26/2026, 6:18:09 PM] Loaded command: children (reproduction) 
+[2/26/2026, 6:18:09 PM] Loaded command: consent (reproduction) 
+[2/26/2026, 6:18:09 PM] Loaded command: decline (reproduction) 
+[2/26/2026, 6:18:09 PM] Loaded command: invite (reproduction) 
+[2/26/2026, 6:18:09 PM] Loaded command: pass (reproduction) 
+[2/26/2026, 6:18:09 PM] Loaded command: romance (reproduction) 
+[2/26/2026, 6:18:09 PM] Loaded command: scorechildren (reproduction) 
+[2/26/2026, 6:18:09 PM] Loaded command: feed (rounds) 
+[2/26/2026, 6:18:09 PM] Loaded command: foodcheck (rounds) 
+[2/26/2026, 6:18:09 PM] Loaded command: leastguarded (rounds) 
+[2/26/2026, 6:18:09 PM] Loaded command: ready (rounds) 
+[2/26/2026, 6:18:09 PM] Loaded command: craft (work) 
+[2/26/2026, 6:18:09 PM] Loaded command: gather (work) 
+[2/26/2026, 6:18:09 PM] Loaded command: guard (work) 
+[2/26/2026, 6:18:09 PM] Loaded command: hunt (work) 
+[2/26/2026, 6:18:09 PM] Loaded command: idle (work) 
+[2/26/2026, 6:18:09 PM] Loaded command: ignore (work) 
+[2/26/2026, 6:18:09 PM] Loaded command: train (work) 
+[2/26/2026, 6:18:09 PM] Tribes server (WebSocket + HTTP) started on port 8000 
+[2/26/2026, 6:18:09 PM] Local access: 
+[2/26/2026, 6:18:09 PM]   Health check: http://localhost:8000/health 
+[2/26/2026, 6:18:09 PM]   Game interface: http://localhost:8000/ 
+[2/26/2026, 6:18:09 PM] Network access: 
+[2/26/2026, 6:18:09 PM]   Health check: http://192.168.1.20:8000/health 
+[2/26/2026, 6:18:09 PM]   Game interface: http://192.168.1.20:8000/ 
+[2/26/2026, 6:18:09 PM] Share the network URL with others on your local network! 
+[2/26/2026, 6:18:09 PM] New client connected from unknown 
+[2/26/2026, 6:18:09 PM] Received: listCommands  from Kevin
+[2/26/2026, 6:18:09 PM] got gamestate for bug
+[2/26/2026, 6:18:09 PM] added a client record  for Kevin
+[2/26/2026, 6:18:09 PM] data type listCommands
+[2/26/2026, 6:18:09 PM] [CHIEF CHECK] Player: "Kevin", HasGameState: true, HasPopulation: true 
+[2/26/2026, 6:18:09 PM] [CHIEF CHECK] Found player: true, Chief status: true 
+[2/26/2026, 6:18:09 PM] [CHIEF CHECK] Player "Kevin" properties: gender,food,grain,basket,spearhead,handle,name,profession,history,vote,chief,worked,consentList,inviteIndex,inviteList,canCraft,strategy,activity,cannotInvite,isInjured
+[2/26/2026, 6:18:09 PM] [REF CHECK] Player "Kevin" isRef: true 
+[2/26/2026, 6:18:09 PM] [CHIEF CHECK] Final isChief status: true 
+[2/26/2026, 6:18:09 PM] [CHIEF CHECK] Filtered out 0 chief commands, sending 53 total commands 
+[2/26/2026, 6:18:09 PM] [REF CHECK] Filtered out force options from 0 commands 
+[2/26/2026, 6:18:10 PM] New client connected from unknown 
+[2/26/2026, 6:18:10 PM] Received: listCommands  from Kevin
+[2/26/2026, 6:18:10 PM] got gamestate for bug
+[2/26/2026, 6:18:10 PM] added a client record  for Kevin
+[2/26/2026, 6:18:10 PM] data type listCommands
+[2/26/2026, 6:18:10 PM] [CHIEF CHECK] Player: "Kevin", HasGameState: true, HasPopulation: true 
+[2/26/2026, 6:18:10 PM] [CHIEF CHECK] Found player: true, Chief status: true 
+[2/26/2026, 6:18:10 PM] [CHIEF CHECK] Player "Kevin" properties: gender,food,grain,basket,spearhead,handle,name,profession,history,vote,chief,worked,consentList,inviteIndex,inviteList,canCraft,strategy,activity,cannotInvite,isInjured
+[2/26/2026, 6:18:10 PM] [REF CHECK] Player "Kevin" isRef: true 
+[2/26/2026, 6:18:10 PM] [CHIEF CHECK] Final isChief status: true 
+[2/26/2026, 6:18:10 PM] [CHIEF CHECK] Filtered out 0 chief commands, sending 53 total commands 
+[2/26/2026, 6:18:10 PM] [REF CHECK] Filtered out force options from 0 commands 
+[2/26/2026, 6:18:10 PM] New client connected from unknown 
+[2/26/2026, 6:18:10 PM] Client disconnected: unknown 
+[2/26/2026, 6:18:10 PM] New client connected from unknown 
+[2/26/2026, 6:18:10 PM] Received: listCommands  from Kevin
+[2/26/2026, 6:18:10 PM] got gamestate for bug
+[2/26/2026, 6:18:10 PM] added a client record  for Kevin
+[2/26/2026, 6:18:10 PM] data type listCommands
+[2/26/2026, 6:18:10 PM] [CHIEF CHECK] Player: "Kevin", HasGameState: true, HasPopulation: true 
+[2/26/2026, 6:18:10 PM] [CHIEF CHECK] Found player: true, Chief status: true 
+[2/26/2026, 6:18:10 PM] [CHIEF CHECK] Player "Kevin" properties: gender,food,grain,basket,spearhead,handle,name,profession,history,vote,chief,worked,consentList,inviteIndex,inviteList,canCraft,strategy,activity,cannotInvite,isInjured
+[2/26/2026, 6:18:10 PM] [REF CHECK] Player "Kevin" isRef: true 
+[2/26/2026, 6:18:10 PM] [CHIEF CHECK] Final isChief status: true 
+[2/26/2026, 6:18:10 PM] [CHIEF CHECK] Filtered out 0 chief commands, sending 53 total commands 
+[2/26/2026, 6:18:10 PM] [REF CHECK] Filtered out force options from 0 commands 
+[2/26/2026, 6:18:10 PM] New client connected from unknown 
+[2/26/2026, 6:18:10 PM] Received: listCommands  from Kevin
+[2/26/2026, 6:18:10 PM] got gamestate for bug
+[2/26/2026, 6:18:10 PM] added a client record  for Kevin
+[2/26/2026, 6:18:10 PM] data type listCommands
+[2/26/2026, 6:18:10 PM] [CHIEF CHECK] Player: "Kevin", HasGameState: true, HasPopulation: true 
+[2/26/2026, 6:18:10 PM] [CHIEF CHECK] Found player: true, Chief status: true 
+[2/26/2026, 6:18:10 PM] [CHIEF CHECK] Player "Kevin" properties: gender,food,grain,basket,spearhead,handle,name,profession,history,vote,chief,worked,consentList,inviteIndex,inviteList,canCraft,strategy,activity,cannotInvite,isInjured
+[2/26/2026, 6:18:10 PM] [REF CHECK] Player "Kevin" isRef: true 
+[2/26/2026, 6:18:10 PM] [CHIEF CHECK] Final isChief status: true 
+[2/26/2026, 6:18:10 PM] [CHIEF CHECK] Filtered out 0 chief commands, sending 53 total commands 
+[2/26/2026, 6:18:10 PM] [REF CHECK] Filtered out force options from 0 commands 
+[2/26/2026, 6:18:10 PM] New client connected from unknown 
+[2/26/2026, 6:18:10 PM] Received: listCommands  from Kevin
+[2/26/2026, 6:18:10 PM] got gamestate for bug
+[2/26/2026, 6:18:10 PM] added a client record  for Kevin
+[2/26/2026, 6:18:10 PM] data type listCommands
+[2/26/2026, 6:18:10 PM] [CHIEF CHECK] Player: "Kevin", HasGameState: true, HasPopulation: true 
+[2/26/2026, 6:18:10 PM] [CHIEF CHECK] Found player: true, Chief status: true 
+[2/26/2026, 6:18:10 PM] [CHIEF CHECK] Player "Kevin" properties: gender,food,grain,basket,spearhead,handle,name,profession,history,vote,chief,worked,consentList,inviteIndex,inviteList,canCraft,strategy,activity,cannotInvite,isInjured
+[2/26/2026, 6:18:10 PM] [REF CHECK] Player "Kevin" isRef: true 
+[2/26/2026, 6:18:10 PM] [CHIEF CHECK] Final isChief status: true 
+[2/26/2026, 6:18:10 PM] [CHIEF CHECK] Filtered out 0 chief commands, sending 53 total commands 
+[2/26/2026, 6:18:10 PM] [REF CHECK] Filtered out force options from 0 commands 
+[2/26/2026, 6:18:26 PM] Client disconnected: unknown 
+[2/26/2026, 6:18:26 PM] Client disconnected: unknown 
+[2/26/2026, 6:18:26 PM] Client disconnected: unknown 
+[2/26/2026, 6:18:26 PM] Client disconnected: unknown 
+[2/26/2026, 6:18:26 PM] Client disconnected: unknown 
+[2/26/2026, 6:18:26 PM] New client connected from unknown 
+[2/26/2026, 6:18:26 PM] Received: listCommands  from unknown
+[2/26/2026, 6:18:26 PM] got gamestate for bear
+[2/26/2026, 6:18:26 PM] added a client record  for 
+[2/26/2026, 6:18:26 PM] data type listCommands
+[2/26/2026, 6:18:26 PM] [CHIEF CHECK] Player: "", HasGameState: true, HasPopulation: true 
+[2/26/2026, 6:18:26 PM] [REF CHECK] Player "" isRef:  
+[2/26/2026, 6:18:26 PM] [CHIEF CHECK] Final isChief status: false 
+[2/26/2026, 6:18:26 PM] [CHIEF CHECK] Filtered out 12 chief commands, sending 41 total commands 
+[2/26/2026, 6:18:26 PM] [REF CHECK] Filtered out force options from 4 commands 
+[2/26/2026, 6:18:27 PM] Received: helpRequest  from Kevin
+[2/26/2026, 6:18:27 PM] got gamestate for bug
+[2/26/2026, 6:18:27 PM] added a client record  for Kevin
+[2/26/2026, 6:18:27 PM] data type helpRequest
+[2/27/2026, 8:33:13 AM] Loaded command: join (admin) 
+[2/27/2026, 8:33:13 AM] Loaded command: secrets (admin) 
+[2/27/2026, 8:33:13 AM] Loaded command: specialize (admin) 
+[2/27/2026, 8:33:13 AM] Loaded command: vote (admin) 
+[2/27/2026, 8:33:13 AM] Loaded command: banish (chief) 
+[2/27/2026, 8:33:13 AM] Loaded command: chance (chief) 
+[2/27/2026, 8:33:13 AM] Loaded command: close (chief) 
+[2/27/2026, 8:33:13 AM] Loaded command: decree (chief) 
+[2/27/2026, 8:33:13 AM] Loaded command: endgame (chief) 
+[2/27/2026, 8:33:13 AM] Loaded command: induct (chief) 
+[2/27/2026, 8:33:13 AM] Loaded command: migrate (chief) 
+[2/27/2026, 8:33:13 AM] Loaded command: open (chief) 
+[2/27/2026, 8:33:13 AM] Loaded command: skip (chief) 
+[2/27/2026, 8:33:13 AM] Loaded command: startfood (chief) 
+[2/27/2026, 8:33:13 AM] Loaded command: startreproduction (chief) 
+[2/27/2026, 8:33:13 AM] Loaded command: startwork (chief) 
+[2/27/2026, 8:33:13 AM] Loaded command: attack (conflict) 
+[2/27/2026, 8:33:13 AM] Loaded command: defend (conflict) 
+[2/27/2026, 8:33:13 AM] Loaded command: demand (conflict) 
+[2/27/2026, 8:33:13 AM] Loaded command: faction (conflict) 
+[2/27/2026, 8:33:13 AM] Loaded command: run (conflict) 
+[2/27/2026, 8:33:13 AM] Loaded command: give (general) 
+[2/27/2026, 8:33:13 AM] Loaded command: graveyard (general) 
+[2/27/2026, 8:33:13 AM] Loaded command: help (general) 
+[2/27/2026, 8:33:13 AM] Loaded command: history (general) 
+[2/27/2026, 8:33:13 AM] Loaded command: inventory (general) 
+[2/27/2026, 8:33:13 AM] Loaded command: jerky (general) 
+[2/27/2026, 8:33:13 AM] Loaded command: law (general) 
+[2/27/2026, 8:33:13 AM] Loaded command: ping (general) 
+[2/27/2026, 8:33:13 AM] Loaded command: rollsomedice (general) 
+[2/27/2026, 8:33:13 AM] Loaded command: sacrifice (general) 
+[2/27/2026, 8:33:13 AM] Loaded command: scout (general) 
+[2/27/2026, 8:33:13 AM] Loaded command: status (general) 
+[2/27/2026, 8:33:13 AM] Loaded command: babysit (reproduction) 
+[2/27/2026, 8:33:13 AM] Loaded command: checkmating (reproduction) 
+[2/27/2026, 8:33:13 AM] Loaded command: children (reproduction) 
+[2/27/2026, 8:33:13 AM] Loaded command: consent (reproduction) 
+[2/27/2026, 8:33:13 AM] Loaded command: decline (reproduction) 
+[2/27/2026, 8:33:13 AM] Loaded command: invite (reproduction) 
+[2/27/2026, 8:33:13 AM] Loaded command: pass (reproduction) 
+[2/27/2026, 8:33:13 AM] Loaded command: romance (reproduction) 
+[2/27/2026, 8:33:13 AM] Loaded command: scorechildren (reproduction) 
+[2/27/2026, 8:33:13 AM] Loaded command: feed (rounds) 
+[2/27/2026, 8:33:13 AM] Loaded command: foodcheck (rounds) 
+[2/27/2026, 8:33:13 AM] Loaded command: leastguarded (rounds) 
+[2/27/2026, 8:33:13 AM] Loaded command: ready (rounds) 
+[2/27/2026, 8:33:13 AM] Loaded command: craft (work) 
+[2/27/2026, 8:33:13 AM] Loaded command: gather (work) 
+[2/27/2026, 8:33:13 AM] Loaded command: guard (work) 
+[2/27/2026, 8:33:13 AM] Loaded command: hunt (work) 
+[2/27/2026, 8:33:13 AM] Loaded command: idle (work) 
+[2/27/2026, 8:33:13 AM] Loaded command: ignore (work) 
+[2/27/2026, 8:33:13 AM] Loaded command: train (work) 
+[2/27/2026, 8:33:13 AM] Tribes server (WebSocket + HTTP) started on port 8000 
+[2/27/2026, 8:33:13 AM] Local access: 
+[2/27/2026, 8:33:13 AM]   Health check: http://localhost:8000/health 
+[2/27/2026, 8:33:13 AM]   Game interface: http://localhost:8000/ 
+[2/27/2026, 8:33:13 AM] Network access: 
+[2/27/2026, 8:33:13 AM]   Health check: http://192.168.1.20:8000/health 
+[2/27/2026, 8:33:13 AM]   Game interface: http://192.168.1.20:8000/ 
+[2/27/2026, 8:33:13 AM] Share the network URL with others on your local network! 
