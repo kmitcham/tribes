@@ -3676,6 +3676,9 @@
                     this.currentPopulation = null;
                     this.saveSettings(); // Save the new tribe selection
                     
+                    // Refresh game data for the new tribe (population, children, status)
+                    this.refreshGameData();
+                    
                     // Clear message display when switching tribes  
                     const container = document.getElementById('messagesContainer');
                     container.innerHTML = '';

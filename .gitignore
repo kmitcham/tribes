@@ -2,3 +2,4 @@
 *.json
 /coverage
 auth.js
+logs/*
