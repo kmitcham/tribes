@@ -160,24 +160,26 @@ function doChance(rollValue, gameState) {
     case 18:
     case 17:
     case 16:
-      name = pop.randomMemberName(population);
-      person = pop.memberByName(name, gameState);
-      safety = 0; // infinite loop protection
-      while (
-        person.hasOwnProperty('strength') &&
-        person.strength == 'strong' &&
-        safety < Object.keys(population).length
-      ) {
-        name = pop.randomMemberName(population);
-        person = pop.memberByName(name, gameState);
-        safety = safety + 1;
-      }
-      message += person.name + ' grows stronger.';
-      pop.history(name, message, gameState);
-      if (person.strength && person.strength == 'weak') {
-        delete person.strength;
+      // Find members who are not already strong
+      var memberNames = Object.keys(population);
+      var nonStrongMembers = memberNames.filter(function (name) {
+        var p = population[name];
+        return !p.hasOwnProperty('strength') || p.strength != 'strong';
+      });
+      if (nonStrongMembers.length === 0) {
+        message += 'Every day is leg day; the tribe is strong.';
       } else {
-        person.strength = 'strong';
+        name = nonStrongMembers[
+          Math.floor(Math.random() * nonStrongMembers.length)
+        ];
+        person = pop.memberByName(name, gameState);
+        message += person.name + ' grows stronger.';
+        pop.history(name, message, gameState);
+        if (person.strength && person.strength == 'weak') {
+          delete person.strength;
+        } else {
+          person.strength = 'strong';
+        }
       }
       break;
     case 15:
