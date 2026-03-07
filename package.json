@@ -18,7 +18,8 @@
     "latest": "^0.2.0",
     "test": "^0.6.0",
     "update": "^0.7.4",
-    "winston": "^3.3.3"
+    "winston": "^3.3.3",
+    "ws": "^8.18.0"
   },
   "devDependencies": {
     "eslint": "^9.23.0",
