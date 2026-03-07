@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder } = require('../../libs/command-builders.js');
 const pop = require('../../libs/population');
 const util = require('../../libs/util');
 const feed = require('../../libs/feed');

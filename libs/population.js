@@ -303,7 +303,7 @@ function showHistory(playerName, gameState) {
 }
 module.exports.showHistory = showHistory;
 
-// handle is the discord player object which we like to store for messaging with them later
+// handle is the player/user object which we store for messaging with them later
 // possibly could just grab the id or something and find them in the channel for messaging
 function addToPopulation(gameState, sourceName, gender, profession, handle) {
   console.log('joining tribe with sourceName:' + sourceName);
