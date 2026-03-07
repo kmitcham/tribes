@@ -823,8 +823,15 @@ async function handleCommandRequest(ws, data, gameState) {
     }
 
     if (gameState.archiveRequired) {
-      savelib.archiveTribe(gameState);
+      const tribeName = gameState.name;
+      const gameEnded = gameState.ended;
+      await savelib.archiveTribe(gameState);
       gameState.archiveRequired = false;
+      // After archiving an ended game, the main file is cleared. Replace in-memory
+      // state with a fresh game so the next /join can start a new instance.
+      if (gameEnded) {
+        allGames[tribeName] = savelib.initGame(tribeName);
+      }
     }
   } catch (error) {
     console.error(`Error executing command ${commandName}:`, error);
