@@ -1992,6 +1992,8 @@
                             preservedValues[paramName] = input.value;
                         }
                         console.log('Preserving modal value for', paramName, ':', preservedValues[paramName]);
+                    } else if (input.id === 'invite_append_pass') {
+                        preservedValues['invite_append_pass'] = input.checked;
                     }
                 });
 
@@ -2143,7 +2145,8 @@
                         }
                     } else if (this.isOrderingOption(option.name)) {
                         // Ordering interface for parameters like invite lists, consent lists
-                        input = this.createOrderingInterface(option.name, preservedValues[option.name] || '');
+                        const appendPassChecked = (option.name === 'invitelist' && preservedValues['invite_append_pass']) || false;
+                        input = this.createOrderingInterface(option.name, preservedValues[option.name] || '', appendPassChecked);
                     } else if (option.type === 4) { // INTEGER
                         input = document.createElement('input');
                         input.type = 'number';
@@ -2252,23 +2255,27 @@
                 
                 const currentPlayer = this.currentPopulation[currentPlayerName];
                 if (!currentPlayer) {
-                    // Current player not in tribe yet - show warning and return all players
+                    // Current player not in tribe yet - show warning and return all players (except self not applicable)
                     console.warn('Current player not found in tribe population');
                     return Object.keys(this.currentPopulation);
                 }
                 
                 if (!currentPlayer.gender) {
-                    // If we can't determine current player's gender, allow all
-                    return Object.keys(this.currentPopulation);
+                    // If we can't determine current player's gender, allow all other tribe members
+                    return Object.keys(this.currentPopulation).filter(name => name !== currentPlayerName);
                 }
                 
-                const currentPlayerGender = currentPlayer.gender;
+                const currentPlayerGender = (currentPlayer.gender || '').toString().toLowerCase();
                 const oppositeGender = currentPlayerGender === 'male' ? 'female' : 'male';
                 
-                // Filter to only opposite gender players
+                // All tribe members of the opposite sex (exclude self). Use case-insensitive gender; include if gender missing so no one is dropped.
                 return Object.keys(this.currentPopulation).filter(playerName => {
+                    if (playerName === currentPlayerName) return false;
                     const player = this.currentPopulation[playerName];
-                    return player && player.gender === oppositeGender;
+                    if (!player) return false;
+                    const g = (player.gender || '').toString().toLowerCase();
+                    if (!g) return true; // unknown gender: include so we don't drop tribe members
+                    return g === oppositeGender;
                 });
             }
 
@@ -2713,7 +2720,14 @@
                     // Handle ordering parameters (comma-separated lists)
                     if (input.type === 'hidden' && this.isOrderingOption(paramName)) {
                         // Send as array for ordering parameters
-                        const orderList = input.value ? input.value.split(',') : [];
+                        let orderList = input.value ? input.value.split(',') : [];
+                        // For invite command, append !pass to end if checkbox is checked
+                        if (paramName === 'invitelist') {
+                            const appendPassEl = document.getElementById('invite_append_pass');
+                            if (appendPassEl && appendPassEl.checked) {
+                                orderList = orderList.concat('!pass');
+                            }
+                        }
                         console.log('Ordering parameter', paramName, 'raw value:', input.value, 'as array:', orderList);
                         parameters[paramName] = orderList;
                     } else if (input.type === 'checkbox') {
@@ -2737,7 +2751,7 @@
                 return parameters;
             }
 
-            createOrderingInterface(paramName, preservedValue = '') {
+            createOrderingInterface(paramName, preservedValue = '', appendPassChecked = false) {
                 const container = document.createElement('div');
                 container.className = 'ordering-container';
                 
@@ -2775,12 +2789,7 @@
                     playerSelect.appendChild(allOption);
                     
                     // Add different options based on command type
-                    if (this.selectedCommand.name.toLowerCase() === 'invite') {
-                        const passOption = document.createElement('option');
-                        passOption.value = '!pass';
-                        passOption.textContent = '!pass (if no choices above this item accept, give up)';
-                        playerSelect.appendChild(passOption);
-                    } else {
+                    if (this.selectedCommand.name.toLowerCase() !== 'invite') {
                         // For consent and decline commands
                         const noneOption = document.createElement('option');
                         noneOption.value = '!none';
@@ -2833,6 +2842,25 @@
                 addSection.appendChild(addBtn);
                 container.appendChild(addSection);
                 
+                // For invite command, add checkbox to append !pass to end of list when sending
+                if (paramName === 'invitelist' && this.selectedCommand.name.toLowerCase() === 'invite') {
+                    const passWrap = document.createElement('div');
+                    passWrap.className = 'invite-append-pass-wrap';
+                    passWrap.style.marginTop = '0.5rem';
+                    const passCheckbox = document.createElement('input');
+                    passCheckbox.type = 'checkbox';
+                    passCheckbox.id = 'invite_append_pass';
+                    passCheckbox.checked = !!appendPassChecked;
+                    const passLabel = document.createElement('label');
+                    passLabel.htmlFor = 'invite_append_pass';
+                    passLabel.style.marginLeft = '0.35rem';
+                    passLabel.style.cursor = 'pointer';
+                    passLabel.textContent = 'Add !pass to end of list (if no choices above accept, give up)';
+                    passWrap.appendChild(passCheckbox);
+                    passWrap.appendChild(passLabel);
+                    container.appendChild(passWrap);
+                }
+                
                 // Initialize display with existing values after everything is built
                 if (existingList.length > 0) {
                     this.updateOrderDisplayWithElement(orderList, existingList, paramName);
@@ -2856,67 +2884,18 @@
                 
                 // Handle special options
                 if (playerName === '!none') {
-                    // Clear the list (only available for consent/decline, not invite)
-                    // For decline/consent commands, server expects ['!none'] not []
+                    // Clear the list (only available for consent/decline, not invite). Do not send or close modal.
                     const clearValue = (this.selectedCommand.name === 'decline' || this.selectedCommand.name === 'consent') ? '!none' : '';
                     hiddenInput.value = clearValue;
                     this.updateOrderDisplay(paramName, clearValue ? [clearValue] : []);
                     const playerSelect = orderList.parentElement.querySelector('.add-player-select');
-                    playerSelect.value = '!none';
-                    this.addMessage('List cleared', 'info');
-                    
-                    // Execute the command immediately with appropriate parameter
-                    const parameters = {};
-                    if (this.selectedCommand.name === 'decline' || this.selectedCommand.name === 'consent') {
-                        // Server expects ['!none'] to clear the list
-                        parameters[paramName] = ['!none'];
-                    } else {
-                        // For other commands, send empty array
-                        parameters[paramName] = [];
-                    }
-                    logWithTimestamp('Auto-executing clear command:', this.selectedCommand.name, 'with parameters:', parameters);
-                    this.send({
-                        type: 'command',
-                        command: this.selectedCommand.name,
-                        parameters: parameters
-                    });
-                    
-                    // Close modal if it's open
-                    const modal = document.getElementById('commandModal');
-                    if (modal && modal.classList.contains('active')) {
-                        this.closeCommandModal();
-                    }
-                    return;
-                }
-                
-                if (playerName === '!pass') {
-                    // Set special pass value for invite command
-                    hiddenInput.value = '!pass';
-                    this.updateOrderDisplay(paramName, ['!pass']);
-                    const playerSelect = orderList.parentElement.querySelector('.add-player-select');
                     playerSelect.value = '';
-                    this.addMessage('Pass set - skipping this reproduction round', 'info');
-                    
-                    // Execute the command immediately with !pass parameter
-                    const parameters = {};
-                    parameters[paramName] = ['!pass'];
-                    logWithTimestamp('Auto-executing pass command:', this.selectedCommand.name, 'with parameters:', parameters);
-                    this.send({
-                        type: 'command',
-                        command: this.selectedCommand.name,
-                        parameters: parameters
-                    });
-                    
-                    // Close modal if it's open
-                    const modal = document.getElementById('commandModal');
-                    if (modal && modal.classList.contains('active')) {
-                        this.closeCommandModal();
-                    }
+                    this.addMessage('List cleared', 'info');
                     return;
                 }
                 
                 if (playerName === '!all') {
-                    // Add all available opposite gender players for romance commands
+                    // Add all available opposite gender players to the list (do not send or close modal)
                     if (this.isReproductionCommand(this.selectedCommand.name)) {
                         const currentPlayerName = document.getElementById('playerName').value;
                         const allValidPlayers = this.getValidTargetsForReproduction(currentPlayerName);
@@ -2925,22 +2904,6 @@
                         const playerSelect = orderList.parentElement.querySelector('.add-player-select');
                         playerSelect.value = '';
                         this.addMessage(`Added all ${allValidPlayers.length} valid players to ${paramName} list`, 'info');
-                        
-                        // Execute the command immediately with all players
-                        const parameters = {};
-                        parameters[paramName] = allValidPlayers;
-                        logWithTimestamp('Auto-executing !all command:', this.selectedCommand.name, 'with parameters:', parameters);
-                        this.send({
-                            type: 'command',
-                            command: this.selectedCommand.name,
-                            parameters: parameters
-                        });
-                        
-                        // Close modal if it's open
-                        const modal = document.getElementById('commandModal');
-                        if (modal && modal.classList.contains('active')) {
-                            this.closeCommandModal();
-                        }
                         return;
                     }
                 }
