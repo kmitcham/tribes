@@ -26,7 +26,7 @@ module.exports = {
       option
         .setName('go')
         .setDescription(
-          'when false, just show who needs food to make the trip alive'
+          'Check this box to actually migrate; otherwise, just evaluate the consequences of migration.'
         )
     ),
   async execute(interaction, gameState, bot) {

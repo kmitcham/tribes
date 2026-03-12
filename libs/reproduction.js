@@ -516,19 +516,19 @@ function globalMatingCheck(gameState) {
       return 'Infinite loop error.  oops.';
     }
     actionableInvites = false;
-    var listMemberNamesForSex = Object.keys(population);
-    listMemberNamesForSex.sort(function () {
+    var randomOrderForProcessingInvites = Object.keys(population);
+    randomOrderForProcessingInvites.sort(function () {
       return Math.random() - 0.5;
     });
     doneMating = [];
     whoNeedsToGiveAnAnswer = [];
-    console.log('a sexlist ' + listMemberNamesForSex);
+    console.log('a sexlist ' + randomOrderForProcessingInvites);
     counter = 0;
-    for (personName of listMemberNamesForSex) {
-      const invitingMember = pop.memberByName(personName, gameState);
+    for (invitingMemberKey of randomOrderForProcessingInvites) {
+      const invitingMember = pop.memberByName(invitingMemberKey, gameState);
       const inviterDisplayName = invitingMember.name;
-      console.log('working ' + personName + ' ' + invitingMember.name);
-      index = listMemberNamesForSex.indexOf(personName);
+      console.log('working ' + invitingMemberKey + ' named ' + invitingMember.name);
+      index = randomOrderForProcessingInvites.indexOf(invitingMemberKey);
       if (hasReasontoNotInvite(gameState, invitingMember)) {
         continue;
       } else if (
@@ -566,13 +566,13 @@ function globalMatingCheck(gameState) {
             inviterDisplayName +
               ' has a troublesome problem flirting, and will not mate this round.'
           );
-          doneMating.push(personName);
+          doneMating.push(invitingMemberKey);
           continue;
         }
         if (targetName.trim() == '!pass') {
           invitingMember.cannotInvite = true;
           //text.addMessage(gameState, "tribe", inviterDisplayName+" is done mating this round.");
-          doneMating.push(personName);
+          doneMating.push(invitingMemberKey);
           continue;
         }
         if (targetName.trim() == '!save') {
@@ -593,20 +593,21 @@ function globalMatingCheck(gameState) {
           continue;
         }
         const targetDisplayName = targetMember.name;
+        const targetPopulationKey = pop.getPopulationKey(targetMember, gameState) || targetName;
         if (
           'declineList' in targetMember &&
-          (targetMember.declineList.includes(personName) ||
+          (targetMember.declineList.includes(invitingMemberKey) ||
             targetMember.declineList.includes('!all') ||
             targetMember.declineList.includes(invitingMember.name))
         ) {
           text.addMessage(
             gameState,
-            inviterDisplayName,
+            invitingMemberKey,
             targetDisplayName + ' declines your invitation.'
           );
           text.addMessage(
             gameState,
-            targetDisplayName,
+            targetPopulationKey,
             inviterDisplayName + ' flirts with you, but you decline.'
           );
           console.log('\t declines  ');
@@ -614,66 +615,66 @@ function globalMatingCheck(gameState) {
         } else if (targetMember.isPregnant) {
           text.addMessage(
             gameState,
-            personName,
-            targetName + ' is visibly pregnant.'
+            invitingMemberKey,
+            targetDisplayName + ' is visibly pregnant.'
           );
           text.addMessage(
             gameState,
-            targetName,
-            personName + ' flirts with you, but you are pregnant.'
+            targetPopulationKey,
+            inviterDisplayName + ' flirts with you, but you are pregnant.'
           );
           console.log('\t is pregnant  ');
           attemptFailed = true;
         } else if (targetMember.isSick || targetMember.isInjured) {
           text.addMessage(
             gameState,
-            targetName,
-            personName +
+            targetPopulationKey,
+            inviterDisplayName +
               ' flirts with you, but you are not healthy enough to respond.'
           );
           text.addMessage(
             gameState,
-            personName,
-            targetName + ' is not healthy enough to enjoy your attention.'
+            invitingMemberKey,
+            targetDisplayName + ' is not healthy enough to enjoy your attention.'
           );
           console.log('\t sick or injured');
           attemptFailed = true;
         } else if (
           targetMember.consentList &&
-          (targetMember.consentList.includes(personName) ||
+          (targetMember.consentList.includes(invitingMemberKey) ||
             targetMember.consentList.includes('!all') ||
             targetMember.consentList.includes(invitingMember.name))
         ) {
           text.addMessage(
             gameState,
-            inviterDisplayName,
-            targetName + ' is impressed by your flirtation.'
+            invitingMemberKey,
+            targetDisplayName + ' is impressed by your flirtation.'
           );
           text.addMessage(
             gameState,
-            targetName,
+            targetPopulationKey,
             inviterDisplayName + ' flirts with you, and you are interested.'
           );
-          makeLove(targetName, personName, gameState);
+          makeLove(targetName, inviterDisplayName, gameState);
           invitingMember.cannotInvite = true;
-          doneMating.push(personName);
+          doneMating.push(invitingMemberKey);
           console.log('\t consents ');
           continue;
         } else {
           // this will get spammy, if the function is called every time anyone updates.
           text.addMessage(
             gameState,
-            targetDisplayName,
+            targetPopulationKey,
             inviterDisplayName +
               ' has invited you to mate- update your romance lists to include them (consent or decline) '
           );
           text.addMessage(
             gameState,
-            inviterDisplayName,
+            invitingMemberKey,
             targetDisplayName + ' considers your invitation.'
           );
-          whoNeedsToGiveAnAnswer.push(targetDisplayName);
-          doneMating.push(personName);
+          whoNeedsToGiveAnAnswer.push(targetPopulationKey);
+          doneMating.push(invitingMemberKey);
           console.log(
             '\t no response found with ' +
               targetDisplayName +
@@ -699,7 +700,7 @@ function globalMatingCheck(gameState) {
       } else {
         // person has no invites pending
         console.log(
-          '\t No invites found for ' + personName + ' so allDone is false'
+          '\t No invites found for ' + invitingMemberKey.name + ' so allDone is false'
         );
       }
     }
@@ -736,7 +737,7 @@ function globalMatingCheck(gameState) {
       invitingMember = pop.memberByName(personName, gameState);
       text.addMessage(
         gameState,
-        invitingMember.name,
+        personName,
         'Reproduction round activities are over.'
       );
       if (invitingMember.hiddenPregnant) {
@@ -793,9 +794,10 @@ function hasReasontoNotInvite(gameState, invitingMember) {
     return true;
   } else if (invitingMember.isPregnant) {
     console.log('\t inviter was pregnant');
+    const inviterKey = pop.getPopulationKey(invitingMember, gameState) || invitingMember.name;
     text.addMessage(
       gameState,
-      invitingMember.name,
+      inviterKey,
       'Your pregnancy prevents you from mating.'
     );
     text.addMessage(
@@ -807,9 +809,10 @@ function hasReasontoNotInvite(gameState, invitingMember) {
     return true;
   } else if (invitingMember.isInjured && invitingMember.isInjured > 0) {
     console.log('\t inviter is injured');
+    const inviterKey = pop.getPopulationKey(invitingMember, gameState) || invitingMember.name;
     text.addMessage(
       gameState,
-      invitingMember.name,
+      inviterKey,
       'Your injury prevents you from mating.'
     );
     text.addMessage(
@@ -821,9 +824,10 @@ function hasReasontoNotInvite(gameState, invitingMember) {
     return true;
   } else if (invitingMember.isSick && invitingMember.isSick > 0) {
     console.log('\t inviter is sick');
+    const inviterKey = pop.getPopulationKey(invitingMember, gameState) || invitingMember.name;
     text.addMessage(
       gameState,
-      invitingMember.name,
+      inviterKey,
       'Your illness prevents you from mating.'
     );
     text.addMessage(
@@ -849,6 +853,8 @@ function makeLove(targetName, inviterName, gameState, force = false) {
   }
   const motherName = mother.name;
   const fatherName = father.name;
+  const motherKey = pop.getPopulationKey(mother, gameState) || motherName;
+  const fatherKey = pop.getPopulationKey(father, gameState) || fatherName;
   console.log('mother:' + motherName + ' father:' + fatherName);
   spawnChance = 9;
   if (mother.nursing && mother.nursing.length > 0) {
@@ -874,8 +880,8 @@ function makeLove(targetName, inviterName, gameState, force = false) {
   targetMessage = inviterName + ' invite you to share good feelings';
   pop.history(inviterName, inviterMessage, gameState);
   pop.history(targetName, targetMessage, gameState);
-  text.addMessage(gameState, motherName, motherMessage);
-  text.addMessage(gameState, fatherName, fatherMessage);
+  text.addMessage(gameState, motherKey, motherMessage);
+  text.addMessage(gameState, fatherKey, fatherMessage);
   detection(mother, father, roll1 + roll2, gameState);
   return;
 }

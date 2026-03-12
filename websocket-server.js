@@ -959,27 +959,40 @@ async function sendGameMessages(ws, gameState, data) {
     delete gameState.messages.tribe;
   }
 
-  // Send private messages
+  // Send private messages (resolve by playerName and by population key so we don't miss due to name/key mismatch)
   const playerName = data.playerName;
-  if (gameState.messages[playerName]) {
+  const playerPopulationKey = pop.getPopulationKey && pop.getPopulationKey(playerName, gameState);
+  const playerMessage =
+    gameState.messages[playerName] ||
+    (playerPopulationKey && gameState.messages[playerPopulationKey]);
+  if (playerMessage) {
     ws.send(
       JSON.stringify({
         type: 'privateMessage',
-        message: gameState.messages[playerName],
+        message: playerMessage,
         clientId: data.clientId,
       })
     );
     delete gameState.messages[playerName];
+    if (playerPopulationKey) delete gameState.messages[playerPopulationKey];
   }
 
-  // Send messages to other connected players
+  // Send messages to other connected players (resolve recipient so population key vs member.name both work)
   for (const [recipient, message] of Object.entries(gameState.messages)) {
-    const recipientConnections = connectedClients.get(recipient);
+    let recipientConnections = connectedClients.get(recipient);
+    if (!recipientConnections || recipientConnections.size === 0) {
+      const populationKey = pop.getPopulationKey && pop.getPopulationKey(recipient, gameState);
+      if (populationKey) recipientConnections = connectedClients.get(populationKey);
+    }
+    if (!recipientConnections || recipientConnections.size === 0) {
+      const member = pop.memberByName(recipient, gameState);
+      if (member && member.name !== recipient) {
+        recipientConnections = connectedClients.get(member.name);
+      }
+    }
     if (recipientConnections && recipientConnections.size > 0) {
-      // Send to all connections for this player
       for (const recipientWs of recipientConnections) {
         if (recipientWs.readyState === 1) {
-          // WebSocket.OPEN
           try {
             recipientWs.send(
               JSON.stringify({

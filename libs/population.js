@@ -139,6 +139,28 @@ function memberByName(name, gameState) {
 }
 module.exports.memberByName = memberByName;
 
+/**
+ * Return the key under which this member is stored in gameState.population.
+ * Use this for message routing so all addMessage(..., address, ...) use the
+ * same key the client may have registered with (population key vs member.name can differ).
+ * @param {string|object} nameOrMember - Player name or member object
+ * @param {object} gameState
+ * @returns {string|null} Population key or null
+ */
+function getPopulationKey(nameOrMember, gameState) {
+  if (!gameState || !gameState.population) return null;
+  var member =
+    typeof nameOrMember === 'object'
+      ? nameOrMember
+      : memberByName(nameOrMember, gameState);
+  if (!member) return null;
+  for (var key in gameState.population) {
+    if (gameState.population[key] === member) return key;
+  }
+  return null;
+}
+module.exports.getPopulationKey = getPopulationKey;
+
 function deadOrBanishedByName(name, gameState) {
   var member = null;
   if (gameState.banished) {

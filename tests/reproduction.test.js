@@ -459,12 +459,12 @@ test('matingList tests', () => {
       p1: {
         name: 'p1',
         gender: 'female',
-        inviteList: ['p 2', '!pass'],
-        consentList: ['p 2'],
+        inviteList: ['p2', '!pass'],
+        consentList: ['p2'],
         declineList: [],
       },
       p2: {
-        name: 'p 2',
+        name: 'p2',
         gender: 'male',
         consentList: ['p1'],
         cannotInvite: true,
@@ -506,7 +506,7 @@ test('make a invitelist, with commas, pass and save', () => {
         gender: 'female',
       },
       p2: {
-        name: 'p 2',
+        name: 'p2',
         gender: 'male',
       },
       p3: {
@@ -521,8 +521,8 @@ test('make a invitelist, with commas, pass and save', () => {
     round: 'reproduction',
   };
   //function handleReproductionList(actorName, args, listName, gameState, bot){
-  expectedList = ['p 2', 'p3', '!pass'];
-  inputList = ['p 2,', 'p3,', '!pass'];
+  expectedList = ['p2', 'p3', '!pass'];
+  inputList = ['p2,', 'p3,', '!pass'];
   response = reproLib.handleReproductionList(
     'p1',
     inputList,
@@ -530,7 +530,7 @@ test('make a invitelist, with commas, pass and save', () => {
     gameState,
     {}
   );
-  exp = 'Setting your inviteList list to:p 2,p3,!pass\n';
+  exp = 'Setting your inviteList list to:p2,p3,!pass\n';
   expect(response).toBe(exp);
   expect(gameState['population']['p1']['inviteList']).toStrictEqual(
     expectedList
@@ -733,11 +733,11 @@ test('mating with spaces in names', () => {
       p1: {
         name: 'p1',
         gender: 'female',
-        inviteList: ['p 2'],
+        inviteList: ['p2'],
         consentList: ['!all'],
       },
       p2: {
-        name: 'p 2',
+        name: 'p2',
         gender: 'male',
         inviteList: ['p1', 'p4'],
         consentList: ['p1'],
@@ -751,7 +751,7 @@ test('mating with spaces in names', () => {
         name: 'p4',
         gender: 'female',
         inviteList: ['!pass'],
-        consentList: ['p 2'],
+        consentList: ['p2'],
       },
     },
     children: {},
@@ -761,15 +761,15 @@ test('mating with spaces in names', () => {
   response = reproLib.checkMating(gameState, 'p1');
   messages = gameState.messages;
 
-  expect('p 2' in messages);
-  p2messages = messages['p 2'];
+  expect('p2' in messages);
+  p2messages = messages['p2'];
   expect(p2messages).toContain('p1 is impressed');
   expect(p2messages).toContain('You share good feelings with p1');
   expect(p2messages).toContain('p1 flirts with you, and you are interested.');
   expect('p1' in messages);
   p1messages = messages['p1'];
   expect(p1messages).toContain('Checking');
-  expect(p1messages).toContain('p 2');
+  expect(p1messages).toContain('p2');
   expect(p1messages).toContain('over');
   expect(p1messages).toContain('done mating');
 });

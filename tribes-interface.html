@@ -1561,6 +1561,9 @@
                     this.minimizeLoginArea();
                     this.addMessage(`Welcome back, ${data.playerName}!`, 'success');
                     this.requestCommandList();
+                    if (document.getElementById('tribeSelect').value) {
+                        this.refreshGameData();
+                    }
                 } else {
                     // Session invalid, clear it and show login
                     this.clearSession();
@@ -1625,6 +1628,18 @@
                     case 'romance':
                         this.currentRomanceLists = data.content;
                         this.displayCurrentRomanceLists(data.content);
+                        
+                        // Also regenerate form to populate defaults if the modal is currently showing
+                        const romanceModal = document.getElementById('commandModal');
+                        if (romanceModal && romanceModal.classList.contains('active') && this.selectedCommand) {
+                            const romanceCommands = ['consent', 'decline', 'invite'];
+                            if (romanceCommands.includes(this.selectedCommand.name.toLowerCase())) {
+                                const paramsContainer = document.getElementById('modalCommandParameters');
+                                if (paramsContainer) {
+                                    this.generateCommandFormInModal(paramsContainer);
+                                }
+                            }
+                        }
                         break;
                     case 'error':
                         this.addMessage(data.content, 'error');
@@ -1687,6 +1702,9 @@
                     this.showCommandsSection(); // Show commands after successful login
                     this.requestCommandList(); // Refresh command list in case chief status changed
                     this.minimizeLoginArea(); // Minimize login area after successful registration
+                    if (document.getElementById('tribeSelect').value) {
+                        this.refreshGameData();
+                    }
                 }
             }
 
@@ -2145,8 +2163,30 @@
                         }
                     } else if (this.isOrderingOption(option.name)) {
                         // Ordering interface for parameters like invite lists, consent lists
-                        const appendPassChecked = (option.name === 'invitelist' && preservedValues['invite_append_pass']) || false;
-                        input = this.createOrderingInterface(option.name, preservedValues[option.name] || '', appendPassChecked);
+                        let initialValue = preservedValues[option.name] || '';
+                        
+                        // If no preserved value, pre-populate from server data if available
+                        if (!initialValue && this.currentRomanceLists) {
+                            if (this.selectedCommand.name === 'invite' && this.currentRomanceLists.inviteList) {
+                                // Filter out !pass as we handle that with a checkbox
+                                const cleanList = this.currentRomanceLists.inviteList.filter(item => item !== '!pass');
+                                initialValue = cleanList.join(',');
+                            } else if (this.selectedCommand.name === 'consent' && this.currentRomanceLists.consentList) {
+                                initialValue = this.currentRomanceLists.consentList.join(',');
+                            } else if (this.selectedCommand.name === 'decline' && this.currentRomanceLists.declineList) {
+                                initialValue = this.currentRomanceLists.declineList.join(',');
+                            }
+                        }
+                        
+                        // Check if invite list ended with !pass in the original data to prepopulate checkbox
+                        let appendPassChecked = (option.name === 'invitelist' && preservedValues['invite_append_pass']);
+                        if (appendPassChecked === undefined && option.name === 'invitelist' && this.currentRomanceLists && this.currentRomanceLists.inviteList) {
+                            appendPassChecked = this.currentRomanceLists.inviteList.includes('!pass');
+                        } else if (appendPassChecked === undefined) {
+                            appendPassChecked = true; // Default
+                        }
+                        
+                        input = this.createOrderingInterface(option.name, initialValue, appendPassChecked);
                     } else if (option.type === 4) { // INTEGER
                         input = document.createElement('input');
                         input.type = 'number';
@@ -2455,7 +2495,30 @@
                         }
                     } else if (this.isOrderingOption(option.name)) {
                         // Create ordering interface
-                        const orderingInterface = this.createOrderingInterface(option.name, '');
+                        let initialValue = preservedValues[option.name] || '';
+                        
+                        // If no preserved value, pre-populate from server data if available
+                        if (!initialValue && this.currentRomanceLists) {
+                            if (this.selectedCommand.name === 'invite' && this.currentRomanceLists.inviteList) {
+                                // Filter out !pass as we handle that with a checkbox
+                                const cleanList = this.currentRomanceLists.inviteList.filter(item => item !== '!pass');
+                                initialValue = cleanList.join(',');
+                            } else if (this.selectedCommand.name === 'consent' && this.currentRomanceLists.consentList) {
+                                initialValue = this.currentRomanceLists.consentList.join(',');
+                            } else if (this.selectedCommand.name === 'decline' && this.currentRomanceLists.declineList) {
+                                initialValue = this.currentRomanceLists.declineList.join(',');
+                            }
+                        }
+                        
+                        // Check if invite list ended with !pass in the original data to prepopulate checkbox
+                        let appendPassChecked = (option.name === 'invitelist' && preservedValues['invite_append_pass']);
+                        if (appendPassChecked === undefined && option.name === 'invitelist' && this.currentRomanceLists && this.currentRomanceLists.inviteList) {
+                            appendPassChecked = this.currentRomanceLists.inviteList.includes('!pass');
+                        } else if (appendPassChecked === undefined) {
+                            appendPassChecked = true; // Default
+                        }
+                        
+                        const orderingInterface = this.createOrderingInterface(option.name, initialValue, appendPassChecked);
                         group.appendChild(orderingInterface);
                         
                         // Add help text for ordering
