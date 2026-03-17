@@ -947,13 +947,7 @@
                 <div class="form-group">
                     <label for="tribeSelect">Tribe: <span id="tribeRemembered" style="color: #28a745; font-size: 0.8em; display: none;">💾</span></label>
                     <select id="tribeSelect">
-                        <option value="bear">Bear</option>
-                        <option value="flounder">Flounder</option>
-                        <option value="bug">Bug</option>
-                        <option value="vashon">Vashon</option>
-                        <option value="mib">MIB</option>
-                        <option value="sloth">Sloth</option>
-                        <option value="wolf">Wolf</option>
+                        <option value="">Loading...</option>
                     </select>
                 </div>
                 
@@ -992,6 +986,9 @@
                         </button>
                         <button class="btn btn-small" onclick="document.getElementById('importFileInput').click()" style="background: #ffc107; color: #212529;">
                             📥 Import Game Data
+                        </button>
+                        <button class="btn btn-small" onclick="tribesClient.showManageTribesModal()" style="background: #17a2b8; margin-top: 0.5rem;">
+                            🔧 Manage Tribes
                         </button>
                         <input type="file" id="importFileInput" accept=".json" style="display: none;" onchange="tribesClient.handleImportFile(event)">
                     </div>
@@ -1585,9 +1582,22 @@
             }
             
             handleCommandList(data) {
-                this.commands = data.commands;
-                this.isReferee = data.isReferee || false;
-                this.chiefStatus = data.isChief || false;
+                if (data.commands) {
+                    this.commands = data.commands;
+                }
+                if (data.isReferee !== undefined) {
+                    this.isReferee = data.isReferee;
+                }
+                if (data.isChief !== undefined) {
+                    this.chiefStatus = data.isChief;
+                }
+                
+                if (data.tribes) {
+                    this.currentTribes = data.tribes;
+                    this.updateTribeDropdown(data.tribes);
+                    this.renderManageTribesList(data.tribes);
+                }
+                
                 this.updateCommandList();
                 this.initCommandSearch();
                 
@@ -1595,6 +1605,46 @@
                 const refereeSection = document.getElementById('refereeAdminSection');
                 if (refereeSection) {
                     refereeSection.style.display = this.isReferee ? 'block' : 'none';
+                }
+            }
+
+            updateTribeDropdown(tribesData) {
+                const tribeSelect = document.getElementById('tribeSelect');
+                if (!tribeSelect) return;
+                
+                const currentValue = tribeSelect.value;
+                tribeSelect.innerHTML = '';
+                
+                // Convert to array and sort
+                const tribes = Object.values(tribesData).sort((a, b) => a.name.localeCompare(b.name));
+                
+                let optionAdded = false;
+                
+                tribes.forEach(tribe => {
+                    // Referees see all tribes, non-referees only see unhidden tribes
+                    if (this.isReferee || !tribe.hidden) {
+                        const opt = document.createElement('option');
+                        opt.value = tribe.name;
+                        // Capitalize first letter
+                        let displayName = tribe.name.charAt(0).toUpperCase() + tribe.name.slice(1);
+                        if (tribe.hidden) displayName += ' (Hidden)';
+                        opt.textContent = displayName;
+                        tribeSelect.appendChild(opt);
+                        if (tribe.name === currentValue) optionAdded = true;
+                    }
+                });
+                
+                if (optionAdded) {
+                    tribeSelect.value = currentValue;
+                } else if (tribeSelect.options.length > 0) {
+                    // Try to restore from cookie if not currently set
+                    const savedTribe = this.getCookie('tribesLastTribe');
+                    const savedExists = Array.from(tribeSelect.options).some(opt => opt.value === savedTribe);
+                    if (savedTribe && savedExists) {
+                        tribeSelect.value = savedTribe;
+                    } else {
+                        tribeSelect.value = tribeSelect.options[0].value;
+                    }
                 }
             }
 
@@ -3880,6 +3930,80 @@
                     clientId: Date.now().toString()
                 });
             }
+
+            showManageTribesModal() {
+                if (!this.isReferee) return;
+                document.getElementById('manageTribesModal').classList.add('active');
+            }
+            
+            createTribe() {
+                if (!this.isReferee) return;
+                const input = document.getElementById('newTribeName');
+                const name = input.value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
+                
+                if (!name) {
+                    this.addMessage('Invalid tribe name', 'error');
+                    return;
+                }
+                
+                input.value = '';
+                this.send({
+                    type: 'manageTribe',
+                    action: 'create',
+                    tribeName: name
+                });
+            }
+            
+            toggleTribeVisibility(tribeName, hidden) {
+                if (!this.isReferee) return;
+                this.send({
+                    type: 'manageTribe',
+                    action: 'setVisibility',
+                    tribeName: tribeName,
+                    hidden: hidden
+                });
+            }
+            
+            renderManageTribesList(tribesData) {
+                const container = document.getElementById('tribesListContainer');
+                if (!container) return;
+                
+                container.innerHTML = '';
+                const tribes = Object.values(tribesData).sort((a, b) => a.name.localeCompare(b.name));
+                
+                tribes.forEach(tribe => {
+                    const div = document.createElement('div');
+                    div.style.display = 'flex';
+                    div.style.justifyContent = 'space-between';
+                    div.style.alignItems = 'center';
+                    div.style.padding = '0.5rem';
+                    div.style.borderBottom = '1px solid #eee';
+                    
+                    const nameSpan = document.createElement('span');
+                    nameSpan.textContent = tribe.name.charAt(0).toUpperCase() + tribe.name.slice(1);
+                    nameSpan.style.fontWeight = 'bold';
+                    if (tribe.hidden) {
+                        nameSpan.style.color = '#dc3545';
+                        nameSpan.textContent += ' (Hidden)';
+                    }
+                    div.appendChild(nameSpan);
+                    
+                    const btn = document.createElement('button');
+                    btn.className = 'btn btn-small';
+                    if (tribe.hidden) {
+                        btn.textContent = 'Reveal';
+                        btn.style.background = '#28a745';
+                        btn.onclick = () => this.toggleTribeVisibility(tribe.name, false);
+                    } else {
+                        btn.textContent = 'Hide';
+                        btn.style.background = '#6c757d';
+                        btn.onclick = () => this.toggleTribeVisibility(tribe.name, true);
+                    }
+                    div.appendChild(btn);
+                    
+                    container.appendChild(div);
+                });
+            }
         }
 
         // Initialize the client when page loads
@@ -3915,6 +4039,33 @@
             }, 1000);
         });
     </script>
+
+    <!-- Manage Tribes Modal -->
+    <div class="modal-overlay" id="manageTribesModal">
+        <div class="modal-popup">
+            <div class="modal-header">
+                <div class="modal-title">Manage Tribes</div>
+                <button class="modal-close" onclick="document.getElementById('manageTribesModal').classList.remove('active')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="margin-bottom: 1rem;">
+                    <h4>Create New Tribe</h4>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="text" id="newTribeName" placeholder="Tribe Name" class="form-control" style="flex: 1; padding: 0.5rem; border: 2px solid #ddd; border-radius: 4px;">
+                        <button class="btn btn-small" onclick="window.tribesClient.createTribe()" style="background: #28a745;">Create</button>
+                    </div>
+                </div>
+                
+                <h4>Existing Tribes</h4>
+                <div id="tribesListContainer" style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 0.5rem; border-radius: 4px;">
+                    <!-- Tribes will be listed here dynamically -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" style="background: #6c757d;" onclick="document.getElementById('manageTribesModal').classList.remove('active')">Close</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Command Arguments Modal -->
     <div class="modal-overlay" id="commandModal">

@@ -5,6 +5,7 @@ const path = require('path');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const savelib = require('./libs/save.js');
+const tribesRegistry = require('./libs/tribesRegistry.js');
 const util = require('./libs/util.js');
 const pop = require('./libs/population.js');
 const help = require('./libs/help.js');
@@ -533,6 +534,10 @@ async function handleWebSocketMessage(ws, data) {
   switch (data.type) {
     case 'authenticateSession':
       handleSessionAuthentication(ws, data);
+      break;
+      
+    case 'manageTribe':
+      handleManageTribe(ws, data);
       break;
       
     case 'logout':
@@ -1139,6 +1144,7 @@ function handleListCommands(ws, data, gameState) {
       commands: commandList,
       isReferee: isRef,
       isChief: isChief,
+      tribes: tribesRegistry.getTribes(),
       clientId: data.clientId,
     })
   );
@@ -1770,6 +1776,38 @@ function actuallyWriteToDisk(fileName, jsonData) {
     console.log(fileName + ' saved!');
   } catch (err) {
     console.log('Save failed for ' + fileName + ': ' + err);
+  }
+}
+
+function handleManageTribe(ws, data) {
+  const isRef = data.playerName && referees.includes(data.playerName);
+  if (!isRef) {
+    ws.send(JSON.stringify({ type: 'error', message: 'You are not a referee.' }));
+    return;
+  }
+  
+  if (data.action === 'create') {
+    tribesRegistry.createTribe(data.tribeName);
+    broadcastTribeUpdate();
+    ws.send(JSON.stringify({ type: 'commandResponse', success: true, command: 'Manage Tribe', message: `Created tribe ${data.tribeName}` }));
+  } else if (data.action === 'setVisibility') {
+    tribesRegistry.setTribeHidden(data.tribeName, data.hidden);
+    broadcastTribeUpdate();
+    ws.send(JSON.stringify({ type: 'commandResponse', success: true, command: 'Manage Tribe', message: `${data.hidden ? 'Hidden' : 'Revealed'} tribe ${data.tribeName}` }));
+  }
+}
+
+function broadcastTribeUpdate() {
+  const tribesList = tribesRegistry.getTribes();
+  const updateMsg = JSON.stringify({
+    type: 'commandList',
+    tribes: tribesList
+  });
+  
+  for (const clientWs of connectedClients) {
+    if (clientWs.readyState === WebSocket.OPEN) {
+      clientWs.send(updateMsg);
+    }
   }
 }
 
