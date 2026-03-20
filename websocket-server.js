@@ -540,6 +540,10 @@ async function handleWebSocketMessage(ws, data) {
       handleManageTribe(ws, data);
       break;
       
+    case 'manageUsers':
+      await handleManageUsers(ws, data);
+      break;
+      
     case 'logout':
       handleLogout(ws, data);
       break;
@@ -1794,6 +1798,43 @@ function handleManageTribe(ws, data) {
     tribesRegistry.setTribeHidden(data.tribeName, data.hidden);
     broadcastTribeUpdate();
     ws.send(JSON.stringify({ type: 'commandResponse', success: true, command: 'Manage Tribe', message: `${data.hidden ? 'Hidden' : 'Revealed'} tribe ${data.tribeName}` }));
+  }
+}
+
+async function handleManageUsers(ws, data) {
+  const isRef = data.playerName && referees.includes(data.playerName);
+  if (!isRef) {
+    ws.send(JSON.stringify({ type: 'error', message: 'You are not a referee.' }));
+    return;
+  }
+
+  if (data.action === 'list') {
+    const userList = Object.keys(usersDict).map(name => {
+      const user = usersDict[name];
+      return {
+        name: name,
+        email: (user && user.email) ? user.email : 'N/A'
+      };
+    });
+    ws.send(JSON.stringify({ type: 'manageUsersList', users: userList }));
+  } else if (data.action === 'delete') {
+    if (usersDict[data.targetUser]) {
+      delete usersDict[data.targetUser];
+      actuallyWriteToDisk('./tribe-data/users.json', usersDict);
+      ws.send(JSON.stringify({ type: 'commandResponse', success: true, command: 'Manage Users', message: `Deleted user ${data.targetUser}` }));
+      handleManageUsers(ws, { action: 'list', playerName: data.playerName });
+    }
+  } else if (data.action === 'resetPassword') {
+    if (usersDict[data.targetUser]) {
+      const newPassword = data.newPassword || '';
+      let hash = '';
+      if (newPassword !== '') {
+        hash = await hashPassword(newPassword);
+      }
+      usersDict[data.targetUser].password = hash;
+      actuallyWriteToDisk('./tribe-data/users.json', usersDict);
+      ws.send(JSON.stringify({ type: 'commandResponse', success: true, command: 'Manage Users', message: `Reset password for user ${data.targetUser}` }));
+    }
   }
 }
 

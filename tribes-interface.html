@@ -987,8 +987,11 @@
                         <button class="btn btn-small" onclick="document.getElementById('importFileInput').click()" style="background: #ffc107; color: #212529;">
                             📥 Import Game Data
                         </button>
-                        <button class="btn btn-small" onclick="tribesClient.showManageTribesModal()" style="background: #17a2b8; margin-top: 0.5rem;">
+                        <button class="btn btn-small" onclick="tribesClient.showManageTribesModal()" style="background: #17a2b8; margin-top: 0.5rem; margin-right: 0.5rem;">
                             🔧 Manage Tribes
+                        </button>
+                        <button class="btn btn-small" onclick="tribesClient.showManageUsersModal()" style="background: #6f42c1; margin-top: 0.5rem;">
+                            👥 Manage Users
                         </button>
                         <input type="file" id="importFileInput" accept=".json" style="display: none;" onchange="tribesClient.handleImportFile(event)">
                     </div>
@@ -1535,6 +1538,9 @@
                         break;
                     case 'helpContent':
                         this.handleHelpContent(data);
+                        break;
+                    case 'manageUsersList':
+                        this.handleManageUsersList(data);
                         break;
                     case 'exportGameResponse':
                         this.handleExportGameResponse(data);
@@ -3935,6 +3941,37 @@
                 if (!this.isReferee) return;
                 document.getElementById('manageTribesModal').classList.add('active');
             }
+
+            showManageUsersModal() {
+                if (!this.isReferee) return;
+                document.getElementById('manageUsersModal').classList.add('active');
+                this.send({
+                    type: 'manageUsers',
+                    action: 'list'
+                });
+            }
+            
+            deleteUser(userName) {
+                if (!this.isReferee) return;
+                if (!confirm(`Are you sure you want to delete user ${userName}?`)) return;
+                this.send({
+                    type: 'manageUsers',
+                    action: 'delete',
+                    targetUser: userName
+                });
+            }
+
+            resetUserPassword(userName) {
+                if (!this.isReferee) return;
+                const newPassword = prompt(`Enter new password for ${userName} (leave blank to allow login without password):`);
+                if (newPassword === null) return; // User cancelled prompt
+                this.send({
+                    type: 'manageUsers',
+                    action: 'resetPassword',
+                    targetUser: userName,
+                    newPassword: newPassword
+                });
+            }
             
             createTribe() {
                 if (!this.isReferee) return;
@@ -3964,6 +4001,53 @@
                 });
             }
             
+            handleManageUsersList(data) {
+                const container = document.getElementById('usersListContainer');
+                if (!container) return;
+                
+                container.innerHTML = '';
+                const users = data.users.sort((a, b) => a.name.localeCompare(b.name));
+                
+                users.forEach(user => {
+                    const row = document.createElement('tr');
+                    
+                    const nameCell = document.createElement('td');
+                    nameCell.textContent = user.name;
+                    nameCell.style.padding = '0.5rem';
+                    nameCell.style.borderBottom = '1px solid #ddd';
+                    row.appendChild(nameCell);
+                    
+                    const emailCell = document.createElement('td');
+                    emailCell.textContent = user.email;
+                    emailCell.style.padding = '0.5rem';
+                    emailCell.style.borderBottom = '1px solid #ddd';
+                    row.appendChild(emailCell);
+                    
+                    const actionsCell = document.createElement('td');
+                    actionsCell.style.padding = '0.5rem';
+                    actionsCell.style.borderBottom = '1px solid #ddd';
+                    
+                    const resetBtn = document.createElement('button');
+                    resetBtn.className = 'btn btn-small';
+                    resetBtn.textContent = 'Reset Password';
+                    resetBtn.style.background = '#ffc107';
+                    resetBtn.style.color = '#212529';
+                    resetBtn.style.marginRight = '0.5rem';
+                    resetBtn.onclick = () => this.resetUserPassword(user.name);
+                    actionsCell.appendChild(resetBtn);
+                    
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'btn btn-small';
+                    deleteBtn.textContent = 'Delete';
+                    deleteBtn.style.background = '#dc3545';
+                    deleteBtn.onclick = () => this.deleteUser(user.name);
+                    actionsCell.appendChild(deleteBtn);
+                    
+                    row.appendChild(actionsCell);
+                    container.appendChild(row);
+                });
+            }
+
             renderManageTribesList(tribesData) {
                 const container = document.getElementById('tribesListContainer');
                 if (!container) return;
@@ -4063,6 +4147,35 @@
             </div>
             <div class="modal-footer">
                 <button class="btn" style="background: #6c757d;" onclick="document.getElementById('manageTribesModal').classList.remove('active')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manage Users Modal -->
+    <div class="modal-overlay" id="manageUsersModal">
+        <div class="modal-popup" style="max-width: 800px; width: 90%;">
+            <div class="modal-header">
+                <div class="modal-title">Manage Users</div>
+                <button class="modal-close" onclick="document.getElementById('manageUsersModal').classList.remove('active')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead style="background: #f8f9fa;">
+                            <tr>
+                                <th style="padding: 0.5rem; text-align: left; border-bottom: 2px solid #ddd;">User Name</th>
+                                <th style="padding: 0.5rem; text-align: left; border-bottom: 2px solid #ddd;">Email</th>
+                                <th style="padding: 0.5rem; text-align: left; border-bottom: 2px solid #ddd;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersListContainer">
+                            <!-- Users will be listed here dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" style="background: #6c757d;" onclick="document.getElementById('manageUsersModal').classList.remove('active')">Close</button>
             </div>
         </div>
     </div>
