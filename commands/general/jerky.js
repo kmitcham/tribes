@@ -1,4 +1,7 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('../../libs/command-builders.js');
+const {
+  SlashCommandBuilder,
+  EmbedBuilder,
+} = require('../../libs/command-builders.js');
 const general = require('../../libs/general.js');
 
 module.exports = {
@@ -7,8 +10,8 @@ module.exports = {
     .setDescription('When conditions allow, convert 3 food to 1 grain')
     .addIntegerOption((option) =>
       option
-        .setName('amount')
-        .setDescription('amount of food to convert to grain')
+        .setName('amount of food')
+        .setDescription('Amount of food to convert to grain')
         .setRequired(true)
     ),
   async execute(interaction, gameState, bot) {

@@ -12,7 +12,7 @@ describe('tribeHistory.js', () => {
   beforeEach(() => {
     gameState = {
       tribeHistory: [],
-      clan: []
+      clan: [],
     };
     jest.clearAllMocks();
   });
@@ -20,8 +20,10 @@ describe('tribeHistory.js', () => {
   test('should handle missing gameState', () => {
     const consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
     tribeHistory.showTribeHistory(playerName, null);
-    
-    expect(consoleSpy).toHaveBeenCalledWith('showTribeHistory called with no gameState');
+
+    expect(consoleSpy).toHaveBeenCalledWith(
+      'showTribeHistory called with no gameState'
+    );
     expect(text.addMessage).toHaveBeenCalledWith(
       null,
       playerName,
@@ -62,8 +64,16 @@ describe('tribeHistory.js', () => {
 
     tribeHistory.showTribeHistory(playerName, gameState);
 
-    expect(text.addMessage).toHaveBeenCalledWith(gameState, playerName, 'Event 1');
-    expect(text.addMessage).toHaveBeenCalledWith(gameState, playerName, 'Event 2');
+    expect(text.addMessage).toHaveBeenCalledWith(
+      gameState,
+      playerName,
+      'Event 1'
+    );
+    expect(text.addMessage).toHaveBeenCalledWith(
+      gameState,
+      playerName,
+      'Event 2'
+    );
     expect(text.addMessage).toHaveBeenCalledTimes(2);
   });
 
@@ -74,6 +84,10 @@ describe('tribeHistory.js', () => {
 
     tribeHistory.showTribeHistory(playerName, gameState);
 
-    expect(text.addMessage).toHaveBeenCalledWith(gameState, playerName, 'Event A');
+    expect(text.addMessage).toHaveBeenCalledWith(
+      gameState,
+      playerName,
+      'Event A'
+    );
   });
 });

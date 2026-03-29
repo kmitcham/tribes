@@ -87,7 +87,8 @@ class SlashCommandBuilder {
         name: opt.name,
         description: opt.description,
         required: opt.required,
-        choices: opt.choices && opt.choices.length > 0 ? opt.choices : undefined,
+        choices:
+          opt.choices && opt.choices.length > 0 ? opt.choices : undefined,
       })),
     };
   }
@@ -108,4 +109,3 @@ module.exports = {
   SlashCommandBuilder,
   EmbedBuilder,
 };
-

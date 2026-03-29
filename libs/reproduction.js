@@ -290,7 +290,7 @@ function intersect(a, b) {
   if (!a || !b) {
     return [];
   }
-  if (b.length > a.length) ((t = b), (b = a), (a = t)); // indexOf to loop over shorter
+  if (b.length > a.length) (t = b), (b = a), (a = t); // indexOf to loop over shorter
   return a.filter(function (e) {
     return b.indexOf(e) > -1;
   });
@@ -527,7 +527,9 @@ function globalMatingCheck(gameState) {
     for (invitingMemberKey of randomOrderForProcessingInvites) {
       const invitingMember = pop.memberByName(invitingMemberKey, gameState);
       const inviterDisplayName = invitingMember.name;
-      console.log('working ' + invitingMemberKey + ' named ' + invitingMember.name);
+      console.log(
+        'working ' + invitingMemberKey + ' named ' + invitingMember.name
+      );
       index = randomOrderForProcessingInvites.indexOf(invitingMemberKey);
       if (hasReasontoNotInvite(gameState, invitingMember)) {
         continue;
@@ -593,22 +595,28 @@ function globalMatingCheck(gameState) {
           continue;
         }
         const targetDisplayName = targetMember.name;
-        const targetPopulationKey = pop.getPopulationKey(targetMember, gameState) || targetName;
+        const targetPopulationKey =
+          pop.getPopulationKey(targetMember, gameState) || targetName;
         migrateToResponseDict(invitingMember);
         migrateToResponseDict(targetMember);
-        
+
         let targetResponse;
         if (targetMember.responseDict) {
-            if (targetMember.responseDict[invitingMemberKey]) {
-                targetResponse = targetMember.responseDict[invitingMemberKey];
-            } else if (targetMember.responseDict[invitingMember.name]) {
-                targetResponse = targetMember.responseDict[invitingMember.name];
-            } else if (targetMember.responseDict['!all']) {
-                targetResponse = targetMember.responseDict['!all'];
-            }
+          if (targetMember.responseDict[invitingMemberKey]) {
+            targetResponse = targetMember.responseDict[invitingMemberKey];
+          } else if (targetMember.responseDict[invitingMember.name]) {
+            targetResponse = targetMember.responseDict[invitingMember.name];
+          } else if (targetMember.responseDict['!all']) {
+            targetResponse = targetMember.responseDict['!all'];
+          }
         }
-        if (!targetResponse && targetMember.inviteList && (targetMember.inviteList.includes(invitingMemberKey) || targetMember.inviteList.includes(invitingMember.name))) {
-            targetResponse = 'consent';
+        if (
+          !targetResponse &&
+          targetMember.inviteList &&
+          (targetMember.inviteList.includes(invitingMemberKey) ||
+            targetMember.inviteList.includes(invitingMember.name))
+        ) {
+          targetResponse = 'consent';
         }
 
         if (targetResponse === 'decline') {
@@ -647,7 +655,8 @@ function globalMatingCheck(gameState) {
           text.addMessage(
             gameState,
             invitingMemberKey,
-            targetDisplayName + ' is not healthy enough to enjoy your attention.'
+            targetDisplayName +
+              ' is not healthy enough to enjoy your attention.'
           );
           console.log('\t sick or injured');
           attemptFailed = true;
@@ -707,7 +716,9 @@ function globalMatingCheck(gameState) {
       } else {
         // person has no invites pending
         console.log(
-          '\t No invites found for ' + invitingMemberKey.name + ' so allDone is false'
+          '\t No invites found for ' +
+            invitingMemberKey.name +
+            ' so allDone is false'
         );
       }
     }
@@ -801,7 +812,8 @@ function hasReasontoNotInvite(gameState, invitingMember) {
     return true;
   } else if (invitingMember.isPregnant) {
     console.log('\t inviter was pregnant');
-    const inviterKey = pop.getPopulationKey(invitingMember, gameState) || invitingMember.name;
+    const inviterKey =
+      pop.getPopulationKey(invitingMember, gameState) || invitingMember.name;
     text.addMessage(
       gameState,
       inviterKey,
@@ -816,7 +828,8 @@ function hasReasontoNotInvite(gameState, invitingMember) {
     return true;
   } else if (invitingMember.isInjured && invitingMember.isInjured > 0) {
     console.log('\t inviter is injured');
-    const inviterKey = pop.getPopulationKey(invitingMember, gameState) || invitingMember.name;
+    const inviterKey =
+      pop.getPopulationKey(invitingMember, gameState) || invitingMember.name;
     text.addMessage(
       gameState,
       inviterKey,
@@ -831,7 +844,8 @@ function hasReasontoNotInvite(gameState, invitingMember) {
     return true;
   } else if (invitingMember.isSick && invitingMember.isSick > 0) {
     console.log('\t inviter is sick');
-    const inviterKey = pop.getPopulationKey(invitingMember, gameState) || invitingMember.name;
+    const inviterKey =
+      pop.getPopulationKey(invitingMember, gameState) || invitingMember.name;
     text.addMessage(
       gameState,
       inviterKey,
@@ -1238,13 +1252,13 @@ function startReproduction(gameState) {
 function migrateToResponseDict(person) {
   if (!person) return;
   if (!person.responseDict) person.responseDict = {};
-  
+
   if (person.consentList && Array.isArray(person.consentList)) {
     for (let target of person.consentList) {
       if (target !== '!none' && target !== '!pass' && target !== '!all') {
-         person.responseDict[target] = 'consent';
+        person.responseDict[target] = 'consent';
       } else if (target === '!all') {
-         person.responseDict['!all'] = 'consent';
+        person.responseDict['!all'] = 'consent';
       }
     }
   }
@@ -1255,13 +1269,22 @@ function migrateToResponseDict(person) {
   }
 }
 
-function handleRomanceResponse(gameState, actorName, targetNameRaw, responseType) {
-  let actingMember = gameState.population && gameState.population[actorName] ? gameState.population[actorName] : null;
+function handleRomanceResponse(
+  gameState,
+  actorName,
+  targetNameRaw,
+  responseType
+) {
+  let actingMember =
+    gameState.population && gameState.population[actorName]
+      ? gameState.population[actorName]
+      : null;
   if (!actingMember) return 'No such member';
   migrateToResponseDict(actingMember);
-  
-  if (!targetNameRaw || targetNameRaw.length === 0) return 'No target provided.';
-  
+
+  if (!targetNameRaw || targetNameRaw.length === 0)
+    return 'No target provided.';
+
   let targetName = targetNameRaw.trim();
   actingMember.responseDict[targetName] = responseType;
   return 'Set ' + targetName + ' to ' + responseType;
@@ -1289,7 +1312,6 @@ function checkMating(gameState, displayName) {
   return;
 }
 module.exports.checkMating = checkMating;
-
 
 module.exports.migrateToResponseDict = migrateToResponseDict;
 module.exports.handleRomanceResponse = handleRomanceResponse;

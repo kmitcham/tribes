@@ -1715,6 +1715,10 @@
                     return;
                 }
                 
+                // Unified form handles its own display
+                const cmdNameDisplay = this.selectedCommand.name.toLowerCase();
+                if (cmdNameDisplay === 'consent' || cmdNameDisplay === 'decline') return;
+                
                 // Find the modal description area
                 const modalDescription = document.getElementById('modalDescription');
                 if (!modalDescription) {
@@ -2035,6 +2039,27 @@
 
             executeModalCommand() {
                 const parametersContainer = document.getElementById('modalCommandParameters');
+                
+                const cmdNameExec = this.selectedCommand ? this.selectedCommand.name.toLowerCase() : '';
+                if ((cmdNameExec === 'consent' || cmdNameExec === 'decline') && document.getElementById('unifiedRomanceGrid')) {
+                    const dropdowns = parametersContainer.querySelectorAll('select.romance-dropdown');
+                    let newResponseDict = {};
+                    dropdowns.forEach(select => {
+                        const nameStr = select.name.replace('romance_', '');
+                        if (select.value !== 'maybe') {
+                            newResponseDict[nameStr] = select.value;
+                        }
+                    });
+                    
+                    this.send({
+                        type: 'romanceRequest',
+                        playerName: document.getElementById('playerName').value.trim(),
+                        responseDict: newResponseDict
+                    });
+                    this.closeCommandModal();
+                    return;
+                }
+                
                 const parameters = this.collectParametersFromContainer(parametersContainer);
                 
                 if (parameters !== null) {
@@ -2048,8 +2073,83 @@
                 }
             }
 
+
+            buildRomanceGridForm(container) {
+                container.innerHTML = '';
+                if (!this.currentPopulation) {
+                    container.innerHTML = '<p>Loading population data...</p>';
+                    return;
+                }
+                
+                const currentPlayerName = document.getElementById('playerName').value.trim();
+                const currentPlayer = this.currentPopulation[currentPlayerName];
+                const gender = currentPlayer ? currentPlayer.gender : null;
+                const oppositeGenderTargets = Object.values(this.currentPopulation)
+                    .filter(p => p.name !== currentPlayerName && p.gender !== gender);
+
+                let responseDict = (this.currentRomanceLists && this.currentRomanceLists.responseDict) || {};
+
+                const gridTable = document.createElement('table');
+                gridTable.style.width = '100%';
+                gridTable.style.borderCollapse = 'collapse';
+                gridTable.style.marginTop = '1rem';
+                gridTable.id = 'unifiedRomanceGrid';
+
+                const thead = document.createElement('thead');
+                thead.innerHTML = `
+                    <tr style="background: #f8f9fa; border-bottom: 2px solid #ddd;">
+                        <th style="padding: 8px; text-align: left;">Player Name</th>
+                        <th style="padding: 8px; text-align: right;">Status</th>
+                    </tr>
+                `;
+                gridTable.appendChild(thead);
+
+                const tbody = document.createElement('tbody');
+                
+                const buildRow = (nameStr, displayName) => {
+                    const row = document.createElement('tr');
+                    row.style.borderBottom = '1px solid #ddd';
+                    
+                    const existingRes = responseDict[nameStr] || 'maybe';
+                    
+                    row.innerHTML = `
+                        <td style="padding: 8px;">${displayName}</td>
+                        <td style="padding: 8px; text-align: right;">
+                            <select name="romance_${nameStr}" class="romance-dropdown" style="padding: 4px; width: 120px;">
+                                <option value="maybe" ${existingRes === 'maybe' ? 'selected' : ''}>🤔 Maybe</option>
+                                <option value="consent" ${existingRes === 'consent' ? 'selected' : ''}>✅ Consent</option>
+                                <option value="decline" ${existingRes === 'decline' ? 'selected' : ''}>❌ Decline</option>
+                            </select>
+                        </td>
+                    `;
+                    return row;
+                };
+
+                tbody.appendChild(buildRow('!all', '<i>Everyone else (!all)</i>'));
+
+                oppositeGenderTargets.sort((a,b) => a.name.localeCompare(b.name)).forEach(p => {
+                    tbody.appendChild(buildRow(p.name, p.name));
+                });
+                
+                gridTable.appendChild(tbody);
+                container.appendChild(gridTable);
+
+                const note = document.createElement('p');
+                note.style.fontSize = '0.85rem';
+                note.style.color = '#6c757d';
+                note.style.marginTop = '1rem';
+                note.textContent = "Setting 'Maybe' means you will be prompted if they invite you, and you will need to resolve it.";
+                container.appendChild(note);
+            }
+
             generateCommandFormInModal(container) {
-                if (!this.selectedCommand || !this.selectedCommand.options) {
+                if (!this.selectedCommand) return;
+                const cmdName = this.selectedCommand.name.toLowerCase();
+                if (cmdName === 'consent' || cmdName === 'decline') {
+                    this.buildRomanceGridForm(container);
+                    return;
+                }
+                if (!this.selectedCommand.options) {
                     return;
                 }
 
@@ -2110,7 +2210,17 @@
                 const form = document.getElementById('commandForm');
                 const container = document.getElementById('commandParameters');
                 
-                if (!this.selectedCommand || !this.selectedCommand.options) {
+                if (!this.selectedCommand) {
+                    form.style.display = 'none';
+                    return;
+                }
+                const cmdName = this.selectedCommand.name.toLowerCase();
+                if (cmdName === 'consent' || cmdName === 'decline') {
+                    form.style.display = 'block';
+                    this.buildRomanceGridForm(container);
+                    return;
+                }
+                if (!this.selectedCommand.options) {
                     form.style.display = 'none';
                     return;
                 }
@@ -3199,6 +3309,31 @@
             executeCommand() {
                 if (!this.selectedCommand) {
                     this.addMessage('No command selected', 'error');
+                    return;
+                }
+                
+                const cmdNameSideExec = this.selectedCommand.name.toLowerCase();
+                if ((cmdNameSideExec === 'consent' || cmdNameSideExec === 'decline') && document.getElementById('unifiedRomanceGrid')) {
+                    const form = document.getElementById('commandParameters');
+                    const dropdowns = form.querySelectorAll('select.romance-dropdown');
+                    let newResponseDict = {};
+                    dropdowns.forEach(select => {
+                        const nameStr = select.name.replace('romance_', '');
+                        if (select.value !== 'maybe') {
+                            newResponseDict[nameStr] = select.value;
+                        }
+                    });
+                    
+                    this.send({
+                        type: 'romanceRequest',
+                        playerName: document.getElementById('playerName').value.trim(),
+                        responseDict: newResponseDict
+                    });
+                    
+                    // Clear selection and form
+                    this.selectedCommand = null;
+                    document.getElementById('commandForm').style.display = 'none';
+                    this.renderCommandList(); // Re-render to clear selection styling
                     return;
                 }
                 

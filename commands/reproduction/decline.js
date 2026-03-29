@@ -1,4 +1,7 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('../../libs/command-builders.js');
+const {
+  SlashCommandBuilder,
+  EmbedBuilder,
+} = require('../../libs/command-builders.js');
 const reproLib = require('../../libs/reproduction.js');
 const text = require('../../libs/textprocess.js');
 
@@ -6,12 +9,14 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('decline')
     .setDescription(
-      'Comma seperated list of names of people you would NOT mate with.'
+      'For every possible partner in the tribe, indicate whether you consent to mate with them.'
     )
     .addStringOption((option) =>
       option
         .setName('declinelist')
-        .setDescription('Tribe members you would NOT mate with.')
+        .setDescription(
+          'List of names and whether you consent status (e.g., "Alice: consent, Sally: decline")'
+        )
     ),
   async execute(interaction, gameState) {
     try {

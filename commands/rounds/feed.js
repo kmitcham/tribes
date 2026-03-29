@@ -1,4 +1,7 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('../../libs/command-builders.js');
+const {
+  SlashCommandBuilder,
+  EmbedBuilder,
+} = require('../../libs/command-builders.js');
 const pop = require('../../libs/population.js');
 const feedlib = require('../../libs/feed.js');
 const text = require('../../libs/textprocess.js');
@@ -55,11 +58,7 @@ function feed(interaction, gameState) {
     return;
   }
   if (amount == 0 || amount > 2) {
-    text.addMessage(
-      gameState,
-      sourceName,
-      'Amount must be between 1 and 2.'
-    );
+    text.addMessage(gameState, sourceName, 'Amount must be between 1 and 2.');
     return;
   }
   if (gameState.reproductionRound && gameState.needChanceRoll) {

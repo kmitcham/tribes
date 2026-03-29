@@ -1599,7 +1599,7 @@ test('migrateToResponseDict works correctly backwards compat', () => {
   var person = {
     name: 'p1',
     consentList: ['p2', 'p3'],
-    declineList: ['p4']
+    declineList: ['p4'],
   };
   reproLib.migrateToResponseDict(person);
   expect(person.responseDict).toBeDefined();
@@ -1611,8 +1611,8 @@ test('migrateToResponseDict works correctly backwards compat', () => {
 test('handleRomanceResponse correctly sets consent and decline in responseDict', () => {
   var gameState = {
     population: {
-      p1: { name: 'p1', reproductionRound: true, responseDict: {} }
-    }
+      p1: { name: 'p1', reproductionRound: true, responseDict: {} },
+    },
   };
   reproLib.handleRomanceResponse(gameState, 'p1', 'p2', 'consent');
   expect(gameState.population.p1.responseDict['p2']).toBe('consent');
@@ -1621,11 +1621,27 @@ test('handleRomanceResponse correctly sets consent and decline in responseDict',
 test('globalMatingCheck resolves maybe to wait if target response is undefined', () => {
   var gameState = {
     population: {
-      p1: { name: 'p1', gender: 'male', activity: 'reproduction', inviteList: ['p2'], inviteIndex: 0, responseDict: {} },
-      p2: { name: 'p2', gender: 'female', activity: 'reproduction', inviteList: [], inviteIndex: 0, responseDict: {} }
+      p1: {
+        name: 'p1',
+        gender: 'male',
+        activity: 'reproduction',
+        inviteList: ['p2'],
+        inviteIndex: 0,
+        responseDict: {},
+      },
+      p2: {
+        name: 'p2',
+        gender: 'female',
+        activity: 'reproduction',
+        inviteList: [],
+        inviteIndex: 0,
+        responseDict: {},
+      },
     },
-    messages: { p1: '', p2: '' }, reproductionRound: true, reproductionRound: true,
-    activity: 'reproduction'
+    messages: { p1: '', p2: '' },
+    reproductionRound: true,
+    reproductionRound: true,
+    activity: 'reproduction',
   };
   reproLib.globalMatingCheck(gameState, {});
   expect(gameState.messages['p1']).toContain('considers');
@@ -1634,11 +1650,28 @@ test('globalMatingCheck resolves maybe to wait if target response is undefined',
 test('globalMatingCheck resolves consent directly dictionary', () => {
   var gameState = {
     population: {
-      p1: { name: 'p1', gender: 'male', activity: 'reproduction', inviteList: ['p2'], inviteIndex: 0, responseDict: {} },
-      p2: { name: 'p2', gender: 'female', activity: 'reproduction', inviteList: [], inviteIndex: 0, responseDict: { p1: 'consent' }, cannotInvite: false }
+      p1: {
+        name: 'p1',
+        gender: 'male',
+        activity: 'reproduction',
+        inviteList: ['p2'],
+        inviteIndex: 0,
+        responseDict: {},
+      },
+      p2: {
+        name: 'p2',
+        gender: 'female',
+        activity: 'reproduction',
+        inviteList: [],
+        inviteIndex: 0,
+        responseDict: { p1: 'consent' },
+        cannotInvite: false,
+      },
     },
-    messages: { p1: '', p2: '' }, reproductionRound: true, reproductionRound: true,
-    activity: 'reproduction'
+    messages: { p1: '', p2: '' },
+    reproductionRound: true,
+    reproductionRound: true,
+    activity: 'reproduction',
   };
   reproLib.globalMatingCheck(gameState, {});
   expect(gameState.messages['p1']).toContain('impressed');
@@ -1647,11 +1680,27 @@ test('globalMatingCheck resolves consent directly dictionary', () => {
 test('globalMatingCheck resolves decline directly dictionary', () => {
   var gameState = {
     population: {
-      p1: { name: 'p1', gender: 'male', activity: 'reproduction', inviteList: ['p2'], inviteIndex: 0, responseDict: {} },
-      p2: { name: 'p2', gender: 'female', activity: 'reproduction', inviteList: [], inviteIndex: 0, responseDict: { p1: 'decline' } }
+      p1: {
+        name: 'p1',
+        gender: 'male',
+        activity: 'reproduction',
+        inviteList: ['p2'],
+        inviteIndex: 0,
+        responseDict: {},
+      },
+      p2: {
+        name: 'p2',
+        gender: 'female',
+        activity: 'reproduction',
+        inviteList: [],
+        inviteIndex: 0,
+        responseDict: { p1: 'decline' },
+      },
     },
-    messages: { p1: '', p2: '' }, reproductionRound: true, reproductionRound: true,
-    activity: 'reproduction'
+    messages: { p1: '', p2: '' },
+    reproductionRound: true,
+    reproductionRound: true,
+    activity: 'reproduction',
   };
   reproLib.globalMatingCheck(gameState, {});
   expect(gameState.messages['p1']).toContain('declines');

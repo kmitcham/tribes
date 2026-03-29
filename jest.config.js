@@ -7,7 +7,7 @@ module.exports = {
 
   // Force exit to handle any async operations
   forceExit: true,
-  
+
   // Use single worker to prevent conflicts with module imports
   maxWorkers: 1,
 

@@ -86,7 +86,12 @@ function induct(gameState, sourceName, targetName, gender) {
 
   // Check if target user exists in users.json (case-insensitive)
   try {
-    const usersFilePath = path.join(__dirname, '..', 'tribe-data', 'users.json');
+    const usersFilePath = path.join(
+      __dirname,
+      '..',
+      'tribe-data',
+      'users.json'
+    );
     const usersData = JSON.parse(fs.readFileSync(usersFilePath, 'utf8'));
     const normalizedTarget = targetName.trim().toLowerCase();
     const matchedKey = Object.keys(usersData).find(
@@ -169,9 +174,8 @@ function doChance(rollValue, gameState) {
       if (nonStrongMembers.length === 0) {
         message += 'Every day is leg day; the tribe is strong.';
       } else {
-        name = nonStrongMembers[
-          Math.floor(Math.random() * nonStrongMembers.length)
-        ];
+        name =
+          nonStrongMembers[Math.floor(Math.random() * nonStrongMembers.length)];
         person = pop.memberByName(name, gameState);
         message += person.name + ' grows stronger.';
         pop.history(name, message, gameState);

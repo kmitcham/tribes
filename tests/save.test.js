@@ -7,8 +7,8 @@ jest.mock('fs');
 jest.mock('ws', () => ({
   Server: jest.fn().mockImplementation(() => ({
     on: jest.fn(),
-    close: jest.fn()
-  }))
+    close: jest.fn(),
+  })),
 }));
 
 const savelib = require('../libs/save.js');
@@ -30,7 +30,7 @@ describe('Save Module', () => {
 
     test('should initialize game with default values', () => {
       const gameState = savelib.initGame('test-tribe');
-      
+
       expect(gameState.name).toBe('test-tribe');
       expect(gameState.seasonCounter).toBe(1);
       expect(gameState.secretMating).toBe(true);
@@ -73,23 +73,23 @@ describe('Save Module', () => {
     test('should load and parse valid JSON', () => {
       const testData = { name: 'test', value: 123 };
       fs.readFileSync.mockReturnValue(JSON.stringify(testData));
-      
+
       const result = savelib.loadJson('test.json');
-      
+
       expect(result).toEqual(testData);
     });
 
     test('should return empty object for empty file', () => {
       fs.readFileSync.mockReturnValue(Buffer.alloc(0));
-      
+
       const result = savelib.loadJson('empty.json');
-      
+
       expect(result).toEqual({});
     });
 
     test('should throw error for invalid JSON', () => {
       fs.readFileSync.mockReturnValue('invalid json {{{');
-      
+
       expect(() => savelib.loadJson('invalid.json')).toThrow();
     });
   });
@@ -99,11 +99,13 @@ describe('Save Module', () => {
       const tribeData = { name: 'test-tribe', population: {} };
       fs.existsSync.mockReturnValue(true);
       fs.readFileSync.mockReturnValue(JSON.stringify(tribeData));
-      
+
       const result = savelib.loadTribe('test-tribe');
-      
+
       expect(result).toEqual(tribeData);
-      expect(fs.existsSync).toHaveBeenCalledWith('./tribe-data/test-tribe/test-tribe.json');
+      expect(fs.existsSync).toHaveBeenCalledWith(
+        './tribe-data/test-tribe/test-tribe.json'
+      );
     });
 
     test('should create new tribe if file does not exist', () => {
@@ -114,11 +116,13 @@ describe('Save Module', () => {
       fs.mkdirSync.mockImplementation(() => {});
       fs.writeFileSync.mockImplementation(() => {});
       fs.readFileSync.mockReturnValue(JSON.stringify({}));
-      
+
       const result = savelib.loadTribe('new-tribe');
-      
+
       expect(result.name).toBe('new-tribe');
-      expect(fs.mkdirSync).toHaveBeenCalledWith('./tribe-data/new-tribe', { recursive: true });
+      expect(fs.mkdirSync).toHaveBeenCalledWith('./tribe-data/new-tribe', {
+        recursive: true,
+      });
     });
   });
 
@@ -127,7 +131,7 @@ describe('Save Module', () => {
       const mockGameState = {
         name: 'test-tribe',
         population: { player1: { name: 'Player1' } },
-        ended: true
+        ended: true,
       };
 
       fs.writeFileSync.mockImplementation(() => {});
@@ -137,13 +141,15 @@ describe('Save Module', () => {
 
       expect(fs.writeFileSync).toHaveBeenCalled();
       const callArgs = fs.writeFileSync.mock.calls[0];
-      expect(callArgs[0]).toMatch(/\.\/tribe-data\/test-tribe\/test-tribe-final-\d{4}-\d{2}-\d{2}\.json/);
+      expect(callArgs[0]).toMatch(
+        /\.\/tribe-data\/test-tribe\/test-tribe-final-\d{4}-\d{2}-\d{2}\.json/
+      );
     });
 
     test('should add final save markers to game state', async () => {
       const mockGameState = {
         name: 'test-tribe',
-        ended: true
+        ended: true,
       };
 
       fs.writeFileSync.mockImplementation(() => {});
@@ -163,8 +169,12 @@ describe('Save Module', () => {
 
       await savelib.clearMainGameFile('test-tribe');
 
-      expect(fs.existsSync).toHaveBeenCalledWith('./tribe-data/test-tribe/test-tribe.json');
-      expect(fs.unlinkSync).toHaveBeenCalledWith('./tribe-data/test-tribe/test-tribe.json');
+      expect(fs.existsSync).toHaveBeenCalledWith(
+        './tribe-data/test-tribe/test-tribe.json'
+      );
+      expect(fs.unlinkSync).toHaveBeenCalledWith(
+        './tribe-data/test-tribe/test-tribe.json'
+      );
     });
 
     test('should not attempt to remove file when it does not exist', async () => {
@@ -172,7 +182,9 @@ describe('Save Module', () => {
 
       await savelib.clearMainGameFile('test-tribe');
 
-      expect(fs.existsSync).toHaveBeenCalledWith('./tribe-data/test-tribe/test-tribe.json');
+      expect(fs.existsSync).toHaveBeenCalledWith(
+        './tribe-data/test-tribe/test-tribe.json'
+      );
       expect(fs.unlinkSync).not.toHaveBeenCalled();
     });
   });
@@ -180,21 +192,23 @@ describe('Save Module', () => {
   describe('manageSnapshots', () => {
     test('should keep only 3 most recent snapshots', async () => {
       fs.existsSync.mockReturnValue(true);
-      
+
       // Mock 5 snapshot files
       const mockFiles = [
         'test-tribe-2026-03-01T10:00:00.000Z.json',
         'test-tribe-2026-03-02T10:00:00.000Z.json',
         'test-tribe-2026-03-03T10:00:00.000Z.json',
         'test-tribe-2026-03-04T10:00:00.000Z.json',
-        'test-tribe-2026-03-05T10:00:00.000Z.json'
+        'test-tribe-2026-03-05T10:00:00.000Z.json',
       ];
       fs.readdirSync.mockReturnValue(mockFiles);
 
       // Mock file stats with dates corresponding to filenames
       fs.statSync.mockImplementation((filePath) => {
         const filename = path.basename(filePath);
-        const dateMatch = filename.match(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z/);
+        const dateMatch = filename.match(
+          /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z/
+        );
         const fileDate = dateMatch ? new Date(dateMatch[0]) : new Date();
         return { mtime: fileDate };
       });
@@ -209,10 +223,10 @@ describe('Save Module', () => {
 
     test('should not delete anything if 3 or fewer snapshots exist', async () => {
       fs.existsSync.mockReturnValue(true);
-      
+
       const mockFiles = [
         'test-tribe-2026-03-04T10:00:00.000Z.json',
-        'test-tribe-2026-03-05T10:00:00.000Z.json'
+        'test-tribe-2026-03-05T10:00:00.000Z.json',
       ];
       fs.readdirSync.mockReturnValue(mockFiles);
       fs.statSync.mockReturnValue({ mtime: new Date() });
@@ -224,14 +238,14 @@ describe('Save Module', () => {
 
     test('should exclude main game file and final saves from deletion', async () => {
       fs.existsSync.mockReturnValue(true);
-      
+
       const mockFiles = [
         'test-tribe.json', // main game file - should be excluded
         'test-tribe-final-2026-03-01.json', // final save - should be excluded
         'test-tribe-2026-03-02T10:00:00.000Z.json',
         'test-tribe-2026-03-03T10:00:00.000Z.json',
         'test-tribe-2026-03-04T10:00:00.000Z.json',
-        'test-tribe-2026-03-05T10:00:00.000Z.json'
+        'test-tribe-2026-03-05T10:00:00.000Z.json',
       ];
       fs.readdirSync.mockReturnValue(mockFiles);
       fs.statSync.mockReturnValue({ mtime: new Date() });
@@ -259,7 +273,7 @@ describe('Save Module', () => {
       const mockGameState = {
         name: 'test-tribe',
         ended: true,
-        population: { player1: { name: 'Player1' } }
+        population: { player1: { name: 'Player1' } },
       };
 
       fs.writeFileSync.mockImplementation(() => {});
@@ -272,7 +286,7 @@ describe('Save Module', () => {
       // Verify final state was saved (check for -final- in filename)
       const writeCall = fs.writeFileSync.mock.calls[0];
       expect(writeCall[0]).toContain('-final-');
-      
+
       // Verify main game file was cleared
       expect(fs.unlinkSync).toHaveBeenCalled();
     });
@@ -281,7 +295,7 @@ describe('Save Module', () => {
       const mockGameState = {
         name: 'test-tribe',
         ended: false,
-        population: { player1: { name: 'Player1' } }
+        population: { player1: { name: 'Player1' } },
       };
 
       fs.writeFileSync.mockImplementation(() => {});
@@ -302,7 +316,7 @@ describe('Save Module', () => {
     test('should save game state to correct file', async () => {
       const mockGameState = {
         name: 'test-tribe',
-        population: { player1: { name: 'Player1' } }
+        population: { player1: { name: 'Player1' } },
       };
 
       fs.writeFileSync.mockImplementation(() => {});
@@ -318,7 +332,7 @@ describe('Save Module', () => {
     test('should update lastSaved timestamp', async () => {
       const mockGameState = {
         name: 'test-tribe',
-        population: {}
+        population: {},
       };
 
       fs.writeFileSync.mockImplementation(() => {});

@@ -46,7 +46,7 @@ Still, the library tests should be doable.
 -- message lib: messageTribe(bot, gamestate, message); messageMember(bot, gamestate, memberName, message) sendMessages(bot, gameState)
     ONLY called by commands, not libs.
     libs add items to 'messages' dict in gamestate, {'tribe':'message for tribe', 'member1':'private message to member 1'}
--- migrate.js and migrateLib.js have a better seperation of responsibilities using message lib.
+-- migrate.js and migrateLib.js have a better separation of responsibilities using message lib.
 -- scout nerd is broken
 -- canCraft not set on a crafter?
 -- reproduction messaging may be in trouble, since it is triggered from so many places  SEEMS FINE

@@ -51,9 +51,9 @@ function playerHelpRounds() {
   text +=
     '\tUpdates made DURING the reproduction round may behave erratically.  \n';
   text +=
-    ' consent <consentList> The list of people you would accept mating invitations from\n';
+    ' consent If a given member offers to mate with you, this is your response.\n';
   text +=
-    ' decline <declineList> The list of people whose mating invitations you would decline to mate with\n';
+    ' decline If a given member offers to mate with you, this is your response.\n';
   text +=
     ' pass Decline to invite anyone in this mating round; can still respond to invitations\n';
   text += ' scorechildren  count number of children by parent';

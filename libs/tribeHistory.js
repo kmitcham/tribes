@@ -43,4 +43,3 @@ function showTribeHistory(playerName, gameState) {
 }
 
 module.exports.showTribeHistory = showTribeHistory;
-

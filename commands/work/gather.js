@@ -1,4 +1,7 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('../../libs/command-builders.js');
+const {
+  SlashCommandBuilder,
+  EmbedBuilder,
+} = require('../../libs/command-builders.js');
 const worklib = require('../../libs/work.js');
 const gatherlib = require('../../libs/gather.js');
 const referees = require('../../libs/referees.json');

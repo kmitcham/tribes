@@ -733,13 +733,27 @@ function handleInfoRequest(ws, data, gameState) {
       };
       break;
 
-    case 'romance':
+        case 'romance':
       const playerName = data.playerName;
       const userData = gameState.population && gameState.population[playerName];
+      
+      let conList = [];
+      let decList = [];
+      if (userData?.responseDict) {
+        for (const [n, r] of Object.entries(userData.responseDict)) {
+          if (r === 'consent') conList.push(n);
+          if (r === 'decline') decList.push(n);
+        }
+      } else {
+        conList = userData?.consentList || [];
+        decList = userData?.declineList || [];
+      }
+      
       let romanceLists = {
         inviteList: userData?.inviteList || [],
-        consentList: userData?.consentList || [],
-        declineList: userData?.declineList || [],
+        consentList: conList,
+        declineList: decList,
+        responseDict: userData?.responseDict || {},
       };
       messageData = {
         type: 'infoRequest',
@@ -1226,19 +1240,42 @@ function sendSecrets(ws, data, gameState) {
 function processRomance(data, gameState) {
   const name = data.playerName || data.name;
   const inviteList = data.inviteList;
+  const responseDict = data.responseDict; // Client sends dictionary directly
+  
+  // Legacy support for incoming lists
   const declineList = data.declineList;
   const consentList = data.consentList;
 
   const userData = gameState.population[name];
   if (userData) {
-    if (inviteList && !arrayMatch(inviteList, userData.inviteList)) {
+    if (inviteList) {
       userData.inviteList = inviteList;
     }
-    if (declineList && !arrayMatch(declineList, userData.declineList)) {
-      userData.declineList = declineList;
+    
+    if (!userData.responseDict) userData.responseDict = {};
+    
+    if (responseDict) {
+        userData.responseDict = responseDict;
+    } else if (consentList || declineList) {
+        if (consentList) {
+            for (const n of consentList) userData.responseDict[n] = 'consent';
+        }
+        if (declineList) {
+            for (const n of declineList) userData.responseDict[n] = 'decline';
+        }
     }
-    if (consentList && !arrayMatch(consentList, userData.consentList)) {
-      userData.consentList = consentList;
+    
+    // Cleanup old arrays just in case, relying purely on dict
+    delete userData.consentList;
+    delete userData.declineList;
+
+    let outCon = [];
+    let outDec = [];
+    if (userData.responseDict) {
+        for (const [n, r] of Object.entries(userData.responseDict)) {
+            if (r === 'consent') outCon.push(n);
+            if (r === 'decline') outDec.push(n);
+        }
     }
 
     return {
@@ -1246,8 +1283,9 @@ function processRomance(data, gameState) {
       label: 'romance',
       content: {
         inviteList: userData.inviteList || [],
-        consentList: userData.consentList || [],
-        declineList: userData.declineList || [],
+        consentList: outCon,
+        declineList: outDec,
+        responseDict: userData.responseDict || {}
       },
     };
   } else {

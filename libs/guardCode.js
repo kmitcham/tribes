@@ -151,13 +151,13 @@ module.exports.hyenaAttack = (children, gameState) => {
   return response;
 };
 function asJson(data) {
-  ((foo = JSON.stringify(data, null, 2)),
+  (foo = JSON.stringify(data, null, 2)),
     (err) => {
       // Checking for errors
       if (err) {
         console.log('error with jsonification of ' + fileName + ' ' + err);
         throw err;
       }
-    });
+    };
   return foo;
 }

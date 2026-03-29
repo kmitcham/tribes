@@ -1,4 +1,7 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('../../libs/command-builders.js');
+const {
+  SlashCommandBuilder,
+  EmbedBuilder,
+} = require('../../libs/command-builders.js');
 const migrate = require('../../libs/migrateLib.js');
 const locations = require('../../libs/locations.json');
 const text = require('../../libs/textprocess');
