@@ -1,0 +1,178 @@
+[3/18/2026, 12:21:53 PM] Loaded command: exportgame (admin)
+[3/18/2026, 12:21:53 PM] Loaded command: importgame (admin)
+[3/18/2026, 12:21:53 PM] Loaded command: join (admin)
+[3/18/2026, 12:21:53 PM] Loaded command: secrets (admin)
+[3/18/2026, 12:21:53 PM] Loaded command: specialize (admin)
+[3/18/2026, 12:21:53 PM] Loaded command: vote (admin)
+[3/18/2026, 12:21:53 PM] Loaded command: banish (chief)
+[3/18/2026, 12:21:53 PM] Loaded command: chance (chief)
+[3/18/2026, 12:21:53 PM] Loaded command: close (chief)
+[3/18/2026, 12:21:53 PM] Loaded command: decree (chief)
+[3/18/2026, 12:21:53 PM] Loaded command: endgame (chief)
+[3/18/2026, 12:21:53 PM] Loaded command: induct (chief)
+[3/18/2026, 12:21:53 PM] Loaded command: migrate (chief)
+[3/18/2026, 12:21:53 PM] Loaded command: open (chief)
+[3/18/2026, 12:21:53 PM] Loaded command: skip (chief)
+[3/18/2026, 12:21:53 PM] Loaded command: startfood (chief)
+[3/18/2026, 12:21:53 PM] Loaded command: startreproduction (chief)
+[3/18/2026, 12:21:53 PM] Loaded command: startwork (chief)
+[3/18/2026, 12:21:53 PM] Loaded command: attack (conflict)
+[3/18/2026, 12:21:53 PM] Loaded command: defend (conflict)
+[3/18/2026, 12:21:53 PM] Loaded command: demand (conflict)
+[3/18/2026, 12:21:53 PM] Loaded command: faction (conflict)
+[3/18/2026, 12:21:53 PM] Loaded command: run (conflict)
+[3/18/2026, 12:21:53 PM] Loaded command: give (general)
+[3/18/2026, 12:21:53 PM] Loaded command: graveyard (general)
+[3/18/2026, 12:21:53 PM] Loaded command: help (general)
+[3/18/2026, 12:21:53 PM] Loaded command: history (general)
+[3/18/2026, 12:21:53 PM] Loaded command: inventory (general)
+[3/18/2026, 12:21:53 PM] Loaded command: jerky (general)
+[3/18/2026, 12:21:53 PM] Loaded command: law (general)
+[3/18/2026, 12:21:53 PM] Loaded command: ping (general)
+[3/18/2026, 12:21:53 PM] Loaded command: rollsomedice (general)
+[3/18/2026, 12:21:53 PM] Loaded command: sacrifice (general)
+[3/18/2026, 12:21:53 PM] Loaded command: scout (general)
+[3/18/2026, 12:21:53 PM] Loaded command: status (general)
+[3/18/2026, 12:21:53 PM] Loaded command: tribehistory (general)
+[3/18/2026, 12:21:53 PM] Loaded command: babysit (reproduction)
+[3/18/2026, 12:21:53 PM] Loaded command: checkmating (reproduction)
+[3/18/2026, 12:21:53 PM] Loaded command: children (reproduction)
+[3/18/2026, 12:21:53 PM] Loaded command: consent (reproduction)
+[3/18/2026, 12:21:53 PM] Loaded command: decline (reproduction)
+[3/18/2026, 12:21:53 PM] Loaded command: invite (reproduction)
+[3/18/2026, 12:21:53 PM] Loaded command: pass (reproduction)
+[3/18/2026, 12:21:53 PM] Loaded command: romance (reproduction)
+[3/18/2026, 12:21:53 PM] Loaded command: scorechildren (reproduction)
+[3/18/2026, 12:21:53 PM] Loaded command: feed (rounds)
+[3/18/2026, 12:21:53 PM] Loaded command: foodcheck (rounds)
+[3/18/2026, 12:21:53 PM] Loaded command: leastguarded (rounds)
+[3/18/2026, 12:21:53 PM] Loaded command: ready (rounds)
+[3/18/2026, 12:21:53 PM] Loaded command: craft (work)
+[3/18/2026, 12:21:53 PM] Loaded command: gather (work)
+[3/18/2026, 12:21:53 PM] Loaded command: guard (work)
+[3/18/2026, 12:21:53 PM] Loaded command: hunt (work)
+[3/18/2026, 12:21:53 PM] Loaded command: idle (work)
+[3/18/2026, 12:21:53 PM] Loaded command: ignore (work)
+[3/18/2026, 12:21:53 PM] Loaded command: train (work)
+Loaded 56 commands total
+Tribes WebSocket Server starting...
+Tribes WebSocket Server starting...
+Available commands: exportgame, importgame, join, secrets, specialize, vote, banish, chance, close, decree, endgame, induct, migrate, open, skip, startfood, startreproduction, startwork, attack, defend, demand, faction, run, give, graveyard, help, history, inventory, jerky, law, ping, rollsomedice, sacrifice, scout, status, tribehistory, babysit, checkmating, children, consent, decline, invite, pass, romance, scorechildren, feed, foodcheck, leastguarded, ready, craft, gather, guard, hunt, idle, ignore, train
+[3/18/2026, 12:21:53 PM] Tribes server (WebSocket + HTTP) started on port 8000
+[3/18/2026, 12:21:53 PM] Local access:
+[3/18/2026, 12:21:53 PM]   Health check: http://localhost:8000/health
+[3/18/2026, 12:21:53 PM]   Game interface: http://localhost:8000/
+[3/18/2026, 12:21:53 PM] Network access:
+[3/18/2026, 12:21:53 PM]   Health check: http://192.168.1.20:8000/health
+[3/18/2026, 12:21:53 PM]   Game interface: http://192.168.1.20:8000/
+[3/18/2026, 12:21:53 PM] Share the network URL with others on your local network!
+[3/18/2026, 12:21:55 PM] New client connected from 127.0.0.1
+[3/18/2026, 12:21:55 PM] Received: manageUsers  from kevin
+[3/18/2026, 12:21:55 PM] got gamestate for bug
+[3/18/2026, 12:21:55 PM] added a client record  for kevin
+[3/18/2026, 12:21:55 PM] data type manageUsers
+[3/18/2026, 12:21:55 PM] Client disconnected: unknown
+[3/18/2026, 12:21:59 PM] New client connected from 127.0.0.1
+[3/18/2026, 12:21:59 PM] Received: manageUsers  from kevin
+[3/18/2026, 12:21:59 PM] got gamestate for bug
+[3/18/2026, 12:21:59 PM] added a client record  for kevin
+[3/18/2026, 12:21:59 PM] data type manageUsers
+[3/18/2026, 12:21:59 PM] Client disconnected: unknown
+[3/18/2026, 12:22:10 PM] New client connected from 127.0.0.1
+[3/18/2026, 12:22:10 PM] Received: manageUsers  from Kevin
+[3/18/2026, 12:22:10 PM] got gamestate for bug
+[3/18/2026, 12:22:10 PM] added a client record  for Kevin
+[3/18/2026, 12:22:10 PM] data type manageUsers
+[3/18/2026, 12:22:10 PM] Client disconnected: unknown
+[3/18/2026, 12:31:54 PM] New client connected from 127.0.0.1
+[3/18/2026, 12:31:54 PM] Received: manageUsers  from Kevin
+[3/18/2026, 12:31:54 PM] got gamestate for bug
+[3/18/2026, 12:31:54 PM] added a client record  for Kevin
+[3/18/2026, 12:31:54 PM] data type manageUsers
+[3/18/2026, 12:31:54 PM] Client disconnected: unknown
+[3/18/2026, 12:32:45 PM] New client connected from 127.0.0.1
+[3/18/2026, 12:32:45 PM] Received: manageUsers  from Kevin
+[3/18/2026, 12:32:45 PM] got gamestate for bug
+[3/18/2026, 12:32:45 PM] added a client record  for Kevin
+[3/18/2026, 12:32:45 PM] data type manageUsers
+[3/18/2026, 12:32:45 PM] Client disconnected: unknown
+[3/18/2026, 12:57:59 PM] New client connected from 127.0.0.1
+[3/18/2026, 12:57:59 PM] Received: listCommands  from unknown
+[3/18/2026, 12:57:59 PM] got gamestate for bug
+[3/18/2026, 12:57:59 PM] added a client record  for 
+[3/18/2026, 12:57:59 PM] data type listCommands
+[3/18/2026, 12:57:59 PM] [CHIEF CHECK] Player: "", HasGameState: true, HasPopulation: true
+[3/18/2026, 12:57:59 PM] [REF CHECK] Player "" isRef: 
+[3/18/2026, 12:57:59 PM] [CHIEF CHECK] Final isChief status: false
+[3/18/2026, 12:57:59 PM] [CHIEF CHECK] Filtered out 12 chief commands, sending 44 total commands
+[3/18/2026, 12:57:59 PM] [REF CHECK] Filtered out force options from 4 commands
+[3/18/2026, 12:58:00 PM] Received: helpRequest  from unknown
+[3/18/2026, 12:58:00 PM] got gamestate for bear
+[3/18/2026, 12:58:00 PM] added a client record  for 
+[3/18/2026, 12:58:00 PM] data type helpRequest
+[3/18/2026, 12:58:01 PM] Received: listCommands  from Kevin
+[3/18/2026, 12:58:01 PM] got gamestate for bear
+[3/18/2026, 12:58:01 PM] added a client record  for Kevin
+[3/18/2026, 12:58:01 PM] data type listCommands
+[3/18/2026, 12:58:01 PM] [CHIEF CHECK] Player: "Kevin", HasGameState: true, HasPopulation: true
+tribe bear has no such member Kevin in population.
+[3/18/2026, 12:58:01 PM] [CHIEF CHECK] Found player: false, Chief status: N/A
+[3/18/2026, 12:58:01 PM] [REF CHECK] Player "Kevin" isRef: true
+[3/18/2026, 12:58:01 PM] [CHIEF CHECK] Final isChief status: null
+[3/18/2026, 12:58:01 PM] [CHIEF CHECK] Filtered out 12 chief commands, sending 44 total commands
+[3/18/2026, 12:58:01 PM] [REF CHECK] Filtered out force options from 0 commands
+[3/18/2026, 12:58:01 PM] Received: registerRequest  from Kevin
+[3/18/2026, 12:58:01 PM] got gamestate for bear
+[3/18/2026, 12:58:01 PM] added a client record  for Kevin
+[3/18/2026, 12:58:01 PM] data type registerRequest
+Failed to register user: Error: Password required for existing player
+    at registerUser (/Users/kevinmitcham/Documents/workspace/TribesAgent/websocket-server.js:1620:13)
+    at handleRegisterRequest (/Users/kevinmitcham/Documents/workspace/TribesAgent/websocket-server.js:1162:26)
+    at handleWebSocketMessage (/Users/kevinmitcham/Documents/workspace/TribesAgent/websocket-server.js:556:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async WebSocket.<anonymous> (/Users/kevinmitcham/Documents/workspace/TribesAgent/websocket-server.js:457:11)
+[3/18/2026, 12:58:02 PM] Received: manageUsers  from Kevin
+[3/18/2026, 12:58:02 PM] got gamestate for bear
+[3/18/2026, 12:58:02 PM] added a client record  for Kevin
+[3/18/2026, 12:58:02 PM] data type manageUsers
+[3/18/2026, 12:58:03 PM] Client disconnected: unknown
+[3/18/2026, 12:58:08 PM] New client connected from 127.0.0.1
+[3/18/2026, 12:58:08 PM] Received: listCommands  from unknown
+[3/18/2026, 12:58:08 PM] got gamestate for bug
+[3/18/2026, 12:58:08 PM] added a client record  for 
+[3/18/2026, 12:58:08 PM] data type listCommands
+[3/18/2026, 12:58:08 PM] [CHIEF CHECK] Player: "", HasGameState: true, HasPopulation: true
+[3/18/2026, 12:58:08 PM] [REF CHECK] Player "" isRef: 
+[3/18/2026, 12:58:08 PM] [CHIEF CHECK] Final isChief status: false
+[3/18/2026, 12:58:08 PM] [CHIEF CHECK] Filtered out 12 chief commands, sending 44 total commands
+[3/18/2026, 12:58:08 PM] [REF CHECK] Filtered out force options from 4 commands
+[3/18/2026, 12:58:09 PM] Received: helpRequest  from unknown
+[3/18/2026, 12:58:09 PM] got gamestate for bear
+[3/18/2026, 12:58:09 PM] added a client record  for 
+[3/18/2026, 12:58:09 PM] data type helpRequest
+[3/18/2026, 12:58:09 PM] Received: listCommands  from Kevin
+[3/18/2026, 12:58:09 PM] got gamestate for bear
+[3/18/2026, 12:58:09 PM] added a client record  for Kevin
+[3/18/2026, 12:58:09 PM] data type listCommands
+[3/18/2026, 12:58:09 PM] [CHIEF CHECK] Player: "Kevin", HasGameState: true, HasPopulation: true
+tribe bear has no such member Kevin in population.
+[3/18/2026, 12:58:09 PM] [CHIEF CHECK] Found player: false, Chief status: N/A
+[3/18/2026, 12:58:09 PM] [REF CHECK] Player "Kevin" isRef: true
+[3/18/2026, 12:58:09 PM] [CHIEF CHECK] Final isChief status: null
+[3/18/2026, 12:58:09 PM] [CHIEF CHECK] Filtered out 12 chief commands, sending 44 total commands
+[3/18/2026, 12:58:09 PM] [REF CHECK] Filtered out force options from 0 commands
+[3/18/2026, 12:58:09 PM] Received: registerRequest  from Kevin
+[3/18/2026, 12:58:09 PM] got gamestate for bear
+[3/18/2026, 12:58:09 PM] added a client record  for Kevin
+[3/18/2026, 12:58:09 PM] data type registerRequest
+Failed to register user: Error: Password required for existing player
+    at registerUser (/Users/kevinmitcham/Documents/workspace/TribesAgent/websocket-server.js:1620:13)
+    at handleRegisterRequest (/Users/kevinmitcham/Documents/workspace/TribesAgent/websocket-server.js:1162:26)
+    at handleWebSocketMessage (/Users/kevinmitcham/Documents/workspace/TribesAgent/websocket-server.js:556:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async WebSocket.<anonymous> (/Users/kevinmitcham/Documents/workspace/TribesAgent/websocket-server.js:457:11)
+[3/18/2026, 12:58:10 PM] Received: manageUsers  from Kevin
+[3/18/2026, 12:58:10 PM] got gamestate for bear
+[3/18/2026, 12:58:10 PM] added a client record  for Kevin
+[3/18/2026, 12:58:10 PM] data type manageUsers
+[3/18/2026, 12:58:11 PM] Client disconnected: unknown

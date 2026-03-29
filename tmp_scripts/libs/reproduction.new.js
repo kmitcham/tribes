@@ -405,9 +405,9 @@ function declinePrep(interaction, gameState) {
       text.addMessage(
         gameState,
         sourceName,
-        'Current declinelist: ' + player.declinelist.join(' ')
+        'Current declinelist: ' + player.declineList.join(' ')
       );
-      return 'Current declinelist: ' + player.declinelist.join(' ');
+      return 'Current declinelist: ' + player.declineList.join(' ');
     } else {
       text.addMessage(gameState, sourceName, 'No current declinelist');
       return 'No current declinelist';
@@ -443,7 +443,7 @@ function decline(actorName, messageArray, gameState) {
       'Setting your declineList to ' + person.declineList
     );
   } else {
-    handleReproductionList(actorName, messageArray, 'declineList', gameState);
+    var handleMessage = handleReproductionList(actorName, messageArray, 'declineList', gameState);
     intersectList = intersect(person.consentList, person.declineList);
     if (
       (intersectList && intersectList.length > 0) ||
@@ -460,7 +460,7 @@ function decline(actorName, messageArray, gameState) {
         'Your consent and decline lists have overlaps.  Decline has priority.'
       );
     }
-    text.addMessage(gameState, actorName, 'Decline updated.');
+    text.addMessage(gameState, actorName, handleMessage);
   }
   gameState.saveRequired = true;
   return globalMatingCheck(gameState);
@@ -485,6 +485,24 @@ function sortCommitFirst(a, b) {
     return -1;
   }
   return Math.random() - 0.5;
+}
+
+function migrateToResponseDict(person) {
+  if (!person.responseDict) {
+    person.responseDict = {};
+  }
+  if (person.consentList) {
+    for (const name of person.consentList) {
+      person.responseDict[name] = 'consent';
+    }
+    delete person.consentList;
+  }
+  if (person.declineList) {
+    for (const name of person.declineList) {
+      person.responseDict[name] = 'decline';
+    }
+    delete person.declineList;
+  }
 }
 
 function globalMatingCheck(gameState) {
@@ -594,24 +612,12 @@ function globalMatingCheck(gameState) {
         }
         const targetDisplayName = targetMember.name;
         const targetPopulationKey = pop.getPopulationKey(targetMember, gameState) || targetName;
-        migrateToResponseDict(invitingMember);
-        migrateToResponseDict(targetMember);
-        
-        let targetResponse;
-        if (targetMember.responseDict) {
-            if (targetMember.responseDict[invitingMemberKey]) {
-                targetResponse = targetMember.responseDict[invitingMemberKey];
-            } else if (targetMember.responseDict[invitingMember.name]) {
-                targetResponse = targetMember.responseDict[invitingMember.name];
-            } else if (targetMember.responseDict['!all']) {
-                targetResponse = targetMember.responseDict['!all'];
-            }
-        }
-        if (!targetResponse && targetMember.inviteList && (targetMember.inviteList.includes(invitingMemberKey) || targetMember.inviteList.includes(invitingMember.name))) {
-            targetResponse = 'consent';
-        }
-
-        if (targetResponse === 'decline') {
+        if (
+          'declineList' in targetMember &&
+          (targetMember.declineList.includes(invitingMemberKey) ||
+            targetMember.declineList.includes('!all') ||
+            targetMember.declineList.includes(invitingMember.name))
+        ) {
           text.addMessage(
             gameState,
             invitingMemberKey,
@@ -651,7 +657,12 @@ function globalMatingCheck(gameState) {
           );
           console.log('\t sick or injured');
           attemptFailed = true;
-        } else if (targetResponse === 'consent') {
+        } else if (
+          targetMember.consentList &&
+          (targetMember.consentList.includes(invitingMemberKey) ||
+            targetMember.consentList.includes('!all') ||
+            targetMember.consentList.includes(invitingMember.name))
+        ) {
           text.addMessage(
             gameState,
             invitingMemberKey,
@@ -1234,39 +1245,6 @@ function startReproduction(gameState) {
 
   return;
 }
-
-function migrateToResponseDict(person) {
-  if (!person) return;
-  if (!person.responseDict) person.responseDict = {};
-  
-  if (person.consentList && Array.isArray(person.consentList)) {
-    for (let target of person.consentList) {
-      if (target !== '!none' && target !== '!pass' && target !== '!all') {
-         person.responseDict[target] = 'consent';
-      } else if (target === '!all') {
-         person.responseDict['!all'] = 'consent';
-      }
-    }
-  }
-  if (person.declineList && Array.isArray(person.declineList)) {
-    for (let target of person.declineList) {
-      person.responseDict[target] = 'decline';
-    }
-  }
-}
-
-function handleRomanceResponse(gameState, actorName, targetNameRaw, responseType) {
-  let actingMember = gameState.population && gameState.population[actorName] ? gameState.population[actorName] : null;
-  if (!actingMember) return 'No such member';
-  migrateToResponseDict(actingMember);
-  
-  if (!targetNameRaw || targetNameRaw.length === 0) return 'No target provided.';
-  
-  let targetName = targetNameRaw.trim();
-  actingMember.responseDict[targetName] = responseType;
-  return 'Set ' + targetName + ' to ' + responseType;
-}
-
 module.exports.startReproduction = startReproduction;
 
 function checkMating(gameState, displayName) {
@@ -1289,7 +1267,3 @@ function checkMating(gameState, displayName) {
   return;
 }
 module.exports.checkMating = checkMating;
-
-
-module.exports.migrateToResponseDict = migrateToResponseDict;
-module.exports.handleRomanceResponse = handleRomanceResponse;

@@ -2905,16 +2905,7 @@
                     const allOption = document.createElement('option');
                     allOption.value = '!all';
                     allOption.textContent = '!all (all opposite gender players)';
-                    playerSelect.appendChild(allOption);
-                    
-                    // Add different options based on command type
-                    if (this.selectedCommand.name.toLowerCase() !== 'invite') {
-                        // For consent and decline commands
-                        const noneOption = document.createElement('option');
-                        noneOption.value = '!none';
-                        noneOption.textContent = '!none (clear list)';
-                        playerSelect.appendChild(noneOption);
-                    }
+                    playerSelect.appendChild(allOption);                    
                 }
                 
                 if (this.currentPopulation) {

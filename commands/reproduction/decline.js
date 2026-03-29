@@ -1,16 +1,17 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('../../libs/command-builders.js');
 const reproLib = require('../../libs/reproduction.js');
+const text = require('../../libs/textprocess.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('decline')
     .setDescription(
-      'Comma seperated list of names of people you would NOT mate with. (!none or !all are options)'
+      'Comma seperated list of names of people you would NOT mate with.'
     )
     .addStringOption((option) =>
       option
         .setName('declinelist')
-        .setDescription('takes !none and !all, or names ')
+        .setDescription('Tribe members you would NOT mate with.')
     ),
   async execute(interaction, gameState) {
     try {
@@ -34,10 +35,12 @@ module.exports = {
         if (player && player.declineList && player.declineList.length > 0) {
           var message = 'Current declinelist: ' + player.declineList.join(' ');
           console.log(message);
+          text.addMessage(gameState, sourceName, message);
           return message;
         } else {
           var message = 'No current declinelist';
           console.log(message);
+          text.addMessage(gameState, sourceName, message);
           return message;
         }
       }
