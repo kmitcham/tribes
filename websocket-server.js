@@ -18,10 +18,10 @@ const referees = require('./libs/referees.json');
 function logWithTimestamp(message, ...args) {
   const timestamp = new Date().toLocaleString();
   const logMessage = `[${timestamp}] ${message} ${args.join(' ')}`;
-  
+
   // Log to console
   console.log(`[${timestamp}]`, message, ...args);
-  
+
   // Log to file
   try {
     // Ensure logs directory exists
@@ -29,11 +29,11 @@ function logWithTimestamp(message, ...args) {
     if (!fs.existsSync(logsDir)) {
       fs.mkdirSync(logsDir, { recursive: true });
     }
-    
+
     // Create daily log file name
     const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
     const logFile = path.join(logsDir, `tribes-${today}.log`);
-    
+
     // Append to log file
     fs.appendFileSync(logFile, logMessage + '\n');
   } catch (error) {
@@ -66,7 +66,7 @@ try {
     fs.mkdirSync('./tribe-data', { recursive: true });
     logWithTimestamp('Created tribe-data directory');
   }
-  
+
   usersDict = loadJson('./tribe-data/users.json');
 } catch (error) {
   logWithTimestamp('No existing users.json, starting fresh');
@@ -87,17 +87,19 @@ function createSession(playerName, ipAddress = 'unknown') {
     playerName,
     createdAt: Date.now(),
     lastActivity: Date.now(),
-    ipAddress
+    ipAddress,
   };
-  
+
   activeSessions.set(token, session);
-  
+
   if (!playerSessions.has(playerName)) {
     playerSessions.set(playerName, new Set());
   }
   playerSessions.get(playerName).add(token);
-  
-  logWithTimestamp(`[SESSION] Created session for ${playerName} from ${ipAddress}`);
+
+  logWithTimestamp(
+    `[SESSION] Created session for ${playerName} from ${ipAddress}`
+  );
   return token;
 }
 
@@ -106,13 +108,13 @@ function validateSession(token) {
   if (!session) {
     return null;
   }
-  
+
   // Check if session has expired
   if (Date.now() - session.lastActivity > SESSION_TIMEOUT) {
     destroySession(token);
     return null;
   }
-  
+
   // Update last activity
   session.lastActivity = Date.now();
   return session;
@@ -123,14 +125,14 @@ function destroySession(token) {
   if (session) {
     const playerName = session.playerName;
     activeSessions.delete(token);
-    
+
     if (playerSessions.has(playerName)) {
       playerSessions.get(playerName).delete(token);
       if (playerSessions.get(playerName).size === 0) {
         playerSessions.delete(playerName);
       }
     }
-    
+
     logWithTimestamp(`[SESSION] Destroyed session for ${playerName}`);
   }
 }
@@ -149,32 +151,39 @@ function destroyAllPlayerSessions(playerName) {
 function cleanupExpiredSessions() {
   const now = Date.now();
   const expiredTokens = [];
-  
+
   for (const [token, session] of activeSessions) {
     if (now - session.lastActivity > SESSION_TIMEOUT) {
       expiredTokens.push(token);
     }
   }
-  
+
   for (const token of expiredTokens) {
     destroySession(token);
   }
-  
+
   if (expiredTokens.length > 0) {
-    logWithTimestamp(`[SESSION] Cleaned up ${expiredTokens.length} expired sessions`);
+    logWithTimestamp(
+      `[SESSION] Cleaned up ${expiredTokens.length} expired sessions`
+    );
   }
 }
 
 // Start session cleanup timer only when not in test mode
 let sessionCleanupTimer = null;
 if (process.env.NODE_ENV !== 'test') {
-  sessionCleanupTimer = setInterval(cleanupExpiredSessions, SESSION_CLEANUP_INTERVAL);
+  sessionCleanupTimer = setInterval(
+    cleanupExpiredSessions,
+    SESSION_CLEANUP_INTERVAL
+  );
 }
 
 function getClientIP(ws, req) {
-  return req?.socket?.remoteAddress || 
-         req?.headers['x-forwarded-for']?.split(',')[0] || 
-         'unknown';
+  return (
+    req?.socket?.remoteAddress ||
+    req?.headers['x-forwarded-for']?.split(',')[0] ||
+    'unknown'
+  );
 }
 
 function loadCommands() {
@@ -321,13 +330,13 @@ function startServer() {
       res.setHeader('Access-Control-Allow-Origin', '*');
       res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
       res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-      
+
       if (req.method === 'OPTIONS') {
         res.writeHead(200);
         res.end();
         return;
       }
-      
+
       if (req.url === '/health') {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(
@@ -342,7 +351,7 @@ function startServer() {
         // Serve the HTML interface with WebSocket configuration
         fs.readFile(
           path.join(__dirname, 'tribes-interface.html'),
-          'utf8',  // Read as text to allow modifications
+          'utf8', // Read as text to allow modifications
           (err, data) => {
             if (err) {
               res.writeHead(404, { 'Content-Type': 'text/plain' });
@@ -351,14 +360,19 @@ function startServer() {
               // Inject WebSocket configuration into the HTML
               const wsConfig = {
                 port: PORT,
-                protocol: req.headers['x-forwarded-proto'] || (req.connection.encrypted ? 'https' : 'http'),
-                host: req.headers.host || req.headers['x-forwarded-host']
+                protocol:
+                  req.headers['x-forwarded-proto'] ||
+                  (req.connection.encrypted ? 'https' : 'http'),
+                host: req.headers.host || req.headers['x-forwarded-host'],
               };
-              
+
               // Insert WebSocket config right after the <head> tag
               const configScript = `<script>window.TRIBES_WS_CONFIG = ${JSON.stringify(wsConfig)};</script>`;
-              const modifiedData = data.replace('<head>', '<head>\n    ' + configScript);
-              
+              const modifiedData = data.replace(
+                '<head>',
+                '<head>\n    ' + configScript
+              );
+
               res.writeHead(200, { 'Content-Type': 'text/html' });
               res.end(modifiedData);
             }
@@ -393,7 +407,7 @@ function startServer() {
     });
 
     // Create WebSocket server on the same port with cloud-friendly options
-    wss = new WebSocket.Server({ 
+    wss = new WebSocket.Server({
       server: httpServer,
       perMessageDeflate: false, // Disable compression for better compatibility
       maxPayload: 16 * 1024, // 16KB max message size
@@ -406,23 +420,28 @@ function startServer() {
       logWithTimestamp(`Local access:`);
       logWithTimestamp(`  Health check: http://localhost:${PORT}/health`);
       logWithTimestamp(`  Game interface: http://localhost:${PORT}/`);
-      
+
       // Only show network access info if we can detect a local IP
       const os = require('os');
       const networkInterfaces = os.networkInterfaces();
       let localIP = null;
-      
+
       for (const [name, addresses] of Object.entries(networkInterfaces)) {
         for (const address of addresses) {
-          if (address.family === 'IPv4' && !address.internal && 
-              (address.address.startsWith('192.168.') || address.address.startsWith('10.') || address.address.startsWith('172.'))) {
+          if (
+            address.family === 'IPv4' &&
+            !address.internal &&
+            (address.address.startsWith('192.168.') ||
+              address.address.startsWith('10.') ||
+              address.address.startsWith('172.'))
+          ) {
             localIP = address.address;
             break;
           }
         }
         if (localIP) break;
       }
-      
+
       if (localIP) {
         logWithTimestamp(`Network access:`);
         logWithTimestamp(`  Health check: http://${localIP}:${PORT}/health`);
@@ -431,7 +450,9 @@ function startServer() {
           `Share the network URL with others on your local network!`
         );
       } else {
-        logWithTimestamp(`Cloud deployment detected - access via your cloud service URL`);
+        logWithTimestamp(
+          `Cloud deployment detected - access via your cloud service URL`
+        );
       }
     });
 
@@ -535,19 +556,19 @@ async function handleWebSocketMessage(ws, data) {
     case 'authenticateSession':
       handleSessionAuthentication(ws, data);
       break;
-      
+
     case 'manageTribe':
       handleManageTribe(ws, data);
       break;
-      
+
     case 'manageUsers':
       await handleManageUsers(ws, data);
       break;
-      
+
     case 'logout':
       handleLogout(ws, data);
       break;
-      
+
     case 'infoRequest':
       handleInfoRequest(ws, data, gameState);
       break;
@@ -561,7 +582,7 @@ async function handleWebSocketMessage(ws, data) {
       break;
 
     case 'romanceRequest':
-      handleRomanceRequest(ws, data, gameState);
+      await handleRomanceRequest(ws, data, gameState);
       break;
 
     case 'listCommands':
@@ -609,69 +630,79 @@ async function getGameState(tribeName) {
 
 function handleSessionAuthentication(ws, data) {
   const { token } = data;
-  
+
   if (!token) {
-    ws.send(JSON.stringify({
-      type: 'sessionAuthResponse',
-      success: false,
-      message: 'Session token required',
-      clientId: data.clientId
-    }));
+    ws.send(
+      JSON.stringify({
+        type: 'sessionAuthResponse',
+        success: false,
+        message: 'Session token required',
+        clientId: data.clientId,
+      })
+    );
     logWithTimestamp('sent sessionAuthResponse', data.clientId);
 
     return;
   }
-  
+
   const session = validateSession(token);
   if (!session) {
-    ws.send(JSON.stringify({
-      type: 'sessionAuthResponse', 
-      success: false,
-      message: 'Invalid or expired session token',
-      clientId: data.clientId
-    }));
+    ws.send(
+      JSON.stringify({
+        type: 'sessionAuthResponse',
+        success: false,
+        message: 'Invalid or expired session token',
+        clientId: data.clientId,
+      })
+    );
     return;
   }
-  
+
   // Associate this WebSocket with the session
   ws.sessionToken = token;
   ws.playerName = session.playerName;
   ws.currentPlayer = session.playerName;
-  
+
   // Track this client's player connections
   if (!connectedClients.has(session.playerName)) {
     connectedClients.set(session.playerName, new Set());
   }
   connectedClients.get(session.playerName).add(ws);
-  
-  logWithTimestamp(`[SESSION] ${session.playerName} authenticated with existing session`);
-  
-  ws.send(JSON.stringify({
-    type: 'sessionAuthResponse',
-    success: true,
-    playerName: session.playerName,
-    message: 'Session authenticated successfully',
-    clientId: data.clientId
-  }));
+
+  logWithTimestamp(
+    `[SESSION] ${session.playerName} authenticated with existing session`
+  );
+
+  ws.send(
+    JSON.stringify({
+      type: 'sessionAuthResponse',
+      success: true,
+      playerName: session.playerName,
+      message: 'Session authenticated successfully',
+      clientId: data.clientId,
+    })
+  );
 }
 
 function handleLogout(ws, data) {
   const { logoutAll = false } = data;
-  
+
   if (ws.sessionToken) {
     if (logoutAll && ws.playerName) {
       // Destroy all sessions for this player
       destroyAllPlayerSessions(ws.playerName);
-      
+
       // Disconnect all WebSockets for this player
       const playerConnections = connectedClients.get(ws.playerName);
       if (playerConnections) {
         for (const connection of playerConnections) {
           if (connection !== ws) {
-            connection.send(JSON.stringify({
-              type: 'forceLogout',
-              message: 'Logged out from another device'
-            }));
+            connection.send(
+              JSON.stringify({
+                type: 'forceLogout',
+                message: 'Logged out from another device',
+              })
+            );
             connection.close();
           }
         }
@@ -680,18 +711,22 @@ function handleLogout(ws, data) {
       // Destroy only this session
       destroySession(ws.sessionToken);
     }
-    
+
     ws.sessionToken = null;
     ws.playerName = null;
     ws.currentPlayer = null;
   }
-  
-  ws.send(JSON.stringify({
-    type: 'logoutResponse',
-    success: true,
-    message: logoutAll ? 'Logged out from all devices' : 'Logged out successfully',
-    clientId: data.clientId
-  }));
+
+  ws.send(
+    JSON.stringify({
+      type: 'logoutResponse',
+      success: true,
+      message: logoutAll
+        ? 'Logged out from all devices'
+        : 'Logged out successfully',
+      clientId: data.clientId,
+    })
+  );
 }
 
 function handleInfoRequest(ws, data, gameState) {
@@ -724,23 +759,24 @@ function handleInfoRequest(ws, data, gameState) {
         gameState: {
           round: gameState.round || 'work',
           workRound: gameState.workRound,
-          foodRound: gameState.foodRound, 
+          foodRound: gameState.foodRound,
           reproductionRound: gameState.reproductionRound,
           seasonCounter: gameState.seasonCounter,
           currentLocationName: gameState.currentLocationName,
-          year: Math.floor(gameState.seasonCounter / 2)
-        }
+          year: Math.floor(gameState.seasonCounter / 2),
+          startStamp: gameState.startStamp,
+        },
       };
       break;
 
-        case 'romance':
+    case 'romance':
       const playerName = data.playerName;
       const userData = gameState.population && gameState.population[playerName];
-      
+
       let conList = [];
       let decList = [];
-      if (userData?.responseDict) {
-        for (const [n, r] of Object.entries(userData.responseDict)) {
+      if (userData?.consentDict) {
+        for (const [n, r] of Object.entries(userData.consentDict)) {
           if (r === 'consent') conList.push(n);
           if (r === 'decline') decList.push(n);
         }
@@ -748,12 +784,12 @@ function handleInfoRequest(ws, data, gameState) {
         conList = userData?.consentList || [];
         decList = userData?.declineList || [];
       }
-      
+
       let romanceLists = {
         inviteList: userData?.inviteList || [],
         consentList: conList,
         declineList: decList,
-        responseDict: userData?.responseDict || {},
+        consentDict: userData?.consentDict || {},
       };
       messageData = {
         type: 'infoRequest',
@@ -837,7 +873,7 @@ async function handleCommandRequest(ws, data, gameState) {
 
       // Refresh game data for all tribe members after state changes
       await refreshTribeGameData(gameState, data.tribe || 'bug');
-      
+
       // Check if commands need refreshing (e.g., after chief change)
       if (gameState.commandsNeedRefresh) {
         await refreshTribeCommandLists(gameState, data.tribe || 'bug');
@@ -887,13 +923,16 @@ async function refreshTribeCommandLists(gameState, tribeName) {
         // Create a mock data object for handleListCommands
         const mockData = {
           playerName: memberWs.currentPlayer,
-          clientId: memberWs.clientId || 'refresh'
+          clientId: memberWs.clientId || 'refresh',
         };
-        
+
         // Call handleListCommands to generate and send the updated command list
         handleListCommands(memberWs, mockData, gameState);
       } catch (error) {
-        console.error(`Error refreshing commands for ${memberWs.currentPlayer}:`, error);
+        console.error(
+          `Error refreshing commands for ${memberWs.currentPlayer}:`,
+          error
+        );
       }
     }
   }
@@ -930,11 +969,11 @@ async function refreshTribeGameData(gameState, tribeName) {
       round: gameState.round || 'work',
       workRound: gameState.workRound,
       foodRound: gameState.foodRound,
-      reproductionRound: gameState.reproductionRound, 
+      reproductionRound: gameState.reproductionRound,
       seasonCounter: gameState.seasonCounter,
       currentLocationName: gameState.currentLocationName,
-      year: Math.floor(gameState.seasonCounter / 2)
-    }
+      year: Math.floor(gameState.seasonCounter / 2),
+    },
   };
 
   // Send to all tribe members
@@ -984,7 +1023,8 @@ async function sendGameMessages(ws, gameState, data) {
 
   // Send private messages (resolve by playerName and by population key so we don't miss due to name/key mismatch)
   const playerName = data.playerName;
-  const playerPopulationKey = pop.getPopulationKey && pop.getPopulationKey(playerName, gameState);
+  const playerPopulationKey =
+    pop.getPopulationKey && pop.getPopulationKey(playerName, gameState);
   const playerMessage =
     gameState.messages[playerName] ||
     (playerPopulationKey && gameState.messages[playerPopulationKey]);
@@ -1004,8 +1044,10 @@ async function sendGameMessages(ws, gameState, data) {
   for (const [recipient, message] of Object.entries(gameState.messages)) {
     let recipientConnections = connectedClients.get(recipient);
     if (!recipientConnections || recipientConnections.size === 0) {
-      const populationKey = pop.getPopulationKey && pop.getPopulationKey(recipient, gameState);
-      if (populationKey) recipientConnections = connectedClients.get(populationKey);
+      const populationKey =
+        pop.getPopulationKey && pop.getPopulationKey(recipient, gameState);
+      if (populationKey)
+        recipientConnections = connectedClients.get(populationKey);
     }
     if (!recipientConnections || recipientConnections.size === 0) {
       const member = pop.memberByName(recipient, gameState);
@@ -1088,24 +1130,12 @@ function handleListCommands(ws, data, gameState) {
 
   // Check if the current player is chief
   let isChief = false;
-  logWithTimestamp(
-    `[CHIEF CHECK] Player: "${playerName}", HasGameState: ${!!gameState}, HasPopulation: ${!!(gameState && gameState.population)}`
-  );
 
   if (playerName && gameState && gameState.population) {
     const pop = require('./libs/population.js');
     const player = pop.memberByName(playerName, gameState);
-    logWithTimestamp(
-      `[CHIEF CHECK] Found player: ${!!player}, Chief status: ${player ? player.chief : 'N/A'}`
-    );
     isChief = player && player.chief;
 
-    if (player) {
-      logWithTimestamp(
-        `[CHIEF CHECK] Player "${playerName}" properties:`,
-        Object.keys(player)
-      );
-    }
   }
 
   // Check if the current player is a referee
@@ -1149,13 +1179,6 @@ function handleListCommands(ws, data, gameState) {
     };
   }
 
-  logWithTimestamp(
-    `[CHIEF CHECK] Filtered out ${chiefCommandsFiltered} chief commands, sending ${Object.keys(commandList).length} total commands`
-  );
-  logWithTimestamp(
-    `[REF CHECK] Filtered out force options from ${forceOptionsFiltered} commands`
-  );
-
   ws.send(
     JSON.stringify({
       type: 'commandList',
@@ -1172,22 +1195,22 @@ async function handleRegisterRequest(ws, data, gameState) {
   try {
     // Add client IP for session creation
     data.clientIP = ws.clientIP;
-    
+
     const result = await registerUser(data);
-    
+
     // If registration/login successful, associate WebSocket with session
     if (result.label === 'success' && result.sessionToken) {
       ws.sessionToken = result.sessionToken;
       ws.playerName = result.playerName;
       ws.currentPlayer = result.playerName;
-      
+
       // Track this client's player connections
       if (!connectedClients.has(result.playerName)) {
         connectedClients.set(result.playerName, new Set());
       }
       connectedClients.get(result.playerName).add(ws);
     }
-    
+
     ws.send(JSON.stringify(result));
 
     // Send any secret/private data after successful registration
@@ -1210,6 +1233,7 @@ async function handleRomanceRequest(ws, data, gameState) {
   try {
     if (await validateUser(data)) {
       const romanceUpdate = processRomance(data, gameState);
+      gameState.saveRequired = true;
       ws.send(JSON.stringify(romanceUpdate));
     } else {
       ws.send(
@@ -1240,8 +1264,8 @@ function sendSecrets(ws, data, gameState) {
 function processRomance(data, gameState) {
   const name = data.playerName || data.name;
   const inviteList = data.inviteList;
-  const responseDict = data.responseDict; // Client sends dictionary directly
-  
+  const consentDict = data.consentDict; // Client sends dictionary directly
+
   // Legacy support for incoming lists
   const declineList = data.declineList;
   const consentList = data.consentList;
@@ -1251,31 +1275,31 @@ function processRomance(data, gameState) {
     if (inviteList) {
       userData.inviteList = inviteList;
     }
-    
-    if (!userData.responseDict) userData.responseDict = {};
-    
-    if (responseDict) {
-        userData.responseDict = responseDict;
+
+    if (!userData.consentDict) userData.consentDict = {};
+
+    if (consentDict) {
+      userData.consentDict = consentDict;
     } else if (consentList || declineList) {
-        if (consentList) {
-            for (const n of consentList) userData.responseDict[n] = 'consent';
-        }
-        if (declineList) {
-            for (const n of declineList) userData.responseDict[n] = 'decline';
-        }
+      if (consentList) {
+        for (const n of consentList) userData.consentDict[n] = 'consent';
+      }
+      if (declineList) {
+        for (const n of declineList) userData.consentDict[n] = 'decline';
+      }
     }
-    
+
     // Cleanup old arrays just in case, relying purely on dict
     delete userData.consentList;
     delete userData.declineList;
 
     let outCon = [];
     let outDec = [];
-    if (userData.responseDict) {
-        for (const [n, r] of Object.entries(userData.responseDict)) {
-            if (r === 'consent') outCon.push(n);
-            if (r === 'decline') outDec.push(n);
-        }
+    if (userData.consentDict) {
+      for (const [n, r] of Object.entries(userData.consentDict)) {
+        if (r === 'consent') outCon.push(n);
+        if (r === 'decline') outDec.push(n);
+      }
     }
 
     return {
@@ -1285,7 +1309,7 @@ function processRomance(data, gameState) {
         inviteList: userData.inviteList || [],
         consentList: outCon,
         declineList: outDec,
-        responseDict: userData.responseDict || {}
+        consentDict: userData.consentDict || {},
       },
     };
   } else {
@@ -1323,7 +1347,9 @@ async function handleExportGame(ws, data) {
           clientId: data.clientId,
         })
       );
-      logWithTimestamp(`[SECURITY] Non-referee ${data.playerName} attempted to export game data`);
+      logWithTimestamp(
+        `[SECURITY] Non-referee ${data.playerName} attempted to export game data`
+      );
       return;
     }
 
@@ -1361,12 +1387,14 @@ async function handleExportGame(ws, data) {
         exportedBy: data.playerName,
         exportedAt: new Date().toISOString(),
         exportVersion: '1.0',
-        serverVersion: process.env.npm_package_version || 'dev'
+        serverVersion: process.env.npm_package_version || 'dev',
       },
-      gameData: gameState
+      gameData: gameState,
     };
 
-    logWithTimestamp(`[REFEREE] ${data.playerName} exported game data for tribe: ${tribeName}`);
+    logWithTimestamp(
+      `[REFEREE] ${data.playerName} exported game data for tribe: ${tribeName}`
+    );
 
     ws.send(
       JSON.stringify({
@@ -1417,7 +1445,9 @@ async function handleImportGame(ws, data, currentGameState) {
           clientId: data.clientId,
         })
       );
-      logWithTimestamp(`[SECURITY] Non-referee ${data.playerName} attempted to import game data`);
+      logWithTimestamp(
+        `[SECURITY] Non-referee ${data.playerName} attempted to import game data`
+      );
       return;
     }
 
@@ -1453,7 +1483,9 @@ async function handleImportGame(ws, data, currentGameState) {
     if (importData.gameData) {
       // New format with metadata
       gameDataToImport = importData.gameData;
-      logWithTimestamp(`[REFEREE] Importing with metadata - exported by: ${importData.metadata?.exportedBy}, exported at: ${importData.metadata?.exportedAt}`);
+      logWithTimestamp(
+        `[REFEREE] Importing with metadata - exported by: ${importData.metadata?.exportedBy}, exported at: ${importData.metadata?.exportedAt}`
+      );
     } else if (importData.name || importData.population) {
       // Legacy direct game state format
       gameDataToImport = importData;
@@ -1471,7 +1503,10 @@ async function handleImportGame(ws, data, currentGameState) {
     }
 
     // Validate essential game data properties
-    if (!gameDataToImport.population || typeof gameDataToImport.population !== 'object') {
+    if (
+      !gameDataToImport.population ||
+      typeof gameDataToImport.population !== 'object'
+    ) {
       ws.send(
         JSON.stringify({
           type: 'importGameResponse',
@@ -1489,9 +1524,9 @@ async function handleImportGame(ws, data, currentGameState) {
         tribeName: tribeName,
         backedUpBy: data.playerName,
         backedUpAt: new Date().toISOString(),
-        reason: 'Pre-import backup'
+        reason: 'Pre-import backup',
       },
-      gameData: currentGameState
+      gameData: currentGameState,
     };
 
     // Ensure archive directory exists
@@ -1514,7 +1549,9 @@ async function handleImportGame(ws, data, currentGameState) {
     // Save to disk
     savelib.saveTribe(gameDataToImport);
 
-    logWithTimestamp(`[REFEREE] ${data.playerName} successfully imported game data for tribe: ${tribeName}`);
+    logWithTimestamp(
+      `[REFEREE] ${data.playerName} successfully imported game data for tribe: ${tribeName}`
+    );
     logWithTimestamp(`[REFEREE] Backup saved as: ${backupFilename}`);
 
     ws.send(
@@ -1531,7 +1568,6 @@ async function handleImportGame(ws, data, currentGameState) {
     // Refresh game data for all connected clients of this tribe
     await refreshTribeGameData(gameDataToImport, tribeName);
     await refreshTribeCommandLists(gameDataToImport, tribeName);
-
   } catch (error) {
     console.error('Error importing game data:', error);
     ws.send(
@@ -1567,8 +1603,12 @@ async function validateUser(userData) {
 
   // Check rate limiting
   const identifier = userData.playerName;
-  const attemptData = loginAttempts.get(identifier) || { count: 0, lastAttempt: 0, lockoutUntil: 0 };
-  
+  const attemptData = loginAttempts.get(identifier) || {
+    count: 0,
+    lastAttempt: 0,
+    lockoutUntil: 0,
+  };
+
   if (Date.now() < attemptData.lockoutUntil) {
     throw new Error(`Account locked. Try again later.`);
   }
@@ -1625,7 +1665,7 @@ async function registerUser(userData) {
   const caseInsensitiveMatch = Object.keys(usersDict).find(
     (existingName) => existingName.toLowerCase() === normalizedName
   );
-  
+
   if (caseInsensitiveMatch && caseInsensitiveMatch !== name) {
     logWithTimestamp(
       `[SECURITY] Registration failed: name already exists with different case '${caseInsensitiveMatch}'`
@@ -1636,50 +1676,52 @@ async function registerUser(userData) {
   if (usersDict[name]) {
     // User exists - this is a login attempt
     const user = usersDict[name];
-    
+
     // If existing user has no password, they can login without password (legacy)
     if (!user.password || user.password === '') {
       // Update last connected time for existing user
       user.lastConnected = new Date().toISOString();
       actuallyWriteToDisk('./tribe-data/users.json', usersDict);
-      
+
       const token = createSession(name, clientIP);
       return {
         type: 'registration',
         label: 'success',
         content: 'success',
         sessionToken: token,
-        playerName: name
+        playerName: name,
       };
     }
-    
+
     // If existing user has password, require authentication
     if (!password) {
       throw new Error('Password required for existing player');
     }
-    
+
     if (!(await verifyPassword(password, user.password))) {
       throw new Error('Invalid password for existing player');
     }
-    
+
     // Update last connected time for successful authentication
     user.lastConnected = new Date().toISOString();
     actuallyWriteToDisk('./tribe-data/users.json', usersDict);
-    
+
     const token = createSession(name, clientIP);
     return {
       type: 'registration',
       label: 'success',
       content: 'success',
       sessionToken: token,
-      playerName: name
+      playerName: name,
     };
   } else {
     // New user registration
     if (!password || password.trim() === '') {
       // Allow new users without password for now (legacy compatibility)
       // But log this for security awareness
-      logWithTimestamp(`[SECURITY] New user '${name}' registered without password`);
+      logWithTimestamp(
+        `[SECURITY] New user '${name}' registered without password`
+      );
       password = '';
     } else {
       // Validate password strength for new users who choose to set one
@@ -1692,7 +1734,7 @@ async function registerUser(userData) {
       email: email || '',
       password: password,
       registeredAt: new Date().toISOString(),
-      lastConnected: new Date().toISOString()
+      lastConnected: new Date().toISOString(),
     };
 
     // Ensure tribe-data directory exists before saving
@@ -1702,14 +1744,14 @@ async function registerUser(userData) {
 
     actuallyWriteToDisk('./tribe-data/users.json', usersDict);
     logWithTimestamp(`[SECURITY] New user registered: ${name}`);
-    
+
     const token = createSession(name, clientIP);
     return {
       type: 'registration',
       label: 'success',
       content: 'success',
       sessionToken: token,
-      playerName: name
+      playerName: name,
     };
   }
 }
@@ -1727,22 +1769,28 @@ function validatePassword(password) {
   if (!password || typeof password !== 'string') {
     throw new Error('Password is required');
   }
-    
+
   return true;
 }
 
 function recordFailedAttempt(identifier) {
-  const attemptData = loginAttempts.get(identifier) || { count: 0, lastAttempt: 0, lockoutUntil: 0 };
+  const attemptData = loginAttempts.get(identifier) || {
+    count: 0,
+    lastAttempt: 0,
+    lockoutUntil: 0,
+  };
   attemptData.count++;
   attemptData.lastAttempt = Date.now();
-  
+
   // Lockout after 5 failed attempts for 15 minutes
   if (attemptData.count >= 5) {
-    attemptData.lockoutUntil = Date.now() + (15 * 60 * 1000); // 15 minutes
+    attemptData.lockoutUntil = Date.now() + 15 * 60 * 1000; // 15 minutes
   }
-  
+
   loginAttempts.set(identifier, attemptData);
-  logWithTimestamp(`Failed login attempt for ${identifier}. Count: ${attemptData.count}`);
+  logWithTimestamp(
+    `Failed login attempt for ${identifier}. Count: ${attemptData.count}`
+  );
 }
 
 function clearFailedAttempts(identifier) {
@@ -1758,7 +1806,10 @@ function removeClunkyKeys(population) {
     'inviteList',
     'consentList',
     'declineList',
+    'consentDict',
+    'responseDict',
     'father',
+    'hiddenPregnant',
   ];
 
   for (const [name, personData] of Object.entries(population || {})) {
@@ -1775,10 +1826,7 @@ function removeClunkyKeys(population) {
 
 function removeFatherReferences(children) {
   const cleanedChildren = {};
-  const excludeKeys = [
-    'father',
-    'fatherName',
-  ];
+  const excludeKeys = ['father', 'fatherName'];
 
   for (const [name, childData] of Object.entries(children || {})) {
     const cleaned = {};
@@ -1824,34 +1872,52 @@ function actuallyWriteToDisk(fileName, jsonData) {
 function handleManageTribe(ws, data) {
   const isRef = data.playerName && referees.includes(data.playerName);
   if (!isRef) {
-    ws.send(JSON.stringify({ type: 'error', message: 'You are not a referee.' }));
+    ws.send(
+      JSON.stringify({ type: 'error', message: 'You are not a referee.' })
+    );
     return;
   }
-  
+
   if (data.action === 'create') {
     tribesRegistry.createTribe(data.tribeName);
     broadcastTribeUpdate();
-    ws.send(JSON.stringify({ type: 'commandResponse', success: true, command: 'Manage Tribe', message: `Created tribe ${data.tribeName}` }));
+    ws.send(
+      JSON.stringify({
+        type: 'commandResponse',
+        success: true,
+        command: 'Manage Tribe',
+        message: `Created tribe ${data.tribeName}`,
+      })
+    );
   } else if (data.action === 'setVisibility') {
     tribesRegistry.setTribeHidden(data.tribeName, data.hidden);
     broadcastTribeUpdate();
-    ws.send(JSON.stringify({ type: 'commandResponse', success: true, command: 'Manage Tribe', message: `${data.hidden ? 'Hidden' : 'Revealed'} tribe ${data.tribeName}` }));
+    ws.send(
+      JSON.stringify({
+        type: 'commandResponse',
+        success: true,
+        command: 'Manage Tribe',
+        message: `${data.hidden ? 'Hidden' : 'Revealed'} tribe ${data.tribeName}`,
+      })
+    );
   }
 }
 
 async function handleManageUsers(ws, data) {
   const isRef = data.playerName && referees.includes(data.playerName);
   if (!isRef) {
-    ws.send(JSON.stringify({ type: 'error', message: 'You are not a referee.' }));
+    ws.send(
+      JSON.stringify({ type: 'error', message: 'You are not a referee.' })
+    );
     return;
   }
 
   if (data.action === 'list') {
-    const userList = Object.keys(usersDict).map(name => {
+    const userList = Object.keys(usersDict).map((name) => {
       const user = usersDict[name];
       return {
         name: name,
-        email: (user && user.email) ? user.email : 'N/A'
+        email: user && user.email ? user.email : 'N/A',
       };
     });
     ws.send(JSON.stringify({ type: 'manageUsersList', users: userList }));
@@ -1859,7 +1925,14 @@ async function handleManageUsers(ws, data) {
     if (usersDict[data.targetUser]) {
       delete usersDict[data.targetUser];
       actuallyWriteToDisk('./tribe-data/users.json', usersDict);
-      ws.send(JSON.stringify({ type: 'commandResponse', success: true, command: 'Manage Users', message: `Deleted user ${data.targetUser}` }));
+      ws.send(
+        JSON.stringify({
+          type: 'commandResponse',
+          success: true,
+          command: 'Manage Users',
+          message: `Deleted user ${data.targetUser}`,
+        })
+      );
       handleManageUsers(ws, { action: 'list', playerName: data.playerName });
     }
   } else if (data.action === 'resetPassword') {
@@ -1871,7 +1944,14 @@ async function handleManageUsers(ws, data) {
       }
       usersDict[data.targetUser].password = hash;
       actuallyWriteToDisk('./tribe-data/users.json', usersDict);
-      ws.send(JSON.stringify({ type: 'commandResponse', success: true, command: 'Manage Users', message: `Reset password for user ${data.targetUser}` }));
+      ws.send(
+        JSON.stringify({
+          type: 'commandResponse',
+          success: true,
+          command: 'Manage Users',
+          message: `Reset password for user ${data.targetUser}`,
+        })
+      );
     }
   }
 }
@@ -1880,9 +1960,9 @@ function broadcastTribeUpdate() {
   const tribesList = tribesRegistry.getTribes();
   const updateMsg = JSON.stringify({
     type: 'commandList',
-    tribes: tribesList
+    tribes: tribesList,
   });
-  
+
   for (const clientWs of connectedClients) {
     if (clientWs.readyState === WebSocket.OPEN) {
       clientWs.send(updateMsg);
@@ -1892,7 +1972,8 @@ function broadcastTribeUpdate() {
 
 // Initialize only when run directly (not when imported as a module or testing)
 const isMainModule = require.main === module;
-const isTesting = process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID !== undefined;
+const isTesting =
+  process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID !== undefined;
 if (isMainModule && !isTesting) {
   loadCommands();
   startServer();
@@ -1909,25 +1990,25 @@ module.exports = {
   destroySession,
   destroyAllPlayerSessions,
   cleanupExpiredSessions,
-  
+
   // Authentication helpers
   validatePassword,
   recordFailedAttempt,
   clearFailedAttempts,
-  
+
   // Utility functions
   removeClunkyKeys,
   removeFatherReferences,
   arrayMatch,
   loadJson,
-  
-  // Request handlers 
+
+  // Request handlers
   handleInfoRequest,
   handleHelpRequest,
   handleLogout,
   handleSessionAuthentication,
   handleListCommands,
-  
+
   // Core functions
   createMockInteraction,
   loadCommands,
@@ -1936,17 +2017,33 @@ module.exports = {
   getClientIP,
   sendSecrets,
   processRomance,
-  
+
   // Expose state for testing
-  get activeSessions() { return activeSessions; },
-  get playerSessions() { return playerSessions; },
-  get loginAttempts() { return loginAttempts; },
-  get connectedClients() { return connectedClients; },
-  get tribeConnections() { return tribeConnections; },
-  get allGames() { return allGames; },
-  get usersDict() { return usersDict; },
-  get commands() { return commands; },
-  
+  get activeSessions() {
+    return activeSessions;
+  },
+  get playerSessions() {
+    return playerSessions;
+  },
+  get loginAttempts() {
+    return loginAttempts;
+  },
+  get connectedClients() {
+    return connectedClients;
+  },
+  get tribeConnections() {
+    return tribeConnections;
+  },
+  get allGames() {
+    return allGames;
+  },
+  get usersDict() {
+    return usersDict;
+  },
+  get commands() {
+    return commands;
+  },
+
   // Constants
   SESSION_TIMEOUT,
 };

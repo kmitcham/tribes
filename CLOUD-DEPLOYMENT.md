@@ -5,6 +5,7 @@ This guide covers deploying the Tribes Game to cloud container services.
 ## Common Cloud Services
 
 ### Azure Container Instances (ACI)
+
 ```bash
 # Build and push to Azure Container Registry
 az acr create --resource-group myResourceGroup --name myregistry --sku Basic
@@ -24,12 +25,14 @@ az container create \
 ```
 
 ### AWS Fargate (ECS)
+
 ```bash
 # Push to ECR and deploy with CloudFormation or Terraform
 # Ensure ALB/NLB supports WebSocket connections
 ```
 
 ### Google Cloud Run
+
 ```bash
 # Deploy to Cloud Run
 gcloud run deploy tribes-game \
@@ -42,6 +45,7 @@ gcloud run deploy tribes-game \
 ## WebSocket Compatibility
 
 ### Load Balancers
+
 Most cloud load balancers need WebSocket support enabled:
 
 - **Azure Application Gateway**: Enable WebSocket protocol
@@ -51,11 +55,13 @@ Most cloud load balancers need WebSocket support enabled:
 ### Common Issues
 
 1. **Health endpoint works but game doesn't load**
+
    - WebSocket connections are being blocked
    - Check load balancer WebSocket configuration
    - Verify firewall rules allow WebSocket traffic
 
 2. **Connection timeouts**
+
    - Cloud services often have shorter WebSocket timeouts
    - Implement keep-alive pings (already included in client)
 
@@ -75,18 +81,20 @@ NODE_ENV=production         # Production optimizations
 ## Debugging
 
 1. **Check container logs**:
+
    ```bash
    # Azure
    az container logs --name tribes-game --resource-group myResourceGroup
-   
+
    # AWS ECS
    aws logs get-log-events --log-group-name /ecs/tribes-game
-   
+
    # Docker locally
    docker logs tribes-server
    ```
 
 2. **Test WebSocket connection**:
+
    ```javascript
    // In browser console on your cloud URL
    const ws = new WebSocket('wss://your-cloud-url.com');
@@ -108,11 +116,13 @@ NODE_ENV=production         # Production optimizations
 
 ## Performance Tips
 
-1. **Resource Allocation**: 
+1. **Resource Allocation**:
+
    - Minimum: 1 CPU, 1GB RAM
    - Recommended: 2 CPU, 2GB RAM for multiple players
 
 2. **Persistent Storage**:
+
    - Mount volumes for game data persistence
    - Use cloud storage services for backups
 
@@ -131,6 +141,7 @@ If WebSocket connections fail after deployment:
 5. **Verify firewall rules** allow WebSocket traffic on port 8000
 
 The recent updates automatically handle:
+
 - ✅ Protocol detection (ws:// vs wss://)
 - ✅ Hostname detection (cloud vs local)
 - ✅ CORS headers for cross-origin requests

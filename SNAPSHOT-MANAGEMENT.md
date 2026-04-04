@@ -15,6 +15,7 @@ The tribes game now has an improved snapshot management system that prevents acc
 ### 2. Final Game State Archiving
 
 When a game ends:
+
 - A final gamestate is saved with format: `{tribe-name}-final-YYYY-MM-DD.json`
 - Example: `bear-final-2026-03-02.json`
 - This preserves the completed game for historical reference
@@ -22,6 +23,7 @@ When a game ends:
 ### 3. Game File Cleanup
 
 After a game ends:
+
 - The main game file (`{tribeName}.json`) is **deleted**
 - This ensures the tribe is ready to start a fresh game
 - No leftover state interferes with new games
@@ -29,11 +31,13 @@ After a game ends:
 ## How It Works
 
 ### Normal Game Operation
+
 1. Regular snapshots are created during gameplay (via `gameState.archiveRequired = true`)
 2. System automatically maintains only the 3 most recent snapshots
 3. Oldest snapshots are deleted when new ones are added
 
 ### Game Ending Process
+
 1. Game ends (via endgame command or condition)
 2. `gameState.ended = true` is set
 3. Final gamestate is saved to `{tribe-name}-final-YYYY-MM-DD.json`
@@ -45,20 +49,24 @@ After a game ends:
 ### New Functions in [libs/save.js](libs/save.js)
 
 #### `saveFinalGameState(gameState)`
+
 - Creates final archive with date-based filename
 - Marks gamestate as `finalSave: true`
 - Includes `finalSaveDate` timestamp
 
 #### `clearMainGameFile(tribeName)`
+
 - Removes the main game file for the tribe
 - Logs confirmation of cleanup
 
 #### `manageSnapshots(tribeName)`
+
 - Scans tribe directory for snapshot files
 - Keeps only 3 most recent based on file modification time
 - Excludes main game file and final save files from deletion
 
 #### Updated `archiveTribe(gameState)`
+
 - Detects if game has ended (`gameState.ended === true`)
 - Routes to final save process for ended games
 - Continues normal snapshot management for active games
@@ -93,8 +101,9 @@ tribe-data/
 ## Testing
 
 The system has been thoroughly tested with:
+
 - ✓ Snapshot limit enforcement (keeps 3 most recent)
 - ✓ Final game state creation (proper filename format)
-- ✓ Main game file cleanup (complete removal)  
+- ✓ Main game file cleanup (complete removal)
 - ✓ Complete end-game archive process
 - ✓ Existing functionality preservation (all tests pass)

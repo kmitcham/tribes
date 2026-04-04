@@ -488,12 +488,10 @@ test('matingList tests', () => {
   //function handleReproductionList(actorName, args, listName, gameState, bot){
   response = reproLib.showMatingLists('p1', gameState, {});
   expect(response.indexOf('inviteList')).toBeGreaterThan(0);
-  expect(response.indexOf('consentList')).toBeGreaterThan(0);
-  expect(response.indexOf('declineList')).toBeGreaterThan(0);
+  expect(response.indexOf('romantic responses')).toBeGreaterThan(0);
   response = reproLib.showMatingLists('p2', gameState, {});
   expect(response.indexOf('inviteList')).toBeGreaterThan(0);
-  expect(response.indexOf('consentList')).toBeGreaterThan(0);
-  expect(response.indexOf('declineList')).toBeGreaterThan(0);
+  expect(response.indexOf('romantic responses')).toBeGreaterThan(0);
   canResponse = reproLib.canStillInvite(gameState);
   expect(canResponse).toBe('p1');
 });
@@ -537,80 +535,6 @@ test('make a invitelist, with commas, pass and save', () => {
   );
 });
 
-test('make a consent list with !all', () => {
-  var gameState = {
-    population: {
-      p1: {
-        name: 'p1',
-        gender: 'female',
-      },
-      p2: {
-        name: 'p2',
-        gender: 'male',
-      },
-      p3: {
-        name: 'p3',
-        gender: 'male',
-      },
-      p4: {
-        name: 'p4',
-        gender: 'female',
-      },
-    },
-    round: 'reproduction',
-  };
-  expectedList = ['p2', 'p3', '!all'];
-  inputList = ['p2,', 'p3,', '!all,'];
-  response = reproLib.handleReproductionList(
-    'p1',
-    inputList,
-    'consentList',
-    gameState,
-    {}
-  );
-  exp = 'Setting your consentList list to:p2,p3,!all\n';
-  expect(response).toBe(exp);
-  expect(gameState['population']['p1']['consentList']).toStrictEqual(
-    expectedList
-  );
-});
-
-test('make a consent list with !all and a declineList', () => {
-  var gameState = {
-    population: {
-      p1: {
-        name: 'p1',
-        gender: 'female',
-        declineList: ['p3'],
-      },
-      p2: {
-        name: 'p2',
-        gender: 'male',
-      },
-      p3: {
-        name: 'p3',
-        gender: 'male',
-      },
-      p4: {
-        name: 'p4',
-        gender: 'female',
-      },
-    },
-    round: 'reproduction',
-  };
-  expectedList = ['p2', 'p3', '!all'];
-  rawInputList = 'p2, p3, !all';
-  reproLib.consentPrep(gameState, 'p1', rawInputList);
-  response = gameState.messages['p1'];
-  exp = 'Updated consentlist to p2,p3,!all';
-  expect(response).toContain(exp);
-  expect(response).toContain('will not override');
-  expect(response).toContain('Updated');
-  expect(gameState['population']['p1']['consentList']).toStrictEqual(
-    expectedList
-  );
-});
-
 test('make a consent list with !none', () => {
   var gameState = {
     population: {
@@ -672,29 +596,6 @@ test('make a consent list with !none', () => {
   expect(!hasList);
 });
 
-test('consent and decline collisions on all', () => {
-  var gameState = {
-    population: {
-      p1: {
-        name: 'p1',
-        gender: 'female',
-        consentList: ['!all'],
-        declineList: ['!all'],
-      },
-      p2: {
-        name: 'p2',
-        gender: 'male',
-        consentList: ['!all'],
-      },
-    },
-    round: 'reproduction',
-  };
-  inputList = '!all';
-  //function decline(actorName, messageArray,  gameState){
-  response = reproLib.decline('p1', inputList, gameState);
-  member = gameState['population']['p1'];
-  expect(['p2']).toStrictEqual(member.declineList);
-});
 
 test('consent and decline collisions by name', () => {
   var gameState = {
@@ -1602,20 +1503,20 @@ test('migrateToResponseDict works correctly backwards compat', () => {
     declineList: ['p4'],
   };
   reproLib.migrateToResponseDict(person);
-  expect(person.responseDict).toBeDefined();
-  expect(person.responseDict['p2']).toBe('consent');
-  expect(person.responseDict['p3']).toBe('consent');
-  expect(person.responseDict['p4']).toBe('decline');
+  expect(person.consentDict).toBeDefined();
+  expect(person.consentDict['p2']).toBe('consent');
+  expect(person.consentDict['p3']).toBe('consent');
+  expect(person.consentDict['p4']).toBe('decline');
 });
 
-test('handleRomanceResponse correctly sets consent and decline in responseDict', () => {
+test('handleRomanceResponse correctly sets consent and decline in consentDict', () => {
   var gameState = {
     population: {
-      p1: { name: 'p1', reproductionRound: true, responseDict: {} },
+      p1: { name: 'p1', reproductionRound: true, consentDict: {} },
     },
   };
   reproLib.handleRomanceResponse(gameState, 'p1', 'p2', 'consent');
-  expect(gameState.population.p1.responseDict['p2']).toBe('consent');
+  expect(gameState.population.p1.consentDict['p2']).toBe('consent');
 });
 
 test('globalMatingCheck resolves maybe to wait if target response is undefined', () => {
@@ -1627,7 +1528,7 @@ test('globalMatingCheck resolves maybe to wait if target response is undefined',
         activity: 'reproduction',
         inviteList: ['p2'],
         inviteIndex: 0,
-        responseDict: {},
+        consentDict: {},
       },
       p2: {
         name: 'p2',
@@ -1635,7 +1536,7 @@ test('globalMatingCheck resolves maybe to wait if target response is undefined',
         activity: 'reproduction',
         inviteList: [],
         inviteIndex: 0,
-        responseDict: {},
+        consentDict: {},
       },
     },
     messages: { p1: '', p2: '' },
@@ -1656,7 +1557,7 @@ test('globalMatingCheck resolves consent directly dictionary', () => {
         activity: 'reproduction',
         inviteList: ['p2'],
         inviteIndex: 0,
-        responseDict: {},
+        consentDict: {},
       },
       p2: {
         name: 'p2',
@@ -1664,7 +1565,7 @@ test('globalMatingCheck resolves consent directly dictionary', () => {
         activity: 'reproduction',
         inviteList: [],
         inviteIndex: 0,
-        responseDict: { p1: 'consent' },
+        consentDict: { p1: 'consent' },
         cannotInvite: false,
       },
     },
@@ -1686,7 +1587,7 @@ test('globalMatingCheck resolves decline directly dictionary', () => {
         activity: 'reproduction',
         inviteList: ['p2'],
         inviteIndex: 0,
-        responseDict: {},
+        consentDict: {},
       },
       p2: {
         name: 'p2',
@@ -1694,7 +1595,7 @@ test('globalMatingCheck resolves decline directly dictionary', () => {
         activity: 'reproduction',
         inviteList: [],
         inviteIndex: 0,
-        responseDict: { p1: 'decline' },
+        consentDict: { p1: 'decline' },
       },
     },
     messages: { p1: '', p2: '' },

@@ -67,6 +67,9 @@ module.exports.eligibleMates = eligibleMates;
 
 function matingObjections(inviter, target) {
   response = '';
+  if (inviter.name === target.name) {
+    return 'You cannot invite or consent to yourself.\n';
+  }
   if (target.isPregnant) {
     // maybe check the age of the child; -2 is bad, but -1 is on the market
     //response += target.name+" is pregnant.\n"
@@ -94,25 +97,12 @@ function showMatingLists(actorName, gameState) {
     actor.inviteList = [];
     response += 'Your inviteList is empty\n';
   }
-  if (
-    'consentList' in actor &&
-    actor.consentList &&
-    actor.consentList.length > 0
-  ) {
-    response += 'Your consentList is:' + actor.consentList + '\n';
-  } else {
-    actor.consentList = [];
-    response += 'Your consentList is empty\n';
-  }
-  if (
-    'declineList' in actor &&
-    actor.declineList &&
-    actor.declineList.length > 0
-  ) {
-    response += 'Your declineList is:' + actor.declineList + '\n';
-  } else {
-    actor.declineList = [];
-    response += 'Your declineList is empty\n';
+  //"consentDict": {
+  //      "Kevin": "consent",
+  //      "nopwd": "consent"
+  //    },
+  if (!('consentDict' in actor) || !actor.consentDict) {
+    actor.consentDict = {};
   }
   return response;
 }
@@ -178,7 +168,7 @@ function handleReproductionList(actorName, arrayOfNames, listName, gameState) {
         }
         list.push('!pass');
       } else {
-        list.push(targetName);
+        errors.push('!all is only valid in the inviteList.');
       }
     } else {
       var targetMember = pop.memberByName(targetName, gameState);
@@ -318,6 +308,29 @@ function consentPrep(gameState, sourceName, rawList) {
     messageArray = rawList.split(',');
     console.log('splitting consent on commas');
   }
+
+  if (rawList.includes(':')) {
+    for (var i = 0; i < messageArray.length; i++) {
+      let entry = messageArray[i].trim();
+      if (entry.includes(':')) {
+        let parts = entry.split(':');
+        handleRomanceResponse(gameState, sourceName, parts[0].trim(), parts[1].trim().toLowerCase());
+      } else if (entry) {
+        handleRomanceResponse(gameState, sourceName, entry, 'consent');
+      }
+    }
+    gameState.saveRequired = true;
+    let outCon = [];
+    if (member.consentDict) {
+       for (const [n, r] of Object.entries(member.consentDict)) {
+         if (r === 'consent') outCon.push(n);
+       }
+    }
+    member.consentList = outCon;
+    text.addMessage(gameState, sourceName, 'Updated your consent responses');
+    return outCon;
+  }
+
   for (var i = 0; i < messageArray.length; i++) {
     messageArray[i] = messageArray[i].trim();
   }
@@ -328,17 +341,6 @@ function consentPrep(gameState, sourceName, rawList) {
       'No values parsed from that consentList: ' + rawList
     );
     return 'No values parsed from that consentList: ' + rawList;
-  }
-  if (
-    messageArray.includes('!all') &&
-    'declineList' in member &&
-    member.declineList
-  ) {
-    text.addMessage(
-      gameState,
-      member.name,
-      'Your declinelist is not empty; !all will not override that.'
-    );
   }
   console.log('updating consentlist: ' + messageArray);
   consent(sourceName, messageArray, gameState);
@@ -426,34 +428,33 @@ module.exports.declinePrep = declinePrep;
 
 function decline(actorName, messageArray, gameState) {
   person = pop.memberByName(actorName, gameState);
-  if (messageArray.includes('!none')) {
+  
+  // if format uses colon dictionary e.g. "Alice: consent"
+  if (messageArray.some(s => typeof s === 'string' && s.includes(':'))) {
+    for (var i = 0; i < messageArray.length; i++) {
+        let entry = messageArray[i].trim();
+        if (entry.includes(':')) {
+           let parts = entry.split(':');
+           handleRomanceResponse(gameState, actorName, parts[0].trim(), parts[1].trim().toLowerCase());
+        } else if (entry) {
+           handleRomanceResponse(gameState, actorName, entry, 'decline');
+        }
+    }
+    let outDec = [];
+    if (person.consentDict) {
+       for (const [n, r] of Object.entries(person.consentDict)) {
+           if (r === 'decline') outDec.push(n);
+       }
+    }
+    person.declineList = outDec;
+    text.addMessage(gameState, actorName, 'Updated your decline responses.');
+  } else if (messageArray.includes('!none')) {
     person.declineList = [];
     text.addMessage(gameState, actorName, 'Emptying your declineList');
-  } else if (messageArray.includes('!all')) {
-    var matchGender = 'male';
-    if (person.gender == 'male') {
-      matchGender = 'female';
-    }
-    declineArray = pop.getAllNamesByGender(gameState.population, matchGender);
-    person.declineList = declineArray;
-    console.log('declineList set to ' + person.declineList.join(', '));
-    text.addMessage(
-      gameState,
-      actorName,
-      'Setting your declineList to ' + person.declineList
-    );
   } else {
     handleReproductionList(actorName, messageArray, 'declineList', gameState);
     intersectList = intersect(person.consentList, person.declineList);
-    if (
-      (intersectList && intersectList.length > 0) ||
-      (person.consentList &&
-        person.declineList &&
-        person.declineList.includes('!all')) ||
-      (person.declineList &&
-        person.consentList &&
-        person.consentList.includes('!all'))
-    ) {
+    if (intersectList && intersectList.length > 0) {
       text.addMessage(
         gameState,
         actorName,
@@ -505,6 +506,8 @@ function globalMatingCheck(gameState) {
   var allDone = true;
   var actionableInvites = true;
   var population = gameState.population;
+  var doneMating = [];
+  var whoNeedsToGiveAnAnswer = [];
   while (actionableInvites) {
     infinite_loop_count += 1;
     if (infinite_loop_count > 10) {
@@ -523,14 +526,14 @@ function globalMatingCheck(gameState) {
     doneMating = [];
     whoNeedsToGiveAnAnswer = [];
     console.log('a sexlist ' + randomOrderForProcessingInvites);
-    counter = 0;
-    for (invitingMemberKey of randomOrderForProcessingInvites) {
+    let counter = 0;
+    for (const invitingMemberKey of randomOrderForProcessingInvites) {
       const invitingMember = pop.memberByName(invitingMemberKey, gameState);
       const inviterDisplayName = invitingMember.name;
       console.log(
         'working ' + invitingMemberKey + ' named ' + invitingMember.name
       );
-      index = randomOrderForProcessingInvites.indexOf(invitingMemberKey);
+      let index = randomOrderForProcessingInvites.indexOf(invitingMemberKey);
       if (hasReasontoNotInvite(gameState, invitingMember)) {
         continue;
       } else if (
@@ -551,7 +554,7 @@ function globalMatingCheck(gameState) {
               invitingMember.inviteList.join()
           );
         }
-        targetName = invitingMember.inviteList[index];
+        let targetName = invitingMember.inviteList[index];
         console.log(' inviting ' + targetName + ' index ' + index);
         if (!targetName) {
           console.log(
@@ -597,17 +600,17 @@ function globalMatingCheck(gameState) {
         const targetDisplayName = targetMember.name;
         const targetPopulationKey =
           pop.getPopulationKey(targetMember, gameState) || targetName;
-        migrateToResponseDict(invitingMember);
-        migrateToResponseDict(targetMember);
+        migrateToConsentDict(invitingMember);
+        migrateToConsentDict(targetMember);
 
         let targetResponse;
-        if (targetMember.responseDict) {
-          if (targetMember.responseDict[invitingMemberKey]) {
-            targetResponse = targetMember.responseDict[invitingMemberKey];
-          } else if (targetMember.responseDict[invitingMember.name]) {
-            targetResponse = targetMember.responseDict[invitingMember.name];
-          } else if (targetMember.responseDict['!all']) {
-            targetResponse = targetMember.responseDict['!all'];
+        if (targetMember.consentDict) {
+          if (targetMember.consentDict[invitingMemberKey]) {
+            targetResponse = targetMember.consentDict[invitingMemberKey];
+          } else if (targetMember.consentDict[invitingMember.name]) {
+            targetResponse = targetMember.consentDict[invitingMember.name];
+          } else if (targetMember.consentDict['!all']) {
+            targetResponse = targetMember.consentDict['!all'];
           }
         }
         if (
@@ -1251,20 +1254,20 @@ function startReproduction(gameState) {
 
 function migrateToResponseDict(person) {
   if (!person) return;
-  if (!person.responseDict) person.responseDict = {};
+  if (!person.consentDict) person.consentDict = {};
 
   if (person.consentList && Array.isArray(person.consentList)) {
     for (let target of person.consentList) {
       if (target !== '!none' && target !== '!pass' && target !== '!all') {
-        person.responseDict[target] = 'consent';
+        person.consentDict[target] = 'consent';
       } else if (target === '!all') {
-        person.responseDict['!all'] = 'consent';
+        person.consentDict['!all'] = 'consent';
       }
     }
   }
   if (person.declineList && Array.isArray(person.declineList)) {
     for (let target of person.declineList) {
-      person.responseDict[target] = 'decline';
+      person.consentDict[target] = 'decline';
     }
   }
 }
@@ -1286,7 +1289,10 @@ function handleRomanceResponse(
     return 'No target provided.';
 
   let targetName = targetNameRaw.trim();
-  actingMember.responseDict[targetName] = responseType;
+  if (actorName === targetName) {
+      return 'You cannot choose yourself.';
+  }
+  actingMember.consentDict[targetName] = responseType;
   return 'Set ' + targetName + ' to ' + responseType;
 }
 

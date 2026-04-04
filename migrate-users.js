@@ -45,25 +45,25 @@ function migrateUsers() {
   let migrationCount = 0;
   let cleanupCount = 0;
   const currentTime = new Date().toISOString();
-  
+
   console.log(`Processing ${Object.keys(users).length} users...`);
 
   for (const [username, userData] of Object.entries(users)) {
     let needsUpdate = false;
-    
+
     // Check if this is a properly structured user object
     if (!userData.name) {
       console.log(`⚠️  User '${username}' has invalid structure - cleaning up`);
-      
+
       // Try to reconstruct a proper user object from available data
       const newUserData = {
         name: username,
         email: userData.email || `${username}@tribes.local`,
         password: userData.password || '',
         registeredAt: currentTime,
-        lastConnected: currentTime
+        lastConnected: currentTime,
       };
-      
+
       users[username] = newUserData;
       cleanupCount++;
       continue;
@@ -102,7 +102,7 @@ function migrateUsers() {
 
   // Write updated users
   writeJson(usersFile, users);
-  
+
   console.log(`✅ Migration completed!`);
   console.log(`   - ${migrationCount} users migrated with new fields`);
   console.log(`   - ${cleanupCount} users cleaned up and restructured`);

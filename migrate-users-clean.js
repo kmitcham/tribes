@@ -45,19 +45,19 @@ function cleanAndMigrateUsers() {
   const newUsers = {};
   let migrationCount = 0;
   const currentTime = new Date().toISOString();
-  
+
   console.log(`Processing ${Object.keys(oldUsers).length} users...`);
 
   for (const [username, oldUserData] of Object.entries(oldUsers)) {
     console.log(`🔄 Processing user: ${username}`);
-    
+
     // Create clean user structure based on current registerUser format
     const cleanUser = {
       name: oldUserData.name || username,
       email: oldUserData.email || `${username}@tribes.local`,
       password: oldUserData.password || '',
       registeredAt: oldUserData.registeredAt || currentTime,
-      lastConnected: oldUserData.lastConnected || currentTime
+      lastConnected: oldUserData.lastConnected || currentTime,
     };
 
     // Ensure email doesn't have invalid values
@@ -69,9 +69,11 @@ function cleanAndMigrateUsers() {
     // Log what we're preserving/changing
     const oldFieldCount = Object.keys(oldUserData).length;
     const newFieldCount = Object.keys(cleanUser).length;
-    
+
     if (oldFieldCount !== newFieldCount) {
-      console.log(`   🧹 Cleaned structure: ${oldFieldCount} → ${newFieldCount} fields`);
+      console.log(
+        `   🧹 Cleaned structure: ${oldFieldCount} → ${newFieldCount} fields`
+      );
     }
 
     newUsers[username] = cleanUser;
@@ -85,11 +87,11 @@ function cleanAndMigrateUsers() {
 
   // Write cleaned users
   writeJson(usersFile, newUsers);
-  
+
   console.log(`✅ Cleanup & migration completed!`);
   console.log(`   - ${migrationCount} users processed and cleaned`);
   console.log(`   - Total users: ${Object.keys(newUsers).length}`);
-  
+
   // Show sample of new structure
   console.log('\n📋 Sample user structure:');
   const sampleUser = Object.values(newUsers)[0];

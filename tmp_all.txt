@@ -1,0 +1,205 @@
+Note: The tool simplified the command to ` grep -n -A 5 -B 5 "all" /Users/kevinmitcham/Documents/workspace/TribesAgent/libs/reproduction.js`, and this is the output of running that command instead:
+1-const genders = ['male', 'female'];
+2:const allNames = require('./names.json');
+3-const text = require('./textprocess');
+4-const dice = require('./dice');
+5-const pop = require('./population');
+6-const feed = require('./feed');
+7-const end = require('./endgame');
+--
+139-  );
+140-  var actingMember = pop.memberByName(actorName, gameState);
+141-  if (!arrayOfNames || arrayOfNames.length == 0) {
+142-    delete actingMember[listName];
+143-    // this may be dead code with the new discord API.
+144:    console.log('DELETE in handle list actually called.  SURPRISE!');
+145-    return 'Deleting your empty ' + listName;
+146-  }
+147-  population = gameState.population;
+148-  errors = [];
+149-  list = [];
+--
+165-      }
+166-    } else if (targetName.toLowerCase() == '!none') {
+167-      list = [];
+168-      save = true;
+169-      break;
+170:    } else if (targetName.toLowerCase() == '!all') {
+171-      if (listName == 'inviteList') {
+172:        // get all the members of the tribe of the opposite gender as the ac
+tingMember                                                                      173-        for (var personName in population) {
+174-          var person = population[personName];
+175-          if (person.gender !== actingMember.gender) {
+176-            list.push(personName);
+177-          }
+--
+328-      'No values parsed from that consentList: ' + rawList
+329-    );
+330-    return 'No values parsed from that consentList: ' + rawList;
+331-  }
+332-  if (
+333:    messageArray.includes('!all') &&
+334-    'declineList' in member &&
+335-    member.declineList
+336-  ) {
+337-    text.addMessage(
+338-      gameState,
+339-      member.name,
+340:      'Your declinelist is not empty; !all will not override that.'
+341-    );
+342-  }
+343-  console.log('updating consentlist: ' + messageArray);
+344-  consent(sourceName, messageArray, gameState);
+345-  return member.consentList;
+--
+427-function decline(actorName, messageArray, gameState) {
+428-  person = pop.memberByName(actorName, gameState);
+429-  if (messageArray.includes('!none')) {
+430-    person.declineList = [];
+431-    text.addMessage(gameState, actorName, 'Emptying your declineList');
+432:  } else if (messageArray.includes('!all')) {
+433-    var matchGender = 'male';
+434-    if (person.gender == 'male') {
+435-      matchGender = 'female';
+436-    }
+437-    declineArray = pop.getAllNamesByGender(gameState.population, matchGender
+);                                                                              --
+447-    intersectList = intersect(person.consentList, person.declineList);
+448-    if (
+449-      (intersectList && intersectList.length > 0) ||
+450-      (person.consentList &&
+451-        person.declineList &&
+452:        person.declineList.includes('!all')) ||
+453-      (person.declineList &&
+454-        person.consentList &&
+455:        person.consentList.includes('!all'))
+456-    ) {
+457-      text.addMessage(
+458-        gameState,
+459-        actorName,
+460-        'Your consent and decline lists have overlaps.  Decline has priority
+.'                                                                              --
+500-      'tribe',
+501-      '---> Reproductive activites are complete for the season <---'
+502-    );
+503-    return 'Mating is complete';
+504-  }
+505:  var allDone = true;
+506-  var actionableInvites = true;
+507-  var population = gameState.population;
+508-  while (actionableInvites) {
+509-    infinite_loop_count += 1;
+510-    if (infinite_loop_count > 10) {
+--
+604-        if (targetMember.responseDict) {
+605-          if (targetMember.responseDict[invitingMemberKey]) {
+606-            targetResponse = targetMember.responseDict[invitingMemberKey];
+607-          } else if (targetMember.responseDict[invitingMember.name]) {
+608-            targetResponse = targetMember.responseDict[invitingMember.name];
+609:          } else if (targetMember.responseDict['!all']) {
+610:            targetResponse = targetMember.responseDict['!all'];
+611-          }
+612-        }
+613-        if (
+614-          !targetResponse &&
+615-          targetMember.inviteList &&
+--
+675-          invitingMember.cannotInvite = true;
+676-          doneMating.push(invitingMemberKey);
+677-          console.log('\t consents ');
+678-          continue;
+679-        } else {
+680:          // this will get spammy, if the function is called every time anyo
+ne updates.                                                                     681-          text.addMessage(
+682-            gameState,
+683-            targetPopulationKey,
+684-            inviterDisplayName +
+685-              ' has invited you to mate- update your romance lists to includ
+e them (consent or decline) '                                                   --
+692-          whoNeedsToGiveAnAnswer.push(targetPopulationKey);
+693-          doneMating.push(invitingMemberKey);
+694-          console.log(
+695-            '\t no response found with ' +
+696-              targetDisplayName +
+697:              ' so allDone is false'
+698-          );
+699-        }
+700-        if (attemptFailed) {
+701-          if ('inviteIndex' in invitingMember) {
+702-            invitingMember.inviteIndex = invitingMember.inviteIndex + 1;
+--
+707-          if (invitingMember.inviteList.length > invitingMember.inviteIndex)
+ {                                                                              708-            actionableInvites = true;
+709-            console.log('\t more invitations exist');
+710-          } else {
+711-            console.log(
+712:              'allDone is false, since no invites to try, and no resolution.
+'                                                                               713-            );
+714-          }
+715-        }
+716-      } else {
+717-        // person has no invites pending
+718-        console.log(
+719-          '\t No invites found for ' +
+720-            invitingMemberKey.name +
+721:            ' so allDone is false'
+722-        );
+723-      }
+724-    }
+725-  }
+726-  if (whoNeedsToGiveAnAnswer && whoNeedsToGiveAnAnswer.length > 0) {
+--
+738-    text.addMessage(
+739-      gameState,
+740-      'tribe',
+741-      '(awaiting invitations or /pass from ' + inviteCheck + ')'
+742-    );
+743:    allDone = false;
+744-  } else {
+745:    allDone = true;
+746-  }
+747:  if (allDone) {
+748-    text.addMessage(
+749-      gameState,
+750-      'tribe',
+751-      '---> Reproductive activites are complete for the season <---'
+752-    );
+--
+991-  child.father = father;
+992-  child.age = -2;
+993-  child.food = 0;
+994-  child.gender = genders[Math.trunc(Math.random() * genders.length)];
+995-  nextIndex = gameState.conceptionCounter % 26;
+996:  child.name = getNextChildName(gameState.children, allNames, nextIndex);
+997-  gameState.children[child.name] = child;
+998-  console.log('added child ' + child.name);
+999-  motherAsMember = pop.memberByName(mother, gameState);
+1000-  motherAsMember.isPregnant = child.name;
+1001-  if (gameState.reproductionList) {
+--
+1216-  );
+1217-}
+1218-module.exports.startReproductionChecks = startReproductionChecks;
+1219-
+1220-function startReproduction(gameState) {
+1221:  // actually consume food here
+1222-  gameState.needChanceRoll = true; // this magic boolean prevents starting 
+work until we did chance roll                                                   1223-  gameState.workRound = false;
+1224-  gameState.foodRound = false;
+1225-  gameState.reproductionRound = true;
+1226-  delete gameState.enoughFood;
+--
+1253-  if (!person) return;
+1254-  if (!person.responseDict) person.responseDict = {};
+1255-
+1256-  if (person.consentList && Array.isArray(person.consentList)) {
+1257-    for (let target of person.consentList) {
+1258:      if (target !== '!none' && target !== '!pass' && target !== '!all') {
+1259-        person.responseDict[target] = 'consent';
+1260:      } else if (target === '!all') {
+1261:        person.responseDict['!all'] = 'consent';
+1262-      }
+1263-    }
+1264-  }
+1265-  if (person.declineList && Array.isArray(person.declineList)) {
+1266-    for (let target of person.declineList) {

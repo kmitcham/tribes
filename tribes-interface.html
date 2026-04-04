@@ -2043,18 +2043,18 @@
                 const cmdNameExec = this.selectedCommand ? this.selectedCommand.name.toLowerCase() : '';
                 if ((cmdNameExec === 'consent' || cmdNameExec === 'decline') && document.getElementById('unifiedRomanceGrid')) {
                     const dropdowns = parametersContainer.querySelectorAll('select.romance-dropdown');
-                    let newResponseDict = {};
+                    let newConsentDict = {};
                     dropdowns.forEach(select => {
                         const nameStr = select.name.replace('romance_', '');
                         if (select.value !== 'maybe') {
-                            newResponseDict[nameStr] = select.value;
+                            newConsentDict[nameStr] = select.value;
                         }
                     });
                     
                     this.send({
                         type: 'romanceRequest',
                         playerName: document.getElementById('playerName').value.trim(),
-                        responseDict: newResponseDict
+                        consentDict: newConsentDict
                     });
                     this.closeCommandModal();
                     return;
@@ -2087,7 +2087,7 @@
                 const oppositeGenderTargets = Object.values(this.currentPopulation)
                     .filter(p => p.name !== currentPlayerName && p.gender !== gender);
 
-                let responseDict = (this.currentRomanceLists && this.currentRomanceLists.responseDict) || {};
+                let consentDict = (this.currentRomanceLists && this.currentRomanceLists.consentDict) || {};
 
                 const gridTable = document.createElement('table');
                 gridTable.style.width = '100%';
@@ -2110,7 +2110,7 @@
                     const row = document.createElement('tr');
                     row.style.borderBottom = '1px solid #ddd';
                     
-                    const existingRes = responseDict[nameStr] || 'maybe';
+                    const existingRes = consentDict[nameStr] || 'maybe';
                     
                     row.innerHTML = `
                         <td style="padding: 8px;">${displayName}</td>
@@ -2124,8 +2124,6 @@
                     `;
                     return row;
                 };
-
-                tbody.appendChild(buildRow('!all', '<i>Everyone else (!all)</i>'));
 
                 oppositeGenderTargets.sort((a,b) => a.name.localeCompare(b.name)).forEach(p => {
                     tbody.appendChild(buildRow(p.name, p.name));
@@ -3316,18 +3314,18 @@
                 if ((cmdNameSideExec === 'consent' || cmdNameSideExec === 'decline') && document.getElementById('unifiedRomanceGrid')) {
                     const form = document.getElementById('commandParameters');
                     const dropdowns = form.querySelectorAll('select.romance-dropdown');
-                    let newResponseDict = {};
+                    let newConsentDict = {};
                     dropdowns.forEach(select => {
                         const nameStr = select.name.replace('romance_', '');
                         if (select.value !== 'maybe') {
-                            newResponseDict[nameStr] = select.value;
+                            newConsentDict[nameStr] = select.value;
                         }
                     });
                     
                     this.send({
                         type: 'romanceRequest',
                         playerName: document.getElementById('playerName').value.trim(),
-                        responseDict: newResponseDict
+                        consentDict: newConsentDict
                     });
                     
                     // Clear selection and form
@@ -3429,45 +3427,35 @@
                     const key = this.getMessageHistoryKey();
                     let messages = [];
                     
-                    // Try to parse existing messages, fallback to empty array if corrupted
                     try {
-                        const existingData = this.getCookie(key);
+                        const existingData = localStorage.getItem(key);
                         if (existingData) {
                             messages = JSON.parse(existingData);
-                            // Validate that it's an array
-                            if (!Array.isArray(messages)) {
-                                messages = [];
-                            }
+                            if (!Array.isArray(messages)) messages = [];
                         }
                     } catch (parseError) {
                         console.warn('Existing message history corrupted, starting fresh:', parseError.message);
                         messages = [];
                     }
                     
-                    // Sanitize message data to prevent JSON corruption
                     const sanitizedMessage = {
-                        text: String(messageData.text || '').replace(/[\u0000-\u001f\u007f]/g, ''), // Remove control characters
+                        text: String(messageData.text || '').replace(/[\u0000-\u001f\u007f]/g, ''),
                         type: String(messageData.type || 'info'),
                         typeLabel: messageData.typeLabel ? String(messageData.typeLabel) : null,
                         timestamp: Number(messageData.timestamp) || Date.now()
                     };
                     
-                    // Add new message
                     messages.push(sanitizedMessage);
                     
-                    // Keep only last 30 messages to prevent cookie size issues
-                    if (messages.length > 30) {
-                        messages = messages.slice(-30);
+                    if (messages.length > 200) {
+                        messages = messages.slice(-200);
                     }
                     
-                    // Store back to cookie (expires in 7 days)
-                    this.setCookie(key, JSON.stringify(messages), 7);
+                    localStorage.setItem(key, JSON.stringify(messages));
                 } catch (error) {
                     console.warn('Failed to store message history:', error);
-                    // Clear corrupted cookie data to prevent future errors
                     try {
-                        const key = this.getMessageHistoryKey();
-                        this.setCookie(key, '[]', 7);
+                        localStorage.setItem(this.getMessageHistoryKey(), '[]');
                     } catch (clearError) {
                         console.warn('Failed to clear corrupted message history:', clearError);
                     }
@@ -3477,31 +3465,23 @@
             loadMessageHistory() {
                 try {
                     const key = this.getMessageHistoryKey();
-                    const messagesJson = this.getCookie(key);
+                    const messagesJson = localStorage.getItem(key);
                     
-                    if (!messagesJson) {
-                        return;
-                    }
+                    if (!messagesJson) return;
                     
                     let messages;
                     try {
                         messages = JSON.parse(messagesJson);
-                        // Validate that it's an array
-                        if (!Array.isArray(messages)) {
-                            console.warn('Invalid message history format, ignoring');
-                            return;
-                        }
+                        if (!Array.isArray(messages)) return;
                     } catch (parseError) {
                         console.warn('Corrupted message history found, clearing it:', parseError.message);
-                        // Clear corrupted data
-                        this.setCookie(key, '[]', 7);
+                        localStorage.setItem(key, '[]');
                         return;
                     }
                     
                     const currentTime = Date.now();
-                    const maxAge = 24 * 60 * 60 * 1000; // 24 hours
+                    const maxAge = 24 * 60 * 60 * 1000;
                     
-                    // Filter out messages older than 24 hours and validate message structure
                     const recentMessages = messages.filter(msg => 
                         msg && 
                         typeof msg.timestamp === 'number' && 
@@ -3511,7 +3491,6 @@
                     );
                     
                     if (recentMessages.length > 0) {
-                        // Add separator
                         const container = document.getElementById('messagesContainer');
                         const separator = document.createElement('div');
                         separator.className = 'message info';
@@ -3519,12 +3498,10 @@
                         separator.innerText = `--- Previous messages (${recentMessages.length}) ---`;
                         container.appendChild(separator);
                         
-                        // Restore recent messages
                         recentMessages.forEach(msg => {
                             this.addMessage(msg.text, msg.type, msg.typeLabel, true);
                         });
                         
-                        // Add another separator
                         const endSeparator = document.createElement('div');
                         endSeparator.className = 'message info';
                         endSeparator.style.cssText = 'text-align: center; font-style: italic; opacity: 0.7; border-bottom: 1px dashed #ccc; padding-bottom: 0.5rem;';
@@ -3538,9 +3515,8 @@
 
             clearMessageHistory() {
                 const key = this.getMessageHistoryKey();
-                this.setCookie(key, '', -1); // Expire the cookie
+                localStorage.removeItem(key);
                 
-                // Clear current display
                 const container = document.getElementById('messagesContainer');
                 container.innerHTML = '';
                 
@@ -3731,6 +3707,16 @@
                 const roundStatus = document.getElementById('roundStatus');
                 const seasonStatus = document.getElementById('seasonStatus');
                 const locationStatus = document.getElementById('locationStatus');
+
+                if (gameState.startStamp) {
+                    const tribe = document.getElementById('tribeSelect').value || 'default';
+                    const startStampKey = `tribesStartStamp_${tribe}`;
+                    const savedStamp = localStorage.getItem(startStampKey);
+                    if (savedStamp && savedStamp !== gameState.startStamp) {
+                        this.clearMessageHistory();
+                    }
+                    localStorage.setItem(startStampKey, gameState.startStamp);
+                }
 
                 if (!roundStatus || !seasonStatus || !locationStatus) return;
 

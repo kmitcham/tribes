@@ -47,7 +47,7 @@ function playerHelpRounds() {
   text +=
     ' invite <inviteList> The list of people you would like to invite people to mate with, in preference order.  \n';
   text +=
-    '\tIf the list ends with !pass, you will give up if they all decline.  \n';
+    '\tIf the list ends with pass, you will give up if they all decline.  \n';
   text +=
     '\tUpdates made DURING the reproduction round may behave erratically.  \n';
   text +=
