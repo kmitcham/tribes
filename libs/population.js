@@ -238,33 +238,37 @@ function memberByNameFromDictionary(name, dictionary) {
 }
 
 function decrementSickness(population, gameState) {
-  for (personName in population) {
-    person = population[personName];
-    if (person.isSick && person.isSick > 0) {
-      person.isSick = person.isSick - 1;
-      console.log(person.name + ' decrement sickness  ' + person.isSick);
+  for (const personName in population) {
+    const person = population[personName];
+    if (person.isSick !== undefined && person.isSick !== null) {
+      if (person.isSick > 0) {
+        person.isSick = person.isSick - 1;
+        console.log(person.name + ' decrement sickness  ' + person.isSick);
+      }
+      if (person.isSick < 1) {
+        delete person.isSick;
+        text.addMessage(
+          gameState,
+          person.name,
+          'You have recovered from your illness.'
+        );
+        console.log(person.name + ' recover sickness  ');
+      }
     }
-    if (person.isInjured && person.isInjured > 0) {
-      person.isInjured = person.isInjured - 1;
-      console.log(person.name + ' decrement injury  ' + person.isSick);
-    }
-    if (person.isSick < 1) {
-      delete person.isSick;
-      text.addMessage(
-        gameState,
-        person.name,
-        'You have recovered from your illness.'
-      );
-      console.log(person.name + ' recover sickness  ');
-    }
-    if (person.isInjured < 1) {
-      text.addMessage(
-        gameState,
-        person.name,
-        'You have recovered from your injury.'
-      );
-      delete person.isInjured;
-      console.log(person.name + ' recover injury  ');
+    if (person.isInjured !== undefined && person.isInjured !== null) {
+      if (person.isInjured > 0) {
+        person.isInjured = person.isInjured - 1;
+        console.log(person.name + ' decrement injury  ' + person.isInjured);
+      }
+      if (person.isInjured < 1) {
+        delete person.isInjured;
+        text.addMessage(
+          gameState,
+          person.name,
+          'You have recovered from your injury.'
+        );
+        console.log(person.name + ' recover injury  ');
+      }
     }
   }
 }

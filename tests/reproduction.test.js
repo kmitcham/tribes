@@ -123,7 +123,7 @@ test('Mating objections fail', () => {
   response = reproLib.matingObjections(p2, p1);
   expect(response).toBe('');
   response = reproLib.matingObjections(p1, p1);
-  expect(response).toBe('p1 is the same gender as p1.\n');
+  expect(response).toBe('You cannot invite or consent to yourself.\n');
 });
 test('make a consentList, happy path', () => {
   var gameState = {
@@ -1496,13 +1496,13 @@ test('Infinite loop issue', () => {
   expect(playerRMessage).toContain('pregnant');
 });
 
-test('migrateToResponseDict works correctly backwards compat', () => {
+test('migrateToConsentDict works correctly backwards compat', () => {
   var person = {
     name: 'p1',
     consentList: ['p2', 'p3'],
     declineList: ['p4'],
   };
-  reproLib.migrateToResponseDict(person);
+  reproLib.migrateToConsentDict(person);
   expect(person.consentDict).toBeDefined();
   expect(person.consentDict['p2']).toBe('consent');
   expect(person.consentDict['p3']).toBe('consent');

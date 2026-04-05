@@ -1097,7 +1097,7 @@
                 this.currentChildren = null; // Store current children for child targeting
                 this.currentRomanceLists = null; // Store current romance lists
                 this.reconnectAttempts = 0;
-                this.maxReconnectAttempts = 5;
+                this.maxReconnectAttempts = 1000; // Keep retrying for a long time if server is down (e.g. 5+ minutes)
                 this.reconnectInterval = 2000;
                 this.isLoggedIn = false; // Track login state
                 this.isReferee = false; // Track referee status
@@ -2074,12 +2074,31 @@
             }
 
 
+            addPregnancyWarning(container) {
+                const playerNameInput = document.getElementById('playerName');
+                if (!playerNameInput) return;
+                const currentPlayerName = playerNameInput.value.trim();
+                const currentPlayer = this.currentPopulation ? this.currentPopulation[currentPlayerName] : null;
+                if (currentPlayer && currentPlayer.isPregnant) {
+                    const warning = document.createElement('div');
+                    warning.style.color = '#721c24';
+                    warning.style.backgroundColor = '#f8d7da';
+                    warning.style.border = '1px solid #f5c6cb';
+                    warning.style.padding = '10px';
+                    warning.style.marginBottom = '15px';
+                    warning.style.borderRadius = '4px';
+                    warning.innerHTML = '<strong>⚠️ Note:</strong> Your character is currently pregnant. This may prevent sharing good feelings or getting new responses.';
+                    container.appendChild(warning);
+                }
+            }
+
             buildRomanceGridForm(container) {
                 container.innerHTML = '';
                 if (!this.currentPopulation) {
                     container.innerHTML = '<p>Loading population data...</p>';
                     return;
                 }
+                this.addPregnancyWarning(container);
                 
                 const currentPlayerName = document.getElementById('playerName').value.trim();
                 const currentPlayer = this.currentPopulation[currentPlayerName];
@@ -2200,6 +2219,10 @@
                     container.innerHTML = '<div>Loading children data...</div>';
                     return;
                 }
+                
+                if (this.selectedCommand.name.toLowerCase() === 'invite') {
+                    this.addPregnancyWarning(container);
+                }
 
                 this.renderParametersInContainer(container, preservedValues);
             }
@@ -2266,6 +2289,10 @@
                     // Show loading message
                     container.innerHTML = '<div>Loading children data...</div>';
                     return;
+                }
+                
+                if (this.selectedCommand && this.selectedCommand.name.toLowerCase() === 'invite') {
+                    this.addPregnancyWarning(container);
                 }
                 
                 this.selectedCommand.options.forEach(option => {

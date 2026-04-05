@@ -104,6 +104,22 @@ function showMatingLists(actorName, gameState) {
   if (!('consentDict' in actor) || !actor.consentDict) {
     actor.consentDict = {};
   }
+
+  let consents = [];
+  let declines = [];
+  for (const [name, responseType] of Object.entries(actor.consentDict)) {
+    if (responseType === 'consent') consents.push(name);
+    else if (responseType === 'decline') declines.push(name);
+  }
+
+  if (consents.length > 0 || declines.length > 0) {
+    response += 'Your romantic responses:\n';
+    if (consents.length > 0) response += '  Consent: ' + consents.join(', ') + '\n';
+    if (declines.length > 0) response += '  Decline: ' + declines.join(', ') + '\n';
+  } else {
+    response += 'Your romantic responses: none\n';
+  }
+
   return response;
 }
 module.exports.showMatingLists = showMatingLists;
@@ -535,6 +551,7 @@ function globalMatingCheck(gameState) {
       );
       let index = randomOrderForProcessingInvites.indexOf(invitingMemberKey);
       if (hasReasontoNotInvite(gameState, invitingMember)) {
+        doneMating.push(invitingMemberKey);
         continue;
       } else if (
         invitingMember.inviteList &&
@@ -806,7 +823,6 @@ function hasReasontoNotInvite(gameState, invitingMember) {
     console.log('\t NULL person may not invite anyone');
     return true;
   } else if (invitingMember.cannotInvite) {
-    doneMating.push(personName);
     console.log('\t cannotInvite. ' + invitingMember.name);
     return true;
   } else if (invitingMember.golem) {
@@ -1252,7 +1268,7 @@ function startReproduction(gameState) {
   return;
 }
 
-function migrateToResponseDict(person) {
+function migrateToConsentDict(person) {
   if (!person) return;
   if (!person.consentDict) person.consentDict = {};
 
@@ -1283,7 +1299,7 @@ function handleRomanceResponse(
       ? gameState.population[actorName]
       : null;
   if (!actingMember) return 'No such member';
-  migrateToResponseDict(actingMember);
+  migrateToConsentDict(actingMember);
 
   if (!targetNameRaw || targetNameRaw.length === 0)
     return 'No target provided.';
@@ -1319,5 +1335,5 @@ function checkMating(gameState, displayName) {
 }
 module.exports.checkMating = checkMating;
 
-module.exports.migrateToResponseDict = migrateToResponseDict;
+module.exports.migrateToConsentDict = migrateToConsentDict;
 module.exports.handleRomanceResponse = handleRomanceResponse;
