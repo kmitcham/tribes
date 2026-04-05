@@ -1921,7 +1921,7 @@
                 
                 // Sort commands alphabetically by name and filter out hidden commands
                 const sortedCommands = Object.entries(this.commands)
-                    .filter(([name]) => !hiddenCommands.includes(name))
+                    .filter(([name, command]) => !hiddenCommands.includes(name) && (!this.isRefereeCommand(command.description) || this.isReferee))
                     .sort(([a], [b]) => a.localeCompare(b));
                 
                 sortedCommands.forEach(([name, command]) => {
@@ -2884,6 +2884,10 @@
                 
                 group.appendChild(ignoreContainer);
                 container.appendChild(group);
+            }
+
+            isRefereeCommand(description) {
+                return description && description.toUpperCase().includes('REFEREE ONLY');
             }
 
             isChiefCommand(description) {
