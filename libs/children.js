@@ -132,9 +132,11 @@ function showChildren(
         childMessage += ' father:' + fatherMember.name;
       }
       if (child.age < 24) {
-        childMessage +=
-          ' guard value:' +
-          guardlib.findGuardValueForChild(childName, population, children);
+        var guardVal = guardlib.findGuardValueForChild(childName, population, children);
+        childMessage += ' guard value:' + guardVal;
+        if (child.guardians && Object.keys(child.guardians).length > 0) {
+          childMessage += ' guarded by:' + Object.keys(child.guardians).join(',');
+        }
       }
       if (child.babysitting) {
         childMessage += ' watching:' + child.babysitting + ' ';

@@ -2511,9 +2511,10 @@
             }
 
             renderParametersInContainer(container, preservedValues = {}) {
-                // Special case for ignore command - create custom interface even without server options
-                if (this.selectedCommand.name.toLowerCase() === 'ignore') {
-                    this.createIgnoreInterface(container);
+                // Special case for guard and ignore commands - create unified custom interface even without server options
+                const cmdName = this.selectedCommand.name.toLowerCase();
+                if (cmdName === 'ignore' || cmdName === 'guard') {
+                    this.createUnifiedGuardInterface(container);
                     return;
                 }
                 
@@ -2796,13 +2797,11 @@
                 });
             }
 
-            createIgnoreInterface(container) {
+            createUnifiedGuardInterface(container) {
                 const currentPlayerName = document.getElementById('playerName').value;
-                
-                if (!this.currentChildren || !currentPlayerName) {
-                    container.innerHTML = '<div style="color: #6c757d; font-style: italic;">Loading children data...</div>';
-                    // Fetch children data if not available
-                    this.send({ type: 'infoRequest', selection: 'children' });
+                if (!this.currentChildren || !currentPlayerName || !this.currentPopulation) {
+                    container.innerHTML = '<div style="color: #6c757d; font-style: italic;">Loading data...</div>';
+                    if (!this.currentChildren) this.send({ type: 'infoRequest', selection: 'children' });
                     return;
                 }
                 
@@ -2810,30 +2809,44 @@
                 group.className = 'parameter-group';
                 
                 const label = document.createElement('label');
-                label.textContent = 'Children to ignore:';
+                label.textContent = 'Children you can guard:';
                 group.appendChild(label);
+
+                const warningMsg = document.createElement('div');
+                warningMsg.id = 'guardLimitWarning';
+                warningMsg.style.color = '#721c24';
+                warningMsg.style.backgroundColor = '#f8d7da';
+                warningMsg.style.padding = '0.5rem';
+                warningMsg.style.borderRadius = '4px';
+                warningMsg.style.marginBottom = '1rem';
+                warningMsg.style.display = 'none';
+                group.appendChild(warningMsg);
                 
-                const ignoreContainer = document.createElement('div');
-                ignoreContainer.className = 'ignore-container';
-                ignoreContainer.id = 'param_child';
+                const guardContainer = document.createElement('div');
+                guardContainer.className = 'unified-guard-container';
+                guardContainer.id = 'param_child';
                 
-                const guardedChildren = [];
+                const eligibleChildren = [];
+                const currentPlayer = this.currentPopulation[currentPlayerName] || Object.values(this.currentPopulation).find(p => p.name === currentPlayerName);
+                const guardedNames = (currentPlayer && currentPlayer.guarding) ? currentPlayer.guarding : [];
+                
                 Object.keys(this.currentChildren).forEach(childName => {
                     const child = this.currentChildren[childName];
-                    const guardians = child.guardians || {};
-                    
-                    // Check if current player is a guardian of this child
-                    if (guardians[currentPlayerName]) {
-                        guardedChildren.push({ name: childName, age: child.age || 0 });
+                    if (child.age >= 0 && child.age < 23) {
+                         eligibleChildren.push({ name: childName, age: child.age, isGuarded: guardedNames.includes(childName) });
                     }
                 });
-                
-                if (guardedChildren.length === 0) {
-                    ignoreContainer.innerHTML = '<div style="color: #6c757d; font-style: italic;">You are not currently guarding any children</div>';
+
+                if (eligibleChildren.length === 0) {
+                    guardContainer.innerHTML = '<div style="color: #6c757d; font-style: italic;">No children to guard</div>';
                 } else {
-                    ignoreContainer.innerHTML = '<div style="margin-bottom: 0.5rem; font-weight: 600;">Set guard status for your children:</div>';
+                    const titleDiv = document.createElement('div');
+                    titleDiv.style.marginBottom = '0.5rem';
+                    titleDiv.style.fontWeight = '600';
+                    titleDiv.textContent = 'Set status:';
+                    guardContainer.appendChild(titleDiv);
                     
-                    guardedChildren.forEach(child => {
+                    eligibleChildren.forEach(child => {
                         const childDiv = document.createElement('div');
                         childDiv.className = 'child-guard-option';
                         childDiv.style.cssText = `
@@ -2858,18 +2871,37 @@
                         guardOption.style.cssText = 'display: flex; align-items: center; gap: 0.25rem; cursor: pointer;';
                         const guardRadio = document.createElement('input');
                         guardRadio.type = 'radio';
-                        guardRadio.name = `guard_${child.name}`;
+                        guardRadio.name = `unified_guard_${child.name}`;
                         guardRadio.value = 'guard';
-                        guardRadio.checked = true; // Default to guard
-                        guardOption.appendChild(guardRadio);
-                        guardOption.appendChild(document.createTextNode('Guard'));
-                        
+                        guardRadio.checked = child.isGuarded;
+
                         const ignoreOption = document.createElement('label');
                         ignoreOption.style.cssText = 'display: flex; align-items: center; gap: 0.25rem; cursor: pointer;';
                         const ignoreRadio = document.createElement('input');
                         ignoreRadio.type = 'radio';
-                        ignoreRadio.name = `guard_${child.name}`;
+                        ignoreRadio.name = `unified_guard_${child.name}`;
                         ignoreRadio.value = 'ignore';
+                        ignoreRadio.checked = !child.isGuarded;
+
+                        const validateLimits = () => {
+                            const allChecked = guardContainer.querySelectorAll('input[type="radio"][value="guard"]:checked');
+                            const execBtn = document.getElementById('modalExecuteBtn');
+                            if (allChecked.length > 4) {
+                                if (execBtn) execBtn.disabled = true;
+                                warningMsg.style.display = 'block';
+                                warningMsg.textContent = 'You can only guard up to 4 children. Please ignore some children to proceed.';
+                            } else {
+                                if (execBtn) execBtn.disabled = false;
+                                warningMsg.style.display = 'none';
+                            }
+                        };
+
+                        guardRadio.addEventListener('change', validateLimits);
+                        ignoreRadio.addEventListener('change', validateLimits);
+
+                        guardOption.appendChild(guardRadio);
+                        guardOption.appendChild(document.createTextNode('Guard'));
+                        
                         ignoreOption.appendChild(ignoreRadio);
                         ignoreOption.appendChild(document.createTextNode('Ignore'));
                         
@@ -2878,12 +2910,25 @@
                         
                         childDiv.appendChild(childLabel);
                         childDiv.appendChild(radioGroup);
-                        ignoreContainer.appendChild(childDiv);
+                        guardContainer.appendChild(childDiv);
                     });
                 }
                 
-                group.appendChild(ignoreContainer);
+                group.appendChild(guardContainer);
                 container.appendChild(group);
+
+                // Initial validation check
+                setTimeout(() => {
+                    const allChecked = guardContainer.querySelectorAll('input[type="radio"][value="guard"]:checked');
+                    const execBtn = document.getElementById('modalExecuteBtn');
+                    if (allChecked && allChecked.length > 4) {
+                        if (execBtn) execBtn.disabled = true;
+                        if (warningMsg) {
+                            warningMsg.style.display = 'block';
+                            warningMsg.textContent = 'You can only guard up to 4 children. Please ignore some children to proceed.';
+                        }
+                    }
+                }, 0);
             }
 
             isRefereeCommand(description) {
@@ -2935,27 +2980,30 @@
                 
                 console.log('Found', inputs.length, 'total inputs in container');
                 
-                // Handle special ignore command interface
-                const ignoreContainer = container.querySelector('.ignore-container');
-                if (ignoreContainer && this.selectedCommand.name.toLowerCase() === 'ignore') {
-                    const childrenToIgnore = [];
-                    const radioGroups = ignoreContainer.querySelectorAll('input[type="radio"]:checked');
+                // Handle unified guard command interface
+                const unifiedGuardContainer = container.querySelector('.unified-guard-container');
+                if (unifiedGuardContainer && (this.selectedCommand.name.toLowerCase() === 'guard' || this.selectedCommand.name.toLowerCase() === 'ignore')) {
+                    const childrenToGuard = [];
+                    const radioGroups = unifiedGuardContainer.querySelectorAll('input[type="radio"][value="guard"]:checked');
                     
                     radioGroups.forEach(radio => {
-                        if (radio.value === 'ignore') {
-                            // Extract child name from radio name attribute (guard_ChildName)
-                            const childName = radio.name.replace('guard_', '');
-                            childrenToIgnore.push(childName);
-                        }
+                        const childName = radio.name.replace('unified_guard_', '');
+                        childrenToGuard.push(childName);
                     });
                     
-                    // For ignore command, send as child1, child2, child3 parameters (command expects these specific names)
-                    childrenToIgnore.forEach((childName, index) => {
-                        const paramKey = `child${index + 1}`; // child1, child2, child3
+                    // We must convert "ignore" command usages to "guard" underneath so the backend clears and resets children
+                    if (this.selectedCommand.name.toLowerCase() === 'ignore') {
+                        this.selectedCommand.name = 'guard';
+                    }
+                    
+                    // 'child1'="none" tells backend to clear existing guards. child2, child3, child4, child5 get the new children.
+                    parameters['child1'] = 'none';
+                    childrenToGuard.forEach((childName, index) => {
+                        const paramKey = `child${index + 2}`; // child2, child3...
                         parameters[paramKey] = childName;
                     });
                     
-                    console.log('Ignore command children to ignore:', childrenToIgnore, 'Parameters:', parameters);
+                    console.log('Unified guard parameters matched:', parameters);
                 }
                 
                 inputs.forEach(input => {
@@ -2970,8 +3018,8 @@
                     const paramName = input.id.replace('param_', '');
                     console.log('Parameter name:', paramName, 'isOrdering:', this.isOrderingOption(paramName));
                     
-                    // Skip if this is the ignore container (already handled above)
-                    if (input.classList && input.classList.contains('ignore-container')) {
+                    // Skip if this is the unified guard container (already handled above)
+                    if (input.classList && input.classList.contains('unified-guard-container')) {
                         return;
                     }
                     
@@ -3676,6 +3724,30 @@
                 if (!children || Object.keys(children).length === 0) {
                     table.innerHTML = '<tr><td colspan="100%">No children data available</td></tr>';
                     return;
+                }
+
+                // Compute guards for each child
+                if (this.currentPopulation) {
+                    Object.keys(children).forEach(childName => {
+                        const guards = [];
+                        Object.values(this.currentPopulation).forEach(person => {
+                            if (person.guarding && person.guarding.includes(childName)) {
+                                guards.push(person.name);
+                            }
+                        });
+                        // check for babysitters
+                        Object.values(children).forEach(sitter => {
+                            if (sitter.age >= 23 && sitter.babysitting === childName) {
+                                guards.push(sitter.name);
+                            }
+                        });
+                        if (guards.length > 0) {
+                            children[childName].Guards = guards.join(', ');
+                        } else {
+                            // Ensure the column always exists for every child
+                            children[childName].Guards = ''; 
+                        }
+                    });
                 }
                 
                 // Similar implementation to population table

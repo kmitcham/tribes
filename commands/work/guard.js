@@ -38,6 +38,12 @@ module.exports = {
         .setName('child4')
         .setDescription('another child of the tribe')
         .setRequired(false)
+    )
+    .addStringOption((option) =>
+      option
+        .setName('child5')
+        .setDescription('another child of the tribe')
+        .setRequired(false)
     ),
   async execute(interaction, gameState) {
     onCommand(interaction, gameState);
@@ -50,6 +56,7 @@ function onCommand(interaction, gameState) {
   var c2Name = interaction.options.getString('child2');
   var c3Name = interaction.options.getString('child3');
   var c4Name = interaction.options.getString('child4');
+  var c5Name = interaction.options.getString('child5');
 
   var person = pop.memberByName(actorName, gameState);
   if (person.worked == true) {
@@ -71,15 +78,10 @@ function onCommand(interaction, gameState) {
   response = '';
   response += guardChild(actorName, gameState, c1Name) + '\n';
 
-  if (c2Name) {
-    response += guardChild(actorName, gameState, c2Name) + '\n';
-  }
-  if (c3Name) {
-    response += guardChild(actorName, gameState, c3Name) + '\n';
-  }
-  if (c4Name) {
-    response += guardChild(actorName, gameState, c4Name) + '\n';
-  }
+  if (c2Name) response += guardChild(actorName, gameState, c2Name) + '\n';
+  if (c3Name) response += guardChild(actorName, gameState, c3Name) + '\n';
+  if (c4Name) response += guardChild(actorName, gameState, c4Name) + '\n';
+  if (c5Name) response += guardChild(actorName, gameState, c5Name) + '\n';
   if (response.includes('FAIL')) {
     text.addMessage(gameState, actorName, response);
   } else {

@@ -85,14 +85,14 @@ function ignoreChild(gameState, actorName, cName) {
       ' actorName ' +
       actorName
   );
-  if (
-    'all' == cName.toLowerCase() &&
-    person.guarding &&
-    person.guarding.length > 0
-  ) {
-    response = actorName + ' stops guarding ' + person.guarding + '\n';
-    delete person.guarding;
-    return response;
+  if ('all' == cName.toLowerCase()) {
+    if (person.guarding && person.guarding.length > 0) {
+      response = actorName + ' stops guarding ' + person.guarding + '\n';
+      delete person.guarding;
+      return response;
+    } else {
+      return actorName + ' is not guarding anyone.\n';
+    }
   }
   childName = text.capitalizeFirstLetter(cName);
   child = children[childName];
