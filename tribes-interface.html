@@ -2582,7 +2582,7 @@
                                         if (age > 22 && mother === currentPlayerName) {
                                             const opt = document.createElement('option');
                                             opt.value = childName;
-                                            opt.textContent = `${childName} (age ${age})`;
+                                            opt.textContent = `${childName} (age ${age / 2})`;
                                             input.appendChild(opt);
                                         }
                                     });
@@ -2595,7 +2595,7 @@
                                         if (age <= 23) {
                                             const opt = document.createElement('option');
                                             opt.value = childName;
-                                            opt.textContent = `${childName} (age ${age})`;
+                                            opt.textContent = `${childName} (age ${age / 2})`;
                                             input.appendChild(opt);
                                         }
                                     });
@@ -2606,7 +2606,8 @@
                                 // Add individual children
                                 Object.keys(this.currentChildren).forEach(childName => {
                                     const child = this.currentChildren[childName];
-                                    if (child.age <= 23) { 
+                                    const age = child.age || 0;
+                                    if (age <= 23) {
                                         const opt = document.createElement('option');
                                         opt.value = childName;
                                         
@@ -2614,7 +2615,7 @@
                                         const food = child.food || 0;
                                         const age = child.age || 0;
                                         const status = food >= 2 ? '🍎' : '😋'; // Fed or hungry
-                                        opt.textContent = `${childName} (age ${age}, food ${food}) ${status}`;
+                                        opt.textContent = `${childName} (age ${age / 2}, food ${food}) ${status}`;
                                         
                                         input.appendChild(opt);
                                     } else {
@@ -2832,8 +2833,9 @@
                 
                 Object.keys(this.currentChildren).forEach(childName => {
                     const child = this.currentChildren[childName];
-                    if (child.age >= 0 && child.age < 23) {
-                         eligibleChildren.push({ name: childName, age: child.age, isGuarded: guardedNames.includes(childName) });
+                    const age = child.age || 0;
+                    if (age >= 0 && age < 23) {
+                         eligibleChildren.push({ name: childName, age: age, isGuarded: guardedNames.includes(childName) });
                     }
                 });
 
@@ -2861,7 +2863,7 @@
                         `;
                         
                         const childLabel = document.createElement('span');
-                        childLabel.textContent = `${child.name} (age ${child.age})`;
+                        childLabel.textContent = `${child.name} (age ${child.age / 2})`;
                         childLabel.style.fontWeight = '500';
                         
                         const radioGroup = document.createElement('div');
@@ -3707,7 +3709,7 @@
                             // Handle objects by extracting keys
                             cell.textContent = Object.keys(value).join(', ');
                         } else {
-                            cell.textContent = value || '';
+                            cell.textContent = (value !== undefined && value !== null && value !== '') ? value : '';
                         }
                         row.appendChild(cell);
                     });
@@ -3779,13 +3781,16 @@
                     Array.from(allKeys).forEach(key => {
                         const cell = document.createElement('td');
                         const value = data[key];
-                        if (Array.isArray(value)) {
+                        if (key === 'age') {
+                            const ageVal = typeof value === 'number' ? value : 0;
+                            cell.textContent = ageVal / 2;
+                        } else if (Array.isArray(value)) {
                             cell.textContent = value.join(', ');
                         } else if (value && typeof value === 'object') {
                             // Handle objects like guardians by extracting keys
                             cell.textContent = Object.keys(value).join(', ');
                         } else {
-                            cell.textContent = value || '';
+                            cell.textContent = (value !== undefined && value !== null && value !== '') ? value : '';
                         }
                         row.appendChild(cell);
                     });

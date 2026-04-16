@@ -380,6 +380,14 @@ module.exports.doChance = doChance;
 
 function startWork(actorName, gameState) {
   var player = pop.memberByName(actorName, gameState);
+  if (gameState.demand || gameState.violence) {
+    text.addMessage(
+      gameState,
+      actorName,
+      'You cannot start a new round while there is an active demand or violence.'
+    );
+    return;
+  }
   if (gameState.ended) {
     text.addMessage(
       gameState,

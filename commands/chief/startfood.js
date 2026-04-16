@@ -21,6 +21,14 @@ module.exports = {
 
 function startFoodFilter(actorName, gameState, bot) {
   var player = pop.memberByName(actorName, gameState);
+  if (gameState.demand || gameState.violence) {
+    text.addMessage(
+      gameState,
+      actorName,
+      'You cannot start a new round while there is an active demand or violence.'
+    );
+    return;
+  }
   if (!player.chief) {
     text.addMessage(
       gameState,

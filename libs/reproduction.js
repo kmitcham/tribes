@@ -929,14 +929,21 @@ module.exports.makeLove = makeLove;
 
 function detection(mother, father, reproRoll, gameState) {
   const OBSERVER_THRESHOLD = 17;
-  observerName = dice.randomMemberName(gameState.population);
-  observer = pop.memberByName(observerName, gameState);
-  if (observer.name == mother.name || observer.name == father.name) {
+  var observerName = dice.randomMemberName(gameState.population);
+  var observer = pop.memberByName(observerName, gameState);
+  
+  if (!observer) return false;
+
+  var obsName = (observer.name || observerName).toLowerCase();
+  var mName = (mother.name || '').toLowerCase();
+  var fName = (father.name || '').toLowerCase();
+
+  if (observer === mother || observer === father || obsName === mName || obsName === fName || observerName.toLowerCase() === mName || observerName.toLowerCase() === fName) {
     console.log('self observation is discarded');
     return false;
   }
   var netRoll;
-  baseRoll = dice.roll(2);
+  var baseRoll = dice.roll(2);
   netRoll = baseRoll + reproRoll;
   // if the observer has more in common with either parent, harder to avoid observation
   if (
@@ -1198,6 +1205,14 @@ module.exports.pass = pass;
 
 function startReproductionChecks(gameState, actorName) {
   var player = pop.memberByName(actorName, gameState);
+  if (gameState.demand || gameState.violence) {
+    text.addMessage(
+      gameState,
+      actorName,
+      'You cannot start a new round while there is an active demand or violence.'
+    );
+    return;
+  }
   if (!player.chief) {
     text.addMessage(
       gameState,
