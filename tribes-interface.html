@@ -1442,7 +1442,6 @@
                         setTimeout(() => {
                             if (this.ws.readyState !== WebSocket.OPEN) {
                                 this.ws.close();
-                                tryHost(hostIndex + 1);
                             }
                         }, 2000);
                     };
@@ -2381,6 +2380,17 @@
                     } else if (option.type === 4) { // INTEGER
                         input = document.createElement('input');
                         input.type = 'number';
+                        if (option.max_value !== undefined) {
+                            input.max = option.max_value;
+                        }
+                        if (option.min_value !== undefined) {
+                            input.min = option.min_value;
+                        }
+                        
+                        // Enforce feed amount hard limit on frontend if not transmitted
+                        if (this.selectedCommand && this.selectedCommand.name === 'feed' && option.name === 'amount') {
+                            input.max = "2";
+                        }
                     } else {
                         input = document.createElement('input');
                         input.type = 'text';
@@ -3043,10 +3053,22 @@
                         parameters[paramName] = input.checked;
                         console.log('Checkbox parameter', paramName, 'checked:', input.checked);
                     } else {
+                        if (input.type === 'number') {
+                            if (input.max !== '' && Number(input.value) > Number(input.max)) {
+                                this.addMessage(`Amount for ${paramName} cannot be more than ${input.max}`, 'error');
+                                hasErrors = true;
+                            }
+                            if (input.min !== '' && Number(input.value) < Number(input.min)) {
+                                this.addMessage(`Amount for ${paramName} cannot be less than ${input.min}`, 'error');
+                                hasErrors = true;
+                            }
+                        }
                         parameters[paramName] = input.value;
                     }
                 });
                 
+                if (hasErrors) return null;
+
                 // Validation
                 const required = this.selectedCommand.options ? this.selectedCommand.options.filter(opt => opt.required) : [];
                 const missing = required.filter(opt => !parameters[opt.name] || parameters[opt.name] === '');
