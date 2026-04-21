@@ -96,13 +96,27 @@ describe('Save Module', () => {
 
   describe('loadTribe', () => {
     test('should load existing tribe file', () => {
-      const tribeData = { name: 'test-tribe', population: {} };
+      const tribeData = {
+        name: 'test-tribe',
+        population: {
+          player1: {
+            name: 'player1',
+            food: null,
+            grain: null,
+            basket: null,
+            spearhead: null,
+          },
+        },
+      };
       fs.existsSync.mockReturnValue(true);
       fs.readFileSync.mockReturnValue(JSON.stringify(tribeData));
 
       const result = savelib.loadTribe('test-tribe');
 
-      expect(result).toEqual(tribeData);
+      expect(result.population.player1.food).toBe(0);
+      expect(result.population.player1.grain).toBe(0);
+      expect(result.population.player1.basket).toBe(0);
+      expect(result.population.player1.spearhead).toBe(0);
       expect(fs.existsSync).toHaveBeenCalledWith(
         './tribe-data/test-tribe/test-tribe.json'
       );
@@ -341,6 +355,48 @@ describe('Save Module', () => {
       await savelib.saveTribe(mockGameState);
 
       expect(mockGameState.lastSaved).toBeDefined();
+    });
+
+    test('should normalize null player stored resources before saving', async () => {
+      const mockGameState = {
+        name: 'test-tribe',
+        population: {
+          player1: {
+            name: 'player1',
+            food: null,
+            grain: null,
+            basket: null,
+            spearhead: null,
+          },
+        },
+      };
+
+      fs.writeFileSync.mockImplementation(() => {});
+      fs.readFileSync.mockReturnValue(
+        JSON.stringify({
+          name: 'test-tribe',
+          population: {
+            player1: {
+              name: 'player1',
+              food: 0,
+              grain: 0,
+              basket: 0,
+              spearhead: 0,
+            },
+          },
+        })
+      );
+
+      await savelib.saveTribe(mockGameState);
+
+      expect(mockGameState.population.player1.food).toBe(0);
+      expect(mockGameState.population.player1.grain).toBe(0);
+      expect(mockGameState.population.player1.basket).toBe(0);
+      expect(mockGameState.population.player1.spearhead).toBe(0);
+      expect(fs.writeFileSync.mock.calls[0][1]).toContain('"food": 0');
+      expect(fs.writeFileSync.mock.calls[0][1]).toContain('"grain": 0');
+      expect(fs.writeFileSync.mock.calls[0][1]).toContain('"basket": 0');
+      expect(fs.writeFileSync.mock.calls[0][1]).toContain('"spearhead": 0');
     });
   });
 });

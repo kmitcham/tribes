@@ -3,6 +3,42 @@ const dice = require('./dice');
 const prof = require('./profession');
 const help = require('./help.js');
 
+function normalizeStoredResourceValue(value) {
+  var numericValue = Number(value);
+  if (!Number.isFinite(numericValue) || numericValue < 0) {
+    return 0;
+  }
+  return Math.floor(numericValue);
+}
+module.exports.normalizeStoredResourceValue = normalizeStoredResourceValue;
+
+function normalizePlayerResources(player) {
+  if (!player || typeof player !== 'object') {
+    return player;
+  }
+  player.food = normalizeStoredResourceValue(player.food);
+  player.grain = normalizeStoredResourceValue(player.grain);
+  player.basket = normalizeStoredResourceValue(player.basket);
+  player.spearhead = normalizeStoredResourceValue(player.spearhead);
+  return player;
+}
+module.exports.normalizePlayerResources = normalizePlayerResources;
+
+function normalizePopulationResources(gameStateOrPopulation) {
+  var population = gameStateOrPopulation;
+  if (population && population.population) {
+    population = population.population;
+  }
+  if (!population || typeof population !== 'object') {
+    return population;
+  }
+  for (var memberName in population) {
+    normalizePlayerResources(population[memberName]);
+  }
+  return population;
+}
+module.exports.normalizePopulationResources = normalizePopulationResources;
+
 function convertStringToArray(listString) {
   if (listString instanceof Array) {
     return listString;
@@ -113,6 +149,7 @@ function memberByName(name, gameState) {
     }
   }
   if (person != null) {
+    normalizePlayerResources(person);
     // WTF is this?
     for (var type in person) {
       if (Object.prototype.hasOwnProperty.call(person, type)) {

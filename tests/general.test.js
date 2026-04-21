@@ -182,7 +182,7 @@ describe('makeJerky function', () => {
     general.makeJerky('player1', undefined, gameState);
 
     expect(gameState.population.player1.food).toBe(7);
-    expect(gameState.population.player1.grain).toBeUndefined();
+    expect(gameState.population.player1.grain).toBe(0);
     expect(gameState.messages.player1).toContain('Amount of food must be a number.');
   });
 });

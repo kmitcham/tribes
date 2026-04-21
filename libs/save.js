@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const WebSocket = require('ws');
 const locations = require('./locations.json');
+const populationLib = require('./population.js');
 
 // NOTE: Removed unused WebSocket server creation that was causing test failures
 // const server = new WebSocket.Server({ port: 8383 });
@@ -64,6 +65,7 @@ function loadTribe(tribeName) {
   if (fs.existsSync(fileName)) {
     try {
       gameState = loadJson(fileName);
+      populationLib.normalizePopulationResources(gameState);
       return gameState;
     } catch (err) {
       console.log('the json file load of ' + fileName + ' failed ' + err);
@@ -88,6 +90,7 @@ function loadTribe(tribeName) {
 module.exports.loadTribe = loadTribe;
 
 function actuallyWriteToDisk(fileName, jsonData) {
+  populationLib.normalizePopulationResources(jsonData);
   (jsonString = JSON.stringify(jsonData, null, 2)),
     (err) => {
       // Checking for errors
