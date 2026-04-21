@@ -755,6 +755,8 @@ describe('Tribes Interface Client', () => {
     });
 
     test('should send message with correct structure', () => {
+      client.ws.readyState = WebSocket.OPEN;
+
       const testData = {
         type: 'command',
         command: 'hunt',

@@ -127,7 +127,7 @@ module.exports.showMatingLists = showMatingLists;
 function canStillInvite(gameState) {
   population = gameState.population;
   var canInvite = [];
-  for (personName in population) {
+  for (var personName in population) {
     person = population[personName];
     if (person.cannotInvite) {
       // do nothing
@@ -744,7 +744,7 @@ function globalMatingCheck(gameState) {
     }
   }
   if (whoNeedsToGiveAnAnswer && whoNeedsToGiveAnAnswer.length > 0) {
-    for (personName of whoNeedsToGiveAnAnswer) {
+    for (var personName of whoNeedsToGiveAnAnswer) {
       text.addMessage(
         gameState,
         personName,
@@ -771,7 +771,7 @@ function globalMatingCheck(gameState) {
       '---> Reproductive activites are complete for the season <---'
     );
     noPregnancies = true;
-    for (personName in population) {
+    for (const personName in population) {
       invitingMember = pop.memberByName(personName, gameState);
       text.addMessage(
         gameState,
@@ -1038,7 +1038,7 @@ module.exports.addChild = addChild;
 
 function restoreSaveLists(gameState) {
   population = gameState.population;
-  for (personName in population) {
+  for (var personName in population) {
     person = population[personName];
     if (person.saveInviteList && person.saveInviteList.length > 0) {
       console.log('restoring inviteList for ' + personName);

@@ -1485,7 +1485,7 @@
                     this.addMessage('WebSocket not initialized; attempting to connect', 'error');
                     this.connectWithFallback()
                 }
-                if (this.ws && !this.ws.readyState === WebSocket.OPEN) {
+                if (this.ws && this.ws.readyState !== WebSocket.OPEN) {
                     this.addMessage('WebSocket not open; attempting to reconnect', 'error');
                     this.connectWithFallback();
                 }
@@ -2009,6 +2009,7 @@
                 }
 
                 // Setup modal event handlers
+                executeBtn.disabled = false;
                 executeBtn.onclick = () => this.executeModalCommand();
                 cancelBtn.onclick = () => this.closeCommandModal();
                 closeBtn.onclick = () => this.closeCommandModal();
@@ -2037,9 +2038,10 @@
             }
 
             executeModalCommand() {
-                const parametersContainer = document.getElementById('modalCommandParameters');
-                
-                const cmdNameExec = this.selectedCommand ? this.selectedCommand.name.toLowerCase() : '';
+                try {
+                    const parametersContainer = document.getElementById('modalCommandParameters');
+                    
+                    const cmdNameExec = this.selectedCommand ? this.selectedCommand.name.toLowerCase() : '';
                 if ((cmdNameExec === 'consent' || cmdNameExec === 'decline') && document.getElementById('unifiedRomanceGrid')) {
                     const dropdowns = parametersContainer.querySelectorAll('select.romance-dropdown');
                     let newConsentDict = {};
@@ -2069,6 +2071,10 @@
                         parameters: parameters
                     });
                     this.closeCommandModal();
+                }
+                } catch (e) {
+                    console.error('Modal execution error:', e);
+                    this.addMessage('Client error executing command: ' + e.message, 'error');
                 }
             }
 
@@ -2898,10 +2904,10 @@
                         const validateLimits = () => {
                             const allChecked = guardContainer.querySelectorAll('input[type="radio"][value="guard"]:checked');
                             const execBtn = document.getElementById('modalExecuteBtn');
-                            if (allChecked.length > 4) {
+                            if (allChecked.length > 5) {
                                 if (execBtn) execBtn.disabled = true;
                                 warningMsg.style.display = 'block';
-                                warningMsg.textContent = 'You can only guard up to 4 children. Please ignore some children to proceed.';
+                                warningMsg.textContent = 'You can only guard up to 5 children. Please ignore some children to proceed.';
                             } else {
                                 if (execBtn) execBtn.disabled = false;
                                 warningMsg.style.display = 'none';
@@ -2933,11 +2939,11 @@
                 setTimeout(() => {
                     const allChecked = guardContainer.querySelectorAll('input[type="radio"][value="guard"]:checked');
                     const execBtn = document.getElementById('modalExecuteBtn');
-                    if (allChecked && allChecked.length > 4) {
+                    if (allChecked && allChecked.length > 5) {
                         if (execBtn) execBtn.disabled = true;
                         if (warningMsg) {
                             warningMsg.style.display = 'block';
-                            warningMsg.textContent = 'You can only guard up to 4 children. Please ignore some children to proceed.';
+                            warningMsg.textContent = 'You can only guard up to 5 children. Please ignore some children to proceed.';
                         }
                     }
                 }, 0);
@@ -3053,21 +3059,9 @@
                         parameters[paramName] = input.checked;
                         console.log('Checkbox parameter', paramName, 'checked:', input.checked);
                     } else {
-                        if (input.type === 'number') {
-                            if (input.max !== '' && Number(input.value) > Number(input.max)) {
-                                this.addMessage(`Amount for ${paramName} cannot be more than ${input.max}`, 'error');
-                                hasErrors = true;
-                            }
-                            if (input.min !== '' && Number(input.value) < Number(input.min)) {
-                                this.addMessage(`Amount for ${paramName} cannot be less than ${input.min}`, 'error');
-                                hasErrors = true;
-                            }
-                        }
                         parameters[paramName] = input.value;
                     }
                 });
-                
-                if (hasErrors) return null;
 
                 // Validation
                 const required = this.selectedCommand.options ? this.selectedCommand.options.filter(opt => opt.required) : [];
