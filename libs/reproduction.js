@@ -630,14 +630,6 @@ function globalMatingCheck(gameState) {
             targetResponse = targetMember.consentDict['!all'];
           }
         }
-        if (
-          !targetResponse &&
-          targetMember.inviteList &&
-          (targetMember.inviteList.includes(invitingMemberKey) ||
-            targetMember.inviteList.includes(invitingMember.name))
-        ) {
-          targetResponse = 'consent';
-        }
 
         if (targetResponse === 'decline') {
           text.addMessage(

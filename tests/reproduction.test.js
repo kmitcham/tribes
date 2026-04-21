@@ -627,6 +627,33 @@ test('consent and decline collisions by name', () => {
   expect(p2message).toStrictEqual('p1 declines your invitation.');
 });
 
+test('reciprocal invite does not count as consent', () => {
+  var gameState = {
+    reproductionRound: true,
+    population: {
+      p1: {
+        name: 'p1',
+        gender: 'female',
+        inviteList: ['p2'],
+      },
+      p2: {
+        name: 'p2',
+        gender: 'male',
+        inviteList: ['p1'],
+      },
+    },
+    children: {},
+    round: 'reproduction',
+  };
+
+  reproLib.globalMatingCheck(gameState);
+
+  expect(gameState.messages['p1']).toContain('p2 has invited you to mate');
+  expect(gameState.messages['p2']).toContain('p1 considers your invitation.');
+  expect(gameState.messages['p1']).not.toContain('You share good feelings');
+  expect(gameState.messages['p2']).not.toContain('is impressed by your flirtation');
+});
+
 test('mating with spaces in names', () => {
   var gameState = {
     reproductionRound: true,
