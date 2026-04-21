@@ -177,7 +177,18 @@ function makeJerky(sourceName, amount, gameState, bot) {
     return;
   }
   player = pop.memberByName(sourceName, gameState);
-  actualFood = player.food;
+  if (!player) {
+    text.addMessage(gameState, sourceName, 'Only tribe members can make jerky.');
+    return;
+  }
+  amount = Number(amount);
+  if (!Number.isFinite(amount)) {
+    text.addMessage(gameState, sourceName, 'Amount of food must be a number.');
+    return;
+  }
+  amount = Math.floor(amount);
+  actualFood = Number(player.food) || 0;
+  actualGrain = Number(player.grain) || 0;
   if (amount > actualFood) {
     amount = actualFood;
   }
@@ -185,7 +196,7 @@ function makeJerky(sourceName, amount, gameState, bot) {
   jerky = (amount - extra) / 3;
   leftover = amount - jerky * 3;
   player.food = actualFood - amount + leftover;
-  player.grain += jerky;
+  player.grain = actualGrain + jerky;
   message =
     sourceName + ' converts ' + jerky * 3 + ' food into ' + jerky + ' jerky';
   text.addMessage(gameState, 'tribe', message);

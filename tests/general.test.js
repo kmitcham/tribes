@@ -1,4 +1,5 @@
 const general = require('../libs/general.js');
+const jerkyCommand = require('../commands/general/jerky.js');
 const pop = require('../libs/population.js');
 const dice = require('../libs/dice.js');
 const referees = require('../libs/referees.json');
@@ -146,5 +147,48 @@ describe('give function', () => {
     expect(gameState.population.player1.grain).toBe(8);
     expect(gameState.population.player2.grain).toBe(12);
     expect(gameState.saveRequired).toBe(true);
+  });
+});
+
+describe('makeJerky function', () => {
+  let gameState;
+
+  beforeEach(() => {
+    gameState = {
+      canJerky: true,
+      ended: false,
+      saveRequired: false,
+      messages: {},
+      population: {
+        player1: {
+          name: 'player1',
+          food: 7,
+        },
+      },
+    };
+  });
+
+  test('should default missing grain to zero instead of producing NaN', () => {
+    general.makeJerky('player1', 6, gameState);
+
+    expect(gameState.population.player1.food).toBe(1);
+    expect(gameState.population.player1.grain).toBe(2);
+    expect(gameState.messages.tribe).toContain('player1 converts 6 food into 2 jerky');
+    expect(gameState.messages.tribe).not.toContain('NaN');
+    expect(gameState.saveRequired).toBe(true);
+  });
+
+  test('should reject invalid amounts instead of producing NaN', () => {
+    general.makeJerky('player1', undefined, gameState);
+
+    expect(gameState.population.player1.food).toBe(7);
+    expect(gameState.population.player1.grain).toBeUndefined();
+    expect(gameState.messages.player1).toContain('Amount of food must be a number.');
+  });
+});
+
+describe('jerky command', () => {
+  test('should expose amount as the integer option name', () => {
+    expect(jerkyCommand.data.options[0].name).toBe('amount');
   });
 });

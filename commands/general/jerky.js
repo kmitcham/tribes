@@ -10,7 +10,7 @@ module.exports = {
     .setDescription('When conditions allow, convert 3 food to 1 grain')
     .addIntegerOption((option) =>
       option
-        .setName('amount of food')
+        .setName('amount')
         .setDescription('Amount of food to convert to grain')
         .setRequired(true)
     ),
