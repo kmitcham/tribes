@@ -416,8 +416,6 @@ function startWork(actorName, gameState) {
     );
     return;
   }
-  //TODO: confirm no longer needed
-  //reproLib.restoreSaveLists(gameState);
   gameState.archiveRequired = true;
   recoverGameTracks(gameState);
   // clear out old activities

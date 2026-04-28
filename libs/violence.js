@@ -340,11 +340,11 @@ const resolveSingleAttack = (attacker, defender, roll, gameState) => {
     return response + 'A miss!\n';
   }
   if (defender.hits == 1) {
-    defender.isInjured = 3;
+    defender.isInjured = 4;
     response += defender.name + ' is injured!';
   }
   if (defender.hits == 2) {
-    defender.isInjured = 3;
+    defender.isInjured = 4;
     defender.strength = 'weak';
     response += defender.name + ' is crippled, and becomes Weak!';
   }

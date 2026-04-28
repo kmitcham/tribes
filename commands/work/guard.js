@@ -66,6 +66,10 @@ function onCommand(interaction, gameState) {
   var c6Name = interaction.options.getString('child6');
 
   var person = pop.memberByName(actorName, gameState);
+  if (!person) {
+    text.addMessage(gameState, actorName, 'FAIL: you are not a person');
+    return;
+  }
   if (person.worked == true) {
     text.addMessage(
       gameState,
@@ -93,7 +97,7 @@ function onCommand(interaction, gameState) {
   if (response.includes('FAIL')) {
     text.addMessage(gameState, actorName, response);
   } else {
-    if (person.guarding) {
+    if (person.guarding && person.guarding.length > 0) {
       text.addMessage(
         gameState,
         'tribe',
