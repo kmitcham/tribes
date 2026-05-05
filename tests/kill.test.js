@@ -265,4 +265,55 @@ describe('kill function', () => {
     expect(gameState).toHaveProperty('graveyard');
     expect(gameState.graveyard).toHaveProperty('pat');
   });
+
+  test('should remove dead person from invite, consent, decline, consentDict, and guarding lists', () => {
+    const gameState = {
+      seasonCounter: 16,
+      population: {
+        alex: {
+          name: 'alex',
+          age: 40,
+          inviteList: ['zoe', 'sam'],
+          consentList: ['zoe'],
+          declineList: ['zoe'],
+          consentDict: { zoe: 'consent', sam: 'decline' },
+          guarding: ['Zoe', 'Kid1'],
+        },
+        zoe: {
+          name: 'zoe',
+          age: 30,
+          inviteList: ['alex'],
+          consentList: ['alex'],
+          declineList: ['alex'],
+          consentDict: { alex: 'decline' },
+          guarding: ['alex', 'Kid2'],
+        },
+        sam: {
+          name: 'sam',
+          age: 33,
+          inviteList: ['alex', 'zoe'],
+          consentList: ['alex'],
+          declineList: ['alex'],
+          consentDict: { alex: 'consent', zoe: 'decline' },
+          guarding: ['Alex'],
+        },
+      },
+      children: {},
+    };
+
+    kill('alex', 'testing', gameState);
+
+    expect(gameState.population).not.toHaveProperty('alex');
+    expect(gameState.population.zoe.inviteList).toBeUndefined();
+    expect(gameState.population.zoe.consentList).toBeUndefined();
+    expect(gameState.population.zoe.declineList).toBeUndefined();
+    expect(gameState.population.zoe.consentDict).toBeUndefined();
+    expect(gameState.population.zoe.guarding).toEqual(['Kid2']);
+
+    expect(gameState.population.sam.inviteList).toEqual(['zoe']);
+    expect(gameState.population.sam.consentList).toBeUndefined();
+    expect(gameState.population.sam.declineList).toBeUndefined();
+    expect(gameState.population.sam.consentDict).toEqual({ zoe: 'decline' });
+    expect(gameState.population.sam.guarding).toBeUndefined();
+  });
 });

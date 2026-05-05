@@ -38,10 +38,12 @@ function migrate(sourceName, destination, force, gameState) {
     return 'no destination';
   }
   if (gameState.demand || gameState.violence) {
+    const activeDemand = gameState.demand || gameState.violence;
     text.addMessage(
       gameState,
       sourceName,
-      'The game can not advance until the demand is dealt with.'
+      'The game can not advance until the demand is dealt with. Active demand: ' +
+        activeDemand
     );
     return 'blocked by demand';
   }

@@ -5,6 +5,7 @@ const {
   consumeFoodChildren,
   birth,
 } = require('../libs/feed.js');
+const diceLib = require('../libs/dice.js');
 console.log = jest.fn();
 
 describe('feed function', () => {
@@ -480,10 +481,12 @@ describe('consumeFoodChildren Function Tests', () => {
   });
 
   it('should handle child birth when age becomes 0', () => {
-    // Mock dice roll for successful birth (> 4)
-    mockDice.roll.mockReturnValue(10);
+    // Mock dice roll on the actual module used by feed.js for deterministic birth path
+    const rollSpy = jest.spyOn(diceLib, 'roll').mockReturnValue(10);
 
     response = consumeFoodChildren(gameState);
+
+    rollSpy.mockRestore();
 
     // Check birth-related actions
     expect(response).toContain('Mother1 gives birth to a male-child');
@@ -585,10 +588,12 @@ describe('consumeFoodChildren Function Tests', () => {
   });
 
   it('should handle nursing setup for newborns', () => {
-    // Mock dice roll for successful birth
-    mockDice.roll.mockReturnValue(10);
+    // Mock dice roll on the actual module used by feed.js for deterministic birth path
+    const rollSpy = jest.spyOn(diceLib, 'roll').mockReturnValue(10);
 
     consumeFoodChildren(gameState);
+
+    rollSpy.mockRestore();
 
     // Mother1 should be nursing Child1
     expect(gameState.population['Mother1'].nursing).toContain('Child1');

@@ -9,7 +9,7 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('invite')
     .setDescription(
-      '(<partner> [other choice(s) partner] [!pass] Comma separated list of who to mate with.'
+      'Set your invite list (web UI: use the Romance panel). Comma-separated names in priority order; append !pass to give up if all decline.'
     )
     .addStringOption((option) =>
       option

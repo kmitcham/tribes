@@ -40,6 +40,7 @@ function kill(name, message, gameState) {
     personKey = getKeyByValue(gameState.population, person);
     gameState.graveyard[name] = person;
     delete population[personKey];
+    removeNameFromAllRelationshipLists(name, gameState.population);
   } else if (childName in children) {
     guardlib.unguardChild(childName, population);
     clearNursingPregnant(childName, gameState.population);
@@ -48,6 +49,7 @@ function kill(name, message, gameState) {
     child.deathSeason = gameState.seasonCounter;
     gameState.graveyard[childName] = child;
     delete children[childName];
+    removeNameFromAllRelationshipLists(childName, gameState.population);
   } else {
     console.log('Tried to kill ' + name + ' but could not find them');
     return;
@@ -57,6 +59,58 @@ function kill(name, message, gameState) {
   return;
 }
 module.exports.kill = kill;
+
+function removeNameFromArray(list, targetName) {
+  if (!list || !Array.isArray(list)) {
+    return;
+  }
+  var lowerTarget = String(targetName).toLowerCase();
+  for (var i = list.length - 1; i >= 0; i--) {
+    if (String(list[i]).toLowerCase() === lowerTarget) {
+      list.splice(i, 1);
+    }
+  }
+}
+
+function removeNameFromAllRelationshipLists(targetName, population) {
+  if (!population) {
+    return;
+  }
+  for (var personName in population) {
+    var person = population[personName];
+    if (!person) {
+      continue;
+    }
+    removeNameFromArray(person.inviteList, targetName);
+    removeNameFromArray(person.consentList, targetName);
+    removeNameFromArray(person.declineList, targetName);
+    removeNameFromArray(person.guarding, targetName);
+
+    if (person.consentDict && typeof person.consentDict === 'object') {
+      for (var key in person.consentDict) {
+        if (String(key).toLowerCase() === String(targetName).toLowerCase()) {
+          delete person.consentDict[key];
+        }
+      }
+      if (Object.keys(person.consentDict).length === 0) {
+        delete person.consentDict;
+      }
+    }
+
+    if (person.inviteList && person.inviteList.length === 0) {
+      delete person.inviteList;
+    }
+    if (person.consentList && person.consentList.length === 0) {
+      delete person.consentList;
+    }
+    if (person.declineList && person.declineList.length === 0) {
+      delete person.declineList;
+    }
+    if (person.guarding && person.guarding.length === 0) {
+      delete person.guarding;
+    }
+  }
+}
 
 function clearNursingPregnant(childName, population) {
   for (personName in population) {

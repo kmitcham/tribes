@@ -1633,3 +1633,26 @@ test('globalMatingCheck resolves decline directly dictionary', () => {
   reproLib.globalMatingCheck(gameState, {});
   expect(gameState.messages['p1']).toContain('declines');
 });
+
+test('startReproductionChecks reports active demand details when blocked', () => {
+  var gameState = {
+    population: {
+      Chief: { name: 'Chief', chief: true, gender: 'male' },
+      p2: { name: 'p2', gender: 'female' },
+    },
+    children: {},
+    workRound: false,
+    foodRound: true,
+    reproductionRound: false,
+    seasonCounter: 8,
+    currentLocationName: 'marsh',
+    gameTrack: { marsh: 12 },
+    violence: 'share all food now',
+  };
+
+  reproLib.startReproductionChecks(gameState, 'Chief');
+
+  expect(gameState.messages.Chief).toBe(
+    'You cannot start a new round while there is an active demand. Active demand: share all food now'
+  );
+});

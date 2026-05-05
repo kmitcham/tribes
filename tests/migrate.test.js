@@ -45,8 +45,13 @@ test('should return "no destination" if no destination provided', () => {
 });
 
 test('should return "blocked by demand" if there is demand or violence', () => {
-  gameState.demand = true;
+  gameState.demand = 'share the food';
   expect(m.migrate('Bob', 'hills', false, gameState)).toBe('blocked by demand');
+  expect(text.addMessage).toHaveBeenCalledWith(
+    gameState,
+    'Bob',
+    expect.stringContaining('Active demand: share the food')
+  );
 });
 
 test('should return "not reproduction round" if not in reproduction round', () => {

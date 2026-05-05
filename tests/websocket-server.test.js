@@ -1220,7 +1220,31 @@ describe('Info Request Handling (using actual exports)', () => {
     expect(response.label).toBe('children');
   });
 
-  // Note: status request test omitted as it requires full gameState with gameTrack, locations, etc.
+  test('should include demand and violence in status request gameState payload', () => {
+    const gameState = {
+      name: 'test-tribe',
+      population: { player1: { name: 'player1' } },
+      children: {},
+      gameTrack: { marsh: 10 },
+      currentLocationName: 'marsh',
+      seasonCounter: 8,
+      workRound: false,
+      foodRound: false,
+      reproductionRound: true,
+      startStamp: '2026-05-04T00:00:00.000Z',
+      demand: 'share the food',
+      violence: 'share the food',
+      needChanceRoll: false,
+    };
+
+    wsServer.handleInfoRequest(mockWs, { selection: 'status' }, gameState);
+
+    const response = mockWs.getLastSentMessage();
+    expect(response.type).toBe('infoRequest');
+    expect(response.label).toBe('status');
+    expect(response.gameState.demand).toBe('share the food');
+    expect(response.gameState.violence).toBe('share the food');
+  });
 });
 
 module.exports = {

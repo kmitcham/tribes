@@ -156,6 +156,145 @@ afterAll(async () => {
 });
 
 describe('Browser Integration: tribes-interface.html', () => {
+    test('status update renders conflict banner for demand and violence', async () => {
+        await loginAs('eggplant');
+
+        const demandState = {
+            round: 'reproduction',
+            workRound: false,
+            foodRound: false,
+            reproductionRound: true,
+            seasonCounter: 8,
+            currentLocationName: 'marsh',
+            year: 4,
+            startStamp: 'test-stamp',
+            demand: 'share fish',
+            violence: null
+        };
+
+        await page.evaluate((state) => {
+            window.tribesClient.handleMessage({
+                type: 'infoRequest',
+                label: 'status',
+                content: 'status',
+                gameState: state
+            });
+        }, demandState);
+
+        await page.waitForSelector('#conflictBanner.active');
+        let bannerState = await page.evaluate(() => ({
+            title: document.getElementById('conflictBannerTitle').textContent,
+            body: document.getElementById('conflictBannerBody').textContent,
+            isViolence: document.getElementById('conflictBanner').classList.contains('violence')
+        }));
+
+        expect(bannerState.title).toBe('Demand Active');
+        expect(bannerState.body).toContain('share fish');
+        expect(bannerState.isViolence).toBe(false);
+
+        const violenceState = { ...demandState, violence: 'share fish' };
+        await page.evaluate((state) => {
+            window.tribesClient.handleMessage({
+                type: 'infoRequest',
+                label: 'status',
+                content: 'status',
+                gameState: state
+            });
+        }, violenceState);
+
+        bannerState = await page.evaluate(() => ({
+            title: document.getElementById('conflictBannerTitle').textContent,
+            body: document.getElementById('conflictBannerBody').textContent,
+            isViolence: document.getElementById('conflictBanner').classList.contains('violence')
+        }));
+
+        expect(bannerState.title).toBe('Violence Active');
+        expect(bannerState.body).toContain('share fish');
+        expect(bannerState.isViolence).toBe(true);
+    }, 25000);
+
+    test('romance modal submits invite and consent updates together', async () => {
+        await loginAs('eggplant');
+
+        await page.evaluate(() => {
+            const client = window.tribesClient;
+            client.selectedCommand = { name: 'romance', description: 'Romance modal test' };
+            if (!client.currentPopulation) {
+                throw new Error('Population not loaded for romance test');
+            }
+            const playerName = document.getElementById('playerName').value.trim();
+            const player = client.currentPopulation[playerName];
+            const targets = Object.values(client.currentPopulation)
+                .filter((p) => p.name !== playerName && p.gender !== player.gender)
+                .map((p) => p.name);
+            if (targets.length === 0) {
+                throw new Error('No romance targets available in fixture');
+            }
+            client.currentRomanceLists = {
+                inviteList: [],
+                consentList: [],
+                declineList: [],
+                consentDict: {},
+            };
+            client.showCommandModal();
+        });
+
+        await page.waitForSelector('#commandModal.active');
+        await page.waitForSelector('.romance-row');
+
+        const result = await page.evaluate(() => {
+            const rows = Array.from(document.querySelectorAll('.romance-row'));
+            const firstRow = rows[0];
+            const firstName = firstRow.dataset.name;
+
+            const inviteCheckbox = firstRow.querySelector('.romance-invite');
+            if (inviteCheckbox && !inviteCheckbox.checked) {
+                inviteCheckbox.click();
+            }
+
+            const responseSelect = firstRow.querySelector('.romance-dropdown');
+            responseSelect.value = 'consent';
+            responseSelect.dispatchEvent(new Event('change', { bubbles: true }));
+
+            const passCheckbox = document.getElementById('invite_append_pass');
+            if (passCheckbox && !passCheckbox.checked) {
+                passCheckbox.click();
+            }
+
+            const sentPayloads = [];
+            const originalSend = window.tribesClient.send.bind(window.tribesClient);
+            window.tribesClient.send = (payload) => sentPayloads.push(payload);
+
+            document.getElementById('modalExecuteBtn').click();
+
+            window.tribesClient.send = originalSend;
+
+            const invitePayload = sentPayloads.find(
+                (p) => p.type === 'command' && p.command === 'invite'
+            );
+            const romancePayload = sentPayloads.find((p) => p.type === 'romanceRequest');
+            const modalIsOpen = document
+                .getElementById('commandModal')
+                .classList.contains('active');
+
+            return {
+                firstName,
+                invitePayload,
+                romancePayload,
+                modalIsOpen,
+                sentCount: sentPayloads.length,
+            };
+        });
+
+        expect(result.sentCount).toBeGreaterThanOrEqual(2);
+        expect(result.invitePayload).toBeDefined();
+        expect(result.invitePayload.parameters.invitelist).toContain(result.firstName);
+        expect(result.invitePayload.parameters.invitelist).toContain('!pass');
+        expect(result.romancePayload).toBeDefined();
+        expect(result.romancePayload.consentDict[result.firstName]).toBe('consent');
+        expect(result.modalIsOpen).toBe(false);
+    }, 25000);
+
     test('connect and execute craft command', async () => {
         await loginAs('test_user_777');
         await openCommand('craft');

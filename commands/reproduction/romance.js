@@ -8,7 +8,7 @@ const text = require('../../libs/textprocess');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('romance')
-    .setDescription('(show your current reproduction lists)'),
+    .setDescription('Open your romance panel — set who to invite and how to respond to invitations.'),
   async execute(interaction, gameState, bot) {
     var sourceName = interaction.member.displayName;
     response = onCommand(sourceName, gameState, bot);

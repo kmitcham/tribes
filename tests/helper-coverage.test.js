@@ -49,4 +49,24 @@ describe('Helper coverage tests', () => {
       'banish requires chief priviliges'
     );
   });
+
+  test('banishAdmin reports active demand details', () => {
+    const gameState = {
+      population: {
+        Leader: { name: 'Leader', chief: true },
+        Target: { name: 'Target' },
+      },
+      demand: 'food redistribution',
+      messages: {},
+    };
+    const addMessageSpy = jest.spyOn(text, 'addMessage');
+
+    banish.banishAdmin(gameState, 'Leader', 'Target', 'reason');
+
+    expect(addMessageSpy).toHaveBeenCalledWith(
+      gameState,
+      'Leader',
+      'banish can not be used while a demand is active. Active demand: food redistribution'
+    );
+  });
 });

@@ -1,0 +1,99 @@
+FAIL tests/browser-integration.test.js (51.443 s)
+  Browser Integration: tribes-interface.html
+    ✕ renders population as structured person cards (15165 ms)
+    ✕ connect and execute craft command (15159 ms)
+    ✕ guard and ignore update the guarded child list (20167 ms)
+
+  ● Browser Integration: tribes-interface.html › renders population as structured person cards
+
+    thrown: "Exceeded timeout of 15000 ms for a test.
+    Use jest.setTimeout(newTimeout) to increase the timeout value, if this is a long-running test."
+
+      158 |
+      159 | describe('Browser Integration: tribes-interface.html', () => {
+    > 160 |     test('renders population as structured person cards', async () => {
+          |     ^
+      161 |         await loginAs('eggplant');
+      162 |
+      163 |         await page.waitForSelector('.person-card');
+
+      at tests/browser-integration.test.js:160:5
+      at Object.<anonymous> (tests/browser-integration.test.js:159:1)
+
+  ● Browser Integration: tribes-interface.html › connect and execute craft command
+
+    thrown: "Exceeded timeout of 15000 ms for a test.
+    Use jest.setTimeout(newTimeout) to increase the timeout value, if this is a long-running test."
+
+      184 |     }, 15000);
+      185 |
+    > 186 |     test('connect and execute craft command', async () => {
+          |     ^
+      187 |         await loginAs('test_user_777');
+      188 |         await openCommand('craft');
+      189 |         await new Promise(r => setTimeout(r, 500));
+
+      at tests/browser-integration.test.js:186:5
+      at Object.<anonymous> (tests/browser-integration.test.js:159:1)
+
+  ● Browser Integration: tribes-interface.html › guard and ignore update the guarded child list
+
+    thrown: "Exceeded timeout of 20000 ms for a test.
+    Use jest.setTimeout(newTimeout) to increase the timeout value, if this is a long-running test."
+
+      201 |     }, 15000);
+      202 |
+    > 203 |     test('guard and ignore update the guarded child list', async () => {
+          |     ^
+      204 |         await loginAs('eggplant');
+      205 |
+      206 |         await openCommand('guard');
+
+      at tests/browser-integration.test.js:203:5
+      at Object.<anonymous> (tests/browser-integration.test.js:159:1)
+
+----------------------|---------|----------|---------|---------|-------------------
+File                  | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+----------------------|---------|----------|---------|---------|-------------------
+All files             |       0 |        0 |       0 |       0 |                   
+ TribesAgent          |       0 |        0 |       0 |       0 |                   
+  websocket-server.js |       0 |        0 |       0 |       0 | 1-2044            
+ TribesAgent/libs     |       0 |        0 |       0 |       0 |                   
+  banish.js           |       0 |        0 |       0 |       0 | 1-114             
+  chief.js            |       0 |        0 |       0 |       0 | 1-480             
+  children.js         |       0 |        0 |       0 |       0 | 1-166             
+  command-builders.js |       0 |        0 |       0 |       0 | 6-108             
+  dice.js             |       0 |        0 |       0 |       0 | 2-19              
+  endgame.js          |       0 |        0 |       0 |       0 | 1-337             
+  feed.js             |       0 |        0 |       0 |       0 | 1-451             
+  gather.js           |       0 |        0 |       0 |       0 | 1-112             
+  general.js          |       0 |        0 |       0 |       0 | 1-317             
+  guardCode.js        |       0 |        0 |       0 |       0 | 1-163             
+  help.js             |       0 |      100 |       0 |       0 | 2-95              
+  hunt.js             |       0 |        0 |       0 |       0 | 1-313             
+  kill.js             |       0 |        0 |       0 |       0 | 1-74              
+  logger.js           |       0 |      100 |       0 |       0 | 1-28              
+  migrateLib.js       |       0 |        0 |       0 |       0 | 1-172             
+  obey.js             |       0 |        0 |       0 |       0 | 1-48              
+  population.js       |       0 |        0 |       0 |       0 | 1-566             
+  profession.js       |       0 |        0 |       0 |       0 | 1-99              
+  referees.js         |       0 |      100 |     100 |       0 | 1                 
+  reproduction.js     |       0 |        0 |       0 |       0 | 1-1328            
+  save.js             |       0 |        0 |       0 |       0 | 1-237             
+  textprocess.js      |       0 |        0 |       0 |       0 | 2-42              
+  tribeHistory.js     |       0 |        0 |       0 |       0 | 1-45              
+  tribesRegistry.js   |       0 |        0 |       0 |       0 | 1-72              
+  util.js             |       0 |        0 |       0 |       0 | 1-83              
+  violence.js         |       0 |        0 |       0 |       0 | 1-461             
+  work.js             |       0 |        0 |       0 |       0 | 1-276             
+----------------------|---------|----------|---------|---------|-------------------
+Jest: "global" coverage threshold for statements (55%) not met: 0%
+Jest: "global" coverage threshold for branches (45%) not met: 0%
+Jest: "global" coverage threshold for lines (55%) not met: 0%
+Jest: "global" coverage threshold for functions (55%) not met: 0%
+Test Suites: 1 failed, 1 total
+Tests:       3 failed, 3 total
+Snapshots:   0 total
+Time:        52.249 s
+Ran all test suites matching /tests\/browser-integration.test.js/i.
+Force exiting Jest: Have you considered using `--detectOpenHandles` to detect async operations that kept running after all tests finished?

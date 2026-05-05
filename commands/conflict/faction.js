@@ -58,8 +58,17 @@ function setFaction(gameState, actorName, side) {
     );
     return;
   }
+  if (player.faction === side) {
+    text.addMessage(
+      gameState,
+      actorName,
+      'You are already in the ' + side + ' faction.'
+    );
+    return;
+  }
   player.faction = side;
   violencelib.getFactionResult(gameState);
   gameState.saveRequired = true;
   return;
 }
+module.exports.setFaction = setFaction;
