@@ -40,7 +40,7 @@ function kill(name, message, gameState) {
     personKey = getKeyByValue(gameState.population, person);
     gameState.graveyard[name] = person;
     delete population[personKey];
-    removeNameFromAllRelationshipLists(name, gameState.population);
+    removeNameFromAllRelationshipLists(name, gameState.population, false);
   } else if (childName in children) {
     guardlib.unguardChild(childName, population);
     clearNursingPregnant(childName, gameState.population);
@@ -49,7 +49,7 @@ function kill(name, message, gameState) {
     child.deathSeason = gameState.seasonCounter;
     gameState.graveyard[childName] = child;
     delete children[childName];
-    removeNameFromAllRelationshipLists(childName, gameState.population);
+    removeNameFromAllRelationshipLists(childName, gameState.population, true);
   } else {
     console.log('Tried to kill ' + name + ' but could not find them');
     return;
@@ -72,7 +72,7 @@ function removeNameFromArray(list, targetName) {
   }
 }
 
-function removeNameFromAllRelationshipLists(targetName, population) {
+function removeNameFromAllRelationshipLists(targetName, population, isChild = false) {
   if (!population) {
     return;
   }
@@ -84,7 +84,11 @@ function removeNameFromAllRelationshipLists(targetName, population) {
     removeNameFromArray(person.inviteList, targetName);
     removeNameFromArray(person.consentList, targetName);
     removeNameFromArray(person.declineList, targetName);
-    removeNameFromArray(person.guarding, targetName);
+    // guarding arrays contain child names only; only clean up when the dead entity is a child
+    // to avoid accidentally unguarding a child that shares a name with a dead adult
+    if (isChild) {
+      removeNameFromArray(person.guarding, targetName);
+    }
 
     if (person.consentDict && typeof person.consentDict === 'object') {
       for (var key in person.consentDict) {

@@ -62,6 +62,7 @@ function endViolence(gameState, winnerFaction) {
   text.addMessage(gameState, 'tribe', winMessage);
   delete gameState.violence;
   delete gameState.violenceRounds;
+  delete gameState.violenceFactions;
   for (const playerName in gameState.population) {
     const player = gameState.population[playerName];
     delete player.strategy;
@@ -77,12 +78,17 @@ function moreFactionViolenceRequired(gameState) {
   var proList = [];
   var conList = [];
   population = gameState['population'];
+  const violenceFactions = gameState.violenceFactions || {};
+  if (!gameState.violenceFactions) {
+    console.warn('moreFactionViolenceRequired: violenceFactions missing during active violence');
+  }
   // dead people are in the graveyard
   for (playerName in population) {
     player = population[playerName];
-    if (player['faction'] == 'for' && !player['escaped']) {
+    const faction = player['faction'] || violenceFactions[playerName];
+    if (faction == 'for' && !player['escaped']) {
       proList.push(player);
-    } else if (player['faction'] == 'against' && !player['escaped']) {
+    } else if (faction == 'against' && !player['escaped']) {
       conList.push(player);
     }
   }
@@ -267,6 +273,14 @@ const getFactionResult = (gameState) => {
     } else {
       gameState.violence = gameState.demand;
       gameState.violenceRounds = 0;
+      // Save faction assignments before they are cleared so violence resolution can use them
+      gameState.violenceFactions = {};
+      for (const pName in gameState['population']) {
+        const faction = gameState['population'][pName]['faction'];
+        if (faction) {
+          gameState.violenceFactions[pName] = faction;
+        }
+      }
       response =
         'Tribal society breaks down as VIOLENCE is required to settle the issue of ' +
         gameState.demand +
@@ -420,11 +434,16 @@ const resolveViolence = (gameState) => {
     // Determine winner by surviving (non-escaped) faction members
     let forSurvivors = 0;
     let againstSurvivors = 0;
+    const violenceFactions = gameState.violenceFactions || {};
+    if (!gameState.violenceFactions) {
+      console.warn('resolveViolence: violenceFactions missing during active violence');
+    }
     for (const pName in population) {
       const p = population[pName];
       if (!p.escaped) {
-        if (p.faction === 'for') forSurvivors++;
-        else if (p.faction === 'against') againstSurvivors++;
+        const faction = p.faction || violenceFactions[pName];
+        if (faction === 'for') forSurvivors++;
+        else if (faction === 'against') againstSurvivors++;
       }
     }
     let winnerFaction = 'none';
