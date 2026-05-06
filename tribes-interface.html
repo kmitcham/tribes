@@ -4698,22 +4698,28 @@
                     ? `${formatNameList(escapedPlayers)} ${escapedCount === 1 ? 'has' : 'have'} run away.`
                     : 'No players have exited combat via run away.';
 
-                const chipMarkup = [];
-                chipMarkup.push(`<span class="conflict-chip neutral">${combatRounds} combat round${combatRounds === 1 ? '' : 's'}</span>`);
+                chips.textContent = '';
+                const appendConflictChip = (variant, label) => {
+                    const chip = document.createElement('span');
+                    chip.className = `conflict-chip ${variant}`;
+                    chip.textContent = label;
+                    chips.appendChild(chip);
+                };
+
+                appendConflictChip('neutral', `${combatRounds} combat round${combatRounds === 1 ? '' : 's'}`);
                 if (activeViolence) {
                     const pickClass = pendingViolenceChoices > 0 ? 'warning' : 'good';
                     const pickLabel = pendingViolenceChoices > 0
                         ? `Choices pending: ${pendingViolenceChoices}`
                         : 'All choices submitted';
-                    chipMarkup.push(`<span class="conflict-chip ${pickClass}">${pickLabel}</span>`);
+                    appendConflictChip(pickClass, pickLabel);
 
                     const escapeClass = escapedCount > 0 ? 'warning' : 'good';
                     const escapeLabel = escapedCount > 0
                         ? `Run aways: ${escapedCount}`
                         : 'No run aways';
-                    chipMarkup.push(`<span class="conflict-chip ${escapeClass}">${escapeLabel}</span>`);
+                    appendConflictChip(escapeClass, escapeLabel);
                 }
-                chips.innerHTML = chipMarkup.join('');
 
                 if (activeViolence) {
                     title.textContent = 'Violence Active';
