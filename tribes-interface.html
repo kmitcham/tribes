@@ -4282,7 +4282,7 @@
                     return this.humanizePopulationText(person.faction);
                 }
 
-                if (this.currentStatusData && (this.currentStatusData.demand || this.currentStatusData.violence)) {
+                if (this.currentStatusData && this.currentStatusData.demand) {
                     return 'Undeclared';
                 }
 
