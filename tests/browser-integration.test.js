@@ -1,5 +1,12 @@
 process.env.JEST_USE_REAL_TIMERS = 'true';
-const puppeteer = require('puppeteer');
+const puppeteer = globalThis.puppeteer || {
+    launch: async () => {
+        if (!globalThis.browser) {
+            throw new Error('Puppeteer is not available in the test environment.');
+        }
+        return globalThis.browser;
+    }
+};
 const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
