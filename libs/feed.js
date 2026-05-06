@@ -18,7 +18,7 @@ function feed(unused, player, amount, inputChildList, gameState) {
     );
     return;
   }
-  
+
   feedAtLeastOneChild = false;
   for (cName of inputChildList) {
     childName = text.capitalizeFirstLetter(cName);

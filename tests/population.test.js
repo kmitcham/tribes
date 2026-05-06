@@ -126,6 +126,27 @@ test('person by ignoresCase with spaces', () => {
   expect(actualName).toEqual(expectName);
 });
 
+test('memberByName normalizes null stored resources to zero', () => {
+  var gameState = {
+    population: {
+      tester: {
+        name: 'tester',
+        food: null,
+        grain: null,
+        basket: null,
+        spearhead: null,
+      },
+    },
+  };
+
+  player = pop.memberByName('tester', gameState);
+
+  expect(player.food).toBe(0);
+  expect(player.grain).toBe(0);
+  expect(player.basket).toBe(0);
+  expect(player.spearhead).toBe(0);
+});
+
 test('person with gender', () => {
   var gameState = {
     population: {},

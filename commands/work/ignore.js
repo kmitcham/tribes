@@ -1,4 +1,7 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('../../libs/command-builders.js');
+const {
+  SlashCommandBuilder,
+  EmbedBuilder,
+} = require('../../libs/command-builders.js');
 
 const guardlib = require('../../libs/guardCode.js');
 const text = require('../../libs/textprocess.js');
@@ -27,17 +30,31 @@ module.exports = {
         .setName('child3')
         .setDescription('another child of the tribe')
         .setRequired(false)
+    )
+    .addStringOption((option) =>
+      option
+        .setName('child4')
+        .setDescription('another child of the tribe')
+        .setRequired(false)
+    )
+    .addStringOption((option) =>
+      option
+        .setName('child5')
+        .setDescription('another child of the tribe')
+        .setRequired(false)
     ),
   async execute(interaction, gameState) {
     var actorName = interaction.member.displayName;
     var cName = interaction.options.getString('child1');
     var cName2 = interaction.options.getString('child2');
     var cName3 = interaction.options.getString('child3');
-    ignoreChildren(gameState, actorName, cName, cName2, cName3);
+    var cName4 = interaction.options.getString('child4');
+    var cName5 = interaction.options.getString('child5');
+    ignoreChildren(gameState, actorName, cName, cName2, cName3, cName4, cName5);
   },
 };
 
-function ignoreChildren(gameState, actorName, cName, cName2, cName3) {
+function ignoreChildren(gameState, actorName, cName, cName2, cName3, cName4, cName5) {
   var person = pop.memberByName(actorName, gameState);
 
   if (person.worked == true) {
@@ -64,6 +81,12 @@ function ignoreChildren(gameState, actorName, cName, cName2, cName3) {
   if (cName3) {
     response += ignoreChild(gameState, actorName, cName3) + '\n';
   }
+  if (cName4) {
+    response += ignoreChild(gameState, actorName, cName4) + '\n';
+  }
+  if (cName5) {
+    response += ignoreChild(gameState, actorName, cName5) + '\n';
+  }
   if (response.includes('FAIL')) {
     text.addMessage(gameState, actorName, response);
   } else {
@@ -82,14 +105,14 @@ function ignoreChild(gameState, actorName, cName) {
       ' actorName ' +
       actorName
   );
-  if (
-    'all' == cName.toLowerCase() &&
-    person.guarding &&
-    person.guarding.length > 0
-  ) {
-    response = actorName + ' stops guarding ' + person.guarding + '\n';
-    delete person.guarding;
-    return response;
+  if ('all' == cName.toLowerCase()) {
+    if (person.guarding && person.guarding.length > 0) {
+      response = actorName + ' stops guarding ' + person.guarding + '\n';
+      delete person.guarding;
+      return response;
+    } else {
+      return actorName + ' is not guarding anyone.\n';
+    }
   }
   childName = text.capitalizeFirstLetter(cName);
   child = children[childName];

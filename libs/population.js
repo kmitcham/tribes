@@ -3,6 +3,42 @@ const dice = require('./dice');
 const prof = require('./profession');
 const help = require('./help.js');
 
+function normalizeStoredResourceValue(value) {
+  var numericValue = Number(value);
+  if (!Number.isFinite(numericValue) || numericValue < 0) {
+    return 0;
+  }
+  return Math.floor(numericValue);
+}
+module.exports.normalizeStoredResourceValue = normalizeStoredResourceValue;
+
+function normalizePlayerResources(player) {
+  if (!player || typeof player !== 'object') {
+    return player;
+  }
+  player.food = normalizeStoredResourceValue(player.food);
+  player.grain = normalizeStoredResourceValue(player.grain);
+  player.basket = normalizeStoredResourceValue(player.basket);
+  player.spearhead = normalizeStoredResourceValue(player.spearhead);
+  return player;
+}
+module.exports.normalizePlayerResources = normalizePlayerResources;
+
+function normalizePopulationResources(gameStateOrPopulation) {
+  var population = gameStateOrPopulation;
+  if (population && population.population) {
+    population = population.population;
+  }
+  if (!population || typeof population !== 'object') {
+    return population;
+  }
+  for (var memberName in population) {
+    normalizePlayerResources(population[memberName]);
+  }
+  return population;
+}
+module.exports.normalizePopulationResources = normalizePopulationResources;
+
 function convertStringToArray(listString) {
   if (listString instanceof Array) {
     return listString;
@@ -113,6 +149,7 @@ function memberByName(name, gameState) {
     }
   }
   if (person != null) {
+    normalizePlayerResources(person);
     // WTF is this?
     for (var type in person) {
       if (Object.prototype.hasOwnProperty.call(person, type)) {
@@ -138,6 +175,28 @@ function memberByName(name, gameState) {
   return null;
 }
 module.exports.memberByName = memberByName;
+
+/**
+ * Return the key under which this member is stored in gameState.population.
+ * Use this for message routing so all addMessage(..., address, ...) use the
+ * same key the client may have registered with (population key vs member.name can differ).
+ * @param {string|object} nameOrMember - Player name or member object
+ * @param {object} gameState
+ * @returns {string|null} Population key or null
+ */
+function getPopulationKey(nameOrMember, gameState) {
+  if (!gameState || !gameState.population) return null;
+  var member =
+    typeof nameOrMember === 'object'
+      ? nameOrMember
+      : memberByName(nameOrMember, gameState);
+  if (!member) return null;
+  for (var key in gameState.population) {
+    if (gameState.population[key] === member) return key;
+  }
+  return null;
+}
+module.exports.getPopulationKey = getPopulationKey;
 
 function deadOrBanishedByName(name, gameState) {
   var member = null;
@@ -216,33 +275,37 @@ function memberByNameFromDictionary(name, dictionary) {
 }
 
 function decrementSickness(population, gameState) {
-  for (personName in population) {
-    person = population[personName];
-    if (person.isSick && person.isSick > 0) {
-      person.isSick = person.isSick - 1;
-      console.log(person.name + ' decrement sickness  ' + person.isSick);
+  for (const personName in population) {
+    const person = population[personName];
+    if (person.isSick !== undefined && person.isSick !== null) {
+      if (person.isSick > 0) {
+        person.isSick = person.isSick - 1;
+        console.log(person.name + ' decrement sickness  ' + person.isSick);
+      }
+      if (person.isSick < 1) {
+        delete person.isSick;
+        text.addMessage(
+          gameState,
+          person.name,
+          'You have recovered from your illness.'
+        );
+        console.log(person.name + ' recover sickness  ');
+      }
     }
-    if (person.isInjured && person.isInjured > 0) {
-      person.isInjured = person.isInjured - 1;
-      console.log(person.name + ' decrement injury  ' + person.isSick);
-    }
-    if (person.isSick < 1) {
-      delete person.isSick;
-      text.addMessage(
-        gameState,
-        person.name,
-        'You have recovered from your illness.'
-      );
-      console.log(person.name + ' recover sickness  ');
-    }
-    if (person.isInjured < 1) {
-      text.addMessage(
-        gameState,
-        person.name,
-        'You have recovered from your injury.'
-      );
-      delete person.isInjured;
-      console.log(person.name + ' recover injury  ');
+    if (person.isInjured !== undefined && person.isInjured !== null) {
+      if (person.isInjured > 0) {
+        person.isInjured = person.isInjured - 1;
+        console.log(person.name + ' decrement injury  ' + person.isInjured);
+      }
+      if (person.isInjured < 1) {
+        delete person.isInjured;
+        text.addMessage(
+          gameState,
+          person.name,
+          'You have recovered from your injury.'
+        );
+        console.log(person.name + ' recover injury  ');
+      }
     }
   }
 }
@@ -404,7 +467,7 @@ function vote(gameState, actorName, candidateName) {
     }
   }
   console.log('Drone count while voting is ' + droneCount);
-  
+
   // Find current chief (before any changes)
   var currentChief = null;
   for (personName in gameState.population) {
@@ -414,7 +477,7 @@ function vote(gameState, actorName, candidateName) {
       break;
     }
   }
-  
+
   // count all existing votes
   if (totalVotes >= (2 / 3) * (tribeSize - droneCount)) {
     // clear the previous chief
@@ -426,14 +489,14 @@ function vote(gameState, actorName, candidateName) {
     }
     candidate.chief = true;
     history(candidate.name, 'became chief', gameState);
-    
+
     // Only send message if chief actually changed (none to chief, or one chief to another)
     if (currentChief === null || currentChief !== candidate.name) {
       text.addMessage(gameState, 'tribe', candidate.name + ' is the new chief');
       var chiefHelp = help.chiefHelp();
       text.addMessage(gameState, candidate.name, chiefHelp);
     }
-    
+
     // Flag that command lists need to be refreshed for all tribe members
     gameState.commandsNeedRefresh = true;
   }

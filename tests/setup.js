@@ -19,6 +19,11 @@ global.console = {
 
 // Mock WebSocket for all tests
 global.WebSocket = class MockWebSocket {
+  static CONNECTING = 0;
+  static OPEN = 1;
+  static CLOSING = 2;
+  static CLOSED = 3;
+
   constructor() {
     this.readyState = 1; // OPEN
     this.sentMessages = [];
@@ -125,20 +130,23 @@ global.window = {
   },
 };
 
-// Mock setTimeout and setInterval for faster tests
-global.setTimeout = jest.fn((fn, delay) => {
-  // Execute immediately in tests
-  fn();
-  return 1;
-});
+// If the test explicitly needs real timers (like Puppeteer integration tests),
+// we allow it, otherwise mock them.
+if (!process.env.JEST_USE_REAL_TIMERS) {
+  global.setTimeout = jest.fn((fn, delay) => {
+    // Execute immediately in tests
+    fn();
+    return 1;
+  });
 
-global.setInterval = jest.fn((fn, delay) => {
-  // Don't execute in tests
-  return 1;
-});
+  global.setInterval = jest.fn((fn, delay) => {
+    // Don't execute in tests
+    return 1;
+  });
 
-global.clearTimeout = jest.fn();
-global.clearInterval = jest.fn();
+  global.clearTimeout = jest.fn();
+  global.clearInterval = jest.fn();
+}
 
 // Helper function to create mock command definitions
 global.createMockCommand = (name, options = []) => ({

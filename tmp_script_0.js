@@ -1,0 +1,3569 @@
+class TribesClient {
+  constructor() {
+    this.ws = null;
+    this.clientId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    this.commands = {};
+    this.selectedCommand = null;
+    this.currentPopulation = null; // Store current population for dropdowns
+    this.currentChildren = null; // Store current children for child targeting
+    this.currentRomanceLists = null; // Store current romance lists
+    this.reconnectAttempts = 0;
+    this.maxReconnectAttempts = 5;
+    this.reconnectInterval = 2000;
+    this.isLoggedIn = false; // Track login state
+    this.isReferee = false; // Track referee status
+    this.chiefStatus = false; // Track chief status
+
+    this.loadSavedSettings();
+    this.initializeEventListeners();
+    this.hideCommandsSection(); // Initially hide commands until login
+    this.connect();
+  }
+
+  // Session management functions
+  storeSession(token, playerName) {
+    this.currentSessionToken = token;
+    this.currentPlayerName = playerName;
+    localStorage.setItem('tribesSessionToken', token);
+    localStorage.setItem('tribesPlayerName', playerName);
+    console.log('Session stored:', playerName);
+  }
+
+  restoreSession() {
+    const token = localStorage.getItem('tribesSessionToken');
+    const playerName = localStorage.getItem('tribesPlayerName');
+
+    if (token && playerName) {
+      this.currentSessionToken = token;
+      this.currentPlayerName = playerName;
+
+      // Pre-fill the login form
+      const playerNameInput = document.getElementById('playerName');
+      if (playerNameInput) {
+        playerNameInput.value = playerName;
+      }
+
+      console.log('Session restored for:', playerName);
+      return true;
+    }
+    return false;
+  }
+
+  clearSession() {
+    this.currentSessionToken = null;
+    this.currentPlayerName = null;
+    localStorage.removeItem('tribesSessionToken');
+    localStorage.removeItem('tribesPlayerName');
+  }
+
+  authenticateWithSession() {
+    if (
+      this.currentSessionToken &&
+      this.ws &&
+      this.ws.readyState === WebSocket.OPEN
+    ) {
+      this.send({
+        type: 'authenticateSession',
+        token: this.currentSessionToken,
+      });
+      return true;
+    }
+    return false;
+  }
+
+  logout(logoutAll = false) {
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.send({
+        type: 'logout',
+        logoutAll: logoutAll,
+      });
+    }
+
+    this.clearSession();
+    this.isLoggedIn = false;
+    this.expandLoginArea();
+    this.hideCommandsSection();
+    this.addMessage('Logged out successfully', 'info');
+  }
+  setCookie(name, value, days = 14) {
+    const expires = new Date();
+    expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
+    document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
+  }
+
+  getCookie(name) {
+    const nameEQ = name + '=';
+    const ca = document.cookie.split(';');
+    for (let i = 0; i < ca.length; i++) {
+      let c = ca[i];
+      while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+      if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+    }
+    return null;
+  }
+
+  loadSavedSettings() {
+    const savedTribe = this.getCookie('tribesLastTribe');
+    const savedPlayerName = this.getCookie('tribesLastPlayerName');
+
+    if (savedTribe) {
+      // Wait for DOM to be ready, then set the value
+      setTimeout(() => {
+        const tribeSelect = document.getElementById('tribeSelect');
+        const tribeIndicator = document.getElementById('tribeRemembered');
+        if (tribeSelect && tribeIndicator) {
+          tribeSelect.value = savedTribe;
+          tribeIndicator.style.display = 'inline';
+          tribeIndicator.title = 'Tribe remembered from last visit';
+        }
+      }, 100);
+    }
+
+    if (savedPlayerName) {
+      setTimeout(() => {
+        const playerNameInput = document.getElementById('playerName');
+        const nameIndicator = document.getElementById('nameRemembered');
+        if (playerNameInput && nameIndicator) {
+          playerNameInput.value = savedPlayerName;
+          nameIndicator.style.display = 'inline';
+          nameIndicator.title = 'Player name remembered from last visit';
+        }
+      }, 100);
+    }
+
+    // Load message history after settings are loaded
+    setTimeout(() => {
+      this.loadMessageHistory();
+    }, 300);
+
+    // Show welcome back message if we loaded settings
+    if (savedTribe || savedPlayerName) {
+      setTimeout(() => {
+        const welcomeMsg = savedPlayerName
+          ? `Welcome back, ${savedPlayerName}! 🏛️`
+          : 'Previous settings restored 🏛️';
+        this.addMessage(welcomeMsg, 'info');
+      }, 400);
+    }
+  }
+
+  saveSettings() {
+    const tribe = document.getElementById('tribeSelect').value;
+    const playerName = document.getElementById('playerName').value;
+
+    if (tribe) {
+      this.setCookie('tribesLastTribe', tribe);
+      const tribeIndicator = document.getElementById('tribeRemembered');
+      if (tribeIndicator) {
+        tribeIndicator.style.display = 'inline';
+        tribeIndicator.title = 'Tribe remembered from last visit';
+      }
+    }
+
+    if (playerName) {
+      this.setCookie('tribesLastPlayerName', playerName);
+      const nameIndicator = document.getElementById('nameRemembered');
+      if (nameIndicator) {
+        nameIndicator.style.display = 'inline';
+        nameIndicator.title = 'Player name remembered from last visit';
+      }
+    } else {
+      // Hide indicator if name is cleared
+      const nameIndicator = document.getElementById('nameRemembered');
+      if (nameIndicator) {
+        nameIndicator.style.display = 'none';
+      }
+    }
+  }
+
+  connect() {
+    try {
+      this.updateConnectionStatus('connecting');
+
+      // Initialize game status bar
+      this.updateGameStatusBar('Welcome to Tribes! Loading game status...');
+
+      // Check if server provided WebSocket configuration
+      const serverConfig = window.TRIBES_WS_CONFIG;
+      if (serverConfig) {
+        logWithTimestamp(
+          'Using server-provided WebSocket configuration:',
+          serverConfig
+        );
+        const wsProtocol = serverConfig.protocol === 'https' ? 'wss' : 'ws';
+        const wsHost = serverConfig.host.split(':')[0]; // Remove port from host if present
+
+        // For cloud deployments with HTTPS, don't include custom ports as they're typically proxied
+        let wsPort = '';
+        if (serverConfig.protocol === 'http' && serverConfig.port !== '80') {
+          wsPort = `:${serverConfig.port}`;
+        } else if (
+          serverConfig.protocol === 'https' &&
+          serverConfig.port !== '443'
+        ) {
+          // For HTTPS cloud deployments, only include port if it's not the default
+          // Most cloud platforms proxy to standard ports
+          const isCloudHost =
+            !wsHost.includes('localhost') &&
+            !wsHost.includes('127.0.0.1') &&
+            !wsHost.startsWith('192.168.') &&
+            !wsHost.startsWith('10.') &&
+            !wsHost.startsWith('172.');
+          if (!isCloudHost) {
+            wsPort = `:${serverConfig.port}`;
+          }
+        }
+
+        const wsUrl = `${wsProtocol}://${wsHost}${wsPort}`;
+
+        logWithTimestamp(`Attempting WebSocket connection: ${wsUrl}`);
+        this.ws = new WebSocket(wsUrl);
+        this.setupWebSocketHandlers(() => {
+          logWithTimestamp(
+            'Server-configured WebSocket failed, falling back to auto-detection'
+          );
+          this.connectWithFallback();
+        });
+        return;
+      }
+
+      this.connectWithFallback();
+    } catch (error) {
+      console.error('Error connecting:', error);
+      logWithTimestamp('WebSocket connection failed with error');
+      this.updateConnectionStatus('disconnected');
+      this.scheduleReconnect();
+    }
+  }
+
+  setupWebSocketHandlers(onCloseCallback) {
+    this.ws.onopen = () => {
+      logWithTimestamp('WebSocket connected');
+      this.updateConnectionStatus('connected');
+      this.reconnectAttempts = 0;
+      this.requestCommandList();
+    };
+
+    this.ws.onmessage = (event) => {
+      this.handleMessage(JSON.parse(event.data));
+    };
+
+    this.ws.onerror = (error) => {
+      console.error('WebSocket error:', error);
+    };
+
+    this.ws.onclose = () => {
+      logWithTimestamp('WebSocket closed');
+      this.updateConnectionStatus('disconnected');
+      if (onCloseCallback) onCloseCallback();
+    };
+  }
+
+  connectWithFallback() {
+    try {
+      // Smart WebSocket connection logic for local and cloud deployment
+      const currentHost = window.location.hostname;
+      const currentPort = window.location.port;
+      const isSecure = window.location.protocol === 'https:';
+
+      // Prioritize current page's host for cloud deployments, fallback to local for development
+      let hosts, port, protocol;
+
+      if (
+        currentHost !== 'localhost' &&
+        currentHost !== '127.0.0.1' &&
+        !currentHost.startsWith('192.168.') &&
+        !currentHost.startsWith('10.') &&
+        !currentHost.startsWith('172.')
+      ) {
+        // Cloud deployment - use the same host and protocol as the page
+        hosts = [currentHost];
+        // For cloud deployments, always try the same port as the page first, then fallback to common ports
+        let portToTry;
+        if (currentPort) {
+          portToTry = `:${currentPort}`;
+        } else {
+          // If no explicit port, try without port first (default 80/443), then try common app ports
+          portToTry = '';
+        }
+        port = portToTry;
+        protocol = isSecure ? 'wss' : 'ws';
+        logWithTimestamp(
+          `Cloud deployment detected, connecting to ${protocol}://${currentHost}${port}`
+        );
+      } else {
+        // Local development - try multiple local addresses
+        hosts = [currentHost, 'localhost', '127.0.0.1', '192.168.1.20'];
+        port = ':8000';
+        protocol = 'ws';
+        logWithTimestamp(`Local development detected, trying multiple hosts`);
+      }
+
+      const setupWebSocketHandlers = (successCallback) => {
+        this.ws.onopen = () => {
+          logWithTimestamp('WebSocket connected');
+          this.updateConnectionStatus('connected');
+          this.reconnectAttempts = 0;
+          this.requestCommandList();
+        };
+
+        this.ws.onmessage = (event) => {
+          this.handleMessage(JSON.parse(event.data));
+        };
+
+        this.ws.onerror = (error) => {
+          console.error('WebSocket error:', error);
+        };
+
+        this.ws.onclose = () => {
+          logWithTimestamp('WebSocket closed');
+          this.updateConnectionStatus('disconnected');
+          if (successCallback) successCallback();
+        };
+      };
+
+      const tryHost = (hostIndex = 0) => {
+        if (hostIndex >= hosts.length) {
+          // If all hosts failed and we're in cloud deployment, try alternative ports
+          if (
+            currentHost !== 'localhost' &&
+            currentHost !== '127.0.0.1' &&
+            !currentHost.startsWith('192.168.') &&
+            !currentHost.startsWith('10.') &&
+            !currentHost.startsWith('172.')
+          ) {
+            // Cloud deployment fallback - try common ports if original failed
+            const fallbackPorts = ['', ':8000', ':3000', ':80', ':443'];
+            let currentFallbackIndex = 0;
+
+            const tryFallbackPort = () => {
+              if (currentFallbackIndex >= fallbackPorts.length) {
+                console.error(
+                  'Failed to connect to any host or port combination'
+                );
+                this.updateConnectionStatus('disconnected');
+                this.scheduleReconnect();
+                return;
+              }
+
+              const fallbackPort = fallbackPorts[currentFallbackIndex];
+              const wsUrl = `${protocol}://${currentHost}${fallbackPort}`;
+              logWithTimestamp(`Trying fallback port: ${wsUrl}`);
+
+              this.ws = new WebSocket(wsUrl);
+              setupWebSocketHandlers(() => {
+                currentFallbackIndex++;
+                setTimeout(tryFallbackPort, 1000);
+              });
+
+              // If connection doesn't open in 3 seconds, try next fallback port
+              setTimeout(() => {
+                if (this.ws.readyState !== WebSocket.OPEN) {
+                  this.ws.close();
+                }
+              }, 3000);
+            };
+
+            tryFallbackPort();
+          } else {
+            console.error('Failed to connect to any host');
+            this.updateConnectionStatus('disconnected');
+            this.scheduleReconnect();
+          }
+          return;
+        }
+
+        const host = hosts[hostIndex];
+        const wsUrl = `${protocol}://${host}${port}`;
+        logWithTimestamp(`Trying to connect to ${wsUrl}`);
+
+        this.ws = new WebSocket(wsUrl);
+        setupWebSocketHandlers(() => tryHost(hostIndex + 1));
+
+        // If connection doesn't open in 2 seconds, try next host
+        setTimeout(() => {
+          if (this.ws.readyState !== WebSocket.OPEN) {
+            this.ws.close();
+            tryHost(hostIndex + 1);
+          }
+        }, 2000);
+      };
+
+      tryHost();
+    } catch (error) {
+      console.error('Error connecting:', error);
+      this.updateConnectionStatus('disconnected');
+      this.scheduleReconnect();
+    }
+  }
+
+  scheduleReconnect() {
+    logWithTimestamp('Scheduled reconnect');
+    if (this.reconnectAttempts < this.maxReconnectAttempts) {
+      this.reconnectAttempts++;
+      setTimeout(() => this.connect(), this.reconnectInterval);
+    }
+  }
+
+  updateConnectionStatus(status) {
+    const statusEl = document.getElementById('connectionStatus');
+    statusEl.className = `connection-status ${status}`;
+
+    switch (status) {
+      case 'connected':
+        statusEl.textContent = '✅ Connected to Tribes Server';
+        break;
+      case 'connecting':
+        statusEl.textContent = '🔄 Connecting...';
+        break;
+      case 'disconnected':
+        statusEl.textContent = '❌ Disconnected from Server';
+        break;
+    }
+  }
+
+  send(data) {
+    if (!this.ws) {
+      this.addMessage(
+        'WebSocket not initialized; attempting to connect',
+        'error'
+      );
+      this.connectWithFallback();
+    }
+    if (this.ws && !this.ws.readyState === WebSocket.OPEN) {
+      this.addMessage('WebSocket not open; attempting to reconnect', 'error');
+      this.connectWithFallback();
+    }
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      data.clientId = this.clientId;
+      data.tribe = document.getElementById('tribeSelect').value;
+      data.playerName = document.getElementById('playerName').value;
+      data.password = document.getElementById('playerPassword').value;
+
+      this.ws.send(JSON.stringify(data));
+    } else {
+      this.addMessage('Not connected to server', 'error');
+    }
+  }
+
+  handleMessage(data) {
+    logWithTimestamp('Received:', data);
+
+    switch (data.type) {
+      case 'sessionAuthResponse':
+        this.handleSessionAuthResponse(data);
+        break;
+
+      case 'logoutResponse':
+        this.handleLogoutResponse(data);
+        break;
+
+      case 'forceLogout':
+        this.handleForceLogout(data);
+        break;
+
+      case 'commandList':
+        this.handleCommandList(data);
+        break;
+      case 'commandResponse':
+        this.handleCommandResponse(data);
+        break;
+      case 'infoRequest':
+        this.handleInfoResponse(data);
+        break;
+      case 'tribeMessage':
+        this.addMessage(data.message, 'tribe', '[EVERYONE]');
+        break;
+      case 'privateMessage':
+        this.addMessage(data.message, 'private', '[PRIVATE]');
+        break;
+      case 'registration':
+        this.handleRegistrationResponse(data);
+        break;
+      case 'helpContent':
+        this.handleHelpContent(data);
+        break;
+      case 'manageUsersList':
+        this.handleManageUsersList(data);
+        break;
+      case 'exportGameResponse':
+        this.handleExportGameResponse(data);
+        break;
+      case 'importGameResponse':
+        this.handleImportGameResponse(data);
+        break;
+      case 'error':
+        this.addMessage(data.message, 'error');
+        break;
+      default:
+        logWithTimestamp('Unknown message type:', data.type);
+    }
+  }
+
+  handleSessionAuthResponse(data) {
+    if (data.success) {
+      this.isLoggedIn = true;
+      this.currentPlayerName = data.playerName;
+      this.showCommandsSection();
+      this.minimizeLoginArea();
+      this.addMessage(`Welcome back, ${data.playerName}!`, 'success');
+      this.requestCommandList();
+      if (document.getElementById('tribeSelect').value) {
+        this.refreshGameData();
+      }
+    } else {
+      // Session invalid, clear it and show login
+      this.clearSession();
+      this.addMessage('Session expired. Please log in again.', 'error');
+      this.expandLoginArea();
+    }
+  }
+
+  handleLogoutResponse(data) {
+    this.addMessage(data.message, 'success');
+  }
+
+  handleForceLogout(data) {
+    this.clearSession();
+    this.isLoggedIn = false;
+    this.expandLoginArea();
+    this.hideCommandsSection();
+    this.addMessage(data.message, 'info');
+  }
+
+  handleCommandList(data) {
+    if (data.commands) {
+      this.commands = data.commands;
+    }
+    if (data.isReferee !== undefined) {
+      this.isReferee = data.isReferee;
+    }
+    if (data.isChief !== undefined) {
+      this.chiefStatus = data.isChief;
+    }
+
+    if (data.tribes) {
+      this.currentTribes = data.tribes;
+      this.updateTribeDropdown(data.tribes);
+      this.renderManageTribesList(data.tribes);
+    }
+
+    this.updateCommandList();
+    this.initCommandSearch();
+
+    // Show/hide referee tools based on referee status
+    const refereeSection = document.getElementById('refereeAdminSection');
+    if (refereeSection) {
+      refereeSection.style.display = this.isReferee ? 'block' : 'none';
+    }
+  }
+
+  updateTribeDropdown(tribesData) {
+    const tribeSelect = document.getElementById('tribeSelect');
+    if (!tribeSelect) return;
+
+    const currentValue = tribeSelect.value;
+    tribeSelect.innerHTML = '';
+
+    // Convert to array and sort
+    const tribes = Object.values(tribesData).sort((a, b) =>
+      a.name.localeCompare(b.name)
+    );
+
+    let optionAdded = false;
+
+    tribes.forEach((tribe) => {
+      // Referees see all tribes, non-referees only see unhidden tribes
+      if (this.isReferee || !tribe.hidden) {
+        const opt = document.createElement('option');
+        opt.value = tribe.name;
+        // Capitalize first letter
+        let displayName =
+          tribe.name.charAt(0).toUpperCase() + tribe.name.slice(1);
+        if (tribe.hidden) displayName += ' (Hidden)';
+        opt.textContent = displayName;
+        tribeSelect.appendChild(opt);
+        if (tribe.name === currentValue) optionAdded = true;
+      }
+    });
+
+    if (optionAdded) {
+      tribeSelect.value = currentValue;
+    } else if (tribeSelect.options.length > 0) {
+      // Try to restore from cookie if not currently set
+      const savedTribe = this.getCookie('tribesLastTribe');
+      const savedExists = Array.from(tribeSelect.options).some(
+        (opt) => opt.value === savedTribe
+      );
+      if (savedTribe && savedExists) {
+        tribeSelect.value = savedTribe;
+      } else {
+        tribeSelect.value = tribeSelect.options[0].value;
+      }
+    }
+  }
+
+  handleCommandResponse(data) {
+    const type = data.success ? 'success' : 'error';
+    this.addMessage(data.message, 'command', `[${data.command.toUpperCase()}]`);
+    // Server will now automatically refresh game data for all tribe members
+  }
+
+  handleInfoResponse(data) {
+    switch (data.label) {
+      case 'population':
+        this.currentPopulation = data.content;
+        this.updatePopulationTable(data.content);
+        // Update command list when population data changes (for chief status)
+        this.updateCommandList();
+        break;
+      case 'children':
+        this.currentChildren = data.content; // Store for targeting dropdowns
+        this.updateChildrenTable(data.content);
+        break;
+      case 'status':
+        this.updateStatusText(data.content);
+        // Update status bar with structured data if available
+        if (data.gameState) {
+          this.updateGameStatusBarWithData(data.gameState);
+        } else {
+          this.updateGameStatusBar(data.content);
+        }
+        break;
+      case 'romance':
+        this.currentRomanceLists = data.content;
+        this.displayCurrentRomanceLists(data.content);
+
+        // Also regenerate form to populate defaults if the modal is currently showing
+        const romanceModal = document.getElementById('commandModal');
+        if (
+          romanceModal &&
+          romanceModal.classList.contains('active') &&
+          this.selectedCommand
+        ) {
+          const romanceCommands = ['consent', 'decline', 'invite'];
+          if (
+            romanceCommands.includes(this.selectedCommand.name.toLowerCase())
+          ) {
+            const paramsContainer = document.getElementById(
+              'modalCommandParameters'
+            );
+            if (paramsContainer) {
+              this.generateCommandFormInModal(paramsContainer);
+            }
+          }
+        }
+        break;
+      case 'error':
+        this.addMessage(data.content, 'error');
+        break;
+    }
+  }
+
+  displayCurrentRomanceLists(romanceLists) {
+    // Only display if a romance command modal is currently open
+    const modal = document.getElementById('commandModal');
+    if (!modal.classList.contains('active') || !this.selectedCommand) {
+      return;
+    }
+
+    const romanceCommands = ['consent', 'decline', 'invite'];
+    if (!romanceCommands.includes(this.selectedCommand.name.toLowerCase())) {
+      return;
+    }
+
+    // Unified form handles its own display
+    const cmdNameDisplay = this.selectedCommand.name.toLowerCase();
+    if (cmdNameDisplay === 'consent' || cmdNameDisplay === 'decline') return;
+
+    // Find the modal description area
+    const modalDescription = document.getElementById('modalDescription');
+    if (!modalDescription) {
+      return;
+    }
+
+    // Create current lists display
+    let currentListsText = '';
+    const commandName = this.selectedCommand.name.toLowerCase();
+
+    if (commandName === 'invite' && romanceLists.inviteList?.length > 0) {
+      currentListsText += `<strong>Current invite list:</strong> ${romanceLists.inviteList.join(', ')}<br>`;
+    }
+    if (commandName === 'consent' && romanceLists.consentList?.length > 0) {
+      currentListsText += `<strong>Current consent list:</strong> ${romanceLists.consentList.join(', ')}<br>`;
+    }
+    if (commandName === 'decline' && romanceLists.declineList?.length > 0) {
+      currentListsText += `<strong>Current decline list:</strong> ${romanceLists.declineList.join(', ')}<br>`;
+    }
+
+    if (currentListsText === '') {
+      currentListsText = `<em>You currently have no ${commandName} list.</em><br>`;
+    }
+
+    // Append current lists to the existing description
+    modalDescription.innerHTML =
+      this.selectedCommand.description + '<br><br>' + currentListsText;
+  }
+
+  handleRegistrationResponse(data) {
+    const type = data.label === 'success' ? 'success' : 'error';
+    this.addMessage(`Registration: ${data.content}`, type);
+
+    // Auto-refresh game data after successful registration
+    if (data.label === 'success') {
+      // Store session token if provided
+      if (data.sessionToken && data.playerName) {
+        this.storeSession(data.sessionToken, data.playerName);
+      }
+
+      this.isLoggedIn = true; // Set logged in state
+      this.showCommandsSection(); // Show commands after successful login
+      this.requestCommandList(); // Refresh command list in case chief status changed
+      this.minimizeLoginArea(); // Minimize login area after successful registration
+      if (document.getElementById('tribeSelect').value) {
+        this.refreshGameData();
+      }
+    }
+  }
+
+  minimizeLoginArea() {
+    const userInfo = document.querySelector('.user-info');
+    userInfo.classList.add('minimized');
+  }
+
+  expandLoginArea() {
+    const userInfo = document.querySelector('.user-info');
+    userInfo.classList.remove('minimized');
+    this.isLoggedIn = false; // Reset login state when expanding login area
+    this.hideCommandsSection(); // Hide commands when going back to login
+  }
+
+  hideCommandsSection() {
+    const commandsSection = document.querySelector('.commands-section');
+    commandsSection.classList.add('hidden');
+  }
+
+  showCommandsSection() {
+    const commandsSection = document.querySelector('.commands-section');
+    commandsSection.classList.remove('hidden');
+  }
+
+  initCommandSearch() {
+    const searchInput = document.getElementById('commandSearchInput');
+    const goBtn = document.getElementById('commandGoBtn');
+    const suggestions = document.getElementById('commandSuggestions');
+
+    let currentHighlight = -1;
+    let filteredCommands = [];
+
+    const hiddenCommands = ['children', 'inventory'];
+    const commandNames = Object.keys(this.commands)
+      .filter((name) => !hiddenCommands.includes(name))
+      .sort();
+
+    const updateSuggestions = (query) => {
+      if (!query) {
+        suggestions.style.display = 'none';
+        filteredCommands = [];
+        goBtn.disabled = true;
+        currentHighlight = -1;
+        return;
+      }
+
+      filteredCommands = commandNames.filter((name) =>
+        name.toLowerCase().includes(query.toLowerCase())
+      );
+
+      if (filteredCommands.length === 0) {
+        suggestions.style.display = 'none';
+        goBtn.disabled = true;
+        return;
+      }
+
+      suggestions.innerHTML = '';
+      filteredCommands.forEach((name, index) => {
+        const div = document.createElement('div');
+        div.className = 'search-suggestion';
+        div.textContent = name;
+        div.onclick = () => {
+          searchInput.value = name;
+          suggestions.style.display = 'none';
+          goBtn.disabled = false;
+          currentHighlight = -1;
+        };
+        suggestions.appendChild(div);
+      });
+
+      suggestions.style.display = 'block';
+      goBtn.disabled = false;
+      currentHighlight = -1;
+    };
+
+    const highlightSuggestion = (index) => {
+      const suggestionElements =
+        suggestions.querySelectorAll('.search-suggestion');
+      suggestionElements.forEach((el, i) => {
+        el.classList.toggle('highlighted', i === index);
+      });
+
+      if (index >= 0 && index < suggestionElements.length) {
+        searchInput.value = filteredCommands[index];
+      }
+    };
+
+    searchInput.oninput = (e) => {
+      updateSuggestions(e.target.value);
+    };
+
+    searchInput.onkeydown = (e) => {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        currentHighlight = Math.min(
+          currentHighlight + 1,
+          filteredCommands.length - 1
+        );
+        highlightSuggestion(currentHighlight);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        currentHighlight = Math.max(currentHighlight - 1, -1);
+        if (currentHighlight === -1) {
+          searchInput.value = '';
+          updateSuggestions('');
+        } else {
+          highlightSuggestion(currentHighlight);
+        }
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        const commandName = searchInput.value;
+        if (commandName && this.commands[commandName]) {
+          suggestions.style.display = 'none';
+          this.selectCommand(commandName);
+          currentHighlight = -1;
+        }
+      } else if (e.key === 'Escape') {
+        suggestions.style.display = 'none';
+        currentHighlight = -1;
+      }
+    };
+
+    searchInput.onblur = () => {
+      // Delay hiding to allow click on suggestions
+      setTimeout(() => {
+        suggestions.style.display = 'none';
+        currentHighlight = -1;
+      }, 200);
+    };
+
+    goBtn.onclick = () => {
+      const commandName = searchInput.value;
+      if (commandName && this.commands[commandName]) {
+        suggestions.style.display = 'none';
+        this.selectCommand(commandName);
+        currentHighlight = -1;
+      }
+    };
+  }
+
+  filterCommands(query) {
+    // Filter command list based on search query
+    document.querySelectorAll('.command-item').forEach((item) => {
+      const commandName = item.dataset.command;
+      const show =
+        !query || commandName.toLowerCase().includes(query.toLowerCase());
+      item.style.display = show ? 'block' : 'none';
+    });
+  }
+
+  updateCommandList() {
+    const container = document.getElementById('commandList');
+    container.innerHTML = '';
+    const playerIsChief = this.isCurrentPlayerChief();
+
+    // Commands that are not needed with the GUI
+    const hiddenCommands = ['children', 'inventory'];
+
+    // Sort commands alphabetically by name and filter out hidden commands
+    const sortedCommands = Object.entries(this.commands)
+      .filter(([name]) => !hiddenCommands.includes(name))
+      .sort(([a], [b]) => a.localeCompare(b));
+
+    sortedCommands.forEach(([name, command]) => {
+      const item = document.createElement('div');
+      item.className = 'command-item';
+      item.dataset.command = name;
+      item.dataset.category = command.category;
+
+      const isChiefCommand = this.isChiefCommand(command.description);
+
+      // Add disabled class if it's a chief command and player is not chief
+      if (isChiefCommand && !playerIsChief) {
+        item.classList.add('disabled');
+      }
+      item.innerHTML = `
+                        <div class="command-name">${name}${isChiefCommand ? ' 👑' : ''}</div>
+                        <div class="command-desc">${command.description}${isChiefCommand && !playerIsChief ? ' [Requires Chief]' : ''}</div>
+                    `;
+      item.onclick = () => {
+        if (isChiefCommand && !playerIsChief) {
+          this.addMessage('⚠️ This command requires chief privileges', 'error');
+          return;
+        }
+        this.selectCommand(name);
+      };
+      container.appendChild(item);
+    });
+  }
+
+  selectCommand(commandName) {
+    // Update selected command visual state
+    document.querySelectorAll('.command-item').forEach((item) => {
+      item.classList.toggle('selected', item.dataset.command === commandName);
+    });
+
+    const command = this.commands[commandName];
+    this.selectedCommand = { name: commandName, ...command };
+
+    // For romance list commands, request current lists to display
+    const romanceCommands = ['consent', 'decline', 'invite'];
+    if (romanceCommands.includes(commandName.toLowerCase())) {
+      this.send({
+        type: 'infoRequest',
+        selection: 'romance',
+      });
+    }
+
+    // If command has no parameters, execute it immediately
+    if (!command.options || command.options.length === 0) {
+      // Special case: ignore command needs custom interface even without server-defined options
+      if (commandName.toLowerCase() === 'ignore') {
+        this.showCommandModal();
+      } else {
+        logWithTimestamp(
+          'Auto-executing command with no parameters:',
+          commandName
+        );
+        this.send({
+          type: 'command',
+          command: commandName,
+          parameters: {},
+        });
+      }
+    } else {
+      // Show modal for commands with parameters
+      this.showCommandModal();
+    }
+  }
+
+  showCommandModal() {
+    const modal = document.getElementById('commandModal');
+    const title = document.getElementById('modalTitle');
+    const description = document.getElementById('modalDescription');
+    const parametersContainer = document.getElementById(
+      'modalCommandParameters'
+    );
+    const executeBtn = document.getElementById('modalExecuteBtn');
+    const cancelBtn = document.getElementById('modalCancelBtn');
+    const closeBtn = document.getElementById('modalClose');
+
+    title.textContent = this.selectedCommand.name;
+    description.textContent = this.selectedCommand.description;
+
+    // Generate command form in modal
+    this.generateCommandFormInModal(parametersContainer);
+
+    // If this is a romance command and we have current lists, display them
+    const romanceCommands = ['consent', 'decline', 'invite'];
+    if (
+      romanceCommands.includes(this.selectedCommand.name.toLowerCase()) &&
+      this.currentRomanceLists
+    ) {
+      this.displayCurrentRomanceLists(this.currentRomanceLists);
+    }
+
+    // Setup modal event handlers
+    executeBtn.onclick = () => this.executeModalCommand();
+    cancelBtn.onclick = () => this.closeCommandModal();
+    closeBtn.onclick = () => this.closeCommandModal();
+
+    // Close modal when clicking overlay
+    modal.onclick = (e) => {
+      if (e.target === modal) {
+        this.closeCommandModal();
+      }
+    };
+
+    // Close modal with ESC key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && modal.classList.contains('active')) {
+        this.closeCommandModal();
+      }
+    });
+
+    // Show modal
+    modal.classList.add('active');
+  }
+
+  closeCommandModal() {
+    const modal = document.getElementById('commandModal');
+    modal.classList.remove('active');
+  }
+
+  executeModalCommand() {
+    const parametersContainer = document.getElementById(
+      'modalCommandParameters'
+    );
+
+    const cmdNameExec = this.selectedCommand
+      ? this.selectedCommand.name.toLowerCase()
+      : '';
+    if (
+      (cmdNameExec === 'consent' || cmdNameExec === 'decline') &&
+      document.getElementById('unifiedRomanceGrid')
+    ) {
+      const dropdowns = parametersContainer.querySelectorAll(
+        'select.romance-dropdown'
+      );
+      let newResponseDict = {};
+      dropdowns.forEach((select) => {
+        const nameStr = select.name.replace('romance_', '');
+        if (select.value !== 'maybe') {
+          newResponseDict[nameStr] = select.value;
+        }
+      });
+
+      this.send({
+        type: 'romanceRequest',
+        playerName: document.getElementById('playerName').value.trim(),
+        consentDict: newResponseDict,
+      });
+      this.closeCommandModal();
+      return;
+    }
+
+    const parameters = this.collectParametersFromContainer(parametersContainer);
+
+    if (parameters !== null) {
+      logWithTimestamp(
+        'Executing modal command:',
+        this.selectedCommand.name,
+        'with parameters:',
+        parameters
+      );
+      this.send({
+        type: 'command',
+        command: this.selectedCommand.name,
+        parameters: parameters,
+      });
+      this.closeCommandModal();
+    }
+  }
+
+  buildRomanceGridForm(container) {
+    container.innerHTML = '';
+    if (!this.currentPopulation) {
+      container.innerHTML = '<p>Loading population data...</p>';
+      return;
+    }
+
+    const currentPlayerName = document
+      .getElementById('playerName')
+      .value.trim();
+    const currentPlayer = this.currentPopulation[currentPlayerName];
+    const gender = currentPlayer ? currentPlayer.gender : null;
+    const oppositeGenderTargets = Object.values(this.currentPopulation).filter(
+      (p) => p.name !== currentPlayerName && p.gender !== gender
+    );
+
+    let consentDict =
+      (this.currentRomanceLists && this.currentRomanceLists.consentDict) || {};
+
+    const gridTable = document.createElement('table');
+    gridTable.style.width = '100%';
+    gridTable.style.borderCollapse = 'collapse';
+    gridTable.style.marginTop = '1rem';
+    gridTable.id = 'unifiedRomanceGrid';
+
+    const thead = document.createElement('thead');
+    thead.innerHTML = `
+                    <tr style="background: #f8f9fa; border-bottom: 2px solid #ddd;">
+                        <th style="padding: 8px; text-align: left;">Player Name</th>
+                        <th style="padding: 8px; text-align: right;">Status</th>
+                    </tr>
+                `;
+    gridTable.appendChild(thead);
+
+    const tbody = document.createElement('tbody');
+
+    const buildRow = (nameStr, displayName) => {
+      const row = document.createElement('tr');
+      row.style.borderBottom = '1px solid #ddd';
+
+      const existingRes = consentDict[nameStr] || 'maybe';
+
+      row.innerHTML = `
+                        <td style="padding: 8px;">${displayName}</td>
+                        <td style="padding: 8px; text-align: right;">
+                            <select name="romance_${nameStr}" class="romance-dropdown" style="padding: 4px; width: 120px;">
+                                <option value="maybe" ${existingRes === 'maybe' ? 'selected' : ''}>🤔 Maybe</option>
+                                <option value="consent" ${existingRes === 'consent' ? 'selected' : ''}>✅ Consent</option>
+                                <option value="decline" ${existingRes === 'decline' ? 'selected' : ''}>❌ Decline</option>
+                            </select>
+                        </td>
+                    `;
+      return row;
+    };
+
+    tbody.appendChild(buildRow('!all', '<i>Everyone else (!all)</i>'));
+
+    oppositeGenderTargets
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .forEach((p) => {
+        tbody.appendChild(buildRow(p.name, p.name));
+      });
+
+    gridTable.appendChild(tbody);
+    container.appendChild(gridTable);
+
+    const note = document.createElement('p');
+    note.style.fontSize = '0.85rem';
+    note.style.color = '#6c757d';
+    note.style.marginTop = '1rem';
+    note.textContent =
+      "Setting 'Maybe' means you will be prompted if they invite you, and you will need to resolve it.";
+    container.appendChild(note);
+  }
+
+  generateCommandFormInModal(container) {
+    if (!this.selectedCommand) return;
+    const cmdName = this.selectedCommand.name.toLowerCase();
+    if (cmdName === 'consent' || cmdName === 'decline') {
+      this.buildRomanceGridForm(container);
+      return;
+    }
+    if (!this.selectedCommand.options) {
+      return;
+    }
+
+    // Preserve existing form values before clearing container
+    const preservedValues = {};
+    const existingInputs = container.querySelectorAll('input, select');
+    existingInputs.forEach((input) => {
+      if (input.id && input.id.startsWith('param_')) {
+        const paramName = input.id.replace('param_', '');
+        // Save checkbox state as checked, not value
+        if (input.type === 'checkbox') {
+          preservedValues[paramName] = input.checked;
+        } else {
+          preservedValues[paramName] = input.value;
+        }
+        console.log(
+          'Preserving modal value for',
+          paramName,
+          ':',
+          preservedValues[paramName]
+        );
+      } else if (input.id === 'invite_append_pass') {
+        preservedValues['invite_append_pass'] = input.checked;
+      }
+    });
+
+    container.innerHTML = '';
+
+    // Check if this command needs player data and fetch it
+    // Exclude induct command - it uses simple text input, not player dropdown
+    const needsPlayerData =
+      this.selectedCommand.name.toLowerCase() !== 'induct' &&
+      this.selectedCommand.options.some((option) =>
+        this.isPlayerTargetingOption(option.name)
+      );
+
+    // Secrets command also needs population data to pre-populate current value
+    const needsPopulationForSecrets =
+      this.selectedCommand.name.toLowerCase() === 'secrets';
+
+    const needsChildrenData = this.selectedCommand.options.some((option) =>
+      this.isChildTargetingOption(option.name)
+    );
+
+    if (
+      (needsPlayerData || needsPopulationForSecrets) &&
+      !this.currentPopulation
+    ) {
+      // Fetch population data first
+      this.send({ type: 'infoRequest', selection: 'population' });
+      // Show loading message
+      container.innerHTML = '<div>Loading player data...</div>';
+      return;
+    }
+
+    if (needsChildrenData && !this.currentChildren) {
+      // Fetch children data first
+      this.send({ type: 'infoRequest', selection: 'children' });
+      // Show loading message
+      container.innerHTML = '<div>Loading children data...</div>';
+      return;
+    }
+
+    this.renderParametersInContainer(container, preservedValues);
+  }
+
+  generateCommandForm() {
+    const form = document.getElementById('commandForm');
+    const container = document.getElementById('commandParameters');
+
+    if (!this.selectedCommand) {
+      form.style.display = 'none';
+      return;
+    }
+    const cmdName = this.selectedCommand.name.toLowerCase();
+    if (cmdName === 'consent' || cmdName === 'decline') {
+      form.style.display = 'block';
+      this.buildRomanceGridForm(container);
+      return;
+    }
+    if (!this.selectedCommand.options) {
+      form.style.display = 'none';
+      return;
+    }
+
+    form.style.display = 'block';
+
+    // Preserve existing form values before clearing container
+    const preservedValues = {};
+    const existingInputs = container.querySelectorAll('input, select');
+    existingInputs.forEach((input) => {
+      if (input.id && input.id.startsWith('param_')) {
+        const paramName = input.id.replace('param_', '');
+        // Save checkbox state as checked, not value
+        if (input.type === 'checkbox') {
+          preservedValues[paramName] = input.checked;
+        } else {
+          preservedValues[paramName] = input.value;
+        }
+        console.log(
+          'Preserving value for',
+          paramName,
+          ':',
+          preservedValues[paramName]
+        );
+      }
+    });
+
+    container.innerHTML = '';
+
+    // Check if this command needs player data and fetch it
+    const needsPlayerData = this.selectedCommand.options.some((option) =>
+      this.isPlayerTargetingOption(option.name)
+    );
+
+    const needsChildrenData = this.selectedCommand.options.some((option) =>
+      this.isChildTargetingOption(option.name)
+    );
+
+    if (needsPlayerData && !this.currentPopulation) {
+      // Fetch population data first
+      this.send({ type: 'infoRequest', selection: 'population' });
+      // Show loading message
+      container.innerHTML = '<div>Loading player data...</div>';
+      return;
+    }
+
+    if (needsChildrenData && !this.currentChildren) {
+      // Fetch children data first
+      this.send({ type: 'infoRequest', selection: 'children' });
+      // Show loading message
+      container.innerHTML = '<div>Loading children data...</div>';
+      return;
+    }
+
+    this.selectedCommand.options.forEach((option) => {
+      const group = document.createElement('div');
+      group.className = 'parameter-group';
+
+      const label = document.createElement('label');
+      label.textContent = `${option.name} ${option.required ? '*' : ''}:`;
+      group.appendChild(label);
+
+      let input;
+      if (option.choices && option.choices.length > 0) {
+        // Existing choice dropdown
+        input = document.createElement('select');
+        option.choices.forEach((choice) => {
+          const opt = document.createElement('option');
+          opt.value = choice.value;
+          opt.textContent = choice.name;
+          input.appendChild(opt);
+        });
+      } else if (this.isPlayerTargetingOption(option.name)) {
+        // Player targeting dropdown
+        input = document.createElement('select');
+        input.innerHTML = '<option value="">Select a player...</option>';
+
+        if (this.currentPopulation) {
+          const currentPlayerName = document.getElementById('playerName').value;
+          let availablePlayers = Object.keys(this.currentPopulation);
+
+          // Filter for reproduction commands to only show opposite gender
+          if (this.isReproductionCommand(this.selectedCommand.name)) {
+            availablePlayers =
+              this.getValidTargetsForReproduction(currentPlayerName);
+          }
+
+          availablePlayers.forEach((playerName) => {
+            const opt = document.createElement('option');
+            opt.value = playerName;
+
+            // Add gender indicator for reproduction commands
+            if (this.isReproductionCommand(this.selectedCommand.name)) {
+              const gender = this.currentPopulation[playerName].gender;
+              const genderIcon = gender === 'male' ? '♂' : '♀';
+              opt.textContent = `${playerName} ${genderIcon}`;
+            } else {
+              opt.textContent = playerName;
+            }
+
+            input.appendChild(opt);
+          });
+
+          // Add helper text for reproduction commands
+          if (
+            this.isReproductionCommand(this.selectedCommand.name) &&
+            availablePlayers.length === 0
+          ) {
+            const helperText = document.createElement('option');
+            helperText.value = '';
+            helperText.textContent = 'No valid targets (opposite gender only)';
+            helperText.disabled = true;
+            input.appendChild(helperText);
+          }
+        }
+      } else if (this.isOrderingOption(option.name)) {
+        // Ordering interface for parameters like invite lists, consent lists
+        let initialValue = preservedValues[option.name] || '';
+
+        // If no preserved value, pre-populate from server data if available
+        if (!initialValue && this.currentRomanceLists) {
+          if (
+            this.selectedCommand.name === 'invite' &&
+            this.currentRomanceLists.inviteList
+          ) {
+            // Filter out !pass as we handle that with a checkbox
+            const cleanList = this.currentRomanceLists.inviteList.filter(
+              (item) => item !== '!pass'
+            );
+            initialValue = cleanList.join(',');
+          } else if (
+            this.selectedCommand.name === 'consent' &&
+            this.currentRomanceLists.consentList
+          ) {
+            initialValue = this.currentRomanceLists.consentList.join(',');
+          } else if (
+            this.selectedCommand.name === 'decline' &&
+            this.currentRomanceLists.declineList
+          ) {
+            initialValue = this.currentRomanceLists.declineList.join(',');
+          }
+        }
+
+        // Check if invite list ended with !pass in the original data to prepopulate checkbox
+        let appendPassChecked =
+          option.name === 'invitelist' && preservedValues['invite_append_pass'];
+        if (
+          appendPassChecked === undefined &&
+          option.name === 'invitelist' &&
+          this.currentRomanceLists &&
+          this.currentRomanceLists.inviteList
+        ) {
+          appendPassChecked =
+            this.currentRomanceLists.inviteList.includes('!pass');
+        } else if (appendPassChecked === undefined) {
+          appendPassChecked = true; // Default
+        }
+
+        input = this.createOrderingInterface(
+          option.name,
+          initialValue,
+          appendPassChecked
+        );
+      } else if (option.type === 4) {
+        // INTEGER
+        input = document.createElement('input');
+        input.type = 'number';
+      } else {
+        input = document.createElement('input');
+        input.type = 'text';
+      }
+
+      input.id = `param_${option.name}`;
+      input.placeholder = option.description || '';
+      input.className = 'form-control';
+
+      // Apply same styling as other inputs
+      input.style.width = '100%';
+      input.style.padding = '0.5rem';
+      input.style.border = '2px solid #ddd';
+      input.style.borderRadius = '4px';
+      input.style.fontSize = '1rem';
+
+      group.appendChild(input);
+
+      // Add helper text for reproduction commands
+      if (
+        (this.isPlayerTargetingOption(option.name) ||
+          this.isOrderingOption(option.name)) &&
+        this.isReproductionCommand(this.selectedCommand.name)
+      ) {
+        const helperText = document.createElement('div');
+        helperText.style.fontSize = '0.8rem';
+        helperText.style.color = '#6c757d';
+        helperText.style.marginTop = '0.25rem';
+
+        const currentPlayerName = document.getElementById('playerName').value;
+        const currentPlayer =
+          this.currentPopulation && this.currentPopulation[currentPlayerName];
+
+        if (!currentPlayer) {
+          helperText.textContent =
+            '⚠️ Join the tribe first to see gender-filtered options';
+          helperText.style.color = '#ffc107';
+        } else {
+          helperText.textContent =
+            '💕 Romance commands only show opposite gender players';
+        }
+
+        group.appendChild(helperText);
+      }
+
+      container.appendChild(group);
+    });
+  }
+
+  isPlayerTargetingOption(optionName) {
+    // Exclude ordering options from regular player targeting
+    if (this.isOrderingOption(optionName)) {
+      return false;
+    }
+
+    // Exclude induct command target - it should be a text input, not dropdown
+    if (
+      this.selectedCommand &&
+      this.selectedCommand.name.toLowerCase() === 'induct'
+    ) {
+      return false;
+    }
+
+    // List of parameter names that should show single player dropdowns
+    const playerTargetingNames = [
+      'target',
+      'player',
+      'member',
+      'user',
+      'who',
+      'person',
+      'candidate',
+      'guardian',
+      'mate',
+      'partner',
+    ];
+
+    return playerTargetingNames.some((name) =>
+      optionName.toLowerCase().includes(name.toLowerCase())
+    );
+  }
+
+  isChildTargetingOption(optionName) {
+    // List of parameter names that should show child dropdowns
+    const childTargetingNames = [
+      'child',
+      'children',
+      'baby',
+      'kid',
+      'offspring',
+      'babysitter',
+    ];
+
+    return childTargetingNames.some((name) =>
+      optionName.toLowerCase().includes(name.toLowerCase())
+    );
+  }
+
+  isOrderingOption(optionName) {
+    // List of parameter names that need ordering interfaces
+    const orderingNames = [
+      'invite',
+      'consent',
+      'decline',
+      'list',
+      'order',
+      'priority',
+      'sequence',
+      'queue',
+      'rank',
+    ];
+
+    return orderingNames.some((name) =>
+      optionName.toLowerCase().includes(name.toLowerCase())
+    );
+  }
+
+  isReproductionCommand(commandName) {
+    // List of commands that deal with reproduction/romance
+    const reproductionCommands = [
+      'romance',
+      'invite',
+      'consent',
+      'decline',
+      'babysit',
+      'checkmating',
+      'pass',
+    ];
+
+    return reproductionCommands.includes(commandName);
+  }
+
+  getValidTargetsForReproduction(currentPlayerName) {
+    if (!this.currentPopulation || !currentPlayerName) {
+      return Object.keys(this.currentPopulation || {});
+    }
+
+    const currentPlayer = this.currentPopulation[currentPlayerName];
+    if (!currentPlayer) {
+      // Current player not in tribe yet - show warning and return all players (except self not applicable)
+      console.warn('Current player not found in tribe population');
+      return Object.keys(this.currentPopulation);
+    }
+
+    if (!currentPlayer.gender) {
+      // If we can't determine current player's gender, allow all other tribe members
+      return Object.keys(this.currentPopulation).filter(
+        (name) => name !== currentPlayerName
+      );
+    }
+
+    const currentPlayerGender = (currentPlayer.gender || '')
+      .toString()
+      .toLowerCase();
+    const oppositeGender = currentPlayerGender === 'male' ? 'female' : 'male';
+
+    // All tribe members of the opposite sex (exclude self). Use case-insensitive gender; include if gender missing so no one is dropped.
+    return Object.keys(this.currentPopulation).filter((playerName) => {
+      if (playerName === currentPlayerName) return false;
+      const player = this.currentPopulation[playerName];
+      if (!player) return false;
+      const g = (player.gender || '').toString().toLowerCase();
+      if (!g) return true; // unknown gender: include so we don't drop tribe members
+      return g === oppositeGender;
+    });
+  }
+
+  renderParametersInContainer(container, preservedValues = {}) {
+    // Special case for ignore command - create custom interface even without server options
+    if (this.selectedCommand.name.toLowerCase() === 'ignore') {
+      this.createIgnoreInterface(container);
+      return;
+    }
+
+    if (
+      !this.selectedCommand.options ||
+      this.selectedCommand.options.length === 0
+    ) {
+      container.innerHTML =
+        '<div style="color: #6c757d; font-style: italic;">This command has no parameters</div>';
+      return;
+    }
+
+    this.selectedCommand.options.forEach((option) => {
+      // Skip force options if player is not a referee
+      if (option.name === 'force' && !this.isReferee) {
+        return;
+      }
+
+      const group = document.createElement('div');
+      group.className = 'parameter-group';
+
+      const label = document.createElement('label');
+      label.textContent = `${option.name} ${option.required ? '*' : ''}:`;
+      group.appendChild(label);
+
+      let input;
+      if (option.choices && option.choices.length > 0) {
+        // Existing choice dropdown
+        input = document.createElement('select');
+        option.choices.forEach((choice) => {
+          const opt = document.createElement('option');
+          opt.value = choice.value;
+          opt.textContent = choice.name;
+          input.appendChild(opt);
+        });
+
+        // Pre-populate secrets command with current willTrain value
+        if (
+          this.selectedCommand.name.toLowerCase() === 'secrets' &&
+          option.name === 'willtrain'
+        ) {
+          const currentPlayerName = document.getElementById('playerName').value;
+          const currentPlayer =
+            this.currentPopulation && this.currentPopulation[currentPlayerName];
+
+          if (currentPlayer) {
+            // If noTeach exists and is true, willTrain is false; otherwise it's true
+            const willTrain = !(currentPlayer.noTeach === true);
+            input.value = willTrain.toString();
+          }
+        }
+      } else if (this.isChildTargetingOption(option.name)) {
+        // Child targeting dropdown
+        input = document.createElement('select');
+        input.innerHTML = '<option value="">Select a child...</option>';
+
+        if (this.currentChildren) {
+          const currentPlayerName = document.getElementById('playerName').value;
+          const isBabysitCommand =
+            this.selectedCommand.name.toLowerCase() === 'babysit';
+          const isFeedingCommand =
+            this.selectedCommand.name.toLowerCase() === 'feed';
+          const isBabysitterOption = option.name.toLowerCase() === 'babysitter';
+
+          // For babysit command babysitter option, only show eligible children
+          if (isBabysitCommand) {
+            if (isBabysitterOption) {
+              // Only show children over age 22 whose mother is the logged in player
+              Object.keys(this.currentChildren).forEach((childName) => {
+                const child = this.currentChildren[childName];
+                const age = child.age || 0;
+                const mother = child.mother;
+                console.log(
+                  `Checking child ${childName}: age ${age}, mother ${mother}`
+                );
+                // Check eligibility: age > 22 and mother is current player
+                if (age > 22 && mother === currentPlayerName) {
+                  const opt = document.createElement('option');
+                  opt.value = childName;
+                  opt.textContent = `${childName} (age ${age})`;
+                  input.appendChild(opt);
+                }
+              });
+            } else {
+              // babysit command but not babysitter option
+              // Show all children under age 23
+              Object.keys(this.currentChildren).forEach((childName) => {
+                const child = this.currentChildren[childName];
+                const age = child.age || 0;
+                if (age <= 23) {
+                  const opt = document.createElement('option');
+                  opt.value = childName;
+                  opt.textContent = `${childName} (age ${age})`;
+                  input.appendChild(opt);
+                }
+              });
+            }
+          } else {
+            // Regular child targeting - show all children or add special options
+
+            // Add individual children
+            Object.keys(this.currentChildren).forEach((childName) => {
+              const child = this.currentChildren[childName];
+              if (child.age <= 23) {
+                const opt = document.createElement('option');
+                opt.value = childName;
+
+                // Add age and food status for context
+                const food = child.food || 0;
+                const age = child.age || 0;
+                const status = food >= 2 ? '🍎' : '😋'; // Fed or hungry
+                opt.textContent = `${childName} (age ${age}, food ${food}) ${status}`;
+
+                input.appendChild(opt);
+              } else {
+                console.log(`Skipping adult: ${childName} (age ${child.age})`);
+              }
+            });
+          }
+          if (isFeedingCommand) {
+            const opt = document.createElement('option');
+            opt.value = '!all';
+            opt.textContent = 'All hungry children';
+            input.appendChild(opt);
+
+            // Also add parent names for feeding all children of a parent
+            if (this.currentPopulation && this.currentChildren) {
+              const parentsWithChildren = new Set();
+              Object.values(this.currentChildren).forEach((child) => {
+                // fathers are unknown during the game
+                if (child.mother) parentsWithChildren.add(child.mother);
+              });
+
+              if (parentsWithChildren.size > 0) {
+                const separator = document.createElement('option');
+                separator.disabled = true;
+                separator.textContent =
+                  '--- Mothers (feed all their children) ---';
+                input.appendChild(separator);
+
+                parentsWithChildren.forEach((parentName) => {
+                  if (this.currentPopulation[parentName]) {
+                    const gender = this.currentPopulation[parentName].gender;
+                    const opt = document.createElement('option');
+                    opt.value = parentName;
+                    opt.textContent = `${parentName}`;
+                    input.appendChild(opt);
+                  }
+                });
+              }
+            }
+          }
+        }
+      } else if (this.isPlayerTargetingOption(option.name)) {
+        // Player targeting dropdown
+        input = document.createElement('select');
+        input.innerHTML = '<option value="">Select a player...</option>';
+
+        if (this.currentPopulation) {
+          const currentPlayerName = document.getElementById('playerName').value;
+          let availablePlayers = Object.keys(this.currentPopulation);
+
+          // Filter for reproduction commands to only show opposite gender
+          if (this.isReproductionCommand(this.selectedCommand.name)) {
+            availablePlayers =
+              this.getValidTargetsForReproduction(currentPlayerName);
+          }
+
+          availablePlayers.forEach((playerName) => {
+            const opt = document.createElement('option');
+            opt.value = playerName;
+
+            // Add gender indicator for reproduction commands
+            if (this.isReproductionCommand(this.selectedCommand.name)) {
+              const gender = this.currentPopulation[playerName].gender;
+              const genderIcon = gender === 'male' ? '♂' : '♀';
+              opt.textContent = `${playerName} ${genderIcon}`;
+            } else {
+              opt.textContent = playerName;
+            }
+
+            input.appendChild(opt);
+          });
+        }
+      } else if (this.isOrderingOption(option.name)) {
+        // Create ordering interface
+        let initialValue = preservedValues[option.name] || '';
+
+        // If no preserved value, pre-populate from server data if available
+        if (!initialValue && this.currentRomanceLists) {
+          if (
+            this.selectedCommand.name === 'invite' &&
+            this.currentRomanceLists.inviteList
+          ) {
+            // Filter out !pass as we handle that with a checkbox
+            const cleanList = this.currentRomanceLists.inviteList.filter(
+              (item) => item !== '!pass'
+            );
+            initialValue = cleanList.join(',');
+          } else if (
+            this.selectedCommand.name === 'consent' &&
+            this.currentRomanceLists.consentList
+          ) {
+            initialValue = this.currentRomanceLists.consentList.join(',');
+          } else if (
+            this.selectedCommand.name === 'decline' &&
+            this.currentRomanceLists.declineList
+          ) {
+            initialValue = this.currentRomanceLists.declineList.join(',');
+          }
+        }
+
+        // Check if invite list ended with !pass in the original data to prepopulate checkbox
+        let appendPassChecked =
+          option.name === 'invitelist' && preservedValues['invite_append_pass'];
+        if (
+          appendPassChecked === undefined &&
+          option.name === 'invitelist' &&
+          this.currentRomanceLists &&
+          this.currentRomanceLists.inviteList
+        ) {
+          appendPassChecked =
+            this.currentRomanceLists.inviteList.includes('!pass');
+        } else if (appendPassChecked === undefined) {
+          appendPassChecked = true; // Default
+        }
+
+        const orderingInterface = this.createOrderingInterface(
+          option.name,
+          initialValue,
+          appendPassChecked
+        );
+        group.appendChild(orderingInterface);
+
+        // Add help text for ordering
+        const helperText = document.createElement('div');
+        helperText.className = 'helper-text';
+        helperText.textContent =
+          'Click "+ Add" to add players, then drag to reorder';
+
+        if (this.isReproductionCommand(this.selectedCommand.name)) {
+          helperText.textContent =
+            '💕 Romance commands only show opposite gender players';
+        }
+
+        group.appendChild(helperText);
+      } else if (option.type === 'boolean') {
+        // Boolean option - use checkbox
+        const checkboxContainer = document.createElement('div');
+        checkboxContainer.className = 'checkbox-container';
+
+        input = document.createElement('input');
+        input.type = 'checkbox';
+        input.id = `param_${option.name}`;
+        input.required = option.required;
+
+        // Restore preserved value for checkbox
+        if (preservedValues.hasOwnProperty(option.name)) {
+          input.checked = preservedValues[option.name];
+          console.log(
+            'Restored checkbox value for',
+            option.name,
+            ':',
+            preservedValues[option.name]
+          );
+        }
+
+        const checkboxLabel = document.createElement('label');
+        checkboxLabel.setAttribute('for', input.id);
+        checkboxLabel.textContent = option.description;
+        checkboxLabel.className = 'checkbox-label';
+
+        checkboxContainer.appendChild(input);
+        checkboxContainer.appendChild(checkboxLabel);
+
+        // Replace the regular label with the checkbox container
+        group.removeChild(label);
+        group.appendChild(checkboxContainer);
+
+        // Don't append input separately since it's in the container
+        input = null;
+      } else {
+        // Regular text input
+        input = document.createElement(
+          option.type === 'number' ? 'input' : 'input'
+        );
+        input.type = option.type || 'text';
+        if (option.placeholder) {
+          input.placeholder = option.placeholder;
+        }
+      }
+
+      if (input) {
+        input.id = `param_${option.name}`;
+        input.required = option.required;
+
+        // Restore preserved values
+        if (preservedValues.hasOwnProperty(option.name)) {
+          if (input.type === 'checkbox') {
+            input.checked = preservedValues[option.name];
+          } else {
+            input.value = preservedValues[option.name];
+          }
+          console.log(
+            'Restored value for',
+            option.name,
+            ':',
+            preservedValues[option.name]
+          );
+        }
+
+        group.appendChild(input);
+      }
+
+      // Add help text for player targeting options in reproduction commands
+      if (
+        (this.isPlayerTargetingOption(option.name) ||
+          this.isOrderingOption(option.name)) &&
+        this.isReproductionCommand(this.selectedCommand.name) &&
+        !this.isOrderingOption(option.name)
+      ) {
+        const helperText = document.createElement('div');
+        helperText.className = 'helper-text';
+
+        if (this.isPlayerTargetingOption(option.name)) {
+          helperText.textContent =
+            '💕 Romance commands only show opposite gender players';
+        }
+
+        group.appendChild(helperText);
+      }
+
+      container.appendChild(group);
+    });
+  }
+
+  createIgnoreInterface(container) {
+    const currentPlayerName = document.getElementById('playerName').value;
+
+    if (!this.currentChildren || !currentPlayerName) {
+      container.innerHTML =
+        '<div style="color: #6c757d; font-style: italic;">Loading children data...</div>';
+      // Fetch children data if not available
+      this.send({ type: 'infoRequest', selection: 'children' });
+      return;
+    }
+
+    const group = document.createElement('div');
+    group.className = 'parameter-group';
+
+    const label = document.createElement('label');
+    label.textContent = 'Children to ignore:';
+    group.appendChild(label);
+
+    const ignoreContainer = document.createElement('div');
+    ignoreContainer.className = 'ignore-container';
+    ignoreContainer.id = 'param_child';
+
+    const guardedChildren = [];
+    Object.keys(this.currentChildren).forEach((childName) => {
+      const child = this.currentChildren[childName];
+      const guardians = child.guardians || {};
+
+      // Check if current player is a guardian of this child
+      if (guardians[currentPlayerName]) {
+        guardedChildren.push({ name: childName, age: child.age || 0 });
+      }
+    });
+
+    if (guardedChildren.length === 0) {
+      ignoreContainer.innerHTML =
+        '<div style="color: #6c757d; font-style: italic;">You are not currently guarding any children</div>';
+    } else {
+      ignoreContainer.innerHTML =
+        '<div style="margin-bottom: 0.5rem; font-weight: 600;">Set guard status for your children:</div>';
+
+      guardedChildren.forEach((child) => {
+        const childDiv = document.createElement('div');
+        childDiv.className = 'child-guard-option';
+        childDiv.style.cssText = `
+                            display: flex;
+                            align-items: center;
+                            justify-content: space-between;
+                            padding: 0.5rem;
+                            margin-bottom: 0.5rem;
+                            border: 1px solid #ddd;
+                            border-radius: 4px;
+                            background: #f8f9fa;
+                        `;
+
+        const childLabel = document.createElement('span');
+        childLabel.textContent = `${child.name} (age ${child.age})`;
+        childLabel.style.fontWeight = '500';
+
+        const radioGroup = document.createElement('div');
+        radioGroup.style.cssText = 'display: flex; gap: 1rem;';
+
+        const guardOption = document.createElement('label');
+        guardOption.style.cssText =
+          'display: flex; align-items: center; gap: 0.25rem; cursor: pointer;';
+        const guardRadio = document.createElement('input');
+        guardRadio.type = 'radio';
+        guardRadio.name = `guard_${child.name}`;
+        guardRadio.value = 'guard';
+        guardRadio.checked = true; // Default to guard
+        guardOption.appendChild(guardRadio);
+        guardOption.appendChild(document.createTextNode('Guard'));
+
+        const ignoreOption = document.createElement('label');
+        ignoreOption.style.cssText =
+          'display: flex; align-items: center; gap: 0.25rem; cursor: pointer;';
+        const ignoreRadio = document.createElement('input');
+        ignoreRadio.type = 'radio';
+        ignoreRadio.name = `guard_${child.name}`;
+        ignoreRadio.value = 'ignore';
+        ignoreOption.appendChild(ignoreRadio);
+        ignoreOption.appendChild(document.createTextNode('Ignore'));
+
+        radioGroup.appendChild(guardOption);
+        radioGroup.appendChild(ignoreOption);
+
+        childDiv.appendChild(childLabel);
+        childDiv.appendChild(radioGroup);
+        ignoreContainer.appendChild(childDiv);
+      });
+    }
+
+    group.appendChild(ignoreContainer);
+    container.appendChild(group);
+  }
+
+  isChiefCommand(description) {
+    // Check if command description indicates it requires chief privileges
+    return (
+      description &&
+      (description.toLowerCase().includes('(chief only)') ||
+        description.toLowerCase().includes('chief only') ||
+        description.toLowerCase().includes('requires chief'))
+    );
+  }
+
+  isCurrentPlayerChief() {
+    // Use server-provided chief status if available
+    if (typeof this.chiefStatus === 'boolean') {
+      return this.chiefStatus;
+    }
+
+    // Fallback: check population data
+    const playerName = document.getElementById('playerName').value;
+    console.log('Checking chief status for player:', playerName);
+    console.log('Current population:', this.currentPopulation);
+
+    if (!playerName || !this.currentPopulation) {
+      console.log(
+        'Missing player name or population data - defaulting to non-chief'
+      );
+      return false;
+    }
+
+    const player = this.currentPopulation[playerName];
+    console.log('Player object:', player);
+
+    if (!player) {
+      console.log('Player not found in population - defaulting to non-chief');
+      return false;
+    }
+
+    const isChief = player && player.chief === true;
+    console.log('Player is chief:', isChief);
+
+    return isChief;
+  }
+
+  collectParametersFromContainer(container) {
+    const parameters = {};
+    const inputs = container.querySelectorAll('input, select');
+
+    console.log('Found', inputs.length, 'total inputs in container');
+
+    // Handle special ignore command interface
+    const ignoreContainer = container.querySelector('.ignore-container');
+    if (
+      ignoreContainer &&
+      this.selectedCommand.name.toLowerCase() === 'ignore'
+    ) {
+      const childrenToIgnore = [];
+      const radioGroups = ignoreContainer.querySelectorAll(
+        'input[type="radio"]:checked'
+      );
+
+      radioGroups.forEach((radio) => {
+        if (radio.value === 'ignore') {
+          // Extract child name from radio name attribute (guard_ChildName)
+          const childName = radio.name.replace('guard_', '');
+          childrenToIgnore.push(childName);
+        }
+      });
+
+      // For ignore command, send as child1, child2, child3 parameters (command expects these specific names)
+      childrenToIgnore.forEach((childName, index) => {
+        const paramKey = `child${index + 1}`; // child1, child2, child3
+        parameters[paramKey] = childName;
+      });
+
+      console.log(
+        'Ignore command children to ignore:',
+        childrenToIgnore,
+        'Parameters:',
+        parameters
+      );
+    }
+
+    inputs.forEach((input) => {
+      console.log(
+        'Processing input:',
+        input.id,
+        'type:',
+        input.type,
+        'value:',
+        input.value
+      );
+
+      // Only process inputs with parameter IDs (starting with 'param_')
+      if (!input.id || !input.id.startsWith('param_')) {
+        console.log('Skipping input without param_ ID:', input.id);
+        return;
+      }
+
+      const paramName = input.id.replace('param_', '');
+      console.log(
+        'Parameter name:',
+        paramName,
+        'isOrdering:',
+        this.isOrderingOption(paramName)
+      );
+
+      // Skip if this is the ignore container (already handled above)
+      if (input.classList && input.classList.contains('ignore-container')) {
+        return;
+      }
+
+      // Handle ordering parameters (comma-separated lists)
+      if (input.type === 'hidden' && this.isOrderingOption(paramName)) {
+        // Send as array for ordering parameters
+        let orderList = input.value ? input.value.split(',') : [];
+        // For invite command, append !pass to end if checkbox is checked
+        if (paramName === 'invitelist') {
+          const appendPassEl = document.getElementById('invite_append_pass');
+          if (appendPassEl && appendPassEl.checked) {
+            orderList = orderList.concat('!pass');
+          }
+        }
+        console.log(
+          'Ordering parameter',
+          paramName,
+          'raw value:',
+          input.value,
+          'as array:',
+          orderList
+        );
+        parameters[paramName] = orderList;
+      } else if (input.type === 'checkbox') {
+        // Handle checkbox (boolean) inputs
+        parameters[paramName] = input.checked;
+        console.log('Checkbox parameter', paramName, 'checked:', input.checked);
+      } else {
+        parameters[paramName] = input.value;
+      }
+    });
+
+    // Validation
+    const required = this.selectedCommand.options
+      ? this.selectedCommand.options.filter((opt) => opt.required)
+      : [];
+    const missing = required.filter(
+      (opt) => !parameters[opt.name] || parameters[opt.name] === ''
+    );
+
+    if (missing.length > 0) {
+      this.addMessage(
+        `Missing required parameters: ${missing.map((opt) => opt.name).join(', ')}`,
+        'error'
+      );
+      return null;
+    }
+
+    return parameters;
+  }
+
+  createOrderingInterface(
+    paramName,
+    preservedValue = '',
+    appendPassChecked = false
+  ) {
+    const container = document.createElement('div');
+    container.className = 'ordering-container';
+
+    console.log(
+      'createOrderingInterface for',
+      paramName,
+      'preserved value:',
+      preservedValue
+    );
+
+    // Hidden input to store the final ordered list
+    const hiddenInput = document.createElement('input');
+    hiddenInput.type = 'hidden';
+    hiddenInput.id = `param_${paramName}`;
+    hiddenInput.value = preservedValue; // Use preserved value
+    container.appendChild(hiddenInput);
+
+    // Parse preserved value to initialize the display
+    const existingList = preservedValue ? preservedValue.split(',') : [];
+
+    // Ordered list display
+    const orderList = document.createElement('div');
+    orderList.className = 'order-list';
+    orderList.id = `order-list-${paramName}`;
+    container.appendChild(orderList);
+
+    // Add player section
+    const addSection = document.createElement('div');
+    addSection.className = 'add-player-section';
+
+    const playerSelect = document.createElement('select');
+    playerSelect.className = 'add-player-select';
+    playerSelect.innerHTML =
+      '<option value="">Choose a player to add...</option>';
+
+    // Add special options for romance commands
+    if (this.isReproductionCommand(this.selectedCommand.name)) {
+      const allOption = document.createElement('option');
+      allOption.value = '!all';
+      allOption.textContent = '!all (all opposite gender players)';
+      playerSelect.appendChild(allOption);
+    }
+
+    if (this.currentPopulation) {
+      const currentPlayerName = document.getElementById('playerName').value;
+      let availablePlayers = Object.keys(this.currentPopulation);
+
+      // Filter for reproduction commands to only show opposite gender
+      if (this.isReproductionCommand(this.selectedCommand.name)) {
+        availablePlayers =
+          this.getValidTargetsForReproduction(currentPlayerName);
+
+        if (availablePlayers.length === 0) {
+          const noTargetsOption = document.createElement('option');
+          noTargetsOption.value = '';
+          noTargetsOption.textContent =
+            'No valid targets (opposite gender only)';
+          noTargetsOption.disabled = true;
+          playerSelect.appendChild(noTargetsOption);
+        }
+      }
+
+      availablePlayers.forEach((playerName) => {
+        const opt = document.createElement('option');
+        opt.value = playerName;
+
+        // Add gender indicator for reproduction commands
+        if (this.isReproductionCommand(this.selectedCommand.name)) {
+          const gender = this.currentPopulation[playerName].gender;
+          const genderIcon = gender === 'male' ? '♂' : '♀';
+          opt.textContent = `${playerName} ${genderIcon}`;
+        } else {
+          opt.textContent = playerName;
+        }
+
+        playerSelect.appendChild(opt);
+      });
+    }
+
+    const addBtn = document.createElement('button');
+    addBtn.type = 'button';
+    addBtn.className = 'btn btn-small';
+    addBtn.textContent = 'Add';
+    addBtn.onclick = () => this.addPlayerToOrder(paramName, playerSelect.value);
+
+    addSection.appendChild(playerSelect);
+    addSection.appendChild(addBtn);
+    container.appendChild(addSection);
+
+    // For invite command, add checkbox to append !pass to end of list when sending
+    if (
+      paramName === 'invitelist' &&
+      this.selectedCommand.name.toLowerCase() === 'invite'
+    ) {
+      const passWrap = document.createElement('div');
+      passWrap.className = 'invite-append-pass-wrap';
+      passWrap.style.marginTop = '0.5rem';
+      const passCheckbox = document.createElement('input');
+      passCheckbox.type = 'checkbox';
+      passCheckbox.id = 'invite_append_pass';
+      passCheckbox.checked = !!appendPassChecked;
+      const passLabel = document.createElement('label');
+      passLabel.htmlFor = 'invite_append_pass';
+      passLabel.style.marginLeft = '0.35rem';
+      passLabel.style.cursor = 'pointer';
+      passLabel.textContent =
+        'Add !pass to end of list (if no choices above accept, give up)';
+      passWrap.appendChild(passCheckbox);
+      passWrap.appendChild(passLabel);
+      container.appendChild(passWrap);
+    }
+
+    // Initialize display with existing values after everything is built
+    if (existingList.length > 0) {
+      this.updateOrderDisplayWithElement(orderList, existingList, paramName);
+    } else {
+      orderList.innerHTML =
+        '<div style="color: #6c757d; text-align: center; padding: 1rem;">No players added yet</div>';
+    }
+
+    return container;
+  }
+
+  addPlayerToOrder(paramName, playerName) {
+    if (!playerName) return;
+
+    console.log(
+      'addPlayerToOrder called with paramName:',
+      paramName,
+      'playerName:',
+      playerName
+    );
+
+    const orderList = document.getElementById(`order-list-${paramName}`);
+    const hiddenInput = document.getElementById(`param_${paramName}`);
+
+    console.log(
+      'Found orderList:',
+      !!orderList,
+      'Found hiddenInput:',
+      !!hiddenInput
+    );
+    console.log(
+      'Hidden input current value:',
+      hiddenInput ? hiddenInput.value : 'NOT FOUND'
+    );
+
+    // Handle special options
+    if (playerName === '!none') {
+      // Clear the list (only available for consent/decline, not invite). Do not send or close modal.
+      const clearValue =
+        this.selectedCommand.name === 'decline' ||
+        this.selectedCommand.name === 'consent'
+          ? '!none'
+          : '';
+      hiddenInput.value = clearValue;
+      this.updateOrderDisplay(paramName, clearValue ? [clearValue] : []);
+      const playerSelect =
+        orderList.parentElement.querySelector('.add-player-select');
+      playerSelect.value = '';
+      this.addMessage('List cleared', 'info');
+      return;
+    }
+
+    if (playerName === '!all') {
+      // Add all available opposite gender players to the list (do not send or close modal)
+      if (this.isReproductionCommand(this.selectedCommand.name)) {
+        const currentPlayerName = document.getElementById('playerName').value;
+        const allValidPlayers =
+          this.getValidTargetsForReproduction(currentPlayerName);
+        hiddenInput.value = allValidPlayers.join(',');
+        this.updateOrderDisplay(paramName, allValidPlayers);
+        const playerSelect =
+          orderList.parentElement.querySelector('.add-player-select');
+        playerSelect.value = '';
+        this.addMessage(
+          `Added all ${allValidPlayers.length} valid players to ${paramName} list`,
+          'info'
+        );
+        return;
+      }
+    }
+
+    // Get current list
+    let currentList = [];
+    if (hiddenInput.value) {
+      currentList = hiddenInput.value.split(',');
+    }
+
+    console.log('Current list before adding:', currentList);
+
+    // Don't add duplicates
+    if (currentList.includes(playerName)) {
+      this.addMessage(`${playerName} is already in the list`, 'error');
+      return;
+    }
+
+    currentList.push(playerName);
+    hiddenInput.value = currentList.join(',');
+
+    console.log('Updated hidden input value to:', hiddenInput.value);
+
+    this.updateOrderDisplay(paramName, currentList);
+
+    // Reset the select
+    const playerSelect =
+      orderList.parentElement.querySelector('.add-player-select');
+    playerSelect.value = '';
+  }
+
+  updateOrderDisplay(paramName, orderedList) {
+    const orderList = document.getElementById(`order-list-${paramName}`);
+
+    if (orderedList.length === 0) {
+      orderList.innerHTML =
+        '<div style="color: #6c757d; text-align: center; padding: 1rem;">No players added yet</div>';
+      return;
+    }
+
+    orderList.innerHTML = '';
+
+    orderedList.forEach((playerName, index) => {
+      const item = document.createElement('div');
+      item.className = 'order-item';
+
+      const number = document.createElement('div');
+      number.className = 'order-number';
+      number.textContent = index + 1;
+
+      const name = document.createElement('div');
+      name.className = 'order-name';
+
+      // Add gender indicator for reproduction commands
+      if (
+        this.isReproductionCommand(this.selectedCommand.name) &&
+        this.currentPopulation[playerName]
+      ) {
+        const gender = this.currentPopulation[playerName].gender;
+        const genderIcon = gender === 'male' ? '♂' : '♀';
+        name.textContent = `${playerName} ${genderIcon}`;
+      } else {
+        name.textContent = playerName;
+      }
+
+      const controls = document.createElement('div');
+      controls.className = 'order-controls';
+
+      if (index > 0) {
+        const upBtn = document.createElement('button');
+        upBtn.type = 'button';
+        upBtn.className = 'order-btn up';
+        upBtn.textContent = '↑';
+        upBtn.onclick = () => this.movePlayerInOrder(paramName, index, -1);
+        controls.appendChild(upBtn);
+      }
+
+      if (index < orderedList.length - 1) {
+        const downBtn = document.createElement('button');
+        downBtn.type = 'button';
+        downBtn.className = 'order-btn down';
+        downBtn.textContent = '↓';
+        downBtn.onclick = () => this.movePlayerInOrder(paramName, index, 1);
+        controls.appendChild(downBtn);
+      }
+
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.className = 'order-btn remove';
+      removeBtn.textContent = '×';
+      removeBtn.onclick = () => this.removePlayerFromOrder(paramName, index);
+      controls.appendChild(removeBtn);
+
+      item.appendChild(number);
+      item.appendChild(name);
+      item.appendChild(controls);
+      orderList.appendChild(item);
+    });
+  }
+
+  updateOrderDisplayWithElement(orderListElement, orderedList, paramName) {
+    if (orderedList.length === 0) {
+      orderListElement.innerHTML =
+        '<div style="color: #6c757d; text-align: center; padding: 1rem;">No players added yet</div>';
+      return;
+    }
+
+    orderListElement.innerHTML = '';
+
+    orderedList.forEach((playerName, index) => {
+      const item = document.createElement('div');
+      item.className = 'order-item';
+
+      const number = document.createElement('div');
+      number.className = 'order-number';
+      number.textContent = index + 1;
+
+      const name = document.createElement('div');
+      name.className = 'order-name';
+
+      // Add gender indicator for reproduction commands
+      if (
+        this.isReproductionCommand(this.selectedCommand.name) &&
+        this.currentPopulation[playerName]
+      ) {
+        const gender = this.currentPopulation[playerName].gender;
+        const genderIcon = gender === 'male' ? '♂' : '♀';
+        name.textContent = `${playerName} ${genderIcon}`;
+      } else {
+        name.textContent = playerName;
+      }
+
+      const controls = document.createElement('div');
+      controls.className = 'order-controls';
+
+      if (index > 0) {
+        const upBtn = document.createElement('button');
+        upBtn.type = 'button';
+        upBtn.className = 'order-btn up';
+        upBtn.textContent = '↑';
+        upBtn.onclick = () => this.movePlayerInOrder(paramName, index, -1);
+        controls.appendChild(upBtn);
+      }
+
+      if (index < orderedList.length - 1) {
+        const downBtn = document.createElement('button');
+        downBtn.type = 'button';
+        downBtn.className = 'order-btn down';
+        downBtn.textContent = '↓';
+        downBtn.onclick = () => this.movePlayerInOrder(paramName, index, 1);
+        controls.appendChild(downBtn);
+      }
+
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.className = 'order-btn remove';
+      removeBtn.textContent = '×';
+      removeBtn.onclick = () => this.removePlayerFromOrder(paramName, index);
+      controls.appendChild(removeBtn);
+
+      item.appendChild(number);
+      item.appendChild(name);
+      item.appendChild(controls);
+      orderListElement.appendChild(item);
+    });
+  }
+
+  movePlayerInOrder(paramName, fromIndex, direction) {
+    const hiddenInput = document.getElementById(`param_${paramName}`);
+    const currentList = hiddenInput.value.split(',');
+    const toIndex = fromIndex + direction;
+
+    if (toIndex < 0 || toIndex >= currentList.length) return;
+
+    // Swap elements
+    [currentList[fromIndex], currentList[toIndex]] = [
+      currentList[toIndex],
+      currentList[fromIndex],
+    ];
+
+    hiddenInput.value = currentList.join(',');
+    this.updateOrderDisplay(paramName, currentList);
+  }
+
+  removePlayerFromOrder(paramName, index) {
+    const hiddenInput = document.getElementById(`param_${paramName}`);
+    const currentList = hiddenInput.value.split(',');
+
+    currentList.splice(index, 1);
+    hiddenInput.value = currentList.join(',');
+
+    this.updateOrderDisplay(paramName, currentList);
+  }
+
+  executeCommand() {
+    if (!this.selectedCommand) {
+      this.addMessage('No command selected', 'error');
+      return;
+    }
+
+    const cmdNameSideExec = this.selectedCommand.name.toLowerCase();
+    if (
+      (cmdNameSideExec === 'consent' || cmdNameSideExec === 'decline') &&
+      document.getElementById('unifiedRomanceGrid')
+    ) {
+      const form = document.getElementById('commandParameters');
+      const dropdowns = form.querySelectorAll('select.romance-dropdown');
+      let newResponseDict = {};
+      dropdowns.forEach((select) => {
+        const nameStr = select.name.replace('romance_', '');
+        if (select.value !== 'maybe') {
+          newResponseDict[nameStr] = select.value;
+        }
+      });
+
+      this.send({
+        type: 'romanceRequest',
+        playerName: document.getElementById('playerName').value.trim(),
+        consentDict: newResponseDict,
+      });
+
+      // Clear selection and form
+      this.selectedCommand = null;
+      document.getElementById('commandForm').style.display = 'none';
+      this.renderCommandList(); // Re-render to clear selection styling
+      return;
+    }
+
+    const parameters = {};
+    const form = document.getElementById('commandParameters');
+    const inputs = form.querySelectorAll('input, select');
+
+    console.log('Found', inputs.length, 'total inputs');
+
+    inputs.forEach((input) => {
+      console.log(
+        'Processing input:',
+        input.id,
+        'type:',
+        input.type,
+        'value:',
+        input.value
+      );
+
+      // Only process inputs with parameter IDs (starting with 'param_')
+      if (!input.id || !input.id.startsWith('param_')) {
+        console.log('Skipping input without param_ ID:', input.id);
+        return;
+      }
+
+      const paramName = input.id.replace('param_', '');
+      console.log(
+        'Parameter name:',
+        paramName,
+        'isOrdering:',
+        this.isOrderingOption(paramName)
+      );
+
+      // Handle ordering parameters (comma-separated lists)
+      if (input.type === 'hidden' && this.isOrderingOption(paramName)) {
+        // Send as array for ordering parameters
+        const orderList = input.value ? input.value.split(',') : [];
+        console.log(
+          'Ordering parameter',
+          paramName,
+          'raw value:',
+          input.value,
+          'as array:',
+          orderList
+        );
+        parameters[paramName] = orderList;
+      } else {
+        parameters[paramName] = input.value;
+      }
+    });
+
+    console.log(
+      'executeCommand called - this function is deprecated, commands now use modals'
+    );
+    this.addMessage(
+      'Please select a command from the sidebar to open the command modal',
+      'info'
+    );
+  }
+
+  addMessage(text, type = 'info', typeLabel = null, isRestored = false) {
+    const container = document.getElementById('messagesContainer');
+    const message = document.createElement('div');
+    message.className = `message ${type}`;
+    console.log(
+      'Adding message:',
+      text,
+      'Type:',
+      type,
+      'TypeLabel:',
+      typeLabel,
+      'IsRestored:',
+      isRestored
+    );
+
+    // Skip empty or whitespace-only messages
+    if (!text || text === '') {
+      console.log('Skipping empty message');
+      return;
+    }
+    text = text.trim();
+
+    if (isRestored) {
+      message.classList.add('restored');
+    }
+
+    const timestamp = new Date().toLocaleTimeString();
+    const labelText = typeLabel ? `${typeLabel} ` : '';
+
+    if (typeLabel) {
+      message.innerHTML = `
+                        <span class="message-type-label">${typeLabel}</span>
+                        <span>[${timestamp}] ${text}</span>
+                    `;
+    } else {
+      message.innerText = `[${timestamp}] ${text}`;
+    }
+
+    container.appendChild(message);
+    container.scrollTop = container.scrollHeight;
+
+    // Store message in history (don't store restored messages to avoid duplication)
+    if (!isRestored) {
+      this.storeMessage({
+        text: text,
+        type: type,
+        typeLabel: typeLabel,
+        timestamp: Date.now(),
+      });
+    }
+
+    // Limit to 50 messages in display
+    while (container.children.length > 50) {
+      container.removeChild(container.firstChild);
+    }
+  }
+
+  getMessageHistoryKey() {
+    const tribe = document.getElementById('tribeSelect').value || 'default';
+    const player = document.getElementById('playerName').value || 'anonymous';
+    return `tribesMessages_${tribe}_${player}`;
+  }
+
+  storeMessage(messageData) {
+    try {
+      const key = this.getMessageHistoryKey();
+      let messages = [];
+
+      // Try to parse existing messages, fallback to empty array if corrupted
+      try {
+        const existingData = this.getCookie(key);
+        if (existingData) {
+          messages = JSON.parse(existingData);
+          // Validate that it's an array
+          if (!Array.isArray(messages)) {
+            messages = [];
+          }
+        }
+      } catch (parseError) {
+        console.warn(
+          'Existing message history corrupted, starting fresh:',
+          parseError.message
+        );
+        messages = [];
+      }
+
+      // Sanitize message data to prevent JSON corruption
+      const sanitizedMessage = {
+        text: String(messageData.text || '').replace(
+          /[\u0000-\u001f\u007f]/g,
+          ''
+        ), // Remove control characters
+        type: String(messageData.type || 'info'),
+        typeLabel: messageData.typeLabel ? String(messageData.typeLabel) : null,
+        timestamp: Number(messageData.timestamp) || Date.now(),
+      };
+
+      // Add new message
+      messages.push(sanitizedMessage);
+
+      // Keep only last 30 messages to prevent cookie size issues
+      if (messages.length > 30) {
+        messages = messages.slice(-30);
+      }
+
+      // Store back to cookie (expires in 7 days)
+      this.setCookie(key, JSON.stringify(messages), 7);
+    } catch (error) {
+      console.warn('Failed to store message history:', error);
+      // Clear corrupted cookie data to prevent future errors
+      try {
+        const key = this.getMessageHistoryKey();
+        this.setCookie(key, '[]', 7);
+      } catch (clearError) {
+        console.warn('Failed to clear corrupted message history:', clearError);
+      }
+    }
+  }
+
+  loadMessageHistory() {
+    try {
+      const key = this.getMessageHistoryKey();
+      const messagesJson = this.getCookie(key);
+
+      if (!messagesJson) {
+        return;
+      }
+
+      let messages;
+      try {
+        messages = JSON.parse(messagesJson);
+        // Validate that it's an array
+        if (!Array.isArray(messages)) {
+          console.warn('Invalid message history format, ignoring');
+          return;
+        }
+      } catch (parseError) {
+        console.warn(
+          'Corrupted message history found, clearing it:',
+          parseError.message
+        );
+        // Clear corrupted data
+        this.setCookie(key, '[]', 7);
+        return;
+      }
+
+      const currentTime = Date.now();
+      const maxAge = 24 * 60 * 60 * 1000; // 24 hours
+
+      // Filter out messages older than 24 hours and validate message structure
+      const recentMessages = messages.filter(
+        (msg) =>
+          msg &&
+          typeof msg.timestamp === 'number' &&
+          currentTime - msg.timestamp < maxAge &&
+          typeof msg.text === 'string' &&
+          msg.text.trim().length > 0
+      );
+
+      if (recentMessages.length > 0) {
+        // Add separator
+        const container = document.getElementById('messagesContainer');
+        const separator = document.createElement('div');
+        separator.className = 'message info';
+        separator.style.cssText =
+          'text-align: center; font-style: italic; opacity: 0.7; border-top: 1px dashed #ccc; padding-top: 0.5rem;';
+        separator.innerText = `--- Previous messages (${recentMessages.length}) ---`;
+        container.appendChild(separator);
+
+        // Restore recent messages
+        recentMessages.forEach((msg) => {
+          this.addMessage(msg.text, msg.type, msg.typeLabel, true);
+        });
+
+        // Add another separator
+        const endSeparator = document.createElement('div');
+        endSeparator.className = 'message info';
+        endSeparator.style.cssText =
+          'text-align: center; font-style: italic; opacity: 0.7; border-bottom: 1px dashed #ccc; padding-bottom: 0.5rem;';
+        endSeparator.innerText = '--- Live messages ---';
+        container.appendChild(endSeparator);
+      }
+    } catch (error) {
+      console.warn('Failed to load message history:', error);
+    }
+  }
+
+  clearMessageHistory() {
+    const key = this.getMessageHistoryKey();
+    this.setCookie(key, '', -1); // Expire the cookie
+
+    // Clear current display
+    const container = document.getElementById('messagesContainer');
+    container.innerHTML = '';
+
+    this.addMessage('Message history cleared', 'info');
+  }
+
+  requestCommandList() {
+    const playerName = document.getElementById('playerName')?.value || '';
+    this.send({
+      type: 'listCommands',
+      playerName: playerName,
+    });
+  }
+
+  requestHelp(helpType) {
+    this.send({
+      type: 'helpRequest',
+      helpType: helpType,
+    });
+  }
+
+  handleHelpContent(data) {
+    const helpContent = document.getElementById('helpContent');
+    if (helpContent) {
+      helpContent.textContent = data.content;
+    }
+  }
+
+  handleHelpContent(data) {
+    const helpContent = document.getElementById('helpContent');
+    if (helpContent) {
+      helpContent.textContent = data.content;
+    }
+  }
+
+  refreshGameData() {
+    this.currentPopulation = null; // Clear cached population when refreshing
+    this.send({ type: 'infoRequest', selection: 'population' });
+    this.send({ type: 'infoRequest', selection: 'children' });
+    this.send({ type: 'infoRequest', selection: 'status' });
+  }
+
+  registerPlayer() {
+    const name = document.getElementById('playerName').value;
+    const password = document.getElementById('playerPassword').value;
+    const email = document.getElementById('playerEmail').value;
+
+    if (!name) {
+      this.addMessage('Player name is required', 'error');
+      return;
+    }
+
+    // Save settings when registering
+    this.saveSettings();
+
+    this.send({
+      type: 'registerRequest',
+      playerName: name,
+      password: password,
+      email: email || '',
+    });
+  }
+
+  updatePopulationTable(population) {
+    const table = document.getElementById('populationTable');
+    table.innerHTML = '';
+
+    if (!population || Object.keys(population).length === 0) {
+      table.innerHTML =
+        '<tr><td colspan="100%">No population data available</td></tr>';
+      return;
+    }
+
+    // Get all unique keys for columns
+    const allKeys = new Set();
+    Object.values(population).forEach((person) => {
+      Object.keys(person).forEach((key) => allKeys.add(key));
+    });
+
+    const columns = ['Name', ...Array.from(allKeys)];
+
+    // Create header
+    const thead = document.createElement('thead');
+    const headerRow = document.createElement('tr');
+    columns.forEach((col) => {
+      const th = document.createElement('th');
+      th.textContent = col;
+      headerRow.appendChild(th);
+    });
+    thead.appendChild(headerRow);
+    table.appendChild(thead);
+
+    // Create body
+    const tbody = document.createElement('tbody');
+    Object.entries(population).forEach(([name, data]) => {
+      const row = document.createElement('tr');
+
+      // Name column
+      const nameCell = document.createElement('td');
+      nameCell.textContent = name;
+      row.appendChild(nameCell);
+
+      // Data columns
+      Array.from(allKeys).forEach((key) => {
+        const cell = document.createElement('td');
+        const value = data[key];
+        if (Array.isArray(value)) {
+          cell.textContent = value.join(', ');
+        } else if (value && typeof value === 'object') {
+          // Handle objects by extracting keys
+          cell.textContent = Object.keys(value).join(', ');
+        } else {
+          cell.textContent = value || '';
+        }
+        row.appendChild(cell);
+      });
+
+      tbody.appendChild(row);
+    });
+    table.appendChild(tbody);
+  }
+
+  updateChildrenTable(children) {
+    const table = document.getElementById('childrenTable');
+    table.innerHTML = '';
+
+    if (!children || Object.keys(children).length === 0) {
+      table.innerHTML =
+        '<tr><td colspan="100%">No children data available</td></tr>';
+      return;
+    }
+
+    // Similar implementation to population table
+    const allKeys = new Set();
+    Object.values(children).forEach((child) => {
+      Object.keys(child).forEach((key) => allKeys.add(key));
+    });
+
+    const columns = ['Name', ...Array.from(allKeys)];
+
+    const thead = document.createElement('thead');
+    const headerRow = document.createElement('tr');
+    columns.forEach((col) => {
+      const th = document.createElement('th');
+      th.textContent = col;
+      headerRow.appendChild(th);
+    });
+    thead.appendChild(headerRow);
+    table.appendChild(thead);
+
+    const tbody = document.createElement('tbody');
+    Object.entries(children).forEach(([name, data]) => {
+      const row = document.createElement('tr');
+
+      const nameCell = document.createElement('td');
+      nameCell.textContent = name;
+      row.appendChild(nameCell);
+
+      Array.from(allKeys).forEach((key) => {
+        const cell = document.createElement('td');
+        const value = data[key];
+        if (Array.isArray(value)) {
+          cell.textContent = value.join(', ');
+        } else if (value && typeof value === 'object') {
+          // Handle objects like guardians by extracting keys
+          cell.textContent = Object.keys(value).join(', ');
+        } else {
+          cell.textContent = value || '';
+        }
+        row.appendChild(cell);
+      });
+
+      tbody.appendChild(row);
+    });
+    table.appendChild(tbody);
+  }
+
+  updateStatusText(status) {
+    // Update the old status text element if it exists
+    const statusTextElement = document.getElementById('statusText');
+    if (statusTextElement) {
+      statusTextElement.textContent = status;
+    }
+
+    // Update the game status bar with parsed information
+    this.updateGameStatusBar(status);
+  }
+
+  updateGameStatusBarWithData(gameState) {
+    const roundStatus = document.getElementById('roundStatus');
+    const seasonStatus = document.getElementById('seasonStatus');
+    const locationStatus = document.getElementById('locationStatus');
+
+    if (!roundStatus || !seasonStatus || !locationStatus) return;
+
+    // Round type detection using structured data
+    let roundIcon = '⚙️';
+    let roundText = 'Work Round';
+
+    if (gameState.workRound) {
+      roundIcon = '⚙️';
+      roundText = 'Work Round';
+    } else if (gameState.foodRound) {
+      roundIcon = '🍖';
+      roundText = 'Food Round';
+    } else if (gameState.reproductionRound) {
+      roundIcon = '💕';
+      roundText = 'Reproduction Round';
+    } else if (gameState.round) {
+      // Fallback to round string if boolean flags not set
+      if (gameState.round.toLowerCase().includes('food')) {
+        roundIcon = '🍖';
+        roundText = 'Food Round';
+      } else if (gameState.round.toLowerCase().includes('repro')) {
+        roundIcon = '💕';
+        roundText = 'Reproduction Round';
+      }
+    }
+
+    // Season detection using structured data
+    let seasonIcon = '☀️';
+    let seasonText = 'Warm Season';
+
+    if (gameState.seasonCounter && gameState.seasonCounter % 2 === 0) {
+      seasonIcon = '❄️';
+      seasonText = 'Cold Season';
+    }
+
+    // Location detection using structured data
+    let locationIcon = '🌍';
+    let locationText = 'Unknown Location';
+
+    if (gameState.currentLocationName) {
+      const location = gameState.currentLocationName.toLowerCase();
+      if (location === 'veldt') {
+        locationIcon = '🌾';
+        locationText = 'Veldt';
+      } else if (location === 'forest') {
+        locationIcon = '🌲';
+        locationText = 'Forest';
+      } else if (location === 'marsh') {
+        locationIcon = '🐸';
+        locationText = 'Marsh';
+      } else if (location === 'hills') {
+        locationIcon = '⛰️';
+        locationText = 'Hills';
+      } else if (location.includes('mountain')) {
+        locationIcon = '🏔️';
+        locationText = 'Mountains';
+      } else if (location === 'desert') {
+        locationIcon = '🏜️';
+        locationText = 'Desert';
+      } else {
+        locationText = gameState.currentLocationName;
+      }
+    }
+
+    // Update the status bar elements
+    roundStatus.innerHTML = `<span class="status-icon">${roundIcon}</span><span>${roundText}</span>`;
+    seasonStatus.innerHTML = `<span class="status-icon">${seasonIcon}</span><span>${seasonText}</span>`;
+    locationStatus.innerHTML = `<span class="status-icon">${locationIcon}</span><span>${locationText}</span>`;
+  }
+
+  updateGameStatusBar(status) {
+    // Round type detection and icons
+    const roundStatus = document.getElementById('roundStatus');
+    const seasonStatus = document.getElementById('seasonStatus');
+    const locationStatus = document.getElementById('locationStatus');
+
+    if (!roundStatus || !seasonStatus || !locationStatus) return;
+
+    let roundIcon = '⚙️';
+    let roundText = 'Unknown Round';
+
+    if (status.toLowerCase().includes('work')) {
+      roundIcon = '⚙️';
+      roundText = 'Work Round';
+    } else if (status.toLowerCase().includes('food')) {
+      roundIcon = '🍖';
+      roundText = 'Food Round';
+    } else if (
+      status.toLowerCase().includes('reproduction') ||
+      status.toLowerCase().includes('romance')
+    ) {
+      roundIcon = '💕';
+      roundText = 'Reproduction Round';
+    }
+
+    // Season detection
+    let seasonIcon = '☀️';
+    let seasonText = 'Warm Season';
+
+    if (
+      status.toLowerCase().includes('winter') ||
+      status.toLowerCase().includes('cold')
+    ) {
+      seasonIcon = '❄️';
+      seasonText = 'Cold Season';
+    } else if (
+      status.toLowerCase().includes('summer') ||
+      status.toLowerCase().includes('warm')
+    ) {
+      seasonIcon = '☀️';
+      seasonText = 'Warm Season';
+    }
+
+    // Location detection (common Tribes game locations)
+    let locationIcon = '🌍';
+    let locationText = 'Unknown Location';
+
+    if (status.toLowerCase().includes('veldt')) {
+      locationIcon = '🌾';
+      locationText = 'Veldt';
+    } else if (status.toLowerCase().includes('forest')) {
+      locationIcon = '🌲';
+      locationText = 'Forest';
+    } else if (status.toLowerCase().includes('marsh')) {
+      locationIcon = '🐸';
+      locationText = 'Marsh';
+    } else if (status.toLowerCase().includes('hills')) {
+      locationIcon = '⛰️';
+      locationText = 'Hills';
+    } else if (status.toLowerCase().includes('mountain')) {
+      locationIcon = '🏔️';
+      locationText = 'Mountains';
+    } else if (status.toLowerCase().includes('desert')) {
+      locationIcon = '🏜️';
+      locationText = 'Desert';
+    }
+
+    // Update the status bar elements
+    roundStatus.innerHTML = `<span class="status-icon">${roundIcon}</span><span>${roundText}</span>`;
+    seasonStatus.innerHTML = `<span class="status-icon">${seasonIcon}</span><span>${seasonText}</span>`;
+    locationStatus.innerHTML = `<span class="status-icon">${locationIcon}</span><span>${locationText}</span>`;
+  }
+
+  initializeEventListeners() {
+    // Register button
+    document.getElementById('registerBtn').onclick = () =>
+      this.registerPlayer();
+
+    // Expand login area button
+    document.getElementById('expandLoginBtn').onclick = () =>
+      this.expandLoginArea();
+
+    // Refresh data button
+    document.getElementById('refreshDataBtn').onclick = () =>
+      this.refreshGameData();
+
+    // Clear messages button
+    document.getElementById('clearMessagesBtn').onclick = () =>
+      this.clearMessageHistory();
+
+    // Tribe dropdown change - clear cached data when switching tribes and save setting
+    document.getElementById('tribeSelect').onchange = () => {
+      this.currentPopulation = null;
+      this.saveSettings(); // Save the new tribe selection
+
+      // Refresh game data for the new tribe (population, children, status)
+      this.refreshGameData();
+
+      // Clear message display when switching tribes
+      const container = document.getElementById('messagesContainer');
+      container.innerHTML = '';
+      this.addMessage(
+        'Switched tribes - loading new message history...',
+        'info'
+      );
+
+      // Load message history for new tribe
+      setTimeout(() => this.loadMessageHistory(), 100);
+      // Player data cleared - modals will automatically reload when needed
+    };
+
+    // Player name change - save setting
+    document.getElementById('playerName').onchange = () => {
+      this.saveSettings(); // Save the new player name
+      this.currentPopulation = null; // Clear population cache to trigger gender filtering refresh
+      this.requestCommandList(); // Refresh command list in case chief status changed
+      this.updateCommandList(); // Update command list immediately for chief status
+
+      // Clear message display when switching players
+      const container = document.getElementById('messagesContainer');
+      container.innerHTML = '';
+      this.addMessage('Switched players - loading message history...', 'info');
+
+      // Load message history for new player
+      setTimeout(() => this.loadMessageHistory(), 100);
+      // Player data cleared - modals will automatically reload when needed
+    };
+
+    // Also save on input for real-time saving
+    document.getElementById('playerName').oninput = () => {
+      this.saveSettings();
+    };
+
+    // Tab switching
+    document.querySelectorAll('.tab').forEach((tab) => {
+      tab.onclick = () => {
+        const targetTab = tab.dataset.tab;
+
+        // Switch tab active states
+        document
+          .querySelectorAll('.tab')
+          .forEach((t) => t.classList.remove('active'));
+        tab.classList.add('active');
+
+        // Switch content
+        document.querySelectorAll('.tab-content').forEach((content) => {
+          content.classList.remove('active');
+        });
+        document.getElementById(`${targetTab}Tab`).classList.add('active');
+      };
+    });
+  }
+
+  // Handle export game response
+  handleExportGameResponse(data) {
+    if (data.success) {
+      this.addMessage(
+        `Game data exported successfully for tribe: ${data.tribeName}`,
+        'success'
+      );
+
+      // Create and download the file
+      const blob = new Blob([JSON.stringify(data.exportData, null, 2)], {
+        type: 'application/json',
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = data.filename || `${data.tribeName}-export.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      this.addMessage(`File downloaded: ${data.filename}`, 'info');
+    } else {
+      this.addMessage(`Export failed: ${data.message}`, 'error');
+    }
+  }
+
+  // Handle import game response
+  handleImportGameResponse(data) {
+    if (data.success) {
+      this.addMessage(
+        `Game data imported successfully for tribe: ${data.tribeName}`,
+        'success'
+      );
+      if (data.backupFilename) {
+        this.addMessage(`Backup saved as: ${data.backupFilename}`, 'info');
+      }
+
+      // Refresh the display after successful import
+      this.refreshGameData();
+    } else {
+      this.addMessage(`Import failed: ${data.message}`, 'error');
+    }
+  }
+
+  // Export game data (referee only)
+  exportGame() {
+    if (!this.isReferee) {
+      this.addMessage('Access denied: Referee privileges required', 'error');
+      return;
+    }
+
+    const currentTribe = document.getElementById('tribeSelect').value;
+    if (!currentTribe) {
+      this.addMessage('Please select a tribe first', 'error');
+      return;
+    }
+
+    this.addMessage(
+      `Exporting game data for tribe: ${currentTribe}...`,
+      'info'
+    );
+
+    this.send({
+      type: 'exportGame',
+      tribe: currentTribe,
+      tribeName: currentTribe,
+      playerName: this.currentPlayerName,
+      sessionToken: this.sessionToken,
+      clientId: Date.now().toString(),
+    });
+  }
+
+  // Handle file selection for import
+  handleImportFile(event) {
+    if (!this.isReferee) {
+      this.addMessage('Access denied: Referee privileges required', 'error');
+      return;
+    }
+
+    const file = event.target.files[0];
+    if (!file) return;
+
+    if (!file.name.endsWith('.json')) {
+      this.addMessage('Please select a JSON file', 'error');
+      return;
+    }
+
+    this.addMessage(`Reading file: ${file.name}...`, 'info');
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const importData = JSON.parse(e.target.result);
+        this.importGame(importData);
+      } catch (error) {
+        this.addMessage('Invalid JSON file: ' + error.message, 'error');
+      }
+    };
+    reader.readAsText(file);
+
+    // Reset file input
+    event.target.value = '';
+  }
+
+  // Import game data (referee only)
+  importGame(importData) {
+    if (!this.isReferee) {
+      this.addMessage('Access denied: Referee privileges required', 'error');
+      return;
+    }
+
+    const currentTribe = document.getElementById('tribeSelect').value;
+    if (!currentTribe) {
+      this.addMessage('Please select a tribe first', 'error');
+      return;
+    }
+
+    // Confirm import action
+    if (
+      !confirm(
+        `Are you sure you want to import game data for tribe '${currentTribe}'?\n\nThis will replace all current game data. A backup will be created automatically.`
+      )
+    ) {
+      this.addMessage('Import cancelled by user', 'info');
+      return;
+    }
+
+    this.addMessage(
+      `Importing game data for tribe: ${currentTribe}...`,
+      'info'
+    );
+
+    this.send({
+      type: 'importGame',
+      tribe: currentTribe,
+      tribeName: currentTribe,
+      importData: importData,
+      playerName: this.currentPlayerName,
+      sessionToken: this.sessionToken,
+      clientId: Date.now().toString(),
+    });
+  }
+
+  showManageTribesModal() {
+    if (!this.isReferee) return;
+    document.getElementById('manageTribesModal').classList.add('active');
+  }
+
+  showManageUsersModal() {
+    if (!this.isReferee) return;
+    document.getElementById('manageUsersModal').classList.add('active');
+    this.send({
+      type: 'manageUsers',
+      action: 'list',
+    });
+  }
+
+  deleteUser(userName) {
+    if (!this.isReferee) return;
+    if (!confirm(`Are you sure you want to delete user ${userName}?`)) return;
+    this.send({
+      type: 'manageUsers',
+      action: 'delete',
+      targetUser: userName,
+    });
+  }
+
+  resetUserPassword(userName) {
+    if (!this.isReferee) return;
+    const newPassword = prompt(
+      `Enter new password for ${userName} (leave blank to allow login without password):`
+    );
+    if (newPassword === null) return; // User cancelled prompt
+    this.send({
+      type: 'manageUsers',
+      action: 'resetPassword',
+      targetUser: userName,
+      newPassword: newPassword,
+    });
+  }
+
+  createTribe() {
+    if (!this.isReferee) return;
+    const input = document.getElementById('newTribeName');
+    const name = input.value
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9-]/g, '');
+
+    if (!name) {
+      this.addMessage('Invalid tribe name', 'error');
+      return;
+    }
+
+    input.value = '';
+    this.send({
+      type: 'manageTribe',
+      action: 'create',
+      tribeName: name,
+    });
+  }
+
+  toggleTribeVisibility(tribeName, hidden) {
+    if (!this.isReferee) return;
+    this.send({
+      type: 'manageTribe',
+      action: 'setVisibility',
+      tribeName: tribeName,
+      hidden: hidden,
+    });
+  }
+
+  handleManageUsersList(data) {
+    const container = document.getElementById('usersListContainer');
+    if (!container) return;
+
+    container.innerHTML = '';
+    const users = data.users.sort((a, b) => a.name.localeCompare(b.name));
+
+    users.forEach((user) => {
+      const row = document.createElement('tr');
+
+      const nameCell = document.createElement('td');
+      nameCell.textContent = user.name;
+      nameCell.style.padding = '0.5rem';
+      nameCell.style.borderBottom = '1px solid #ddd';
+      row.appendChild(nameCell);
+
+      const emailCell = document.createElement('td');
+      emailCell.textContent = user.email;
+      emailCell.style.padding = '0.5rem';
+      emailCell.style.borderBottom = '1px solid #ddd';
+      row.appendChild(emailCell);
+
+      const actionsCell = document.createElement('td');
+      actionsCell.style.padding = '0.5rem';
+      actionsCell.style.borderBottom = '1px solid #ddd';
+
+      const resetBtn = document.createElement('button');
+      resetBtn.className = 'btn btn-small';
+      resetBtn.textContent = 'Reset Password';
+      resetBtn.style.background = '#ffc107';
+      resetBtn.style.color = '#212529';
+      resetBtn.style.marginRight = '0.5rem';
+      resetBtn.onclick = () => this.resetUserPassword(user.name);
+      actionsCell.appendChild(resetBtn);
+
+      const deleteBtn = document.createElement('button');
+      deleteBtn.className = 'btn btn-small';
+      deleteBtn.textContent = 'Delete';
+      deleteBtn.style.background = '#dc3545';
+      deleteBtn.onclick = () => this.deleteUser(user.name);
+      actionsCell.appendChild(deleteBtn);
+
+      row.appendChild(actionsCell);
+      container.appendChild(row);
+    });
+  }
+
+  renderManageTribesList(tribesData) {
+    const container = document.getElementById('tribesListContainer');
+    if (!container) return;
+
+    container.innerHTML = '';
+    const tribes = Object.values(tribesData).sort((a, b) =>
+      a.name.localeCompare(b.name)
+    );
+
+    tribes.forEach((tribe) => {
+      const div = document.createElement('div');
+      div.style.display = 'flex';
+      div.style.justifyContent = 'space-between';
+      div.style.alignItems = 'center';
+      div.style.padding = '0.5rem';
+      div.style.borderBottom = '1px solid #eee';
+
+      const nameSpan = document.createElement('span');
+      nameSpan.textContent =
+        tribe.name.charAt(0).toUpperCase() + tribe.name.slice(1);
+      nameSpan.style.fontWeight = 'bold';
+      if (tribe.hidden) {
+        nameSpan.style.color = '#dc3545';
+        nameSpan.textContent += ' (Hidden)';
+      }
+      div.appendChild(nameSpan);
+
+      const btn = document.createElement('button');
+      btn.className = 'btn btn-small';
+      if (tribe.hidden) {
+        btn.textContent = 'Reveal';
+        btn.style.background = '#28a745';
+        btn.onclick = () => this.toggleTribeVisibility(tribe.name, false);
+      } else {
+        btn.textContent = 'Hide';
+        btn.style.background = '#6c757d';
+        btn.onclick = () => this.toggleTribeVisibility(tribe.name, true);
+      }
+      div.appendChild(btn);
+
+      container.appendChild(div);
+    });
+  }
+}
+
+// Initialize the client when page loads
+window.addEventListener('DOMContentLoaded', () => {
+  // Add timestamped logging function
+  window.logWithTimestamp = function (message, ...args) {
+    const timestamp = new Date().toLocaleString();
+    console.log(`[${timestamp}]`, message, ...args);
+  };
+
+  window.tribesClient = new TribesClient();
+
+  // Add help tab event listeners
+  const helpTabs = document.querySelectorAll('.help-tab-btn');
+  helpTabs.forEach((tab) => {
+    tab.addEventListener('click', () => {
+      // Remove active class from all tabs
+      helpTabs.forEach((t) => t.classList.remove('active'));
+      // Add active class to clicked tab
+      tab.classList.add('active');
+
+      // Request help content
+      const helpType = tab.getAttribute('data-help-type');
+      window.tribesClient.requestHelp(helpType);
+    });
+  });
+
+  // Load initial help content
+  setTimeout(() => {
+    if (
+      window.tribesClient &&
+      window.tribesClient.ws &&
+      window.tribesClient.ws.readyState === WebSocket.OPEN
+    ) {
+      window.tribesClient.requestHelp('overview');
+    }
+  }, 1000);
+});

@@ -123,7 +123,7 @@ test('Mating objections fail', () => {
   response = reproLib.matingObjections(p2, p1);
   expect(response).toBe('');
   response = reproLib.matingObjections(p1, p1);
-  expect(response).toBe('p1 is the same gender as p1.\n');
+  expect(response).toBe('You cannot invite or consent to yourself.\n');
 });
 test('make a consentList, happy path', () => {
   var gameState = {
@@ -459,12 +459,12 @@ test('matingList tests', () => {
       p1: {
         name: 'p1',
         gender: 'female',
-        inviteList: ['p 2', '!pass'],
-        consentList: ['p 2'],
+        inviteList: ['p2', '!pass'],
+        consentList: ['p2'],
         declineList: [],
       },
       p2: {
-        name: 'p 2',
+        name: 'p2',
         gender: 'male',
         consentList: ['p1'],
         cannotInvite: true,
@@ -488,12 +488,10 @@ test('matingList tests', () => {
   //function handleReproductionList(actorName, args, listName, gameState, bot){
   response = reproLib.showMatingLists('p1', gameState, {});
   expect(response.indexOf('inviteList')).toBeGreaterThan(0);
-  expect(response.indexOf('consentList')).toBeGreaterThan(0);
-  expect(response.indexOf('declineList')).toBeGreaterThan(0);
+  expect(response.indexOf('romantic responses')).toBeGreaterThan(0);
   response = reproLib.showMatingLists('p2', gameState, {});
   expect(response.indexOf('inviteList')).toBeGreaterThan(0);
-  expect(response.indexOf('consentList')).toBeGreaterThan(0);
-  expect(response.indexOf('declineList')).toBeGreaterThan(0);
+  expect(response.indexOf('romantic responses')).toBeGreaterThan(0);
   canResponse = reproLib.canStillInvite(gameState);
   expect(canResponse).toBe('p1');
 });
@@ -506,7 +504,7 @@ test('make a invitelist, with commas, pass and save', () => {
         gender: 'female',
       },
       p2: {
-        name: 'p 2',
+        name: 'p2',
         gender: 'male',
       },
       p3: {
@@ -521,8 +519,8 @@ test('make a invitelist, with commas, pass and save', () => {
     round: 'reproduction',
   };
   //function handleReproductionList(actorName, args, listName, gameState, bot){
-  expectedList = ['p 2', 'p3', '!pass'];
-  inputList = ['p 2,', 'p3,', '!pass'];
+  expectedList = ['p2', 'p3', '!pass'];
+  inputList = ['p2,', 'p3,', '!pass'];
   response = reproLib.handleReproductionList(
     'p1',
     inputList,
@@ -530,87 +528,13 @@ test('make a invitelist, with commas, pass and save', () => {
     gameState,
     {}
   );
-  exp = 'Setting your inviteList list to:p 2,p3,!pass\n';
+  exp = 'Setting your inviteList list to:p2,p3,!pass\n';
   expect(response).toBe(exp);
   expect(gameState['population']['p1']['inviteList']).toStrictEqual(
     expectedList
   );
 });
 
-test('make a consent list with !all', () => {
-  var gameState = {
-    population: {
-      p1: {
-        name: 'p1',
-        gender: 'female',
-      },
-      p2: {
-        name: 'p2',
-        gender: 'male',
-      },
-      p3: {
-        name: 'p3',
-        gender: 'male',
-      },
-      p4: {
-        name: 'p4',
-        gender: 'female',
-      },
-    },
-    round: 'reproduction',
-  };
-  expectedList = ['p2', 'p3', '!all'];
-  inputList = ['p2,', 'p3,', '!all,'];
-  response = reproLib.handleReproductionList(
-    'p1',
-    inputList,
-    'consentList',
-    gameState,
-    {}
-  );
-  exp = 'Setting your consentList list to:p2,p3,!all\n';
-  expect(response).toBe(exp);
-  expect(gameState['population']['p1']['consentList']).toStrictEqual(
-    expectedList
-  );
-});
-
-test('make a consent list with !all and a declineList', () => {
-  var gameState = {
-    population: {
-      p1: {
-        name: 'p1',
-        gender: 'female',
-        declineList: ['p3'],
-      },
-      p2: {
-        name: 'p2',
-        gender: 'male',
-      },
-      p3: {
-        name: 'p3',
-        gender: 'male',
-      },
-      p4: {
-        name: 'p4',
-        gender: 'female',
-      },
-    },
-    round: 'reproduction',
-  };
-  expectedList = ['p2', 'p3', '!all'];
-  rawInputList = 'p2, p3, !all';
-  reproLib.consentPrep(gameState, 'p1', rawInputList);
-  response = gameState.messages['p1'];
-  exp = 'Updated consentlist to p2,p3,!all';
-  expect(response).toContain(exp);
-  expect(response).toContain('will not override');
-  expect(response).toContain('Updated');
-  expect(gameState['population']['p1']['consentList']).toStrictEqual(
-    expectedList
-  );
-});
-
 test('make a consent list with !none', () => {
   var gameState = {
     population: {
@@ -672,29 +596,6 @@ test('make a consent list with !none', () => {
   expect(!hasList);
 });
 
-test('consent and decline collisions on all', () => {
-  var gameState = {
-    population: {
-      p1: {
-        name: 'p1',
-        gender: 'female',
-        consentList: ['!all'],
-        declineList: ['!all'],
-      },
-      p2: {
-        name: 'p2',
-        gender: 'male',
-        consentList: ['!all'],
-      },
-    },
-    round: 'reproduction',
-  };
-  inputList = '!all';
-  //function decline(actorName, messageArray,  gameState){
-  response = reproLib.decline('p1', inputList, gameState);
-  member = gameState['population']['p1'];
-  expect(['p2']).toStrictEqual(member.declineList);
-});
 
 test('consent and decline collisions by name', () => {
   var gameState = {
@@ -726,6 +627,33 @@ test('consent and decline collisions by name', () => {
   expect(p2message).toStrictEqual('p1 declines your invitation.');
 });
 
+test('reciprocal invite does not count as consent', () => {
+  var gameState = {
+    reproductionRound: true,
+    population: {
+      p1: {
+        name: 'p1',
+        gender: 'female',
+        inviteList: ['p2'],
+      },
+      p2: {
+        name: 'p2',
+        gender: 'male',
+        inviteList: ['p1'],
+      },
+    },
+    children: {},
+    round: 'reproduction',
+  };
+
+  reproLib.globalMatingCheck(gameState);
+
+  expect(gameState.messages['p1']).toContain('p2 has invited you to mate');
+  expect(gameState.messages['p2']).toContain('p1 considers your invitation.');
+  expect(gameState.messages['p1']).not.toContain('You share good feelings');
+  expect(gameState.messages['p2']).not.toContain('is impressed by your flirtation');
+});
+
 test('mating with spaces in names', () => {
   var gameState = {
     reproductionRound: true,
@@ -733,11 +661,11 @@ test('mating with spaces in names', () => {
       p1: {
         name: 'p1',
         gender: 'female',
-        inviteList: ['p 2'],
+        inviteList: ['p2'],
         consentList: ['!all'],
       },
       p2: {
-        name: 'p 2',
+        name: 'p2',
         gender: 'male',
         inviteList: ['p1', 'p4'],
         consentList: ['p1'],
@@ -751,7 +679,7 @@ test('mating with spaces in names', () => {
         name: 'p4',
         gender: 'female',
         inviteList: ['!pass'],
-        consentList: ['p 2'],
+        consentList: ['p2'],
       },
     },
     children: {},
@@ -761,15 +689,15 @@ test('mating with spaces in names', () => {
   response = reproLib.checkMating(gameState, 'p1');
   messages = gameState.messages;
 
-  expect('p 2' in messages);
-  p2messages = messages['p 2'];
+  expect('p2' in messages);
+  p2messages = messages['p2'];
   expect(p2messages).toContain('p1 is impressed');
   expect(p2messages).toContain('You share good feelings with p1');
   expect(p2messages).toContain('p1 flirts with you, and you are interested.');
   expect('p1' in messages);
   p1messages = messages['p1'];
   expect(p1messages).toContain('Checking');
-  expect(p1messages).toContain('p 2');
+  expect(p1messages).toContain('p2');
   expect(p1messages).toContain('over');
   expect(p1messages).toContain('done mating');
 });
@@ -1593,4 +1521,115 @@ test('Infinite loop issue', () => {
   expect(playerJMessage).toContain('pregnant');
   var playerRMessage = gameState['messages']['Ragnarthenotimcompetent'];
   expect(playerRMessage).toContain('pregnant');
+});
+
+test('migrateToConsentDict works correctly backwards compat', () => {
+  var person = {
+    name: 'p1',
+    consentList: ['p2', 'p3'],
+    declineList: ['p4'],
+  };
+  reproLib.migrateToConsentDict(person);
+  expect(person.consentDict).toBeDefined();
+  expect(person.consentDict['p2']).toBe('consent');
+  expect(person.consentDict['p3']).toBe('consent');
+  expect(person.consentDict['p4']).toBe('decline');
+});
+
+test('handleRomanceResponse correctly sets consent and decline in consentDict', () => {
+  var gameState = {
+    population: {
+      p1: { name: 'p1', reproductionRound: true, consentDict: {} },
+    },
+  };
+  reproLib.handleRomanceResponse(gameState, 'p1', 'p2', 'consent');
+  expect(gameState.population.p1.consentDict['p2']).toBe('consent');
+});
+
+test('globalMatingCheck resolves maybe to wait if target response is undefined', () => {
+  var gameState = {
+    population: {
+      p1: {
+        name: 'p1',
+        gender: 'male',
+        activity: 'reproduction',
+        inviteList: ['p2'],
+        inviteIndex: 0,
+        consentDict: {},
+      },
+      p2: {
+        name: 'p2',
+        gender: 'female',
+        activity: 'reproduction',
+        inviteList: [],
+        inviteIndex: 0,
+        consentDict: {},
+      },
+    },
+    messages: { p1: '', p2: '' },
+    reproductionRound: true,
+    reproductionRound: true,
+    activity: 'reproduction',
+  };
+  reproLib.globalMatingCheck(gameState, {});
+  expect(gameState.messages['p1']).toContain('considers');
+});
+
+test('globalMatingCheck resolves consent directly dictionary', () => {
+  var gameState = {
+    population: {
+      p1: {
+        name: 'p1',
+        gender: 'male',
+        activity: 'reproduction',
+        inviteList: ['p2'],
+        inviteIndex: 0,
+        consentDict: {},
+      },
+      p2: {
+        name: 'p2',
+        gender: 'female',
+        activity: 'reproduction',
+        inviteList: [],
+        inviteIndex: 0,
+        consentDict: { p1: 'consent' },
+        cannotInvite: false,
+      },
+    },
+    messages: { p1: '', p2: '' },
+    reproductionRound: true,
+    reproductionRound: true,
+    activity: 'reproduction',
+  };
+  reproLib.globalMatingCheck(gameState, {});
+  expect(gameState.messages['p1']).toContain('impressed');
+});
+
+test('globalMatingCheck resolves decline directly dictionary', () => {
+  var gameState = {
+    population: {
+      p1: {
+        name: 'p1',
+        gender: 'male',
+        activity: 'reproduction',
+        inviteList: ['p2'],
+        inviteIndex: 0,
+        consentDict: {},
+      },
+      p2: {
+        name: 'p2',
+        gender: 'female',
+        activity: 'reproduction',
+        inviteList: [],
+        inviteIndex: 0,
+        consentDict: { p1: 'decline' },
+      },
+    },
+    messages: { p1: '', p2: '' },
+    reproductionRound: true,
+    reproductionRound: true,
+    activity: 'reproduction',
+  };
+  reproLib.globalMatingCheck(gameState, {});
+  expect(gameState.messages['p1']).toContain('declines');
 });

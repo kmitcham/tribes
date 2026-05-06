@@ -3,3 +3,4 @@
 /coverage
 auth.js
 logs/*
+tmp_scripts/

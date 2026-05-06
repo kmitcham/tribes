@@ -947,13 +947,7 @@
                 <div class="form-group">
                     <label for="tribeSelect">Tribe: <span id="tribeRemembered" style="color: #28a745; font-size: 0.8em; display: none;">💾</span></label>
                     <select id="tribeSelect">
-                        <option value="bear">Bear</option>
-                        <option value="flounder">Flounder</option>
-                        <option value="bug">Bug</option>
-                        <option value="vashon">Vashon</option>
-                        <option value="mib">MIB</option>
-                        <option value="sloth">Sloth</option>
-                        <option value="wolf">Wolf</option>
+                        <option value="">Loading...</option>
                     </select>
                 </div>
                 
@@ -992,6 +986,12 @@
                         </button>
                         <button class="btn btn-small" onclick="document.getElementById('importFileInput').click()" style="background: #ffc107; color: #212529;">
                             📥 Import Game Data
+                        </button>
+                        <button class="btn btn-small" onclick="tribesClient.showManageTribesModal()" style="background: #17a2b8; margin-top: 0.5rem; margin-right: 0.5rem;">
+                            🔧 Manage Tribes
+                        </button>
+                        <button class="btn btn-small" onclick="tribesClient.showManageUsersModal()" style="background: #6f42c1; margin-top: 0.5rem;">
+                            👥 Manage Users
                         </button>
                         <input type="file" id="importFileInput" accept=".json" style="display: none;" onchange="tribesClient.handleImportFile(event)">
                     </div>
@@ -1097,7 +1097,7 @@
                 this.currentChildren = null; // Store current children for child targeting
                 this.currentRomanceLists = null; // Store current romance lists
                 this.reconnectAttempts = 0;
-                this.maxReconnectAttempts = 5;
+                this.maxReconnectAttempts = 1000; // Keep retrying for a long time if server is down (e.g. 5+ minutes)
                 this.reconnectInterval = 2000;
                 this.isLoggedIn = false; // Track login state
                 this.isReferee = false; // Track referee status
@@ -1442,7 +1442,6 @@
                         setTimeout(() => {
                             if (this.ws.readyState !== WebSocket.OPEN) {
                                 this.ws.close();
-                                tryHost(hostIndex + 1);
                             }
                         }, 2000);
                     };
@@ -1486,7 +1485,7 @@
                     this.addMessage('WebSocket not initialized; attempting to connect', 'error');
                     this.connectWithFallback()
                 }
-                if (this.ws && !this.ws.readyState === WebSocket.OPEN) {
+                if (this.ws && this.ws.readyState !== WebSocket.OPEN) {
                     this.addMessage('WebSocket not open; attempting to reconnect', 'error');
                     this.connectWithFallback();
                 }
@@ -1539,6 +1538,9 @@
                     case 'helpContent':
                         this.handleHelpContent(data);
                         break;
+                    case 'manageUsersList':
+                        this.handleManageUsersList(data);
+                        break;
                     case 'exportGameResponse':
                         this.handleExportGameResponse(data);
                         break;
@@ -1561,6 +1563,9 @@
                     this.minimizeLoginArea();
                     this.addMessage(`Welcome back, ${data.playerName}!`, 'success');
                     this.requestCommandList();
+                    if (document.getElementById('tribeSelect').value) {
+                        this.refreshGameData();
+                    }
                 } else {
                     // Session invalid, clear it and show login
                     this.clearSession();
@@ -1582,9 +1587,22 @@
             }
             
             handleCommandList(data) {
-                this.commands = data.commands;
-                this.isReferee = data.isReferee || false;
-                this.chiefStatus = data.isChief || false;
+                if (data.commands) {
+                    this.commands = data.commands;
+                }
+                if (data.isReferee !== undefined) {
+                    this.isReferee = data.isReferee;
+                }
+                if (data.isChief !== undefined) {
+                    this.chiefStatus = data.isChief;
+                }
+                
+                if (data.tribes) {
+                    this.currentTribes = data.tribes;
+                    this.updateTribeDropdown(data.tribes);
+                    this.renderManageTribesList(data.tribes);
+                }
+                
                 this.updateCommandList();
                 this.initCommandSearch();
                 
@@ -1592,6 +1610,46 @@
                 const refereeSection = document.getElementById('refereeAdminSection');
                 if (refereeSection) {
                     refereeSection.style.display = this.isReferee ? 'block' : 'none';
+                }
+            }
+
+            updateTribeDropdown(tribesData) {
+                const tribeSelect = document.getElementById('tribeSelect');
+                if (!tribeSelect) return;
+                
+                const currentValue = tribeSelect.value;
+                tribeSelect.innerHTML = '';
+                
+                // Convert to array and sort
+                const tribes = Object.values(tribesData).sort((a, b) => a.name.localeCompare(b.name));
+                
+                let optionAdded = false;
+                
+                tribes.forEach(tribe => {
+                    // Referees see all tribes, non-referees only see unhidden tribes
+                    if (this.isReferee || !tribe.hidden) {
+                        const opt = document.createElement('option');
+                        opt.value = tribe.name;
+                        // Capitalize first letter
+                        let displayName = tribe.name.charAt(0).toUpperCase() + tribe.name.slice(1);
+                        if (tribe.hidden) displayName += ' (Hidden)';
+                        opt.textContent = displayName;
+                        tribeSelect.appendChild(opt);
+                        if (tribe.name === currentValue) optionAdded = true;
+                    }
+                });
+                
+                if (optionAdded) {
+                    tribeSelect.value = currentValue;
+                } else if (tribeSelect.options.length > 0) {
+                    // Try to restore from cookie if not currently set
+                    const savedTribe = this.getCookie('tribesLastTribe');
+                    const savedExists = Array.from(tribeSelect.options).some(opt => opt.value === savedTribe);
+                    if (savedTribe && savedExists) {
+                        tribeSelect.value = savedTribe;
+                    } else {
+                        tribeSelect.value = tribeSelect.options[0].value;
+                    }
                 }
             }
 
@@ -1625,6 +1683,18 @@
                     case 'romance':
                         this.currentRomanceLists = data.content;
                         this.displayCurrentRomanceLists(data.content);
+                        
+                        // Also regenerate form to populate defaults if the modal is currently showing
+                        const romanceModal = document.getElementById('commandModal');
+                        if (romanceModal && romanceModal.classList.contains('active') && this.selectedCommand) {
+                            const romanceCommands = ['consent', 'decline', 'invite'];
+                            if (romanceCommands.includes(this.selectedCommand.name.toLowerCase())) {
+                                const paramsContainer = document.getElementById('modalCommandParameters');
+                                if (paramsContainer) {
+                                    this.generateCommandFormInModal(paramsContainer);
+                                }
+                            }
+                        }
                         break;
                     case 'error':
                         this.addMessage(data.content, 'error');
@@ -1643,6 +1713,10 @@
                 if (!romanceCommands.includes(this.selectedCommand.name.toLowerCase())) {
                     return;
                 }
+                
+                // Unified form handles its own display
+                const cmdNameDisplay = this.selectedCommand.name.toLowerCase();
+                if (cmdNameDisplay === 'consent' || cmdNameDisplay === 'decline') return;
                 
                 // Find the modal description area
                 const modalDescription = document.getElementById('modalDescription');
@@ -1687,6 +1761,9 @@
                     this.showCommandsSection(); // Show commands after successful login
                     this.requestCommandList(); // Refresh command list in case chief status changed
                     this.minimizeLoginArea(); // Minimize login area after successful registration
+                    if (document.getElementById('tribeSelect').value) {
+                        this.refreshGameData();
+                    }
                 }
             }
 
@@ -1843,7 +1920,7 @@
                 
                 // Sort commands alphabetically by name and filter out hidden commands
                 const sortedCommands = Object.entries(this.commands)
-                    .filter(([name]) => !hiddenCommands.includes(name))
+                    .filter(([name, command]) => !hiddenCommands.includes(name) && (!this.isRefereeCommand(command.description) || this.isReferee))
                     .sort(([a], [b]) => a.localeCompare(b));
                 
                 sortedCommands.forEach(([name, command]) => {
@@ -1932,6 +2009,7 @@
                 }
 
                 // Setup modal event handlers
+                executeBtn.disabled = false;
                 executeBtn.onclick = () => this.executeModalCommand();
                 cancelBtn.onclick = () => this.closeCommandModal();
                 closeBtn.onclick = () => this.closeCommandModal();
@@ -1960,7 +2038,29 @@
             }
 
             executeModalCommand() {
-                const parametersContainer = document.getElementById('modalCommandParameters');
+                try {
+                    const parametersContainer = document.getElementById('modalCommandParameters');
+                    
+                    const cmdNameExec = this.selectedCommand ? this.selectedCommand.name.toLowerCase() : '';
+                if ((cmdNameExec === 'consent' || cmdNameExec === 'decline') && document.getElementById('unifiedRomanceGrid')) {
+                    const dropdowns = parametersContainer.querySelectorAll('select.romance-dropdown');
+                    let newConsentDict = {};
+                    dropdowns.forEach(select => {
+                        const nameStr = select.name.replace('romance_', '');
+                        if (select.value !== 'maybe') {
+                            newConsentDict[nameStr] = select.value;
+                        }
+                    });
+                    
+                    this.send({
+                        type: 'romanceRequest',
+                        playerName: document.getElementById('playerName').value.trim(),
+                        consentDict: newConsentDict
+                    });
+                    this.closeCommandModal();
+                    return;
+                }
+                
                 const parameters = this.collectParametersFromContainer(parametersContainer);
                 
                 if (parameters !== null) {
@@ -1972,10 +2072,106 @@
                     });
                     this.closeCommandModal();
                 }
+                } catch (e) {
+                    console.error('Modal execution error:', e);
+                    this.addMessage('Client error executing command: ' + e.message, 'error');
+                }
+            }
+
+
+            addPregnancyWarning(container) {
+                const playerNameInput = document.getElementById('playerName');
+                if (!playerNameInput) return;
+                const currentPlayerName = playerNameInput.value.trim();
+                const currentPlayer = this.currentPopulation ? this.currentPopulation[currentPlayerName] : null;
+                if (currentPlayer && currentPlayer.isPregnant) {
+                    const warning = document.createElement('div');
+                    warning.style.color = '#721c24';
+                    warning.style.backgroundColor = '#f8d7da';
+                    warning.style.border = '1px solid #f5c6cb';
+                    warning.style.padding = '10px';
+                    warning.style.marginBottom = '15px';
+                    warning.style.borderRadius = '4px';
+                    warning.innerHTML = '<strong>⚠️ Note:</strong> Your character is currently pregnant. This may prevent sharing good feelings or getting new responses.';
+                    container.appendChild(warning);
+                }
+            }
+
+            buildRomanceGridForm(container) {
+                container.innerHTML = '';
+                if (!this.currentPopulation) {
+                    container.innerHTML = '<p>Loading population data...</p>';
+                    return;
+                }
+                this.addPregnancyWarning(container);
+                
+                const currentPlayerName = document.getElementById('playerName').value.trim();
+                const currentPlayer = this.currentPopulation[currentPlayerName];
+                const gender = currentPlayer ? currentPlayer.gender : null;
+                const oppositeGenderTargets = Object.values(this.currentPopulation)
+                    .filter(p => p.name !== currentPlayerName && p.gender !== gender);
+
+                let consentDict = (this.currentRomanceLists && this.currentRomanceLists.consentDict) || {};
+
+                const gridTable = document.createElement('table');
+                gridTable.style.width = '100%';
+                gridTable.style.borderCollapse = 'collapse';
+                gridTable.style.marginTop = '1rem';
+                gridTable.id = 'unifiedRomanceGrid';
+
+                const thead = document.createElement('thead');
+                thead.innerHTML = `
+                    <tr style="background: #f8f9fa; border-bottom: 2px solid #ddd;">
+                        <th style="padding: 8px; text-align: left;">Player Name</th>
+                        <th style="padding: 8px; text-align: right;">Status</th>
+                    </tr>
+                `;
+                gridTable.appendChild(thead);
+
+                const tbody = document.createElement('tbody');
+                
+                const buildRow = (nameStr, displayName) => {
+                    const row = document.createElement('tr');
+                    row.style.borderBottom = '1px solid #ddd';
+                    
+                    const existingRes = consentDict[nameStr] || 'maybe';
+                    
+                    row.innerHTML = `
+                        <td style="padding: 8px;">${displayName}</td>
+                        <td style="padding: 8px; text-align: right;">
+                            <select name="romance_${nameStr}" class="romance-dropdown" style="padding: 4px; width: 120px;">
+                                <option value="maybe" ${existingRes === 'maybe' ? 'selected' : ''}>🤔 Maybe</option>
+                                <option value="consent" ${existingRes === 'consent' ? 'selected' : ''}>✅ Consent</option>
+                                <option value="decline" ${existingRes === 'decline' ? 'selected' : ''}>❌ Decline</option>
+                            </select>
+                        </td>
+                    `;
+                    return row;
+                };
+
+                oppositeGenderTargets.sort((a,b) => a.name.localeCompare(b.name)).forEach(p => {
+                    tbody.appendChild(buildRow(p.name, p.name));
+                });
+                
+                gridTable.appendChild(tbody);
+                container.appendChild(gridTable);
+
+                const note = document.createElement('p');
+                note.style.fontSize = '0.85rem';
+                note.style.color = '#6c757d';
+                note.style.marginTop = '1rem';
+                note.textContent = "Setting 'Maybe' means you will be prompted if they invite you, and you will need to resolve it.";
+                container.appendChild(note);
             }
 
             generateCommandFormInModal(container) {
-                if (!this.selectedCommand || !this.selectedCommand.options) {
+                if (!this.selectedCommand) return;
+                const cmdName = this.selectedCommand.name.toLowerCase();
+                if (cmdName === 'consent' || cmdName === 'decline') {
+                    this.buildRomanceGridForm(container);
+                    return;
+                }
+                if (!this.selectedCommand.options) {
                     return;
                 }
 
@@ -2028,6 +2224,10 @@
                     container.innerHTML = '<div>Loading children data...</div>';
                     return;
                 }
+                
+                if (this.selectedCommand.name.toLowerCase() === 'invite') {
+                    this.addPregnancyWarning(container);
+                }
 
                 this.renderParametersInContainer(container, preservedValues);
             }
@@ -2036,7 +2236,17 @@
                 const form = document.getElementById('commandForm');
                 const container = document.getElementById('commandParameters');
                 
-                if (!this.selectedCommand || !this.selectedCommand.options) {
+                if (!this.selectedCommand) {
+                    form.style.display = 'none';
+                    return;
+                }
+                const cmdName = this.selectedCommand.name.toLowerCase();
+                if (cmdName === 'consent' || cmdName === 'decline') {
+                    form.style.display = 'block';
+                    this.buildRomanceGridForm(container);
+                    return;
+                }
+                if (!this.selectedCommand.options) {
                     form.style.display = 'none';
                     return;
                 }
@@ -2084,6 +2294,10 @@
                     // Show loading message
                     container.innerHTML = '<div>Loading children data...</div>';
                     return;
+                }
+                
+                if (this.selectedCommand && this.selectedCommand.name.toLowerCase() === 'invite') {
+                    this.addPregnancyWarning(container);
                 }
                 
                 this.selectedCommand.options.forEach(option => {
@@ -2145,11 +2359,44 @@
                         }
                     } else if (this.isOrderingOption(option.name)) {
                         // Ordering interface for parameters like invite lists, consent lists
-                        const appendPassChecked = (option.name === 'invitelist' && preservedValues['invite_append_pass']) || false;
-                        input = this.createOrderingInterface(option.name, preservedValues[option.name] || '', appendPassChecked);
+                        let initialValue = preservedValues[option.name] || '';
+                        
+                        // If no preserved value, pre-populate from server data if available
+                        if (!initialValue && this.currentRomanceLists) {
+                            if (this.selectedCommand.name === 'invite' && this.currentRomanceLists.inviteList) {
+                                // Filter out !pass as we handle that with a checkbox
+                                const cleanList = this.currentRomanceLists.inviteList.filter(item => item !== '!pass');
+                                initialValue = cleanList.join(',');
+                            } else if (this.selectedCommand.name === 'consent' && this.currentRomanceLists.consentList) {
+                                initialValue = this.currentRomanceLists.consentList.join(',');
+                            } else if (this.selectedCommand.name === 'decline' && this.currentRomanceLists.declineList) {
+                                initialValue = this.currentRomanceLists.declineList.join(',');
+                            }
+                        }
+                        
+                        // Check if invite list ended with !pass in the original data to prepopulate checkbox
+                        let appendPassChecked = (option.name === 'invitelist' && preservedValues['invite_append_pass']);
+                        if (appendPassChecked === undefined && option.name === 'invitelist' && this.currentRomanceLists && this.currentRomanceLists.inviteList) {
+                            appendPassChecked = this.currentRomanceLists.inviteList.includes('!pass');
+                        } else if (appendPassChecked === undefined) {
+                            appendPassChecked = true; // Default
+                        }
+                        
+                        input = this.createOrderingInterface(option.name, initialValue, appendPassChecked);
                     } else if (option.type === 4) { // INTEGER
                         input = document.createElement('input');
                         input.type = 'number';
+                        if (option.max_value !== undefined) {
+                            input.max = option.max_value;
+                        }
+                        if (option.min_value !== undefined) {
+                            input.min = option.min_value;
+                        }
+                        
+                        // Enforce feed amount hard limit on frontend if not transmitted
+                        if (this.selectedCommand && this.selectedCommand.name === 'feed' && option.name === 'amount') {
+                            input.max = "2";
+                        }
                     } else {
                         input = document.createElement('input');
                         input.type = 'text';
@@ -2280,9 +2527,10 @@
             }
 
             renderParametersInContainer(container, preservedValues = {}) {
-                // Special case for ignore command - create custom interface even without server options
-                if (this.selectedCommand.name.toLowerCase() === 'ignore') {
-                    this.createIgnoreInterface(container);
+                // Special case for guard and ignore commands - create unified custom interface even without server options
+                const cmdName = this.selectedCommand.name.toLowerCase();
+                if (cmdName === 'ignore' || cmdName === 'guard') {
+                    this.createUnifiedGuardInterface(container);
                     return;
                 }
                 
@@ -2350,7 +2598,7 @@
                                         if (age > 22 && mother === currentPlayerName) {
                                             const opt = document.createElement('option');
                                             opt.value = childName;
-                                            opt.textContent = `${childName} (age ${age})`;
+                                            opt.textContent = `${childName} (age ${age / 2})`;
                                             input.appendChild(opt);
                                         }
                                     });
@@ -2363,7 +2611,7 @@
                                         if (age <= 23) {
                                             const opt = document.createElement('option');
                                             opt.value = childName;
-                                            opt.textContent = `${childName} (age ${age})`;
+                                            opt.textContent = `${childName} (age ${age / 2})`;
                                             input.appendChild(opt);
                                         }
                                     });
@@ -2374,7 +2622,8 @@
                                 // Add individual children
                                 Object.keys(this.currentChildren).forEach(childName => {
                                     const child = this.currentChildren[childName];
-                                    if (child.age <= 23) { 
+                                    const age = child.age || 0;
+                                    if (age <= 23) {
                                         const opt = document.createElement('option');
                                         opt.value = childName;
                                         
@@ -2382,7 +2631,7 @@
                                         const food = child.food || 0;
                                         const age = child.age || 0;
                                         const status = food >= 2 ? '🍎' : '😋'; // Fed or hungry
-                                        opt.textContent = `${childName} (age ${age}, food ${food}) ${status}`;
+                                        opt.textContent = `${childName} (age ${age / 2}, food ${food}) ${status}`;
                                         
                                         input.appendChild(opt);
                                     } else {
@@ -2455,7 +2704,30 @@
                         }
                     } else if (this.isOrderingOption(option.name)) {
                         // Create ordering interface
-                        const orderingInterface = this.createOrderingInterface(option.name, '');
+                        let initialValue = preservedValues[option.name] || '';
+                        
+                        // If no preserved value, pre-populate from server data if available
+                        if (!initialValue && this.currentRomanceLists) {
+                            if (this.selectedCommand.name === 'invite' && this.currentRomanceLists.inviteList) {
+                                // Filter out !pass as we handle that with a checkbox
+                                const cleanList = this.currentRomanceLists.inviteList.filter(item => item !== '!pass');
+                                initialValue = cleanList.join(',');
+                            } else if (this.selectedCommand.name === 'consent' && this.currentRomanceLists.consentList) {
+                                initialValue = this.currentRomanceLists.consentList.join(',');
+                            } else if (this.selectedCommand.name === 'decline' && this.currentRomanceLists.declineList) {
+                                initialValue = this.currentRomanceLists.declineList.join(',');
+                            }
+                        }
+                        
+                        // Check if invite list ended with !pass in the original data to prepopulate checkbox
+                        let appendPassChecked = (option.name === 'invitelist' && preservedValues['invite_append_pass']);
+                        if (appendPassChecked === undefined && option.name === 'invitelist' && this.currentRomanceLists && this.currentRomanceLists.inviteList) {
+                            appendPassChecked = this.currentRomanceLists.inviteList.includes('!pass');
+                        } else if (appendPassChecked === undefined) {
+                            appendPassChecked = true; // Default
+                        }
+                        
+                        const orderingInterface = this.createOrderingInterface(option.name, initialValue, appendPassChecked);
                         group.appendChild(orderingInterface);
                         
                         // Add help text for ordering
@@ -2542,13 +2814,11 @@
                 });
             }
 
-            createIgnoreInterface(container) {
+            createUnifiedGuardInterface(container) {
                 const currentPlayerName = document.getElementById('playerName').value;
-                
-                if (!this.currentChildren || !currentPlayerName) {
-                    container.innerHTML = '<div style="color: #6c757d; font-style: italic;">Loading children data...</div>';
-                    // Fetch children data if not available
-                    this.send({ type: 'infoRequest', selection: 'children' });
+                if (!this.currentChildren || !currentPlayerName || !this.currentPopulation) {
+                    container.innerHTML = '<div style="color: #6c757d; font-style: italic;">Loading data...</div>';
+                    if (!this.currentChildren) this.send({ type: 'infoRequest', selection: 'children' });
                     return;
                 }
                 
@@ -2556,30 +2826,45 @@
                 group.className = 'parameter-group';
                 
                 const label = document.createElement('label');
-                label.textContent = 'Children to ignore:';
+                label.textContent = 'Children you can guard:';
                 group.appendChild(label);
+
+                const warningMsg = document.createElement('div');
+                warningMsg.id = 'guardLimitWarning';
+                warningMsg.style.color = '#721c24';
+                warningMsg.style.backgroundColor = '#f8d7da';
+                warningMsg.style.padding = '0.5rem';
+                warningMsg.style.borderRadius = '4px';
+                warningMsg.style.marginBottom = '1rem';
+                warningMsg.style.display = 'none';
+                group.appendChild(warningMsg);
                 
-                const ignoreContainer = document.createElement('div');
-                ignoreContainer.className = 'ignore-container';
-                ignoreContainer.id = 'param_child';
+                const guardContainer = document.createElement('div');
+                guardContainer.className = 'unified-guard-container';
+                guardContainer.id = 'param_child';
                 
-                const guardedChildren = [];
+                const eligibleChildren = [];
+                const currentPlayer = this.currentPopulation[currentPlayerName] || Object.values(this.currentPopulation).find(p => p.name === currentPlayerName);
+                const guardedNames = (currentPlayer && currentPlayer.guarding) ? currentPlayer.guarding : [];
+                
                 Object.keys(this.currentChildren).forEach(childName => {
                     const child = this.currentChildren[childName];
-                    const guardians = child.guardians || {};
-                    
-                    // Check if current player is a guardian of this child
-                    if (guardians[currentPlayerName]) {
-                        guardedChildren.push({ name: childName, age: child.age || 0 });
+                    const age = child.age || 0;
+                    if (age >= 0 && age < 23) {
+                         eligibleChildren.push({ name: childName, age: age, isGuarded: guardedNames.includes(childName) });
                     }
                 });
-                
-                if (guardedChildren.length === 0) {
-                    ignoreContainer.innerHTML = '<div style="color: #6c757d; font-style: italic;">You are not currently guarding any children</div>';
+
+                if (eligibleChildren.length === 0) {
+                    guardContainer.innerHTML = '<div style="color: #6c757d; font-style: italic;">No children to guard</div>';
                 } else {
-                    ignoreContainer.innerHTML = '<div style="margin-bottom: 0.5rem; font-weight: 600;">Set guard status for your children:</div>';
+                    const titleDiv = document.createElement('div');
+                    titleDiv.style.marginBottom = '0.5rem';
+                    titleDiv.style.fontWeight = '600';
+                    titleDiv.textContent = 'Set status:';
+                    guardContainer.appendChild(titleDiv);
                     
-                    guardedChildren.forEach(child => {
+                    eligibleChildren.forEach(child => {
                         const childDiv = document.createElement('div');
                         childDiv.className = 'child-guard-option';
                         childDiv.style.cssText = `
@@ -2594,7 +2879,7 @@
                         `;
                         
                         const childLabel = document.createElement('span');
-                        childLabel.textContent = `${child.name} (age ${child.age})`;
+                        childLabel.textContent = `${child.name} (age ${child.age / 2})`;
                         childLabel.style.fontWeight = '500';
                         
                         const radioGroup = document.createElement('div');
@@ -2604,18 +2889,37 @@
                         guardOption.style.cssText = 'display: flex; align-items: center; gap: 0.25rem; cursor: pointer;';
                         const guardRadio = document.createElement('input');
                         guardRadio.type = 'radio';
-                        guardRadio.name = `guard_${child.name}`;
+                        guardRadio.name = `unified_guard_${child.name}`;
                         guardRadio.value = 'guard';
-                        guardRadio.checked = true; // Default to guard
-                        guardOption.appendChild(guardRadio);
-                        guardOption.appendChild(document.createTextNode('Guard'));
-                        
+                        guardRadio.checked = child.isGuarded;
+
                         const ignoreOption = document.createElement('label');
                         ignoreOption.style.cssText = 'display: flex; align-items: center; gap: 0.25rem; cursor: pointer;';
                         const ignoreRadio = document.createElement('input');
                         ignoreRadio.type = 'radio';
-                        ignoreRadio.name = `guard_${child.name}`;
+                        ignoreRadio.name = `unified_guard_${child.name}`;
                         ignoreRadio.value = 'ignore';
+                        ignoreRadio.checked = !child.isGuarded;
+
+                        const validateLimits = () => {
+                            const allChecked = guardContainer.querySelectorAll('input[type="radio"][value="guard"]:checked');
+                            const execBtn = document.getElementById('modalExecuteBtn');
+                            if (allChecked.length > 5) {
+                                if (execBtn) execBtn.disabled = true;
+                                warningMsg.style.display = 'block';
+                                warningMsg.textContent = 'You can only guard up to 5 children. Please ignore some children to proceed.';
+                            } else {
+                                if (execBtn) execBtn.disabled = false;
+                                warningMsg.style.display = 'none';
+                            }
+                        };
+
+                        guardRadio.addEventListener('change', validateLimits);
+                        ignoreRadio.addEventListener('change', validateLimits);
+
+                        guardOption.appendChild(guardRadio);
+                        guardOption.appendChild(document.createTextNode('Guard'));
+                        
                         ignoreOption.appendChild(ignoreRadio);
                         ignoreOption.appendChild(document.createTextNode('Ignore'));
                         
@@ -2624,12 +2928,29 @@
                         
                         childDiv.appendChild(childLabel);
                         childDiv.appendChild(radioGroup);
-                        ignoreContainer.appendChild(childDiv);
+                        guardContainer.appendChild(childDiv);
                     });
                 }
                 
-                group.appendChild(ignoreContainer);
+                group.appendChild(guardContainer);
                 container.appendChild(group);
+
+                // Initial validation check
+                setTimeout(() => {
+                    const allChecked = guardContainer.querySelectorAll('input[type="radio"][value="guard"]:checked');
+                    const execBtn = document.getElementById('modalExecuteBtn');
+                    if (allChecked && allChecked.length > 5) {
+                        if (execBtn) execBtn.disabled = true;
+                        if (warningMsg) {
+                            warningMsg.style.display = 'block';
+                            warningMsg.textContent = 'You can only guard up to 5 children. Please ignore some children to proceed.';
+                        }
+                    }
+                }, 0);
+            }
+
+            isRefereeCommand(description) {
+                return description && description.toUpperCase().includes('REFEREE ONLY');
             }
 
             isChiefCommand(description) {
@@ -2677,27 +2998,30 @@
                 
                 console.log('Found', inputs.length, 'total inputs in container');
                 
-                // Handle special ignore command interface
-                const ignoreContainer = container.querySelector('.ignore-container');
-                if (ignoreContainer && this.selectedCommand.name.toLowerCase() === 'ignore') {
-                    const childrenToIgnore = [];
-                    const radioGroups = ignoreContainer.querySelectorAll('input[type="radio"]:checked');
+                // Handle unified guard command interface
+                const unifiedGuardContainer = container.querySelector('.unified-guard-container');
+                if (unifiedGuardContainer && (this.selectedCommand.name.toLowerCase() === 'guard' || this.selectedCommand.name.toLowerCase() === 'ignore')) {
+                    const childrenToGuard = [];
+                    const radioGroups = unifiedGuardContainer.querySelectorAll('input[type="radio"][value="guard"]:checked');
                     
                     radioGroups.forEach(radio => {
-                        if (radio.value === 'ignore') {
-                            // Extract child name from radio name attribute (guard_ChildName)
-                            const childName = radio.name.replace('guard_', '');
-                            childrenToIgnore.push(childName);
-                        }
+                        const childName = radio.name.replace('unified_guard_', '');
+                        childrenToGuard.push(childName);
                     });
                     
-                    // For ignore command, send as child1, child2, child3 parameters (command expects these specific names)
-                    childrenToIgnore.forEach((childName, index) => {
-                        const paramKey = `child${index + 1}`; // child1, child2, child3
+                    // We must convert "ignore" command usages to "guard" underneath so the backend clears and resets children
+                    if (this.selectedCommand.name.toLowerCase() === 'ignore') {
+                        this.selectedCommand.name = 'guard';
+                    }
+                    
+                    // 'child1'="none" tells backend to clear existing guards. child2, child3, child4, child5 get the new children.
+                    parameters['child1'] = 'none';
+                    childrenToGuard.forEach((childName, index) => {
+                        const paramKey = `child${index + 2}`; // child2, child3...
                         parameters[paramKey] = childName;
                     });
                     
-                    console.log('Ignore command children to ignore:', childrenToIgnore, 'Parameters:', parameters);
+                    console.log('Unified guard parameters matched:', parameters);
                 }
                 
                 inputs.forEach(input => {
@@ -2712,8 +3036,8 @@
                     const paramName = input.id.replace('param_', '');
                     console.log('Parameter name:', paramName, 'isOrdering:', this.isOrderingOption(paramName));
                     
-                    // Skip if this is the ignore container (already handled above)
-                    if (input.classList && input.classList.contains('ignore-container')) {
+                    // Skip if this is the unified guard container (already handled above)
+                    if (input.classList && input.classList.contains('unified-guard-container')) {
                         return;
                     }
                     
@@ -2738,7 +3062,7 @@
                         parameters[paramName] = input.value;
                     }
                 });
-                
+
                 // Validation
                 const required = this.selectedCommand.options ? this.selectedCommand.options.filter(opt => opt.required) : [];
                 const missing = required.filter(opt => !parameters[opt.name] || parameters[opt.name] === '');
@@ -2786,16 +3110,7 @@
                     const allOption = document.createElement('option');
                     allOption.value = '!all';
                     allOption.textContent = '!all (all opposite gender players)';
-                    playerSelect.appendChild(allOption);
-                    
-                    // Add different options based on command type
-                    if (this.selectedCommand.name.toLowerCase() !== 'invite') {
-                        // For consent and decline commands
-                        const noneOption = document.createElement('option');
-                        noneOption.value = '!none';
-                        noneOption.textContent = '!none (clear list)';
-                        playerSelect.appendChild(noneOption);
-                    }
+                    playerSelect.appendChild(allOption);                    
                 }
                 
                 if (this.currentPopulation) {
@@ -3092,6 +3407,31 @@
                     return;
                 }
                 
+                const cmdNameSideExec = this.selectedCommand.name.toLowerCase();
+                if ((cmdNameSideExec === 'consent' || cmdNameSideExec === 'decline') && document.getElementById('unifiedRomanceGrid')) {
+                    const form = document.getElementById('commandParameters');
+                    const dropdowns = form.querySelectorAll('select.romance-dropdown');
+                    let newConsentDict = {};
+                    dropdowns.forEach(select => {
+                        const nameStr = select.name.replace('romance_', '');
+                        if (select.value !== 'maybe') {
+                            newConsentDict[nameStr] = select.value;
+                        }
+                    });
+                    
+                    this.send({
+                        type: 'romanceRequest',
+                        playerName: document.getElementById('playerName').value.trim(),
+                        consentDict: newConsentDict
+                    });
+                    
+                    // Clear selection and form
+                    this.selectedCommand = null;
+                    document.getElementById('commandForm').style.display = 'none';
+                    this.renderCommandList(); // Re-render to clear selection styling
+                    return;
+                }
+                
                 const parameters = {};
                 const form = document.getElementById('commandParameters');
                 const inputs = form.querySelectorAll('input, select');
@@ -3184,45 +3524,35 @@
                     const key = this.getMessageHistoryKey();
                     let messages = [];
                     
-                    // Try to parse existing messages, fallback to empty array if corrupted
                     try {
-                        const existingData = this.getCookie(key);
+                        const existingData = localStorage.getItem(key);
                         if (existingData) {
                             messages = JSON.parse(existingData);
-                            // Validate that it's an array
-                            if (!Array.isArray(messages)) {
-                                messages = [];
-                            }
+                            if (!Array.isArray(messages)) messages = [];
                         }
                     } catch (parseError) {
                         console.warn('Existing message history corrupted, starting fresh:', parseError.message);
                         messages = [];
                     }
                     
-                    // Sanitize message data to prevent JSON corruption
                     const sanitizedMessage = {
-                        text: String(messageData.text || '').replace(/[\u0000-\u001f\u007f]/g, ''), // Remove control characters
+                        text: String(messageData.text || '').replace(/[\u0000-\u001f\u007f]/g, ''),
                         type: String(messageData.type || 'info'),
                         typeLabel: messageData.typeLabel ? String(messageData.typeLabel) : null,
                         timestamp: Number(messageData.timestamp) || Date.now()
                     };
                     
-                    // Add new message
                     messages.push(sanitizedMessage);
                     
-                    // Keep only last 30 messages to prevent cookie size issues
-                    if (messages.length > 30) {
-                        messages = messages.slice(-30);
+                    if (messages.length > 200) {
+                        messages = messages.slice(-200);
                     }
                     
-                    // Store back to cookie (expires in 7 days)
-                    this.setCookie(key, JSON.stringify(messages), 7);
+                    localStorage.setItem(key, JSON.stringify(messages));
                 } catch (error) {
                     console.warn('Failed to store message history:', error);
-                    // Clear corrupted cookie data to prevent future errors
                     try {
-                        const key = this.getMessageHistoryKey();
-                        this.setCookie(key, '[]', 7);
+                        localStorage.setItem(this.getMessageHistoryKey(), '[]');
                     } catch (clearError) {
                         console.warn('Failed to clear corrupted message history:', clearError);
                     }
@@ -3232,31 +3562,23 @@
             loadMessageHistory() {
                 try {
                     const key = this.getMessageHistoryKey();
-                    const messagesJson = this.getCookie(key);
+                    const messagesJson = localStorage.getItem(key);
                     
-                    if (!messagesJson) {
-                        return;
-                    }
+                    if (!messagesJson) return;
                     
                     let messages;
                     try {
                         messages = JSON.parse(messagesJson);
-                        // Validate that it's an array
-                        if (!Array.isArray(messages)) {
-                            console.warn('Invalid message history format, ignoring');
-                            return;
-                        }
+                        if (!Array.isArray(messages)) return;
                     } catch (parseError) {
                         console.warn('Corrupted message history found, clearing it:', parseError.message);
-                        // Clear corrupted data
-                        this.setCookie(key, '[]', 7);
+                        localStorage.setItem(key, '[]');
                         return;
                     }
                     
                     const currentTime = Date.now();
-                    const maxAge = 24 * 60 * 60 * 1000; // 24 hours
+                    const maxAge = 24 * 60 * 60 * 1000;
                     
-                    // Filter out messages older than 24 hours and validate message structure
                     const recentMessages = messages.filter(msg => 
                         msg && 
                         typeof msg.timestamp === 'number' && 
@@ -3266,7 +3588,6 @@
                     );
                     
                     if (recentMessages.length > 0) {
-                        // Add separator
                         const container = document.getElementById('messagesContainer');
                         const separator = document.createElement('div');
                         separator.className = 'message info';
@@ -3274,12 +3595,10 @@
                         separator.innerText = `--- Previous messages (${recentMessages.length}) ---`;
                         container.appendChild(separator);
                         
-                        // Restore recent messages
                         recentMessages.forEach(msg => {
                             this.addMessage(msg.text, msg.type, msg.typeLabel, true);
                         });
                         
-                        // Add another separator
                         const endSeparator = document.createElement('div');
                         endSeparator.className = 'message info';
                         endSeparator.style.cssText = 'text-align: center; font-style: italic; opacity: 0.7; border-bottom: 1px dashed #ccc; padding-bottom: 0.5rem;';
@@ -3293,9 +3612,8 @@
 
             clearMessageHistory() {
                 const key = this.getMessageHistoryKey();
-                this.setCookie(key, '', -1); // Expire the cookie
+                localStorage.removeItem(key);
                 
-                // Clear current display
                 const container = document.getElementById('messagesContainer');
                 container.innerHTML = '';
                 
@@ -3407,7 +3725,7 @@
                             // Handle objects by extracting keys
                             cell.textContent = Object.keys(value).join(', ');
                         } else {
-                            cell.textContent = value || '';
+                            cell.textContent = (value !== undefined && value !== null && value !== '') ? value : '';
                         }
                         row.appendChild(cell);
                     });
@@ -3424,6 +3742,30 @@
                 if (!children || Object.keys(children).length === 0) {
                     table.innerHTML = '<tr><td colspan="100%">No children data available</td></tr>';
                     return;
+                }
+
+                // Compute guards for each child
+                if (this.currentPopulation) {
+                    Object.keys(children).forEach(childName => {
+                        const guards = [];
+                        Object.values(this.currentPopulation).forEach(person => {
+                            if (person.guarding && person.guarding.includes(childName)) {
+                                guards.push(person.name);
+                            }
+                        });
+                        // check for babysitters
+                        Object.values(children).forEach(sitter => {
+                            if (sitter.age >= 23 && sitter.babysitting === childName) {
+                                guards.push(sitter.name);
+                            }
+                        });
+                        if (guards.length > 0) {
+                            children[childName].Guards = guards.join(', ');
+                        } else {
+                            // Ensure the column always exists for every child
+                            children[childName].Guards = ''; 
+                        }
+                    });
                 }
                 
                 // Similar implementation to population table
@@ -3455,13 +3797,16 @@
                     Array.from(allKeys).forEach(key => {
                         const cell = document.createElement('td');
                         const value = data[key];
-                        if (Array.isArray(value)) {
+                        if (key === 'age') {
+                            const ageVal = typeof value === 'number' ? value : 0;
+                            cell.textContent = ageVal / 2;
+                        } else if (Array.isArray(value)) {
                             cell.textContent = value.join(', ');
                         } else if (value && typeof value === 'object') {
                             // Handle objects like guardians by extracting keys
                             cell.textContent = Object.keys(value).join(', ');
                         } else {
-                            cell.textContent = value || '';
+                            cell.textContent = (value !== undefined && value !== null && value !== '') ? value : '';
                         }
                         row.appendChild(cell);
                     });
@@ -3486,6 +3831,16 @@
                 const roundStatus = document.getElementById('roundStatus');
                 const seasonStatus = document.getElementById('seasonStatus');
                 const locationStatus = document.getElementById('locationStatus');
+
+                if (gameState.startStamp) {
+                    const tribe = document.getElementById('tribeSelect').value || 'default';
+                    const startStampKey = `tribesStartStamp_${tribe}`;
+                    const savedStamp = localStorage.getItem(startStampKey);
+                    if (savedStamp && savedStamp !== gameState.startStamp) {
+                        this.clearMessageHistory();
+                    }
+                    localStorage.setItem(startStampKey, gameState.startStamp);
+                }
 
                 if (!roundStatus || !seasonStatus || !locationStatus) return;
 
@@ -3817,6 +4172,158 @@
                     clientId: Date.now().toString()
                 });
             }
+
+            showManageTribesModal() {
+                if (!this.isReferee) return;
+                document.getElementById('manageTribesModal').classList.add('active');
+            }
+
+            showManageUsersModal() {
+                if (!this.isReferee) return;
+                document.getElementById('manageUsersModal').classList.add('active');
+                this.send({
+                    type: 'manageUsers',
+                    action: 'list'
+                });
+            }
+            
+            deleteUser(userName) {
+                if (!this.isReferee) return;
+                if (!confirm(`Are you sure you want to delete user ${userName}?`)) return;
+                this.send({
+                    type: 'manageUsers',
+                    action: 'delete',
+                    targetUser: userName
+                });
+            }
+
+            resetUserPassword(userName) {
+                if (!this.isReferee) return;
+                const newPassword = prompt(`Enter new password for ${userName} (leave blank to allow login without password):`);
+                if (newPassword === null) return; // User cancelled prompt
+                this.send({
+                    type: 'manageUsers',
+                    action: 'resetPassword',
+                    targetUser: userName,
+                    newPassword: newPassword
+                });
+            }
+            
+            createTribe() {
+                if (!this.isReferee) return;
+                const input = document.getElementById('newTribeName');
+                const name = input.value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
+                
+                if (!name) {
+                    this.addMessage('Invalid tribe name', 'error');
+                    return;
+                }
+                
+                input.value = '';
+                this.send({
+                    type: 'manageTribe',
+                    action: 'create',
+                    tribeName: name
+                });
+            }
+            
+            toggleTribeVisibility(tribeName, hidden) {
+                if (!this.isReferee) return;
+                this.send({
+                    type: 'manageTribe',
+                    action: 'setVisibility',
+                    tribeName: tribeName,
+                    hidden: hidden
+                });
+            }
+            
+            handleManageUsersList(data) {
+                const container = document.getElementById('usersListContainer');
+                if (!container) return;
+                
+                container.innerHTML = '';
+                const users = data.users.sort((a, b) => a.name.localeCompare(b.name));
+                
+                users.forEach(user => {
+                    const row = document.createElement('tr');
+                    
+                    const nameCell = document.createElement('td');
+                    nameCell.textContent = user.name;
+                    nameCell.style.padding = '0.5rem';
+                    nameCell.style.borderBottom = '1px solid #ddd';
+                    row.appendChild(nameCell);
+                    
+                    const emailCell = document.createElement('td');
+                    emailCell.textContent = user.email;
+                    emailCell.style.padding = '0.5rem';
+                    emailCell.style.borderBottom = '1px solid #ddd';
+                    row.appendChild(emailCell);
+                    
+                    const actionsCell = document.createElement('td');
+                    actionsCell.style.padding = '0.5rem';
+                    actionsCell.style.borderBottom = '1px solid #ddd';
+                    
+                    const resetBtn = document.createElement('button');
+                    resetBtn.className = 'btn btn-small';
+                    resetBtn.textContent = 'Reset Password';
+                    resetBtn.style.background = '#ffc107';
+                    resetBtn.style.color = '#212529';
+                    resetBtn.style.marginRight = '0.5rem';
+                    resetBtn.onclick = () => this.resetUserPassword(user.name);
+                    actionsCell.appendChild(resetBtn);
+                    
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'btn btn-small';
+                    deleteBtn.textContent = 'Delete';
+                    deleteBtn.style.background = '#dc3545';
+                    deleteBtn.onclick = () => this.deleteUser(user.name);
+                    actionsCell.appendChild(deleteBtn);
+                    
+                    row.appendChild(actionsCell);
+                    container.appendChild(row);
+                });
+            }
+
+            renderManageTribesList(tribesData) {
+                const container = document.getElementById('tribesListContainer');
+                if (!container) return;
+                
+                container.innerHTML = '';
+                const tribes = Object.values(tribesData).sort((a, b) => a.name.localeCompare(b.name));
+                
+                tribes.forEach(tribe => {
+                    const div = document.createElement('div');
+                    div.style.display = 'flex';
+                    div.style.justifyContent = 'space-between';
+                    div.style.alignItems = 'center';
+                    div.style.padding = '0.5rem';
+                    div.style.borderBottom = '1px solid #eee';
+                    
+                    const nameSpan = document.createElement('span');
+                    nameSpan.textContent = tribe.name.charAt(0).toUpperCase() + tribe.name.slice(1);
+                    nameSpan.style.fontWeight = 'bold';
+                    if (tribe.hidden) {
+                        nameSpan.style.color = '#dc3545';
+                        nameSpan.textContent += ' (Hidden)';
+                    }
+                    div.appendChild(nameSpan);
+                    
+                    const btn = document.createElement('button');
+                    btn.className = 'btn btn-small';
+                    if (tribe.hidden) {
+                        btn.textContent = 'Reveal';
+                        btn.style.background = '#28a745';
+                        btn.onclick = () => this.toggleTribeVisibility(tribe.name, false);
+                    } else {
+                        btn.textContent = 'Hide';
+                        btn.style.background = '#6c757d';
+                        btn.onclick = () => this.toggleTribeVisibility(tribe.name, true);
+                    }
+                    div.appendChild(btn);
+                    
+                    container.appendChild(div);
+                });
+            }
         }
 
         // Initialize the client when page loads
@@ -3852,6 +4359,62 @@
             }, 1000);
         });
     </script>
+
+    <!-- Manage Tribes Modal -->
+    <div class="modal-overlay" id="manageTribesModal">
+        <div class="modal-popup">
+            <div class="modal-header">
+                <div class="modal-title">Manage Tribes</div>
+                <button class="modal-close" onclick="document.getElementById('manageTribesModal').classList.remove('active')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="margin-bottom: 1rem;">
+                    <h4>Create New Tribe</h4>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="text" id="newTribeName" placeholder="Tribe Name" class="form-control" style="flex: 1; padding: 0.5rem; border: 2px solid #ddd; border-radius: 4px;">
+                        <button class="btn btn-small" onclick="window.tribesClient.createTribe()" style="background: #28a745;">Create</button>
+                    </div>
+                </div>
+                
+                <h4>Existing Tribes</h4>
+                <div id="tribesListContainer" style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 0.5rem; border-radius: 4px;">
+                    <!-- Tribes will be listed here dynamically -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" style="background: #6c757d;" onclick="document.getElementById('manageTribesModal').classList.remove('active')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manage Users Modal -->
+    <div class="modal-overlay" id="manageUsersModal">
+        <div class="modal-popup" style="max-width: 800px; width: 90%;">
+            <div class="modal-header">
+                <div class="modal-title">Manage Users</div>
+                <button class="modal-close" onclick="document.getElementById('manageUsersModal').classList.remove('active')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead style="background: #f8f9fa;">
+                            <tr>
+                                <th style="padding: 0.5rem; text-align: left; border-bottom: 2px solid #ddd;">User Name</th>
+                                <th style="padding: 0.5rem; text-align: left; border-bottom: 2px solid #ddd;">Email</th>
+                                <th style="padding: 0.5rem; text-align: left; border-bottom: 2px solid #ddd;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersListContainer">
+                            <!-- Users will be listed here dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" style="background: #6c757d;" onclick="document.getElementById('manageUsersModal').classList.remove('active')">Close</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Command Arguments Modal -->
     <div class="modal-overlay" id="commandModal">

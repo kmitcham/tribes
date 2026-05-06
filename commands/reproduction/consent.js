@@ -1,4 +1,7 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('../../libs/command-builders.js');
+const {
+  SlashCommandBuilder,
+  EmbedBuilder,
+} = require('../../libs/command-builders.js');
 const reproLib = require('../../libs/reproduction.js');
 const pop = require('../../libs/population.js');
 const text = require('../../libs/textprocess.js');
@@ -7,13 +10,13 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('consent')
     .setDescription(
-      'Comma seperated list of people you will mate with given an invitation.'
+      'For every possible partner in the tribe, indicate whether you consent to mate with them.'
     )
     .addStringOption((option) =>
       option
         .setName('consentlist')
         .setDescription(
-          'list of names.  !all is an option for the less discriminating, !none is also available'
+          'List of names and whether you consent status (e.g., "Alice: consent, Sally: decline")'
         )
     ),
   async execute(interaction, gameState, bot) {

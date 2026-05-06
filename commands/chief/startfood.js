@@ -1,4 +1,7 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('../../libs/command-builders.js');
+const {
+  SlashCommandBuilder,
+  EmbedBuilder,
+} = require('../../libs/command-builders.js');
 const pop = require('../../libs/population');
 const util = require('../../libs/util');
 const feed = require('../../libs/feed');
@@ -18,6 +21,14 @@ module.exports = {
 
 function startFoodFilter(actorName, gameState, bot) {
   var player = pop.memberByName(actorName, gameState);
+  if (gameState.demand || gameState.violence) {
+    text.addMessage(
+      gameState,
+      actorName,
+      'You cannot start a new round while there is an active demand or violence.'
+    );
+    return;
+  }
   if (!player.chief) {
     text.addMessage(
       gameState,

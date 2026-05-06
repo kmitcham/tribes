@@ -1,4 +1,7 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('../../libs/command-builders.js');
+const {
+  SlashCommandBuilder,
+  EmbedBuilder,
+} = require('../../libs/command-builders.js');
 
 const { banish, banishAdmin } = require('../../libs/banish.js');
 const text = require('../../libs/textprocess');

@@ -67,6 +67,9 @@ module.exports.eligibleMates = eligibleMates;
 
 function matingObjections(inviter, target) {
   response = '';
+  if (inviter.name === target.name) {
+    return 'You cannot invite or consent to yourself.\n';
+  }
   if (target.isPregnant) {
     // maybe check the age of the child; -2 is bad, but -1 is on the market
     //response += target.name+" is pregnant.\n"
@@ -94,26 +97,29 @@ function showMatingLists(actorName, gameState) {
     actor.inviteList = [];
     response += 'Your inviteList is empty\n';
   }
-  if (
-    'consentList' in actor &&
-    actor.consentList &&
-    actor.consentList.length > 0
-  ) {
-    response += 'Your consentList is:' + actor.consentList + '\n';
-  } else {
-    actor.consentList = [];
-    response += 'Your consentList is empty\n';
+  //"consentDict": {
+  //      "Kevin": "consent",
+  //      "nopwd": "consent"
+  //    },
+  if (!('consentDict' in actor) || !actor.consentDict) {
+    actor.consentDict = {};
   }
-  if (
-    'declineList' in actor &&
-    actor.declineList &&
-    actor.declineList.length > 0
-  ) {
-    response += 'Your declineList is:' + actor.declineList + '\n';
-  } else {
-    actor.declineList = [];
-    response += 'Your declineList is empty\n';
+
+  let consents = [];
+  let declines = [];
+  for (const [name, responseType] of Object.entries(actor.consentDict)) {
+    if (responseType === 'consent') consents.push(name);
+    else if (responseType === 'decline') declines.push(name);
   }
+
+  if (consents.length > 0 || declines.length > 0) {
+    response += 'Your romantic responses:\n';
+    if (consents.length > 0) response += '  Consent: ' + consents.join(', ') + '\n';
+    if (declines.length > 0) response += '  Decline: ' + declines.join(', ') + '\n';
+  } else {
+    response += 'Your romantic responses: none\n';
+  }
+
   return response;
 }
 module.exports.showMatingLists = showMatingLists;
@@ -121,7 +127,7 @@ module.exports.showMatingLists = showMatingLists;
 function canStillInvite(gameState) {
   population = gameState.population;
   var canInvite = [];
-  for (personName in population) {
+  for (var personName in population) {
     person = population[personName];
     if (person.cannotInvite) {
       // do nothing
@@ -178,7 +184,7 @@ function handleReproductionList(actorName, arrayOfNames, listName, gameState) {
         }
         list.push('!pass');
       } else {
-        list.push(targetName);
+        errors.push('!all is only valid in the inviteList.');
       }
     } else {
       var targetMember = pop.memberByName(targetName, gameState);
@@ -290,7 +296,7 @@ function intersect(a, b) {
   if (!a || !b) {
     return [];
   }
-  if (b.length > a.length) ((t = b), (b = a), (a = t)); // indexOf to loop over shorter
+  if (b.length > a.length) (t = b), (b = a), (a = t); // indexOf to loop over shorter
   return a.filter(function (e) {
     return b.indexOf(e) > -1;
   });
@@ -318,6 +324,29 @@ function consentPrep(gameState, sourceName, rawList) {
     messageArray = rawList.split(',');
     console.log('splitting consent on commas');
   }
+
+  if (rawList.includes(':')) {
+    for (var i = 0; i < messageArray.length; i++) {
+      let entry = messageArray[i].trim();
+      if (entry.includes(':')) {
+        let parts = entry.split(':');
+        handleRomanceResponse(gameState, sourceName, parts[0].trim(), parts[1].trim().toLowerCase());
+      } else if (entry) {
+        handleRomanceResponse(gameState, sourceName, entry, 'consent');
+      }
+    }
+    gameState.saveRequired = true;
+    let outCon = [];
+    if (member.consentDict) {
+       for (const [n, r] of Object.entries(member.consentDict)) {
+         if (r === 'consent') outCon.push(n);
+       }
+    }
+    member.consentList = outCon;
+    text.addMessage(gameState, sourceName, 'Updated your consent responses');
+    return outCon;
+  }
+
   for (var i = 0; i < messageArray.length; i++) {
     messageArray[i] = messageArray[i].trim();
   }
@@ -328,17 +357,6 @@ function consentPrep(gameState, sourceName, rawList) {
       'No values parsed from that consentList: ' + rawList
     );
     return 'No values parsed from that consentList: ' + rawList;
-  }
-  if (
-    messageArray.includes('!all') &&
-    'declineList' in member &&
-    member.declineList
-  ) {
-    text.addMessage(
-      gameState,
-      member.name,
-      'Your declinelist is not empty; !all will not override that.'
-    );
   }
   console.log('updating consentlist: ' + messageArray);
   consent(sourceName, messageArray, gameState);
@@ -426,34 +444,33 @@ module.exports.declinePrep = declinePrep;
 
 function decline(actorName, messageArray, gameState) {
   person = pop.memberByName(actorName, gameState);
-  if (messageArray.includes('!none')) {
+  
+  // if format uses colon dictionary e.g. "Alice: consent"
+  if (messageArray.some(s => typeof s === 'string' && s.includes(':'))) {
+    for (var i = 0; i < messageArray.length; i++) {
+        let entry = messageArray[i].trim();
+        if (entry.includes(':')) {
+           let parts = entry.split(':');
+           handleRomanceResponse(gameState, actorName, parts[0].trim(), parts[1].trim().toLowerCase());
+        } else if (entry) {
+           handleRomanceResponse(gameState, actorName, entry, 'decline');
+        }
+    }
+    let outDec = [];
+    if (person.consentDict) {
+       for (const [n, r] of Object.entries(person.consentDict)) {
+           if (r === 'decline') outDec.push(n);
+       }
+    }
+    person.declineList = outDec;
+    text.addMessage(gameState, actorName, 'Updated your decline responses.');
+  } else if (messageArray.includes('!none')) {
     person.declineList = [];
     text.addMessage(gameState, actorName, 'Emptying your declineList');
-  } else if (messageArray.includes('!all')) {
-    var matchGender = 'male';
-    if (person.gender == 'male') {
-      matchGender = 'female';
-    }
-    declineArray = pop.getAllNamesByGender(gameState.population, matchGender);
-    person.declineList = declineArray;
-    console.log('declineList set to ' + person.declineList.join(', '));
-    text.addMessage(
-      gameState,
-      actorName,
-      'Setting your declineList to ' + person.declineList
-    );
   } else {
     handleReproductionList(actorName, messageArray, 'declineList', gameState);
     intersectList = intersect(person.consentList, person.declineList);
-    if (
-      (intersectList && intersectList.length > 0) ||
-      (person.consentList &&
-        person.declineList &&
-        person.declineList.includes('!all')) ||
-      (person.declineList &&
-        person.consentList &&
-        person.consentList.includes('!all'))
-    ) {
+    if (intersectList && intersectList.length > 0) {
       text.addMessage(
         gameState,
         actorName,
@@ -505,6 +522,8 @@ function globalMatingCheck(gameState) {
   var allDone = true;
   var actionableInvites = true;
   var population = gameState.population;
+  var doneMating = [];
+  var whoNeedsToGiveAnAnswer = [];
   while (actionableInvites) {
     infinite_loop_count += 1;
     if (infinite_loop_count > 10) {
@@ -516,20 +535,23 @@ function globalMatingCheck(gameState) {
       return 'Infinite loop error.  oops.';
     }
     actionableInvites = false;
-    var listMemberNamesForSex = Object.keys(population);
-    listMemberNamesForSex.sort(function () {
+    var randomOrderForProcessingInvites = Object.keys(population);
+    randomOrderForProcessingInvites.sort(function () {
       return Math.random() - 0.5;
     });
     doneMating = [];
     whoNeedsToGiveAnAnswer = [];
-    console.log('a sexlist ' + listMemberNamesForSex);
-    counter = 0;
-    for (personName of listMemberNamesForSex) {
-      const invitingMember = pop.memberByName(personName, gameState);
+    console.log('a sexlist ' + randomOrderForProcessingInvites);
+    let counter = 0;
+    for (const invitingMemberKey of randomOrderForProcessingInvites) {
+      const invitingMember = pop.memberByName(invitingMemberKey, gameState);
       const inviterDisplayName = invitingMember.name;
-      console.log('working ' + personName + ' ' + invitingMember.name);
-      index = listMemberNamesForSex.indexOf(personName);
+      console.log(
+        'working ' + invitingMemberKey + ' named ' + invitingMember.name
+      );
+      let index = randomOrderForProcessingInvites.indexOf(invitingMemberKey);
       if (hasReasontoNotInvite(gameState, invitingMember)) {
+        doneMating.push(invitingMemberKey);
         continue;
       } else if (
         invitingMember.inviteList &&
@@ -549,7 +571,7 @@ function globalMatingCheck(gameState) {
               invitingMember.inviteList.join()
           );
         }
-        targetName = invitingMember.inviteList[index];
+        let targetName = invitingMember.inviteList[index];
         console.log(' inviting ' + targetName + ' index ' + index);
         if (!targetName) {
           console.log(
@@ -566,13 +588,13 @@ function globalMatingCheck(gameState) {
             inviterDisplayName +
               ' has a troublesome problem flirting, and will not mate this round.'
           );
-          doneMating.push(personName);
+          doneMating.push(invitingMemberKey);
           continue;
         }
         if (targetName.trim() == '!pass') {
           invitingMember.cannotInvite = true;
           //text.addMessage(gameState, "tribe", inviterDisplayName+" is done mating this round.");
-          doneMating.push(personName);
+          doneMating.push(invitingMemberKey);
           continue;
         }
         if (targetName.trim() == '!save') {
@@ -593,20 +615,31 @@ function globalMatingCheck(gameState) {
           continue;
         }
         const targetDisplayName = targetMember.name;
-        if (
-          'declineList' in targetMember &&
-          (targetMember.declineList.includes(personName) ||
-            targetMember.declineList.includes('!all') ||
-            targetMember.declineList.includes(invitingMember.name))
-        ) {
+        const targetPopulationKey =
+          pop.getPopulationKey(targetMember, gameState) || targetName;
+        migrateToConsentDict(invitingMember);
+        migrateToConsentDict(targetMember);
+
+        let targetResponse;
+        if (targetMember.consentDict) {
+          if (targetMember.consentDict[invitingMemberKey]) {
+            targetResponse = targetMember.consentDict[invitingMemberKey];
+          } else if (targetMember.consentDict[invitingMember.name]) {
+            targetResponse = targetMember.consentDict[invitingMember.name];
+          } else if (targetMember.consentDict['!all']) {
+            targetResponse = targetMember.consentDict['!all'];
+          }
+        }
+
+        if (targetResponse === 'decline') {
           text.addMessage(
             gameState,
-            inviterDisplayName,
+            invitingMemberKey,
             targetDisplayName + ' declines your invitation.'
           );
           text.addMessage(
             gameState,
-            targetDisplayName,
+            targetPopulationKey,
             inviterDisplayName + ' flirts with you, but you decline.'
           );
           console.log('\t declines  ');
@@ -614,66 +647,62 @@ function globalMatingCheck(gameState) {
         } else if (targetMember.isPregnant) {
           text.addMessage(
             gameState,
-            personName,
-            targetName + ' is visibly pregnant.'
+            invitingMemberKey,
+            targetDisplayName + ' is visibly pregnant.'
           );
           text.addMessage(
             gameState,
-            targetName,
-            personName + ' flirts with you, but you are pregnant.'
+            targetPopulationKey,
+            inviterDisplayName + ' flirts with you, but you are pregnant.'
           );
           console.log('\t is pregnant  ');
           attemptFailed = true;
         } else if (targetMember.isSick || targetMember.isInjured) {
           text.addMessage(
             gameState,
-            targetName,
-            personName +
+            targetPopulationKey,
+            inviterDisplayName +
               ' flirts with you, but you are not healthy enough to respond.'
           );
           text.addMessage(
             gameState,
-            personName,
-            targetName + ' is not healthy enough to enjoy your attention.'
+            invitingMemberKey,
+            targetDisplayName +
+              ' is not healthy enough to enjoy your attention.'
           );
           console.log('\t sick or injured');
           attemptFailed = true;
-        } else if (
-          targetMember.consentList &&
-          (targetMember.consentList.includes(personName) ||
-            targetMember.consentList.includes('!all') ||
-            targetMember.consentList.includes(invitingMember.name))
-        ) {
+        } else if (targetResponse === 'consent') {
           text.addMessage(
             gameState,
-            inviterDisplayName,
-            targetName + ' is impressed by your flirtation.'
+            invitingMemberKey,
+            targetDisplayName + ' is impressed by your flirtation.'
           );
           text.addMessage(
             gameState,
-            targetName,
+            targetPopulationKey,
             inviterDisplayName + ' flirts with you, and you are interested.'
           );
-          makeLove(targetName, personName, gameState);
+          makeLove(targetName, inviterDisplayName, gameState);
           invitingMember.cannotInvite = true;
-          doneMating.push(personName);
+          doneMating.push(invitingMemberKey);
           console.log('\t consents ');
           continue;
         } else {
           // this will get spammy, if the function is called every time anyone updates.
           text.addMessage(
             gameState,
-            targetDisplayName,
+            targetPopulationKey,
             inviterDisplayName +
               ' has invited you to mate- update your romance lists to include them (consent or decline) '
           );
           text.addMessage(
             gameState,
-            inviterDisplayName,
+            invitingMemberKey,
             targetDisplayName + ' considers your invitation.'
           );
-          whoNeedsToGiveAnAnswer.push(targetDisplayName);
-          doneMating.push(personName);
+          whoNeedsToGiveAnAnswer.push(targetPopulationKey);
+          doneMating.push(invitingMemberKey);
           console.log(
             '\t no response found with ' +
               targetDisplayName +
@@ -699,13 +728,15 @@ function globalMatingCheck(gameState) {
       } else {
         // person has no invites pending
         console.log(
-          '\t No invites found for ' + personName + ' so allDone is false'
+          '\t No invites found for ' +
+            invitingMemberKey.name +
+            ' so allDone is false'
         );
       }
     }
   }
   if (whoNeedsToGiveAnAnswer && whoNeedsToGiveAnAnswer.length > 0) {
-    for (personName of whoNeedsToGiveAnAnswer) {
+    for (var personName of whoNeedsToGiveAnAnswer) {
       text.addMessage(
         gameState,
         personName,
@@ -732,11 +763,11 @@ function globalMatingCheck(gameState) {
       '---> Reproductive activites are complete for the season <---'
     );
     noPregnancies = true;
-    for (personName in population) {
+    for (const personName in population) {
       invitingMember = pop.memberByName(personName, gameState);
       text.addMessage(
         gameState,
-        invitingMember.name,
+        personName,
         'Reproduction round activities are over.'
       );
       if (invitingMember.hiddenPregnant) {
@@ -784,7 +815,6 @@ function hasReasontoNotInvite(gameState, invitingMember) {
     console.log('\t NULL person may not invite anyone');
     return true;
   } else if (invitingMember.cannotInvite) {
-    doneMating.push(personName);
     console.log('\t cannotInvite. ' + invitingMember.name);
     return true;
   } else if (invitingMember.golem) {
@@ -793,9 +823,11 @@ function hasReasontoNotInvite(gameState, invitingMember) {
     return true;
   } else if (invitingMember.isPregnant) {
     console.log('\t inviter was pregnant');
+    const inviterKey =
+      pop.getPopulationKey(invitingMember, gameState) || invitingMember.name;
     text.addMessage(
       gameState,
-      invitingMember.name,
+      inviterKey,
       'Your pregnancy prevents you from mating.'
     );
     text.addMessage(
@@ -807,9 +839,11 @@ function hasReasontoNotInvite(gameState, invitingMember) {
     return true;
   } else if (invitingMember.isInjured && invitingMember.isInjured > 0) {
     console.log('\t inviter is injured');
+    const inviterKey =
+      pop.getPopulationKey(invitingMember, gameState) || invitingMember.name;
     text.addMessage(
       gameState,
-      invitingMember.name,
+      inviterKey,
       'Your injury prevents you from mating.'
     );
     text.addMessage(
@@ -821,9 +855,11 @@ function hasReasontoNotInvite(gameState, invitingMember) {
     return true;
   } else if (invitingMember.isSick && invitingMember.isSick > 0) {
     console.log('\t inviter is sick');
+    const inviterKey =
+      pop.getPopulationKey(invitingMember, gameState) || invitingMember.name;
     text.addMessage(
       gameState,
-      invitingMember.name,
+      inviterKey,
       'Your illness prevents you from mating.'
     );
     text.addMessage(
@@ -849,6 +885,8 @@ function makeLove(targetName, inviterName, gameState, force = false) {
   }
   const motherName = mother.name;
   const fatherName = father.name;
+  const motherKey = pop.getPopulationKey(mother, gameState) || motherName;
+  const fatherKey = pop.getPopulationKey(father, gameState) || fatherName;
   console.log('mother:' + motherName + ' father:' + fatherName);
   spawnChance = 9;
   if (mother.nursing && mother.nursing.length > 0) {
@@ -874,8 +912,8 @@ function makeLove(targetName, inviterName, gameState, force = false) {
   targetMessage = inviterName + ' invite you to share good feelings';
   pop.history(inviterName, inviterMessage, gameState);
   pop.history(targetName, targetMessage, gameState);
-  text.addMessage(gameState, motherName, motherMessage);
-  text.addMessage(gameState, fatherName, fatherMessage);
+  text.addMessage(gameState, motherKey, motherMessage);
+  text.addMessage(gameState, fatherKey, fatherMessage);
   detection(mother, father, roll1 + roll2, gameState);
   return;
 }
@@ -883,14 +921,21 @@ module.exports.makeLove = makeLove;
 
 function detection(mother, father, reproRoll, gameState) {
   const OBSERVER_THRESHOLD = 17;
-  observerName = dice.randomMemberName(gameState.population);
-  observer = pop.memberByName(observerName, gameState);
-  if (observer.name == mother.name || observer.name == father.name) {
+  var observerName = dice.randomMemberName(gameState.population);
+  var observer = pop.memberByName(observerName, gameState);
+  
+  if (!observer) return false;
+
+  var obsName = (observer.name || observerName).toLowerCase();
+  var mName = (mother.name || '').toLowerCase();
+  var fName = (father.name || '').toLowerCase();
+
+  if (observer === mother || observer === father || obsName === mName || obsName === fName || observerName.toLowerCase() === mName || observerName.toLowerCase() === fName) {
     console.log('self observation is discarded');
     return false;
   }
   var netRoll;
-  baseRoll = dice.roll(2);
+  var baseRoll = dice.roll(2);
   netRoll = baseRoll + reproRoll;
   // if the observer has more in common with either parent, harder to avoid observation
   if (
@@ -985,7 +1030,7 @@ module.exports.addChild = addChild;
 
 function restoreSaveLists(gameState) {
   population = gameState.population;
-  for (personName in population) {
+  for (var personName in population) {
     person = population[personName];
     if (person.saveInviteList && person.saveInviteList.length > 0) {
       console.log('restoring inviteList for ' + personName);
@@ -1152,6 +1197,14 @@ module.exports.pass = pass;
 
 function startReproductionChecks(gameState, actorName) {
   var player = pop.memberByName(actorName, gameState);
+  if (gameState.demand || gameState.violence) {
+    text.addMessage(
+      gameState,
+      actorName,
+      'You cannot start a new round while there is an active demand or violence.'
+    );
+    return;
+  }
   if (!player.chief) {
     text.addMessage(
       gameState,
@@ -1221,6 +1274,51 @@ function startReproduction(gameState) {
 
   return;
 }
+
+function migrateToConsentDict(person) {
+  if (!person) return;
+  if (!person.consentDict) person.consentDict = {};
+
+  if (person.consentList && Array.isArray(person.consentList)) {
+    for (let target of person.consentList) {
+      if (target !== '!none' && target !== '!pass' && target !== '!all') {
+        person.consentDict[target] = 'consent';
+      } else if (target === '!all') {
+        person.consentDict['!all'] = 'consent';
+      }
+    }
+  }
+  if (person.declineList && Array.isArray(person.declineList)) {
+    for (let target of person.declineList) {
+      person.consentDict[target] = 'decline';
+    }
+  }
+}
+
+function handleRomanceResponse(
+  gameState,
+  actorName,
+  targetNameRaw,
+  responseType
+) {
+  let actingMember =
+    gameState.population && gameState.population[actorName]
+      ? gameState.population[actorName]
+      : null;
+  if (!actingMember) return 'No such member';
+  migrateToConsentDict(actingMember);
+
+  if (!targetNameRaw || targetNameRaw.length === 0)
+    return 'No target provided.';
+
+  let targetName = targetNameRaw.trim();
+  if (actorName === targetName) {
+      return 'You cannot choose yourself.';
+  }
+  actingMember.consentDict[targetName] = responseType;
+  return 'Set ' + targetName + ' to ' + responseType;
+}
+
 module.exports.startReproduction = startReproduction;
 
 function checkMating(gameState, displayName) {
@@ -1243,3 +1341,6 @@ function checkMating(gameState, displayName) {
   return;
 }
 module.exports.checkMating = checkMating;
+
+module.exports.migrateToConsentDict = migrateToConsentDict;
+module.exports.handleRomanceResponse = handleRomanceResponse;

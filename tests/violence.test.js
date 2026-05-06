@@ -408,3 +408,41 @@ test('ResolveViolence for fatality', () => {
   expect(actual).toContain('demander attacks con1');
   //expect(actual).toContain("dump")
 });
+test('Faction Voting -> closely balanced For slightly ahead', () => {
+  var gameState = {
+    population: {
+      demander: { name: 'demander', faction: 'for' },
+      pro1: { name: 'pro1', faction: 'for' },
+      pro2: { name: 'pro2', faction: 'for' },
+      con1: { name: 'con1', faction: 'against' },
+      con2: { name: 'con2', faction: 'against' },
+    },
+    demand: 'some demand',
+  };
+  var message =
+    'Tribal society breaks down as VIOLENCE is required to settle the issue of some demand\n The demand is lost in the conflict.';
+  violencelib.getFactionResult(gameState);
+  var result = gameState.messages['tribe'];
+  expect(result).toBe(message);
+  expect(gameState.violence).toEqual('some demand');
+});
+
+
+test('Faction Voting -> closely balanced Against slightly ahead', () => {
+  var gameState = {
+    population: {
+      demander: { name: 'demander', faction: 'for' },
+      pro1: { name: 'pro1', faction: 'for' },
+      con1: { name: 'con1', faction: 'against' },
+      con2: { name: 'con2', faction: 'against' },
+      con3: { name: 'con3', faction: 'against' },
+    },
+    demand: 'some demand',
+  };
+  var message =
+    'Tribal society breaks down as VIOLENCE is required to settle the issue of some demand\n The demand is lost in the conflict.';
+  violencelib.getFactionResult(gameState);
+  var result = gameState.messages['tribe'];
+  expect(result).toBe(message);
+  expect(gameState.violence).toEqual('some demand');
+});

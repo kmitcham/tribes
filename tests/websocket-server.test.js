@@ -978,19 +978,27 @@ describe('WebSocket Server Utility Functions', () => {
     });
 
     test('should throw error for empty password', () => {
-      expect(() => wsServer.validatePassword('')).toThrow('Password is required');
+      expect(() => wsServer.validatePassword('')).toThrow(
+        'Password is required'
+      );
     });
 
     test('should throw error for null password', () => {
-      expect(() => wsServer.validatePassword(null)).toThrow('Password is required');
+      expect(() => wsServer.validatePassword(null)).toThrow(
+        'Password is required'
+      );
     });
 
     test('should throw error for undefined password', () => {
-      expect(() => wsServer.validatePassword(undefined)).toThrow('Password is required');
+      expect(() => wsServer.validatePassword(undefined)).toThrow(
+        'Password is required'
+      );
     });
 
     test('should throw error for non-string password', () => {
-      expect(() => wsServer.validatePassword(12345)).toThrow('Password is required');
+      expect(() => wsServer.validatePassword(12345)).toThrow(
+        'Password is required'
+      );
     });
   });
 });
@@ -1112,7 +1120,9 @@ describe('Session Management (using actual exports)', () => {
     });
 
     test('should handle non-existent player gracefully', () => {
-      expect(() => wsServer.destroyAllPlayerSessions('nonexistent')).not.toThrow();
+      expect(() =>
+        wsServer.destroyAllPlayerSessions('nonexistent')
+      ).not.toThrow();
     });
   });
 
@@ -1173,16 +1183,16 @@ describe('Rate Limiting (using actual exports)', () => {
 
 describe('Info Request Handling (using actual exports)', () => {
   let mockWs;
-  
+
   beforeEach(() => {
     mockWs = {
       sentMessages: [],
-      send: function(data) {
+      send: function (data) {
         this.sentMessages.push(JSON.parse(data));
       },
-      getLastSentMessage: function() {
+      getLastSentMessage: function () {
         return this.sentMessages[this.sentMessages.length - 1];
-      }
+      },
     };
   });
 

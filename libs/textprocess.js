@@ -21,6 +21,18 @@ function addMessage(gameState, address, message) {
   } else {
     messages[address] = message;
   }
+
+  // Record tribe-wide messages in a persistent history for this tribe
+  if (address === 'tribe' && gameState) {
+    if (!gameState.tribeHistory) {
+      gameState.tribeHistory = [];
+    }
+    var entry = message;
+    if (typeof gameState.seasonCounter === 'number') {
+      entry = gameState.seasonCounter / 2 + ': ' + message;
+    }
+    gameState.tribeHistory.push(entry);
+  }
 }
 module.exports.addMessage = addMessage;
 

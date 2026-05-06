@@ -1,0 +1,109 @@
+FAIL tests/violence.test.js
+  ● Test suite failed to run
+
+    SyntaxError: /Users/kevinmitcham/Documents/workspace/TribesAgent/tests/violence.test.js: Unexpected token, expected "," (436:66)
+
+      434 |       pro1: { name: 'pro1', faction: 'for' },
+      435 |       con1: { name: 'con1', faction: 'against' },
+    > 436 |       con2: { name: 'con2', faction: 'against      con2: { name: 'con2', faction: 'against      con2: { name: 'coma      con2: { nd',
+          |                                                                   ^
+      437 |                  e                  e                  e               ui                 e                  e  n The d                 e                  e      lib                 e                  e           eState.messages['tribe'];
+      438 |   expect(result).toBe(mess  exp
+      439 |                          ce).toEq           emand');
+
+      at toParseError (node_modules/@babel/parser/src/parse-error.ts:95:45)
+      at Parser.raise (node_modules/@babel/parser/src/tokenizer/index.ts:1503:19)
+      at Parser.unexpected (node_modules/@babel/parser/src/tokenizer/index.ts:1543:16)
+      at Parser.expect (node_modules/@babel/parser/src/parser/util.ts:158:12)
+      at Parser.parseObjectLike (node_modules/@babel/parser/src/parser/expression.ts:2049:14)
+      at Parser.parseExprAtom (node_modules/@babel/parser/src/parser/expression.ts:1165:21)
+      at Parser.parseExprSubscripts (node_modules/@babel/parser/src/parser/expression.ts:728:23)
+      at Parser.parseUpdate (node_modules/@babel/parser/src/parser/expression.ts:707:21)
+      at Parser.parseMaybeUnary (node_modules/@babel/parser/src/parser/expression.ts:669:23)
+      at Parser.parseMaybeUnaryOrPrivate (node_modules/@babel/parser/src/parser/expression.ts:403:14)
+      at Parser.parseExprOps (node_modules/@babel/parser/src/parser/expression.ts:415:23)
+      at Parser.parseMaybeConditional (node_modules/@babel/parser/src/parser/expression.ts:370:23)
+      at Parser.parseMaybeAssign (node_modules/@babel/parser/src/parser/expression.ts:301:21)
+      at callback (node_modules/@babel/parser/src/parser/expression.ts:257:12)
+      at Parser.allowInAnd (node_modules/@babel/parser/src/parser/expression.ts:3149:12)
+      at Parser.parseMaybeAssignAllowIn (node_modules/@babel/parser/src/parser/expression.ts:256:17)
+      at Parser.parseObjectProperty (node_modules/@babel/parser/src/parser/expression.ts:2290:16)
+      at Parser.parseObjPropValue (node_modules/@babel/parser/src/parser/expression.ts:2350:12)
+      at Parser.parsePropertyDefinition (node_modules/@babel/parser/src/parser/expression.ts:2193:17)
+      at Parser.parseObjectLike (node_modules/@babel/parser/src/parser/expression.ts:2060:21)
+      at Parser.parseExprAtom (node_modules/@babel/parser/src/parser/expression.ts:1165:21)
+      at Parser.parseExprSubscripts (node_modules/@babel/parser/src/parser/expression.ts:728:23)
+      at Parser.parseUpdate (node_modules/@babel/parser/src/parser/expression.ts:707:21)
+      at Parser.parseMaybeUnary (node_modules/@babel/parser/src/parser/expression.ts:669:23)
+      at Parser.parseMaybeUnaryOrPrivate (node_modules/@babel/parser/src/parser/expression.ts:403:14)
+      at Parser.parseExprOps (node_modules/@babel/parser/src/parser/expression.ts:415:23)
+      at Parser.parseMaybeConditional (node_modules/@babel/parser/src/parser/expression.ts:370:23)
+      at Parser.parseMaybeAssign (node_modules/@babel/parser/src/parser/expression.ts:301:21)
+      at callback (node_modules/@babel/parser/src/parser/expression.ts:257:12)
+      at Parser.allowInAnd (node_modules/@babel/parser/src/parser/expression.ts:3149:12)
+      at Parser.parseMaybeAssignAllowIn (node_modules/@babel/parser/src/parser/expression.ts:256:17)
+      at Parser.parseObjectProperty (node_modules/@babel/parser/src/parser/expression.ts:2290:16)
+      at Parser.parseObjPropValue (node_modules/@babel/parser/src/parser/expression.ts:2350:12)
+      at Parser.parsePropertyDefinition (node_modules/@babel/parser/src/parser/expression.ts:2193:17)
+      at Parser.parseObjectLike (node_modules/@babel/parser/src/parser/expression.ts:2060:21)
+      at Parser.parseExprAtom (node_modules/@babel/parser/src/parser/expression.ts:1165:21)
+      at Parser.parseExprSubscripts (node_modules/@babel/parser/src/parser/expression.ts:728:23)
+      at Parser.parseUpdate (node_modules/@babel/parser/src/parser/expression.ts:707:21)
+      at Parser.parseMaybeUnary (node_modules/@babel/parser/src/parser/expression.ts:669:23)
+      at Parser.parseMaybeUnaryOrPrivate (node_modules/@babel/parser/src/parser/expression.ts:403:14)
+      at Parser.parseExprOps (node_modules/@babel/parser/src/parser/expression.ts:415:23)
+      at Parser.parseMaybeConditional (node_modules/@babel/parser/src/parser/expression.ts:370:23)
+      at Parser.parseMaybeAssign (node_modules/@babel/parser/src/parser/expression.ts:301:21)
+      at callback (node_modules/@babel/parser/src/parser/expression.ts:257:12)
+      at Parser.allowInAnd (node_modules/@babel/parser/src/parser/expression.ts:3144:16)
+      at Parser.parseMaybeAssignAllowIn (node_modules/@babel/parser/src/parser/expression.ts:256:17)
+      at Parser.parseVar (node_modules/@babel/parser/src/parser/statement.ts:1567:18)
+      at Parser.parseVarStatement (node_modules/@babel/parser/src/parser/statement.ts:1231:10)
+      at Parser.parseStatementContent (node_modules/@babel/parser/src/parser/statement.ts:587:21)
+      at Parser.parseStatementLike (node_modules/@babel/parser/src/parser/statement.ts:456:17)
+
+----------------------|---------|----------|---------|---------|-------------------
+File                  | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+----------------------|---------|----------|---------|---------|-------------------
+All files             |       0 |        0 |       0 |       0 |                   
+ TribesAgent          |       0 |        0 |       0 |       0 |                   
+  websocket-server.js |       0 |        0 |       0 |       0 | 1-2044            
+ TribesAgent/libs     |       0 |        0 |       0 |       0 |                   
+  banish.js           |       0 |        0 |       0 |       0 | 1-114             
+  chief.js            |       0 |        0 |       0 |       0 | 1-482             
+  children.js         |       0 |        0 |       0 |       0 | 1-166             
+  command-builders.js |       0 |        0 |       0 |       0 | 6-108             
+  dice.js             |       0 |        0 |       0 |       0 | 2-19              
+  endgame.js          |       0 |        0 |       0 |       0 | 1-337             
+  feed.js             |       0 |        0 |       0 |       0 | 1-451             
+  gather.js           |       0 |        0 |       0 |       0 | 1-112             
+  general.js          |       0 |        0 |       0 |       0 | 1-306             
+  guardCode.js        |       0 |        0 |       0 |       0 | 1-163             
+  help.js             |       0 |      100 |       0 |       0 | 2-105             
+  hunt.js             |       0 |        0 |       0 |       0 | 1-313             
+  kill.js             |       0 |        0 |       0 |       0 | 1-74              
+  logger.js           |       0 |      100 |       0 |       0 | 1-28              
+  migrateLib.js       |       0 |        0 |       0 |       0 | 1-172             
+  obey.js             |       0 |        0 |       0 |       0 | 1-48              
+  population.js       |       0 |        0 |       0 |       0 | 1-529             
+  profession.js       |       0 |        0 |       0 |       0 | 1-99              
+  referees.js         |       0 |      100 |     100 |       0 | 1                 
+  reproduction.js     |       0 |        0 |       0 |       0 | 1-1354            
+  save.js             |       0 |        0 |       0 |       0 | 1-234             
+  textprocess.js      |       0 |        0 |       0 |       0 | 2-42              
+  tribeHistory.js     |       0 |        0 |       0 |       0 | 1-45              
+  tribesRegistry.js   |       0 |        0 |       0 |       0 | 1-72              
+  util.js             |       0 |        0 |       0 |       0 | 1-83              
+  violence.js         |       0 |        0 |       0 |       0 | 1-461             
+  work.js             |       0 |        0 |       0 |       0 | 1-276             
+----------------------|---------|----------|---------|---------|-------------------
+Jest: "global" coverage threshold for statements (55%) not met: 0%
+Jest: "global" coverage threshold for branches (45%) not met: 0%
+Jest: "global" coverage threshold for lines (55%) not met: 0%
+Jest: "global" coverage threshold for functions (55%) not met: 0%
+Test Suites: 1 failed, 1 total
+Tests:       0 total
+Snapshots:   0 total
+Time:        0.983 s
+Ran all test suites matching /tests\/violence.test.js/i.
+Force exiting Jest: Have you considered using `--detectOpenHandles` to detect async operations that kept running after all tests finished?

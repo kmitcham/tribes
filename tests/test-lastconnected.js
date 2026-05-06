@@ -15,7 +15,9 @@ console.log(`Testing with user: ${TEST_USER}`);
 const fs = require('fs');
 function readUserData() {
   try {
-    const usersData = JSON.parse(fs.readFileSync('./tribe-data/users.json', 'utf8'));
+    const usersData = JSON.parse(
+      fs.readFileSync('./tribe-data/users.json', 'utf8')
+    );
     return usersData[TEST_USER];
   } catch (error) {
     console.error('Error reading user data:', error.message);
@@ -37,7 +39,7 @@ const ws = new WebSocket(SERVER_URL);
 
 ws.on('open', function open() {
   console.log('✅ Connected to server');
-  
+
   // Send authentication request
   const authMessage = {
     type: 'registerRequest',
@@ -45,9 +47,9 @@ ws.on('open', function open() {
     password: TEST_PASSWORD,
     email: initialUser.email,
     tribe: 'bug',
-    clientId: Date.now().toString()
+    clientId: Date.now().toString(),
   };
-  
+
   console.log('🔐 Sending authentication...');
   ws.send(JSON.stringify(authMessage));
 });
@@ -55,11 +57,11 @@ ws.on('open', function open() {
 ws.on('message', function message(data) {
   const response = JSON.parse(data);
   console.log(`📨 Received: ${response.type}`);
-  
+
   if (response.type === 'registration') {
     if (response.label === 'success') {
       console.log('✅ Authentication successful!');
-      
+
       // Wait a moment then check the updated user data
       setTimeout(() => {
         const updatedUser = readUserData();
@@ -67,11 +69,13 @@ ws.on('message', function message(data) {
           console.log(`\n📊 Results:`);
           console.log(`   Initial lastConnected: ${initialUser.lastConnected}`);
           console.log(`   Updated lastConnected: ${updatedUser.lastConnected}`);
-          console.log(`   registeredAt (unchanged): ${updatedUser.registeredAt}`);
-          
+          console.log(
+            `   registeredAt (unchanged): ${updatedUser.registeredAt}`
+          );
+
           const initialTime = new Date(initialUser.lastConnected);
           const updatedTime = new Date(updatedUser.lastConnected);
-          
+
           if (updatedTime > initialTime) {
             console.log('✅ SUCCESS: lastConnected was updated!');
             console.log(`   Time difference: ${updatedTime - initialTime}ms`);
@@ -79,10 +83,9 @@ ws.on('message', function message(data) {
             console.log('❌ FAILURE: lastConnected was not updated');
           }
         }
-        
+
         ws.close();
       }, 500);
-      
     } else {
       console.log('❌ Authentication failed:', response.content);
       ws.close();

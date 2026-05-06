@@ -107,7 +107,13 @@ describe('Obey Module', () => {
     test('should execute craft spearhead command when target can craft', () => {
       targetMember.canCraft = true;
 
-      obey.command(gameState, 'ChiefPlayer', 'TargetPlayer', 'craft', 'spearhead');
+      obey.command(
+        gameState,
+        'ChiefPlayer',
+        'TargetPlayer',
+        'craft',
+        'spearhead'
+      );
 
       expect(worklib.craft).toHaveBeenCalledWith(
         gameState,
@@ -133,7 +139,13 @@ describe('Obey Module', () => {
     test('should send error message when target cannot craft', () => {
       targetMember.canCraft = false;
 
-      obey.command(gameState, 'ChiefPlayer', 'TargetPlayer', 'craft', 'spearhead');
+      obey.command(
+        gameState,
+        'ChiefPlayer',
+        'TargetPlayer',
+        'craft',
+        'spearhead'
+      );
 
       expect(worklib.craft).not.toHaveBeenCalled();
       expect(text.addMessage).toHaveBeenCalledWith(
@@ -146,7 +158,13 @@ describe('Obey Module', () => {
     test('should send error message when craft type is invalid', () => {
       targetMember.canCraft = true;
 
-      obey.command(gameState, 'ChiefPlayer', 'TargetPlayer', 'craft', 'invalid');
+      obey.command(
+        gameState,
+        'ChiefPlayer',
+        'TargetPlayer',
+        'craft',
+        'invalid'
+      );
 
       expect(worklib.craft).not.toHaveBeenCalled();
       expect(text.addMessage).toHaveBeenCalledWith(

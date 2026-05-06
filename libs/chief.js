@@ -86,7 +86,12 @@ function induct(gameState, sourceName, targetName, gender) {
 
   // Check if target user exists in users.json (case-insensitive)
   try {
-    const usersFilePath = path.join(__dirname, '..', 'tribe-data', 'users.json');
+    const usersFilePath = path.join(
+      __dirname,
+      '..',
+      'tribe-data',
+      'users.json'
+    );
     const usersData = JSON.parse(fs.readFileSync(usersFilePath, 'utf8'));
     const normalizedTarget = targetName.trim().toLowerCase();
     const matchedKey = Object.keys(usersData).find(
@@ -160,24 +165,25 @@ function doChance(rollValue, gameState) {
     case 18:
     case 17:
     case 16:
-      name = pop.randomMemberName(population);
-      person = pop.memberByName(name, gameState);
-      safety = 0; // infinite loop protection
-      while (
-        person.hasOwnProperty('strength') &&
-        person.strength == 'strong' &&
-        safety < Object.keys(population).length
-      ) {
-        name = pop.randomMemberName(population);
-        person = pop.memberByName(name, gameState);
-        safety = safety + 1;
-      }
-      message += person.name + ' grows stronger.';
-      pop.history(name, message, gameState);
-      if (person.strength && person.strength == 'weak') {
-        delete person.strength;
+      // Find members who are not already strong
+      var memberNames = Object.keys(population);
+      var nonStrongMembers = memberNames.filter(function (name) {
+        var p = population[name];
+        return !p.hasOwnProperty('strength') || p.strength != 'strong';
+      });
+      if (nonStrongMembers.length === 0) {
+        message += 'Every day is leg day; the tribe is strong.';
       } else {
-        person.strength = 'strong';
+        name =
+          nonStrongMembers[Math.floor(Math.random() * nonStrongMembers.length)];
+        person = pop.memberByName(name, gameState);
+        message += person.name + ' grows stronger.';
+        pop.history(name, message, gameState);
+        if (person.strength && person.strength == 'weak') {
+          delete person.strength;
+        } else {
+          person.strength = 'strong';
+        }
       }
       break;
     case 15:
@@ -374,6 +380,14 @@ module.exports.doChance = doChance;
 
 function startWork(actorName, gameState) {
   var player = pop.memberByName(actorName, gameState);
+  if (gameState.demand || gameState.violence) {
+    text.addMessage(
+      gameState,
+      actorName,
+      'You cannot start a new round while there is an active demand or violence.'
+    );
+    return;
+  }
   if (gameState.ended) {
     text.addMessage(
       gameState,
