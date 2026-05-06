@@ -2318,7 +2318,7 @@
                     this.send({
                         type: 'command',
                         command: 'invite',
-                        parameters: { invitelist: invitedNames.join(',') }
+                        parameters: { invitelist: invitedNames.length > 0 ? invitedNames.join(',') : null }
                     });
                     // Collect consent dict from all rows
                     const newConsentDict = {};
