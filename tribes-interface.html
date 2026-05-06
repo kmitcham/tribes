@@ -607,6 +607,48 @@
             margin-bottom: 0.35rem;
         }
 
+        .conflict-banner-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-bottom: 0.45rem;
+        }
+
+        .conflict-chip {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 999px;
+            padding: 0.18rem 0.55rem;
+            font-size: 0.74rem;
+            font-weight: 700;
+            letter-spacing: 0.01em;
+            border: 1px solid transparent;
+        }
+
+        .conflict-chip.neutral {
+            background: #f1ede2;
+            border-color: #d9c27a;
+            color: #6b4f00;
+        }
+
+        .conflict-chip.warning {
+            background: #fef1de;
+            border-color: #e3a544;
+            color: #855400;
+        }
+
+        .conflict-chip.good {
+            background: #e5f5ea;
+            border-color: #6ba980;
+            color: #1f6a3e;
+        }
+
+        .conflict-banner.violence .conflict-chip.neutral {
+            background: #f8e5e5;
+            border-color: #d78b8b;
+            color: #7a1f1f;
+        }
+
         .conflict-banner-body {
             font-size: 0.96rem;
             line-height: 1.45;
@@ -1275,6 +1317,7 @@
 
                 <div id="conflictBanner" class="conflict-banner">
                     <div id="conflictBannerTitle" class="conflict-banner-title"></div>
+                    <div id="conflictBannerChips" class="conflict-banner-chips"></div>
                     <div id="conflictBannerBody" class="conflict-banner-body"></div>
                 </div>
                 
@@ -4204,6 +4247,10 @@
             }
 
             getPopulationWorkStatus(person) {
+                if (person.escaped) {
+                    return 'Ran away from combat';
+                }
+
                 if (Number(person.isInjured) > 0 || Number(person.isSick) > 0) {
                     return 'Recovering';
                 }
@@ -4262,6 +4309,9 @@
                 }
                 if (person.isPregnant) {
                     badges.push({ text: 'Pregnant', className: 'info' });
+                }
+                if (person.escaped) {
+                    badges.push({ text: 'Ran Away', className: 'alert' });
                 }
                 if (Array.isArray(person.nursing) && person.nursing.length > 0) {
                     badges.push({ text: `Nursing ${person.nursing.length}`, className: 'neutral' });
@@ -4598,9 +4648,10 @@
             updateConflictBanner(gameState, statusText = '') {
                 const banner = document.getElementById('conflictBanner');
                 const title = document.getElementById('conflictBannerTitle');
+                const chips = document.getElementById('conflictBannerChips');
                 const body = document.getElementById('conflictBannerBody');
 
-                if (!banner || !title || !body) return;
+                if (!banner || !title || !chips || !body) return;
 
                 const activeViolence = gameState && gameState.violence;
                 const activeDemand = gameState && (gameState.demand || gameState.violence);
@@ -4608,6 +4659,7 @@
                 if (!activeDemand) {
                     banner.classList.remove('active', 'violence');
                     title.textContent = '';
+                    chips.innerHTML = '';
                     body.textContent = '';
                     return;
                 }
@@ -4615,12 +4667,60 @@
                 banner.classList.add('active');
                 banner.classList.toggle('violence', !!activeViolence);
 
+                const combatRounds = Number.isFinite(gameState && gameState.combatRounds)
+                    ? gameState.combatRounds
+                    : 0;
+                const combatStatus = combatRounds > 0
+                    ? `Combat has happened for ${combatRounds} round${combatRounds === 1 ? '' : 's'}.`
+                    : 'Combat has not happened yet.';
+
+                const allPlayers = this.currentPopulation
+                    ? Object.values(this.currentPopulation)
+                    : [];
+                const escapedPlayers = allPlayers
+                    .filter(player => player && player.escaped)
+                    .map(player => this.humanizePopulationText(player.name))
+                    .filter(Boolean);
+                const escapedCount = escapedPlayers.length;
+                const pendingViolenceChoices = allPlayers.filter(
+                    player => player && !player.escaped && !player.strategy
+                ).length;
+                const pickStatus = pendingViolenceChoices > 0
+                    ? `${pendingViolenceChoices} player${pendingViolenceChoices === 1 ? '' : 's'} still need to pick attack, run away, or defend for the next round.`
+                    : 'No pending violence choices right now.';
+                const formatNameList = (names) => {
+                    if (!names || names.length === 0) return '';
+                    if (names.length === 1) return names[0];
+                    if (names.length === 2) return `${names[0]} and ${names[1]}`;
+                    return `${names.slice(0, -1).join(', ')}, and ${names[names.length - 1]}`;
+                };
+                const escapeStatus = escapedCount > 0
+                    ? `${formatNameList(escapedPlayers)} ${escapedCount === 1 ? 'has' : 'have'} run away.`
+                    : 'No players have exited combat via run away.';
+
+                const chipMarkup = [];
+                chipMarkup.push(`<span class="conflict-chip neutral">${combatRounds} combat round${combatRounds === 1 ? '' : 's'}</span>`);
+                if (activeViolence) {
+                    const pickClass = pendingViolenceChoices > 0 ? 'warning' : 'good';
+                    const pickLabel = pendingViolenceChoices > 0
+                        ? `Choices pending: ${pendingViolenceChoices}`
+                        : 'All choices submitted';
+                    chipMarkup.push(`<span class="conflict-chip ${pickClass}">${pickLabel}</span>`);
+
+                    const escapeClass = escapedCount > 0 ? 'warning' : 'good';
+                    const escapeLabel = escapedCount > 0
+                        ? `Run aways: ${escapedCount}`
+                        : 'No run aways';
+                    chipMarkup.push(`<span class="conflict-chip ${escapeClass}">${escapeLabel}</span>`);
+                }
+                chips.innerHTML = chipMarkup.join('');
+
                 if (activeViolence) {
                     title.textContent = 'Violence Active';
-                    body.textContent = `The tribe is in open conflict over this demand: ${activeViolence}`;
+                    body.textContent = `The tribe is in open conflict over this demand: ${activeViolence} ${combatStatus} ${pickStatus} ${escapeStatus}`;
                 } else {
                     title.textContent = 'Demand Active';
-                    body.textContent = `A demand is currently in play: ${activeDemand}`;
+                    body.textContent = `A demand is currently in play: ${activeDemand} ${combatStatus}`;
                 }
             }
 

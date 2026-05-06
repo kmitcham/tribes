@@ -49,6 +49,28 @@ function getGameFactions(gameState) {
 }
 module.exports.getGameFactions = getGameFactions;
 
+function endViolence(gameState, winnerFaction) {
+  const topic = gameState.violence;
+  let winMessage;
+  if (winnerFaction === 'for') {
+    winMessage = 'The FOR faction wins the conflict over "' + topic + '". The demand will be carried out.';
+  } else if (winnerFaction === 'against') {
+    winMessage = 'The AGAINST faction wins the conflict over "' + topic + '". The demand has been denied.';
+  } else {
+    winMessage = 'The conflict over "' + topic + '" ends with no clear winner.';
+  }
+  text.addMessage(gameState, 'tribe', winMessage);
+  delete gameState.violence;
+  delete gameState.violenceRounds;
+  for (const playerName in gameState.population) {
+    const player = gameState.population[playerName];
+    delete player.strategy;
+    delete player.escaped;
+    delete player.attack_target;
+    delete player.hits;
+  }
+}
+
 // see if any factions members are all escaped or dead.
 // returns true if violence is still in order
 function moreFactionViolenceRequired(gameState) {
@@ -70,13 +92,15 @@ function moreFactionViolenceRequired(gameState) {
       'tribe',
       'There is no one left from either faction that wants to fight about it.'
     );
+    endViolence(gameState, 'none');
     return false;
   } else if (proList.length == 0) {
     text.addMessage(
       gameState,
       'tribe',
-      'There is no one left favor of the demand that wants to fight about it.'
+      'There is no one left in favor of the demand that wants to fight about it.'
     );
+    endViolence(gameState, 'against');
     return false;
   } else if (conList.length == 0) {
     text.addMessage(
@@ -84,6 +108,7 @@ function moreFactionViolenceRequired(gameState) {
       'tribe',
       'There is no one left against the demand that wants to fight about it.'
     );
+    endViolence(gameState, 'for');
     return false;
   } else {
     text.addMessage(
@@ -150,6 +175,7 @@ const getFactionResult = (gameState) => {
       '.  The conflict has been resolved.';
     console.log('nobody wants the demand anymore');
     delete gameState['demand'];
+    delete gameState.violenceRounds;
     for (playerName in gameState['population']) {
       delete gameState['population'][playerName]['faction'];
     }
@@ -196,6 +222,7 @@ const getFactionResult = (gameState) => {
         gameState.demand
     );
     delete gameState['demand'];
+    delete gameState.violenceRounds;
   } else if (againstScore >= 2 * (forScore + undeclaredScore)) {
     response =
       'The Oppostion faction has overwhelming support (' +
@@ -206,6 +233,7 @@ const getFactionResult = (gameState) => {
     for (playerName in gameState['population']) {
       delete gameState['population'][playerName]['faction'];
     }
+    delete gameState.violenceRounds;
   } else if (
     gameFactions['undeclared'] &&
     gameFactions['undeclared'].length > 0
@@ -238,6 +266,7 @@ const getFactionResult = (gameState) => {
         ' should be ignored.';
     } else {
       gameState.violence = gameState.demand;
+      gameState.violenceRounds = 0;
       response =
         'Tribal society breaks down as VIOLENCE is required to settle the issue of ' +
         gameState.demand +
@@ -373,7 +402,7 @@ const resolveViolence = (gameState) => {
       undecided.push(playerName);
     } else if (player.strategy == 'attack') {
       attackers.push(playerName);
-    } else if (player.strategy == 'run') {
+    } else if (player.strategy == 'run' && !player.escaped) {
       runners.push(playerName);
     }
   }
@@ -386,15 +415,22 @@ const resolveViolence = (gameState) => {
   if (attackers.length == 0) {
     response =
       'The violence has ended.  Nobody is still willing to attack anyone about ' +
-      gameState.violence;
-    delete gameState.violence;
-    for (playerName in population) {
-      player = population[playerName];
-      delete player.strategy;
-      delete player.escaped;
-      delete player.attack_target;
-      delete player.hits;
+      gameState.violence + '.';
+    text.addMessage(gameState, 'tribe', response);
+    // Determine winner by surviving (non-escaped) faction members
+    let forSurvivors = 0;
+    let againstSurvivors = 0;
+    for (const pName in population) {
+      const p = population[pName];
+      if (!p.escaped) {
+        if (p.faction === 'for') forSurvivors++;
+        else if (p.faction === 'against') againstSurvivors++;
+      }
     }
+    let winnerFaction = 'none';
+    if (forSurvivors > 0 && againstSurvivors === 0) winnerFaction = 'for';
+    else if (againstSurvivors > 0 && forSurvivors === 0) winnerFaction = 'against';
+    endViolence(gameState, winnerFaction);
     return response;
   }
   defenderTargets = {};
@@ -439,16 +475,22 @@ const resolveViolence = (gameState) => {
     // can die before you run
     if (runner) {
       runner.escaped = true;
+      runner.strategy = 'run';
       response += playerName + ' runs away from the fighting.\n';
-      delete runner.strategy;
     }
   }
   // reset the strategies
   for (playerName in population) {
     player = population[playerName];
-    delete player.strategy;
+    if (!player.escaped) {
+      delete player.strategy;
+    }
     delete player.attack_target;
   }
+  if (!Number.isFinite(gameState.violenceRounds)) {
+    gameState.violenceRounds = 0;
+  }
+  gameState.violenceRounds += 1;
   response +=
     '\nA round of combat has ended.  Everyone who has not escaped needs to choose a strategy';
 

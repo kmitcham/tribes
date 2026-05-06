@@ -1234,6 +1234,7 @@ describe('Info Request Handling (using actual exports)', () => {
       startStamp: '2026-05-04T00:00:00.000Z',
       demand: 'share the food',
       violence: 'share the food',
+      violenceRounds: 3,
       needChanceRoll: false,
     };
 
@@ -1244,6 +1245,7 @@ describe('Info Request Handling (using actual exports)', () => {
     expect(response.label).toBe('status');
     expect(response.gameState.demand).toBe('share the food');
     expect(response.gameState.violence).toBe('share the food');
+    expect(response.gameState.combatRounds).toBe(3);
   });
 });
 

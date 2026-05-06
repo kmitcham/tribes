@@ -169,7 +169,8 @@ describe('Browser Integration: tribes-interface.html', () => {
             year: 4,
             startStamp: 'test-stamp',
             demand: 'share fish',
-            violence: null
+            violence: null,
+            combatRounds: 0
         };
 
         await page.evaluate((state) => {
@@ -184,15 +185,18 @@ describe('Browser Integration: tribes-interface.html', () => {
         await page.waitForSelector('#conflictBanner.active');
         let bannerState = await page.evaluate(() => ({
             title: document.getElementById('conflictBannerTitle').textContent,
+            chips: document.getElementById('conflictBannerChips').innerText,
             body: document.getElementById('conflictBannerBody').textContent,
             isViolence: document.getElementById('conflictBanner').classList.contains('violence')
         }));
 
         expect(bannerState.title).toBe('Demand Active');
         expect(bannerState.body).toContain('share fish');
+        expect(bannerState.body).toContain('Combat has not happened yet.');
+        expect(bannerState.chips).toContain('0 combat rounds');
         expect(bannerState.isViolence).toBe(false);
 
-        const violenceState = { ...demandState, violence: 'share fish' };
+        const violenceState = { ...demandState, violence: 'share fish', combatRounds: 2 };
         await page.evaluate((state) => {
             window.tribesClient.handleMessage({
                 type: 'infoRequest',
@@ -204,13 +208,63 @@ describe('Browser Integration: tribes-interface.html', () => {
 
         bannerState = await page.evaluate(() => ({
             title: document.getElementById('conflictBannerTitle').textContent,
+            chips: document.getElementById('conflictBannerChips').innerText,
             body: document.getElementById('conflictBannerBody').textContent,
             isViolence: document.getElementById('conflictBanner').classList.contains('violence')
         }));
 
         expect(bannerState.title).toBe('Violence Active');
         expect(bannerState.body).toContain('share fish');
+        expect(bannerState.body).toContain('Combat has happened for 2 rounds.');
+        expect(bannerState.body).toContain('still need to pick attack, run away, or defend for the next round.');
+        expect(bannerState.body).toContain('No players have exited combat via run away.');
+        expect(bannerState.chips).toContain('2 combat rounds');
+        expect(bannerState.chips).toContain('Choices pending');
+        expect(bannerState.chips).toContain('No run aways');
         expect(bannerState.isViolence).toBe(true);
+
+        const escapedPlayerName = await page.evaluate(() => {
+            const population = window.tribesClient.currentPopulation || {};
+            const firstPlayerName = Object.keys(population)[0];
+            if (firstPlayerName && population[firstPlayerName]) {
+                population[firstPlayerName].escaped = true;
+                return population[firstPlayerName].name || firstPlayerName;
+            }
+            return null;
+        });
+
+        await page.evaluate((state) => {
+            window.tribesClient.handleMessage({
+                type: 'infoRequest',
+                label: 'status',
+                content: 'status',
+                gameState: state
+            });
+        }, violenceState);
+
+        bannerState = await page.evaluate(() => ({
+            title: document.getElementById('conflictBannerTitle').textContent,
+            chips: document.getElementById('conflictBannerChips').innerText,
+            body: document.getElementById('conflictBannerBody').textContent,
+            isViolence: document.getElementById('conflictBanner').classList.contains('violence')
+        }));
+
+        expect(bannerState.body).toContain('has run away.');
+        expect(bannerState.body).toContain(escapedPlayerName.charAt(0).toUpperCase() + escapedPlayerName.slice(1));
+        expect(bannerState.chips).toContain('Run aways: 1');
+
+        const escapedCardShowsRunAway = await page.evaluate((escapedName) => {
+            const cards = Array.from(document.querySelectorAll('.person-card'));
+            const targetCard = cards.find((card) => {
+                const nameEl = card.querySelector('.person-name');
+                return nameEl && nameEl.textContent.trim() === escapedName;
+            });
+            if (!targetCard) return false;
+            const badgeTexts = Array.from(targetCard.querySelectorAll('.person-badge')).map(b => b.textContent.trim());
+            return badgeTexts.includes('Ran Away');
+        }, escapedPlayerName);
+
+        expect(escapedCardShowsRunAway).toBe(true);
     }, 25000);
 
     test('romance modal submits invite and consent updates together', async () => {
