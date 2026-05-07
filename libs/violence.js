@@ -77,14 +77,14 @@ function endViolence(gameState, winnerFaction) {
 function moreFactionViolenceRequired(gameState) {
   var proList = [];
   var conList = [];
-  population = gameState['population'];
+  const population = gameState['population'];
   const violenceFactions = gameState.violenceFactions || {};
   if (!gameState.violenceFactions) {
     console.warn('moreFactionViolenceRequired: violenceFactions missing during active violence');
   }
   // dead people are in the graveyard
-  for (playerName in population) {
-    player = population[playerName];
+  for (const playerName in population) {
+    const player = population[playerName];
     const faction = player['faction'] || violenceFactions[playerName];
     if (faction == 'for' && !player['escaped']) {
       proList.push(player);
