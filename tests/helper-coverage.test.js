@@ -46,7 +46,7 @@ describe('Helper coverage tests', () => {
     expect(addMessageSpy).toHaveBeenCalledWith(
       gameState,
       'Leader',
-      'banish requires chief priviliges'
+      'banish requires chief privileges'
     );
   });
 
