@@ -405,13 +405,13 @@ const resolveSingleAttack = (attacker, defender, roll, gameState) => {
 module.exports.resolveSingleAttack = resolveSingleAttack;
 
 const resolveViolence = (gameState) => {
-  attackers = [];
-  undecided = [];
-  runners = [];
-  response = '';
-  population = gameState['population'];
-  for (playerName in population) {
-    player = population[playerName];
+  let attackers = [];
+  const undecided = [];
+  const runners = [];
+  let response = '';
+  const population = gameState['population'];
+  for (const playerName in population) {
+    const player = population[playerName];
     if (!player.strategy && !player.escaped) {
       undecided.push(playerName);
     } else if (player.strategy == 'attack') {
@@ -452,10 +452,10 @@ const resolveViolence = (gameState) => {
     endViolence(gameState, winnerFaction);
     return response;
   }
-  defenderTargets = {};
-  for (attackerName of attackers) {
-    attacker = population[attackerName];
-    targetName = attacker.attack_target;
+  const defenderTargets = {};
+  for (const attackerName of attackers) {
+    const attacker = population[attackerName];
+    const targetName = attacker.attack_target;
     if (defenderTargets[targetName]) {
       //console.log(' defenderTargets adds '+attackerName)
       defenderTargets[targetName].push(attackerName);
@@ -465,32 +465,32 @@ const resolveViolence = (gameState) => {
     }
   }
   // giving defenders first strike, in case attack makes someone weak
-  for (defenderName in defenderTargets) {
+  for (const defenderName in defenderTargets) {
     attackers = defenderTargets[defenderName];
-    var randomIndex = Math.trunc(Math.random() * attackers.length);
-    targetName = attackers[randomIndex];
-    //console.log('defender first strike vs '+attackerName)
-    attacker = pop.memberByName(defenderName, gameState);
+    const randomIndex = Math.trunc(Math.random() * attackers.length);
+    const targetName = attackers[randomIndex];
+    //console.log('defender first strike vs '+defenderName)
+    const attacker = pop.memberByName(defenderName, gameState);
     if (attacker && attacker.strategy == 'defend') {
-      defender = pop.memberByName(targetName, gameState);
-      roll = dice.roll(2);
+      const defender = pop.memberByName(targetName, gameState);
+      const roll = dice.roll(2);
       response += resolveSingleAttack(attacker, defender, roll, gameState);
     }
   }
-  for (attackerName of attackers) {
-    attacker = pop.memberByName(attackerName, gameState);
+  for (const attackerName of attackers) {
+    const attacker = pop.memberByName(attackerName, gameState);
     if (!attacker) {
       // Defender first strike wins
       continue;
     }
-    targetName = attacker.attack_target;
-    defender = pop.memberByName(targetName, gameState);
+    const targetName = attacker.attack_target;
+    const defender = pop.memberByName(targetName, gameState);
     //console.log(attackerName+' attacks '+targetName)
-    roll = dice.roll(2);
+    const roll = dice.roll(2);
     response += resolveSingleAttack(attacker, defender, roll, gameState);
   }
-  for (playerName of runners) {
-    runner = population[playerName];
+  for (const playerName of runners) {
+    const runner = population[playerName];
     // can die before you run
     if (runner) {
       runner.escaped = true;
@@ -499,8 +499,8 @@ const resolveViolence = (gameState) => {
     }
   }
   // reset the strategies
-  for (playerName in population) {
-    player = population[playerName];
+  for (const playerName in population) {
+    const player = population[playerName];
     if (!player.escaped) {
       delete player.strategy;
     }

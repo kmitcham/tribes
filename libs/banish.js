@@ -82,7 +82,7 @@ function banishAdmin(gameState, actorName, targetName, reason) {
     return;
   }
   if (!actingMember.chief) {
-    text.addMessage(gameState, actorName, 'banish requires chief priviliges');
+    text.addMessage(gameState, actorName, 'banish requires chief privileges');
     return;
   }
   if (gameState.demand || gameState.violence) {
