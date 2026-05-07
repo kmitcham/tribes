@@ -1,0 +1,83 @@
+{
+  "seasonCounter": 3,
+  "gameTrack": {
+    "veldt": 1,
+    "forest": 1,
+    "marsh": 1,
+    "hills": 1
+  },
+  "name": "unit-test-tribe",
+  "startStamp": "2026-04-18T00:00:00.000Z",
+  "secretMating": true,
+  "open": true,
+  "conceptionCounter": 0,
+  "consumed": 0,
+  "spoiled": 0,
+  "foodAcquired": 0,
+  "population": {
+    "eggplant": {
+      "name": "eggplant",
+      "gender": "female",
+      "food": 6,
+      "grain": 0,
+      "basket": 1,
+      "spearhead": 0,
+      "profession": "gatherer",
+      "worked": false,
+      "activity": "idle",
+      "inviteList": [
+        "nopwd",
+        "!pass"
+      ],
+      "consentDict": {
+        "nopwd": "consent"
+      }
+    },
+    "nopwd": {
+      "name": "nopwd",
+      "gender": "male",
+      "food": 6,
+      "grain": 0,
+      "basket": 0,
+      "spearhead": 1,
+      "profession": "hunter",
+      "worked": false,
+      "activity": "idle",
+      "inviteList": [
+        "eggplant",
+        "!pass"
+      ],
+      "consentDict": {
+        "eggplant": "consent"
+      }
+    }
+  },
+  "graveyard": {},
+  "children": {
+    "Pebble": {
+      "mother": "eggplant",
+      "father": "nopwd",
+      "age": 4,
+      "food": 0,
+      "gender": "female",
+      "name": "Pebble"
+    },
+    "Flint": {
+      "mother": "eggplant",
+      "father": "nopwd",
+      "age": 2,
+      "food": 0,
+      "gender": "male",
+      "name": "Flint"
+    }
+  },
+  "currentLocationName": "marsh",
+  "round": "work",
+  "workRound": true,
+  "foodRound": false,
+  "reproductionRound": false,
+  "needChanceRoll": true,
+  "canJerky": false,
+  "messages": {},
+  "tribeHistory": []
+}
