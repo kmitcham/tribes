@@ -765,6 +765,11 @@ function handleInfoRequest(ws, data, gameState) {
           currentLocationName: gameState.currentLocationName,
           year: Math.floor(gameState.seasonCounter / 2),
           startStamp: gameState.startStamp,
+          demand: gameState.demand,
+          violence: gameState.violence,
+          combatRounds: Number.isFinite(gameState.violenceRounds)
+            ? gameState.violenceRounds
+            : 0,
         },
       };
       break;
@@ -973,6 +978,11 @@ async function refreshTribeGameData(gameState, tribeName) {
       seasonCounter: gameState.seasonCounter,
       currentLocationName: gameState.currentLocationName,
       year: Math.floor(gameState.seasonCounter / 2),
+      demand: gameState.demand,
+      violence: gameState.violence,
+      combatRounds: Number.isFinite(gameState.violenceRounds)
+        ? gameState.violenceRounds
+        : 0,
     },
   };
 

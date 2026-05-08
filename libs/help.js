@@ -43,19 +43,9 @@ function playerHelpRounds() {
     ' foodcheck examine the food situation for every adult and living child; triggers reproduction round if everyone has enough food\n';
   text += ' feed <amt> <childName | mothername | !all >  [<more childNames>]\n';
   text += '-=Reproduction Commands=-\n';
-  text += ' romance  show your current reproduction lists\n';
-  text +=
-    ' invite <inviteList> The list of people you would like to invite people to mate with, in preference order.  \n';
-  text +=
-    '\tIf the list ends with pass, you will give up if they all decline.  \n';
-  text +=
-    '\tUpdates made DURING the reproduction round may behave erratically.  \n';
-  text +=
-    ' consent If a given member offers to mate with you, this is your response.\n';
-  text +=
-    ' decline If a given member offers to mate with you, this is your response.\n';
-  text +=
-    ' pass Decline to invite anyone in this mating round; can still respond to invitations\n';
+  text += ' romance  Open your romance panel. Set who to invite (in priority order) and how to respond to invitations from others. One Save sends both your invite list and your consent/decline choices together.\n';
+  text += '\tAdd !pass to the end of your invite list to give up if everyone you invited declines.\n';
+  text += '\tDiscord users can still use invite, consent, decline, and pass commands directly.\n';
   text += ' scorechildren  count number of children by parent';
   return text;
 }

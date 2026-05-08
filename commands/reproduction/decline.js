@@ -9,7 +9,7 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('decline')
     .setDescription(
-      'For every possible partner in the tribe, indicate whether you consent to mate with them.'
+      'Record decline for one or more partners (web UI: use the Romance panel). Format: "Alice: decline, Bob: consent".'
     )
     .addStringOption((option) =>
       option

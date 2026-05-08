@@ -57,6 +57,11 @@ module.exports = {
 function ignoreChildren(gameState, actorName, cName, cName2, cName3, cName4, cName5) {
   var person = pop.memberByName(actorName, gameState);
 
+  if (!person) {
+    text.addMessage(gameState, actorName, 'FAIL: you are not a person');
+    return;
+  }
+
   if (person.worked == true) {
     text.addMessage(
       gameState,
@@ -99,6 +104,9 @@ function ignoreChild(gameState, actorName, cName) {
   var person = pop.memberByName(actorName, gameState);
   children = gameState.children;
   var response = '';
+  if (!person) {
+    return 'FAIL: you are not a person';
+  }
   console.log(
     'inside ignore cName ' +
       text.capitalizeFirstLetter(cName) +
@@ -124,6 +132,9 @@ function ignoreChild(gameState, actorName, cName) {
     childIndex = person.guarding.indexOf(childName);
     if (childIndex > -1) {
       person.guarding.splice(childIndex, 1);
+      if (person.guarding.length === 0) {
+        delete person.guarding;
+      }
     }
     return actorName + ' stops guarding ' + childName + '\n';
   }

@@ -161,6 +161,37 @@ test('Faction Voting -> balanced', () => {
   result = violencelib.getFactionResult(gameState);
   result = gameState.messages['tribe'];
   expect(result).toContain(message);
+  expect(gameState.violenceRounds).toBe(0);
+});
+
+test('resolveViolence increments combat rounds and announces winner when faction eliminated', () => {
+  var gameState = {
+    population: {
+      attacker: {
+        name: 'attacker',
+        faction: 'for',
+        strategy: 'attack',
+        attack_target: 'defender',
+        gender: 'male',
+      },
+      defender: {
+        name: 'defender',
+        faction: 'against',
+        strategy: 'run',
+        gender: 'male',
+      },
+    },
+    violence: 'some demand',
+    messages: {},
+  };
+
+  violencelib.resolveViolence(gameState);
+
+  // After the round, "against" faction is all escaped → FOR wins → violence cleared
+  expect(gameState.violence).toBeUndefined();
+  expect(gameState.violenceRounds).toBeUndefined();
+  expect(gameState.messages.tribe).toContain('A round of combat has ended');
+  expect(gameState.messages.tribe).toContain('FOR faction wins');
 });
 
 test('Faction Voting -> Overwhelmning For', () => {
@@ -350,10 +381,90 @@ test('ResolveViolence first test', () => {
   actual = gameState.messages['tribe'];
 
   expect(gameState.population['con2'].escaped).toBeTruthy();
+  expect(gameState.population['con2'].strategy).toBe('run');
   expect(actual).toContain('pro1 attacks con1');
   expect(actual).toContain('demander attacks con1');
   expect(actual).toContain('con1 attacks');
   expect(actual).toContain('con2 runs away from the fighting');
+});
+
+test('escaped players with run strategy do not delay violence resolution', () => {
+  var gameState = {
+    violence: 'test violence',
+    population: {
+      conEscaped: {
+        name: 'conEscaped',
+        faction: 'against',
+        strategy: 'run',
+        escaped: true,
+      },
+      proEscaped: {
+        name: 'proEscaped',
+        faction: 'for',
+        strategy: 'run',
+        escaped: true,
+      },
+    },
+  };
+
+  var response = violencelib.resolveViolence(gameState);
+
+  expect(response).toContain('The violence has ended.');
+  expect(response).not.toContain('still need to chose');
+});
+
+test('conflict-end announces no winner when both factions escaped', () => {
+  var gameState = {
+    violence: 'food sharing',
+    messages: [],
+    population: {
+      conEscaped: { name: 'conEscaped', faction: 'against', strategy: 'run', escaped: true },
+      proEscaped: { name: 'proEscaped', faction: 'for', strategy: 'run', escaped: true },
+    },
+  };
+
+  violencelib.resolveViolence(gameState);
+
+  const allMessages = gameState.messages.tribe || '';
+  expect(allMessages).toContain('no clear winner');
+  expect(gameState.violence).toBeUndefined();
+});
+
+test('conflict-end announces FOR wins when against faction all escaped', () => {
+  var gameState = {
+    violence: 'food sharing',
+    messages: [],
+    population: {
+      conEscaped: { name: 'conEscaped', faction: 'against', escaped: true },
+      proActive: { name: 'proActive', faction: 'for', strategy: 'defend' },
+    },
+  };
+
+  violencelib.resolveViolence(gameState);
+
+  const allMessages = gameState.messages.tribe || '';
+  expect(allMessages).toContain('FOR faction wins');
+  expect(gameState.violence).toBeUndefined();
+});
+
+test('moreFactionViolenceRequired announces AGAINST wins when for faction eliminated', () => {
+  var gameState = {
+    violence: 'food sharing',
+    violenceRounds: 2,
+    messages: [],
+    population: {
+      conActive: { name: 'conActive', faction: 'against' },
+      proEscaped: { name: 'proEscaped', faction: 'for', escaped: true },
+    },
+  };
+
+  // Trigger via resolveViolence with no attackers (everyone defends/escaped)
+  gameState.population.conActive.strategy = 'defend';
+  violencelib.resolveViolence(gameState);
+
+  const allMessages = gameState.messages.tribe || '';
+  expect(allMessages).toContain('AGAINST faction wins');
+  expect(gameState.violence).toBeUndefined();
 });
 
 test('ResolveViolence for fatality', () => {
@@ -445,4 +556,45 @@ test('Faction Voting -> closely balanced Against slightly ahead', () => {
   var result = gameState.messages['tribe'];
   expect(result).toBe(message);
   expect(gameState.violence).toEqual('some demand');
+});
+
+test('resolveViolence uses violenceFactions when player faction fields are cleared', () => {
+  // Simulate full flow: getFactionResult clears faction fields, then resolveViolence uses violenceFactions
+  var gameState = {
+    population: {
+      pro1: { name: 'pro1', faction: 'for' },
+      pro2: { name: 'pro2', faction: 'for' },
+      con1: { name: 'con1', faction: 'against' },
+      con2: { name: 'con2', faction: 'against' },
+    },
+    demand: 'share fish',
+    messages: {},
+  };
+
+  // Trigger violence - factions get cleared, violenceFactions is saved
+  violencelib.getFactionResult(gameState);
+  expect(gameState.violence).toBe('share fish');
+  expect(gameState.violenceFactions).toEqual({
+    pro1: 'for',
+    pro2: 'for',
+    con1: 'against',
+    con2: 'against',
+  });
+  // All faction fields on players must be cleared
+  for (const p of Object.values(gameState.population)) {
+    expect(p.faction).toBeUndefined();
+  }
+
+  // Now resolve violence: con1 and con2 escape/flee, no attackers
+  gameState.population.pro1.strategy = 'defend';
+  gameState.population.pro2.strategy = 'defend';
+  gameState.population.con1.escaped = true;
+  gameState.population.con2.escaped = true;
+
+  violencelib.resolveViolence(gameState);
+
+  // FOR faction should win since all AGAINST members escaped
+  expect(gameState.messages.tribe).toContain('FOR faction wins');
+  expect(gameState.violence).toBeUndefined();
+  expect(gameState.violenceFactions).toBeUndefined();
 });

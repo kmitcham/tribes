@@ -381,10 +381,12 @@ module.exports.doChance = doChance;
 function startWork(actorName, gameState) {
   var player = pop.memberByName(actorName, gameState);
   if (gameState.demand || gameState.violence) {
+    const activeDemand = gameState.demand || gameState.violence;
     text.addMessage(
       gameState,
       actorName,
-      'You cannot start a new round while there is an active demand or violence.'
+      'You cannot start a new round while there is an active demand. Active demand: ' +
+        activeDemand
     );
     return;
   }
@@ -416,8 +418,6 @@ function startWork(actorName, gameState) {
     );
     return;
   }
-  //TODO: confirm no longer needed
-  //reproLib.restoreSaveLists(gameState);
   gameState.archiveRequired = true;
   recoverGameTracks(gameState);
   // clear out old activities

@@ -1028,24 +1028,6 @@ function addChild(mother, father, gameState) {
 }
 module.exports.addChild = addChild;
 
-function restoreSaveLists(gameState) {
-  population = gameState.population;
-  for (var personName in population) {
-    person = population[personName];
-    if (person.saveInviteList && person.saveInviteList.length > 0) {
-      console.log('restoring inviteList for ' + personName);
-      person.inviteList = person.saveInviteList;
-      delete person.saveInviteList;
-      text.addMessage(
-        gameState,
-        personName,
-        'restoring your invitelist to what it was at the start of the reproduction round'
-      );
-    }
-  }
-}
-module.exports.restoreSaveLists = restoreSaveLists;
-
 function validateDrone(gameState, actorName, args) {
   population = gameState.population;
   // is actorname Chief
@@ -1198,10 +1180,12 @@ module.exports.pass = pass;
 function startReproductionChecks(gameState, actorName) {
   var player = pop.memberByName(actorName, gameState);
   if (gameState.demand || gameState.violence) {
+    const activeDemand = gameState.demand || gameState.violence;
     text.addMessage(
       gameState,
       actorName,
-      'You cannot start a new round while there is an active demand or violence.'
+      'You cannot start a new round while there is an active demand. Active demand: ' +
+        activeDemand
     );
     return;
   }

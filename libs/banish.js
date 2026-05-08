@@ -82,14 +82,16 @@ function banishAdmin(gameState, actorName, targetName, reason) {
     return;
   }
   if (!actingMember.chief) {
-    text.addMessage(gameState, actorName, 'banish requires chief priviliges');
+    text.addMessage(gameState, actorName, 'banish requires chief privileges');
     return;
   }
   if (gameState.demand || gameState.violence) {
+    const activeDemand = gameState.demand || gameState.violence;
     text.addMessage(
       gameState,
       actorName,
-      'banish can not be used during a conflict'
+      'banish can not be used while a demand is active. Active demand: ' +
+        activeDemand
     );
     return;
   }

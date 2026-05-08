@@ -12,6 +12,8 @@ const text = require('../libs/textprocess.js');
 const dice = require('../libs/dice.js');
 const gatherlib = require('../libs/gather.js');
 const locations = require('../libs/locations.json');
+const guardCommand = require('../commands/work/guard.js');
+const ignoreCommand = require('../commands/work/ignore.js');
 console.log = jest.fn();
 
 // Mock dependencies
@@ -53,6 +55,9 @@ describe('Work Module Tests', () => {
     // Setup mocks
     pop.memberByName.mockReturnValue(mockPlayer);
     text.addMessage = jest.fn();
+    text.capitalizeFirstLetter = jest.fn((value) =>
+      value ? value.charAt(0).toUpperCase() + value.slice(1) : ''
+    );
     pop.history = jest.fn();
     dice.roll.mockReturnValue(10);
     gatherlib.gather.mockReturnValue('Successfully gathered resources');
@@ -422,6 +427,59 @@ describe('Work Module Tests', () => {
         mockGameState,
         'testPlayer',
         'You do not know any crafting secrets'
+      );
+      expect(mockGameState.saveRequired).toBe(true);
+    });
+  });
+
+  describe('guard and ignore command backends', () => {
+    function createInteraction(displayName, values) {
+      return {
+        member: { displayName },
+        options: {
+          getString: jest.fn((name) => values[name] || null),
+        },
+      };
+    }
+
+    test('guard should reject non-members without throwing', async () => {
+      pop.memberByName.mockReturnValue(null);
+      const interaction = createInteraction('ghost', { child1: 'Pebble' });
+
+      await guardCommand.execute(interaction, mockGameState);
+
+      expect(text.addMessage).toHaveBeenCalledWith(
+        mockGameState,
+        'ghost',
+        'FAIL: you are not a person'
+      );
+    });
+
+    test('ignore should reject non-members without throwing', async () => {
+      pop.memberByName.mockReturnValue(null);
+      const interaction = createInteraction('ghost', { child1: 'Pebble' });
+
+      await ignoreCommand.execute(interaction, mockGameState);
+
+      expect(text.addMessage).toHaveBeenCalledWith(
+        mockGameState,
+        'ghost',
+        'FAIL: you are not a person'
+      );
+    });
+
+    test('ignore should delete guarding when removing the last child', async () => {
+      mockGameState.children = { Pebble: { age: 2 } };
+      mockPlayer.guarding = ['Pebble'];
+      const interaction = createInteraction('testPlayer', { child1: 'Pebble' });
+
+      await ignoreCommand.execute(interaction, mockGameState);
+
+      expect(mockPlayer.guarding).toBeUndefined();
+      expect(text.addMessage).toHaveBeenCalledWith(
+        mockGameState,
+        'tribe',
+        'testPlayer stops guarding Pebble\n\n'
       );
       expect(mockGameState.saveRequired).toBe(true);
     });

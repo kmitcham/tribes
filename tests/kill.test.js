@@ -265,4 +265,85 @@ describe('kill function', () => {
     expect(gameState).toHaveProperty('graveyard');
     expect(gameState.graveyard).toHaveProperty('pat');
   });
+
+  test('should remove dead person from invite, consent, decline, and consentDict lists but not guarding (adult)', () => {
+    const gameState = {
+      seasonCounter: 16,
+      population: {
+        alex: {
+          name: 'alex',
+          age: 40,
+          inviteList: ['zoe', 'sam'],
+          consentList: ['zoe'],
+          declineList: ['zoe'],
+          consentDict: { zoe: 'consent', sam: 'decline' },
+          guarding: ['Kid1'],
+        },
+        zoe: {
+          name: 'zoe',
+          age: 30,
+          inviteList: ['alex'],
+          consentList: ['alex'],
+          declineList: ['alex'],
+          consentDict: { alex: 'decline' },
+          guarding: ['Kid2'],
+        },
+        sam: {
+          name: 'sam',
+          age: 33,
+          inviteList: ['alex', 'zoe'],
+          consentList: ['alex'],
+          declineList: ['alex'],
+          consentDict: { alex: 'consent', zoe: 'decline' },
+        },
+      },
+      children: {},
+    };
+
+    kill('alex', 'testing', gameState);
+
+    expect(gameState.population).not.toHaveProperty('alex');
+    expect(gameState.population.zoe.inviteList).toBeUndefined();
+    expect(gameState.population.zoe.consentList).toBeUndefined();
+    expect(gameState.population.zoe.declineList).toBeUndefined();
+    expect(gameState.population.zoe.consentDict).toBeUndefined();
+    // guarding is not modified for adult deaths
+    expect(gameState.population.zoe.guarding).toEqual(['Kid2']);
+
+    expect(gameState.population.sam.inviteList).toEqual(['zoe']);
+    expect(gameState.population.sam.consentList).toBeUndefined();
+    expect(gameState.population.sam.declineList).toBeUndefined();
+    expect(gameState.population.sam.consentDict).toEqual({ zoe: 'decline' });
+  });
+
+  test('should not strip child guardians when an adult shares the same name', () => {
+    // Child named 'Alex' exists; adult named 'alex' is killed
+    // The guardian of child 'Alex' should NOT be affected
+    const gameState = {
+      seasonCounter: 17,
+      population: {
+        alex: {
+          name: 'alex',
+          age: 35,
+          inviteList: ['zoe'],
+        },
+        zoe: {
+          name: 'zoe',
+          age: 30,
+          inviteList: ['alex'],
+          // zoe guards child 'Alex' (same name as adult 'alex')
+          guarding: ['Alex'],
+        },
+      },
+      children: {
+        Alex: { name: 'Alex', age: 5 },
+      },
+    };
+
+    kill('alex', 'testing', gameState);
+
+    expect(gameState.population).not.toHaveProperty('alex');
+    // zoe's guarding of child 'Alex' must be preserved
+    expect(gameState.population.zoe.guarding).toEqual(['Alex']);
+  });
 });

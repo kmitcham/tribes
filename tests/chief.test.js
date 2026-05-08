@@ -213,3 +213,15 @@ test('PayTwoOrDie should kill you', () => {
   assert.equal(deadAlice.deathMessage, 'lack of extra sustenance while ill');
   assert.equal(gameState.population['Bob']['grain'], 0);
 });
+
+test('startWork reports active demand details when blocked', () => {
+  gameState.population['Alice'].chief = true;
+  gameState.demand = 'share fish equally';
+
+  chiefLib.startWork('Alice', gameState);
+
+  assert.strictEqual(
+    gameState.messages['Alice'],
+    'You cannot start a new round while there is an active demand. Active demand: share fish equally'
+  );
+});

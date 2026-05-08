@@ -562,6 +562,272 @@
             color: #856404;
         }
 
+        .population-roster {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+            align-items: start;
+        }
+
+        .population-empty {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 1rem;
+            color: #6c757d;
+        }
+
+        .conflict-banner {
+            display: none;
+            margin-bottom: 1rem;
+            padding: 0.9rem 1rem;
+            border-radius: 10px;
+            border: 1px solid #d9c27a;
+            background: linear-gradient(135deg, #fff7db 0%, #f8ecd0 100%);
+            color: #6b4f00;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .conflict-banner.active {
+            display: block;
+        }
+
+        .conflict-banner.violence {
+            border-color: #d78b8b;
+            background: linear-gradient(135deg, #ffe1e1 0%, #f7d0d0 100%);
+            color: #7a1f1f;
+        }
+
+        .conflict-banner-title {
+            font-size: 0.9rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.35rem;
+        }
+
+        .conflict-banner-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-bottom: 0.45rem;
+        }
+
+        .conflict-chip {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 999px;
+            padding: 0.18rem 0.55rem;
+            font-size: 0.74rem;
+            font-weight: 700;
+            letter-spacing: 0.01em;
+            border: 1px solid transparent;
+        }
+
+        .conflict-chip.neutral {
+            background: #f1ede2;
+            border-color: #d9c27a;
+            color: #6b4f00;
+        }
+
+        .conflict-chip.warning {
+            background: #fef1de;
+            border-color: #e3a544;
+            color: #855400;
+        }
+
+        .conflict-chip.good {
+            background: #e5f5ea;
+            border-color: #6ba980;
+            color: #1f6a3e;
+        }
+
+        .conflict-banner.violence .conflict-chip.neutral {
+            background: #f8e5e5;
+            border-color: #d78b8b;
+            color: #7a1f1f;
+        }
+
+        .conflict-banner-body {
+            font-size: 0.96rem;
+            line-height: 1.45;
+        }
+
+        .person-card {
+            background: white;
+            border: 1px solid #dfe3e8;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+
+        .person-card summary {
+            list-style: none;
+            cursor: pointer;
+            padding: 1rem 1.25rem;
+            background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        }
+
+        .person-card summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .person-card[open] summary {
+            border-bottom: 1px solid #eef1f4;
+        }
+
+        .person-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 1rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .person-name-block {
+            min-width: 0;
+        }
+
+        .person-name {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #22303c;
+        }
+
+        .person-subtitle {
+            color: #5f6b76;
+            font-size: 0.95rem;
+        }
+
+        .person-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            justify-content: flex-end;
+        }
+
+        .person-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.2rem 0.55rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.01em;
+        }
+
+        .person-badge.role {
+            background: #e7f0ff;
+            color: #2550a8;
+        }
+
+        .person-badge.alert {
+            background: #fce8e6;
+            color: #b3261e;
+        }
+
+        .person-badge.info {
+            background: #e8f4f8;
+            color: #0056b3;
+        }
+
+        .person-badge.neutral {
+            background: #edf1f5;
+            color: #4d5a66;
+        }
+
+        .person-summary-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.75rem;
+        }
+
+        .person-stat {
+            background: #f8f9fa;
+            border: 1px solid #edf0f2;
+            border-radius: 10px;
+            padding: 0.7rem 0.8rem;
+        }
+
+        .person-stat-label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #6b7782;
+            margin-bottom: 0.2rem;
+        }
+
+        .person-stat-value {
+            display: block;
+            color: #22303c;
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+
+        .person-details {
+            padding: 1rem 1.25rem 1.25rem;
+            background: #fbfcfd;
+        }
+
+        .person-section + .person-section {
+            margin-top: 1rem;
+        }
+
+        .person-section-title {
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #5f6b76;
+            margin-bottom: 0.5rem;
+        }
+
+        .person-field-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 0.65rem;
+        }
+
+        .person-field {
+            background: white;
+            border: 1px solid #edf0f2;
+            border-radius: 10px;
+            padding: 0.65rem 0.75rem;
+        }
+
+        .person-field-label {
+            display: block;
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #7a8691;
+            margin-bottom: 0.2rem;
+        }
+
+        .person-field-value {
+            display: block;
+            color: #22303c;
+            word-break: break-word;
+        }
+
+        @media (max-width: 900px) {
+            .person-summary-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .person-header {
+                flex-direction: column;
+            }
+
+            .person-badges {
+                justify-content: flex-start;
+            }
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
@@ -1048,6 +1314,12 @@
                     <div class="section-title">Game Data</div>
                     <button class="btn btn-small" id="refreshDataBtn">Refresh Game Data</button>
                 </div>
+
+                <div id="conflictBanner" class="conflict-banner">
+                    <div id="conflictBannerTitle" class="conflict-banner-title"></div>
+                    <div id="conflictBannerChips" class="conflict-banner-chips"></div>
+                    <div id="conflictBannerBody" class="conflict-banner-body"></div>
+                </div>
                 
                 <div class="tab-container">
                     <div class="tabs">
@@ -1057,13 +1329,9 @@
                     </div>
                     
                     <div class="tab-content active" id="populationTab">
-                        <table id="populationTable">
-                            <thead>
-                                <tr>
-                                    <td colspan="100%">Click "Refresh Game Data" to load population data</td>
-                                </tr>
-                            </thead>
-                        </table>
+                        <div id="populationTable" class="population-roster">
+                            <div class="population-empty">Click "Refresh Game Data" to load population data</div>
+                        </div>
                     </div>
                     
                     <div class="tab-content" id="childrenTab">
@@ -1096,6 +1364,7 @@
                 this.currentPopulation = null; // Store current population for dropdowns
                 this.currentChildren = null; // Store current children for child targeting
                 this.currentRomanceLists = null; // Store current romance lists
+                this.currentStatusData = null; // Store current structured game status
                 this.reconnectAttempts = 0;
                 this.maxReconnectAttempts = 1000; // Keep retrying for a long time if server is down (e.g. 5+ minutes)
                 this.reconnectInterval = 2000;
@@ -1672,12 +1941,17 @@
                         this.updateChildrenTable(data.content);
                         break;
                     case 'status':
+                        this.currentStatusData = data.gameState || null;
                         this.updateStatusText(data.content);
                         // Update status bar with structured data if available
                         if (data.gameState) {
                             this.updateGameStatusBarWithData(data.gameState);
                         } else {
                             this.updateGameStatusBar(data.content);
+                        }
+                        this.updateConflictBanner(data.gameState || null, data.content);
+                        if (this.currentPopulation) {
+                            this.updatePopulationTable(this.currentPopulation);
                         }
                         break;
                     case 'romance':
@@ -1687,7 +1961,7 @@
                         // Also regenerate form to populate defaults if the modal is currently showing
                         const romanceModal = document.getElementById('commandModal');
                         if (romanceModal && romanceModal.classList.contains('active') && this.selectedCommand) {
-                            const romanceCommands = ['consent', 'decline', 'invite'];
+                            const romanceCommands = ['consent', 'decline', 'invite', 'romance'];
                             if (romanceCommands.includes(this.selectedCommand.name.toLowerCase())) {
                                 const paramsContainer = document.getElementById('modalCommandParameters');
                                 if (paramsContainer) {
@@ -1703,47 +1977,21 @@
             }
 
             displayCurrentRomanceLists(romanceLists) {
-                // Only display if a romance command modal is currently open
+                // Only act if a romance command modal is currently open
                 const modal = document.getElementById('commandModal');
                 if (!modal.classList.contains('active') || !this.selectedCommand) {
                     return;
                 }
-                
-                const romanceCommands = ['consent', 'decline', 'invite'];
-                if (!romanceCommands.includes(this.selectedCommand.name.toLowerCase())) {
+                const cmdName = this.selectedCommand.name.toLowerCase();
+                const romanceCommands = ['consent', 'decline', 'invite', 'romance'];
+                if (!romanceCommands.includes(cmdName)) {
                     return;
                 }
-                
-                // Unified form handles its own display
-                const cmdNameDisplay = this.selectedCommand.name.toLowerCase();
-                if (cmdNameDisplay === 'consent' || cmdNameDisplay === 'decline') return;
-                
-                // Find the modal description area
-                const modalDescription = document.getElementById('modalDescription');
-                if (!modalDescription) {
-                    return;
+                // For the unified romance modal, rebuild the form with now-available data
+                const paramsContainer = document.getElementById('modalCommandParameters');
+                if (paramsContainer) {
+                    this.generateCommandFormInModal(paramsContainer);
                 }
-                
-                // Create current lists display
-                let currentListsText = '';
-                const commandName = this.selectedCommand.name.toLowerCase();
-                
-                if (commandName === 'invite' && romanceLists.inviteList?.length > 0) {
-                    currentListsText += `<strong>Current invite list:</strong> ${romanceLists.inviteList.join(', ')}<br>`;
-                }
-                if (commandName === 'consent' && romanceLists.consentList?.length > 0) {
-                    currentListsText += `<strong>Current consent list:</strong> ${romanceLists.consentList.join(', ')}<br>`;
-                }
-                if (commandName === 'decline' && romanceLists.declineList?.length > 0) {
-                    currentListsText += `<strong>Current decline list:</strong> ${romanceLists.declineList.join(', ')}<br>`;
-                }
-                
-                if (currentListsText === '') {
-                    currentListsText = `<em>You currently have no ${commandName} list.</em><br>`;
-                }
-                
-                // Append current lists to the existing description
-                modalDescription.innerHTML = this.selectedCommand.description + '<br><br>' + currentListsText;
             }
 
             handleRegistrationResponse(data) {
@@ -1916,7 +2164,8 @@
                 const playerIsChief = this.isCurrentPlayerChief();
                 
                 // Commands that are not needed with the GUI
-                const hiddenCommands = ['children', 'inventory'];
+                // invite/consent/decline are unified under the romance command in the UI
+                const hiddenCommands = ['children', 'inventory', 'invite', 'consent', 'decline'];
                 
                 // Sort commands alphabetically by name and filter out hidden commands
                 const sortedCommands = Object.entries(this.commands)
@@ -1960,12 +2209,21 @@
                 this.selectedCommand = { name: commandName, ...command };
                 
                 // For romance list commands, request current lists to display
-                const romanceCommands = ['consent', 'decline', 'invite'];
+                const romanceCommands = ['consent', 'decline', 'invite', 'romance'];
                 if (romanceCommands.includes(commandName.toLowerCase())) {
                     this.send({ 
                         type: 'infoRequest', 
                         selection: 'romance'
                     });
+                }
+                
+                // Special case: romance command opens unified modal (no server-defined options)
+                if (commandName.toLowerCase() === 'romance') {
+                    if (!this.currentPopulation) {
+                        this.send({ type: 'infoRequest', selection: 'population' });
+                    }
+                    this.showCommandModal();
+                    return;
                 }
                 
                 // If command has no parameters, execute it immediately
@@ -1996,15 +2254,20 @@
                 const cancelBtn = document.getElementById('modalCancelBtn');
                 const closeBtn = document.getElementById('modalClose');
 
-                title.textContent = this.selectedCommand.name;
-                description.textContent = this.selectedCommand.description;
+                if (this.selectedCommand.name.toLowerCase() === 'romance') {
+                    title.textContent = 'Romance — Invite & Respond';
+                    description.textContent = 'Set who you want to invite and how you respond to invitations from others.';
+                } else {
+                    title.textContent = this.selectedCommand.name;
+                    description.textContent = this.selectedCommand.description;
+                }
 
                 // Generate command form in modal
                 this.generateCommandFormInModal(parametersContainer);
 
                 // If this is a romance command and we have current lists, display them
-                const romanceCommands = ['consent', 'decline', 'invite'];
-                if (romanceCommands.includes(this.selectedCommand.name.toLowerCase()) && this.currentRomanceLists) {
+                const romanceCommandsModal = ['consent', 'decline', 'invite', 'romance'];
+                if (romanceCommandsModal.includes(this.selectedCommand.name.toLowerCase()) && this.currentRomanceLists) {
                     this.displayCurrentRomanceLists(this.currentRomanceLists);
                 }
 
@@ -2042,6 +2305,37 @@
                     const parametersContainer = document.getElementById('modalCommandParameters');
                     
                     const cmdNameExec = this.selectedCommand ? this.selectedCommand.name.toLowerCase() : '';
+                if (cmdNameExec === 'romance') {
+                    // Collect invite list from row order
+                    const allRomanceRows = [...parametersContainer.querySelectorAll('.romance-row')];
+                    const invitedNames = allRomanceRows
+                        .filter(r => r.querySelector('.romance-invite') && r.querySelector('.romance-invite').checked)
+                        .map(r => r.dataset.name);
+                    const passCheckbox = parametersContainer.querySelector('#invite_append_pass');
+                    if (passCheckbox && passCheckbox.checked) {
+                        invitedNames.push('!pass');
+                    }
+                    this.send({
+                        type: 'command',
+                        command: 'invite',
+                        parameters: { invitelist: invitedNames.length > 0 ? invitedNames.join(',') : null }
+                    });
+                    // Collect consent dict from all rows
+                    const newConsentDict = {};
+                    allRomanceRows.forEach(r => {
+                        const sel = r.querySelector('.romance-dropdown');
+                        if (sel && sel.value !== 'maybe') {
+                            newConsentDict[r.dataset.name] = sel.value;
+                        }
+                    });
+                    this.send({
+                        type: 'romanceRequest',
+                        playerName: document.getElementById('playerName').value.trim(),
+                        consentDict: newConsentDict
+                    });
+                    this.closeCommandModal();
+                    return;
+                }
                 if ((cmdNameExec === 'consent' || cmdNameExec === 'decline') && document.getElementById('unifiedRomanceGrid')) {
                     const dropdowns = parametersContainer.querySelectorAll('select.romance-dropdown');
                     let newConsentDict = {};
@@ -2164,11 +2458,200 @@
                 container.appendChild(note);
             }
 
+            buildUnifiedRomanceModal(container) {
+                container.innerHTML = '';
+
+                if (!this.currentPopulation) {
+                    container.innerHTML = '<p style="color:#6c757d;">Loading population data&hellip;</p>';
+                    return;
+                }
+
+                this.addPregnancyWarning(container);
+
+                // Explanatory text
+                const intro = document.createElement('p');
+                intro.style.cssText = 'font-size:0.9rem;color:#444;margin-bottom:1rem;line-height:1.5;background:#f0f4ff;border:1px solid #c8d8f0;border-radius:6px;padding:0.75rem 1rem;';
+                intro.innerHTML = '<strong>Invite</strong> — check a row to invite that person this round. '
+                    + 'Drag <span style="font-size:1rem;color:#888;">⠿</span> to set priority order; the first person who accepts becomes your partner. '
+                    + '<strong>Response</strong> — how you reply when <em>they</em> invite <em>you</em>: '
+                    + '<em>Consent</em> always accepts, <em>Decline</em> always refuses, <em>Maybe</em> means you\'ll be asked at the time. '
+                    + 'Unchecked rows drop to the bottom automatically.';
+                container.appendChild(intro);
+
+                // Gather targets
+                const currentPlayerName = document.getElementById('playerName').value.trim();
+                const currentPlayer = this.currentPopulation[currentPlayerName];
+                const gender = currentPlayer ? currentPlayer.gender : null;
+                const allTargets = Object.values(this.currentPopulation)
+                    .filter(p => p.name !== currentPlayerName && p.gender !== gender);
+
+                if (allTargets.length === 0) {
+                    const empty = document.createElement('p');
+                    empty.style.color = '#6c757d';
+                    empty.textContent = 'No opposite-gender players in the tribe.';
+                    container.appendChild(empty);
+                    return;
+                }
+
+                // Current state from server
+                const rawInviteList = (this.currentRomanceLists && this.currentRomanceLists.inviteList) || [];
+                const cleanInviteList = rawInviteList.filter(n => n !== '!pass');
+                const appendPassChecked = rawInviteList.includes('!pass');
+                const consentDict = (this.currentRomanceLists && this.currentRomanceLists.consentDict) || {};
+                const invitedSet = new Set(cleanInviteList);
+
+                // Order: invited first (preserve invite-list order), then non-invited alphabetically
+                const orderedTargets = [
+                    ...cleanInviteList.map(name => allTargets.find(p => p.name === name)).filter(Boolean),
+                    ...allTargets.filter(p => !invitedSet.has(p.name)).sort((a, b) => a.name.localeCompare(b.name))
+                ];
+
+                // List container
+                const listWrap = document.createElement('div');
+                listWrap.style.cssText = 'border:1px solid #ddd;border-radius:8px;overflow:hidden;margin-bottom:0.75rem;';
+
+                // Header row
+                const headerRow = document.createElement('div');
+                headerRow.style.cssText = 'display:grid;grid-template-columns:28px 1fr 70px 140px;gap:8px;padding:8px 12px;background:#f8f9fa;border-bottom:2px solid #ddd;font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:#6b7782;align-items:center;';
+                headerRow.innerHTML = '<span></span><span>Name</span><span style="text-align:center;">Invite</span><span style="text-align:right;">Response</span>';
+                listWrap.appendChild(headerRow);
+
+                // Rows container
+                const rowsEl = document.createElement('div');
+                rowsEl.id = 'romanceRows';
+                orderedTargets.forEach(p => {
+                    rowsEl.appendChild(this._buildRomanceRow(p.name, invitedSet.has(p.name), consentDict[p.name] || 'maybe'));
+                });
+                listWrap.appendChild(rowsEl);
+                container.appendChild(listWrap);
+
+                // !pass checkbox
+                const passWrap = document.createElement('div');
+                passWrap.style.cssText = 'display:flex;align-items:center;gap:8px;font-size:0.9rem;margin-bottom:0.25rem;';
+                const passCheck = document.createElement('input');
+                passCheck.type = 'checkbox';
+                passCheck.id = 'invite_append_pass';
+                passCheck.checked = appendPassChecked;
+                passCheck.style.cssText = 'width:16px;height:16px;cursor:pointer;flex-shrink:0;';
+                const passLabel = document.createElement('label');
+                passLabel.htmlFor = 'invite_append_pass';
+                passLabel.style.cursor = 'pointer';
+                passLabel.innerHTML = '<strong>Give up if everyone declines</strong> — adds <code>!pass</code> so you skip reproduction if all your invitees say no';
+                passWrap.appendChild(passCheck);
+                passWrap.appendChild(passLabel);
+                container.appendChild(passWrap);
+
+                // Activate drag-and-drop
+                this._initRomanceDragDrop(rowsEl);
+            }
+
+            _buildRomanceRow(name, isInvited, consent) {
+                const row = document.createElement('div');
+                row.className = 'romance-row';
+                row.dataset.name = name;
+                row.dataset.invited = isInvited ? '1' : '0';
+                row.draggable = isInvited;
+                row.style.cssText = 'display:grid;grid-template-columns:28px 1fr 70px 140px;gap:8px;padding:10px 12px;border-bottom:1px solid #eee;align-items:center;'
+                    + (isInvited ? 'background:#fff;' : 'background:#f7f7f7;');
+
+                // Drag handle
+                const handle = document.createElement('span');
+                handle.className = 'romance-drag-handle';
+                handle.textContent = '⠿';
+                handle.style.cssText = 'font-size:1.1rem;user-select:none;'
+                    + (isInvited ? 'cursor:grab;color:#bbb;' : 'cursor:default;color:transparent;');
+                row.appendChild(handle);
+
+                // Name
+                const nameEl = document.createElement('span');
+                nameEl.textContent = name;
+                nameEl.style.fontWeight = '600';
+                row.appendChild(nameEl);
+
+                // Invite checkbox
+                const inviteCell = document.createElement('div');
+                inviteCell.style.textAlign = 'center';
+                const inviteCheck = document.createElement('input');
+                inviteCheck.type = 'checkbox';
+                inviteCheck.className = 'romance-invite';
+                inviteCheck.checked = isInvited;
+                inviteCheck.style.cssText = 'width:18px;height:18px;cursor:pointer;';
+                inviteCheck.addEventListener('change', () => this._onRomanceInviteToggle(row, inviteCheck.checked));
+                inviteCell.appendChild(inviteCheck);
+                row.appendChild(inviteCell);
+
+                // Response dropdown
+                const dropCell = document.createElement('div');
+                dropCell.style.textAlign = 'right';
+                const select = document.createElement('select');
+                select.className = 'romance-dropdown';
+                select.name = 'romance_' + name;
+                select.style.cssText = 'padding:4px 6px;width:130px;';
+                [['maybe', '🤔 Maybe'], ['consent', '✅ Consent'], ['decline', '❌ Decline']].forEach(([val, label]) => {
+                    const opt = document.createElement('option');
+                    opt.value = val;
+                    opt.textContent = label;
+                    if (val === consent) opt.selected = true;
+                    select.appendChild(opt);
+                });
+                dropCell.appendChild(select);
+                row.appendChild(dropCell);
+
+                return row;
+            }
+
+            _onRomanceInviteToggle(row, isInvited) {
+                const rowsEl = document.getElementById('romanceRows');
+                if (!rowsEl) return;
+                row.dataset.invited = isInvited ? '1' : '0';
+                row.draggable = isInvited;
+                row.style.background = isInvited ? '#fff' : '#f7f7f7';
+                const handle = row.querySelector('.romance-drag-handle');
+                if (handle) {
+                    handle.style.cursor = isInvited ? 'grab' : 'default';
+                    handle.style.color = isInvited ? '#bbb' : 'transparent';
+                }
+                // Re-position the row
+                if (isInvited) {
+                    const firstNonInvited = [...rowsEl.querySelectorAll('.romance-row')].find(r => r !== row && r.dataset.invited !== '1');
+                    rowsEl.insertBefore(row, firstNonInvited || null);
+                } else {
+                    rowsEl.appendChild(row);
+                }
+            }
+
+            _initRomanceDragDrop(rowsEl) {
+                let dragSrc = null;
+                rowsEl.addEventListener('dragstart', (e) => {
+                    const row = e.target.closest('.romance-row');
+                    if (!row || row.dataset.invited !== '1') { e.preventDefault(); return; }
+                    dragSrc = row;
+                    row.style.opacity = '0.45';
+                    e.dataTransfer.effectAllowed = 'move';
+                });
+                rowsEl.addEventListener('dragend', () => {
+                    if (dragSrc) { dragSrc.style.opacity = '1'; dragSrc = null; }
+                });
+                rowsEl.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    if (!dragSrc) return;
+                    const target = e.target.closest('.romance-row');
+                    if (!target || target === dragSrc || target.dataset.invited !== '1') return;
+                    const rect = target.getBoundingClientRect();
+                    if (e.clientY < rect.top + rect.height / 2) {
+                        rowsEl.insertBefore(dragSrc, target);
+                    } else {
+                        rowsEl.insertBefore(dragSrc, target.nextSibling);
+                    }
+                });
+                rowsEl.addEventListener('drop', (e) => e.preventDefault());
+            }
+
             generateCommandFormInModal(container) {
                 if (!this.selectedCommand) return;
                 const cmdName = this.selectedCommand.name.toLowerCase();
-                if (cmdName === 'consent' || cmdName === 'decline') {
-                    this.buildRomanceGridForm(container);
+                if (cmdName === 'romance' || cmdName === 'consent' || cmdName === 'decline') {
+                    this.buildUnifiedRomanceModal(container);
                     return;
                 }
                 if (!this.selectedCommand.options) {
@@ -3158,7 +3641,8 @@
                 container.appendChild(addSection);
                 
                 // For invite command, add checkbox to append !pass to end of list when sending
-                if (paramName === 'invitelist' && this.selectedCommand.name.toLowerCase() === 'invite') {
+                const cmdForPass = this.selectedCommand ? this.selectedCommand.name.toLowerCase() : '';
+                if (paramName === 'invitelist' && (cmdForPass === 'invite' || cmdForPass === 'romance')) {
                     const passWrap = document.createElement('div');
                     passWrap.className = 'invite-append-pass-wrap';
                     passWrap.style.marginTop = '0.5rem';
@@ -3486,10 +3970,16 @@
                 const labelText = typeLabel ? `${typeLabel} ` : '';
                 
                 if (typeLabel) {
-                    message.innerHTML = `
-                        <span class="message-type-label">${typeLabel}</span>
-                        <span>[${timestamp}] ${text}</span>
-                    `;
+                    const typeLabelSpan = document.createElement('span');
+                    typeLabelSpan.className = 'message-type-label';
+                    typeLabelSpan.textContent = typeLabel;
+
+                    const contentSpan = document.createElement('span');
+                    contentSpan.style.whiteSpace = 'pre-wrap';
+                    contentSpan.textContent = `[${timestamp}] ${text}`;
+
+                    message.appendChild(typeLabelSpan);
+                    message.appendChild(contentSpan);
                 } else {
                     message.innerText = `[${timestamp}] ${text}`;
                 }
@@ -3677,62 +4167,390 @@
                 });
             }
 
-            updatePopulationTable(population) {
-                const table = document.getElementById('populationTable');
-                table.innerHTML = '';
-                
-                if (!population || Object.keys(population).length === 0) {
-                    table.innerHTML = '<tr><td colspan="100%">No population data available</td></tr>';
+            humanizePopulationText(value) {
+                if (value === undefined || value === null || value === '') {
+                    return '';
+                }
+
+                return String(value)
+                    .replace(/[_-]+/g, ' ')
+                    .replace(/\b\w/g, char => char.toUpperCase());
+            }
+
+            formatPopulationValue(key, value) {
+                if (value === undefined || value === null || value === '') {
+                    return '';
+                }
+
+                if (Array.isArray(value)) {
+                    return value.length > 0 ? value.join(', ') : '';
+                }
+
+                if (value && typeof value === 'object') {
+                    return Object.keys(value).join(', ');
+                }
+
+                if (typeof value === 'boolean') {
+                    return value ? 'Yes' : 'No';
+                }
+
+                if (key === 'profession' || key === 'activity' || key === 'strategy' || key === 'faction' || key === 'gender' || key === 'nickname') {
+                    return this.humanizePopulationText(value);
+                }
+
+                if (key === 'strength') {
+                    return this.humanizePopulationText(value || 'average');
+                }
+
+                if (key === 'isInjured') {
+                    return Number(value) > 0 ? `Recovering from injury (${value})` : 'Healthy';
+                }
+
+                if (key === 'isSick') {
+                    return Number(value) > 0 ? `Recovering from illness (${value})` : 'Healthy';
+                }
+
+                if (key === 'isPregnant') {
+                    return value ? `Pregnant with ${value}` : '';
+                }
+
+                if (key === 'guarding') {
+                    return Array.isArray(value) && value.length > 0 ? `Guarding ${value.join(', ')}` : '';
+                }
+
+                if (key === 'nursing') {
+                    return Array.isArray(value) && value.length > 0 ? `Nursing ${value.join(', ')}` : '';
+                }
+
+                if (key === 'obeyList') {
+                    return Array.isArray(value) && value.length > 0 ? value.map(entry => this.humanizePopulationText(entry)).join(', ') : '';
+                }
+
+                return String(value);
+            }
+
+            getPopulationStrength(person) {
+                return this.humanizePopulationText(person.strength || 'average');
+            }
+
+            getPopulationHealth(person) {
+                const states = [];
+
+                if (Number(person.isInjured) > 0) {
+                    states.push(`Injured (${person.isInjured})`);
+                }
+                if (Number(person.isSick) > 0) {
+                    states.push(`Sick (${person.isSick})`);
+                }
+
+                return states.length > 0 ? states.join(' • ') : 'Healthy';
+            }
+
+            getPopulationWorkStatus(person) {
+                if (person.escaped) {
+                    return 'Ran away from combat';
+                }
+
+                if (Number(person.isInjured) > 0 || Number(person.isSick) > 0) {
+                    return 'Recovering';
+                }
+
+                if (person.worked) {
+                    if (person.activity && person.activity !== 'idle') {
+                        return `Worked: ${this.humanizePopulationText(person.activity)}`;
+                    }
+                    return 'Worked this round';
+                }
+
+                if (person.activity && person.activity !== 'idle' && person.activity !== 'recovery') {
+                    return this.humanizePopulationText(person.activity);
+                }
+
+                return 'Available to work';
+            }
+
+            getPopulationResources(person) {
+                const food = Number(person.food || 0);
+                const grain = Number(person.grain || 0);
+                const basket = Number(person.basket || 0);
+                const spearhead = Number(person.spearhead || 0);
+                return `Food ${food} • Grain ${grain} • Basket ${basket} • Spearhead ${spearhead}`;
+            }
+
+            getFactionStatus(person) {
+                if (person.faction) {
+                    return this.humanizePopulationText(person.faction);
+                }
+
+                if (this.currentStatusData && this.currentStatusData.demand) {
+                    return 'Undeclared';
+                }
+
+                return '';
+            }
+
+            getPopulationBadges(person) {
+                const badges = [];
+
+                if (person.profession) {
+                    badges.push({ text: this.humanizePopulationText(person.profession), className: 'role' });
+                }
+                if (person.chief) {
+                    badges.push({ text: 'Chief', className: 'info' });
+                }
+                if (person.canCraft) {
+                    badges.push({ text: 'Can Craft', className: 'info' });
+                }
+                if (Number(person.isInjured) > 0) {
+                    badges.push({ text: 'Injured', className: 'alert' });
+                }
+                if (Number(person.isSick) > 0) {
+                    badges.push({ text: 'Sick', className: 'alert' });
+                }
+                if (person.isPregnant) {
+                    badges.push({ text: 'Pregnant', className: 'info' });
+                }
+                if (person.escaped) {
+                    badges.push({ text: 'Ran Away', className: 'alert' });
+                }
+                if (Array.isArray(person.nursing) && person.nursing.length > 0) {
+                    badges.push({ text: `Nursing ${person.nursing.length}`, className: 'neutral' });
+                }
+                if (Array.isArray(person.guarding) && person.guarding.length > 0) {
+                    badges.push({ text: `Guarding ${person.guarding.length}`, className: 'neutral' });
+                }
+                const factionStatus = this.getFactionStatus(person);
+                if (factionStatus) {
+                    badges.push({ text: factionStatus, className: 'neutral' });
+                }
+
+                return badges;
+            }
+
+            getPopulationSections(person) {
+                const sections = [
+                    {
+                        title: 'Identity',
+                        items: [
+                            { label: 'Gender', value: this.formatPopulationValue('gender', person.gender) },
+                            { label: 'Profession', value: this.formatPopulationValue('profession', person.profession) },
+                            { label: 'Nickname', value: this.formatPopulationValue('nickname', person.nickname) }
+                        ]
+                    },
+                    {
+                        title: 'Resources',
+                        items: [
+                            { label: 'Food', value: this.formatPopulationValue('food', person.food) },
+                            { label: 'Grain', value: this.formatPopulationValue('grain', person.grain) },
+                            { label: 'Basket', value: this.formatPopulationValue('basket', person.basket) },
+                            { label: 'Spearhead', value: this.formatPopulationValue('spearhead', person.spearhead) }
+                        ]
+                    },
+                    {
+                        title: 'Health',
+                        items: [
+                            { label: 'Strength', value: this.getPopulationStrength(person) },
+                            { label: 'Injury', value: this.formatPopulationValue('isInjured', person.isInjured) },
+                            { label: 'Illness', value: this.formatPopulationValue('isSick', person.isSick) }
+                        ]
+                    },
+                    {
+                        title: 'Work',
+                        items: [
+                            { label: 'Work Status', value: this.getPopulationWorkStatus(person) },
+                            { label: 'Current Activity', value: this.formatPopulationValue('activity', person.activity) },
+                            { label: 'Guarding', value: this.formatPopulationValue('guarding', person.guarding) },
+                            { label: 'Can Craft', value: person.canCraft ? 'Yes' : '' },
+                            { label: 'Not Teaching', value: person.noTeach ? 'Yes' : '' }
+                        ]
+                    },
+                    {
+                        title: 'Family and Reproduction',
+                        items: [
+                            { label: 'Pregnancy', value: this.formatPopulationValue('isPregnant', person.isPregnant) },
+                            { label: 'Nursing', value: this.formatPopulationValue('nursing', person.nursing) },
+                            { label: 'Golem', value: person.golem ? 'Yes' : '' },
+                            { label: 'Orders', value: this.formatPopulationValue('obeyList', person.obeyList) }
+                        ]
+                    },
+                    {
+                        title: 'Leadership and Conflict',
+                        items: [
+                            { label: 'Chief', value: person.chief ? 'Yes' : '' },
+                            { label: 'Vote', value: this.formatPopulationValue('vote', person.vote) },
+                            { label: 'Faction Status', value: this.getFactionStatus(person) },
+                            { label: 'Attack Target', value: this.formatPopulationValue('attack_target', person.attack_target) },
+                            { label: 'Escaped', value: person.escaped ? 'Yes' : '' },
+                            { label: 'Hits', value: this.formatPopulationValue('hits', person.hits) }
+                        ]
+                    }
+                ];
+
+                const knownKeys = new Set([
+                    'name',
+                    'gender',
+                    'profession',
+                    'nickname',
+                    'food',
+                    'grain',
+                    'basket',
+                    'spearhead',
+                    'strength',
+                    'isInjured',
+                    'isSick',
+                    'worked',
+                    'activity',
+                    'guarding',
+                    'canCraft',
+                    'noTeach',
+                    'isPregnant',
+                    'nursing',
+                    'golem',
+                    'obeyList',
+                    'chief',
+                    'vote',
+                    'faction',
+                    'strategy',
+                    'attack_target',
+                    'escaped',
+                    'hits'
+                ]);
+
+                const otherItems = Object.entries(person)
+                    .filter(([key]) => !knownKeys.has(key))
+                    .map(([key, value]) => ({
+                        label: this.humanizePopulationText(key),
+                        value: this.formatPopulationValue(key, value)
+                    }));
+
+                sections.push({ title: 'Other Fields', items: otherItems });
+                return sections;
+            }
+
+            appendPopulationSection(container, section) {
+                const items = section.items.filter(item => item.value !== '');
+                if (items.length === 0) {
                     return;
                 }
-                
-                // Get all unique keys for columns
-                const allKeys = new Set();
-                Object.values(population).forEach(person => {
-                    Object.keys(person).forEach(key => allKeys.add(key));
+
+                const sectionEl = document.createElement('div');
+                sectionEl.className = 'person-section';
+
+                const titleEl = document.createElement('div');
+                titleEl.className = 'person-section-title';
+                titleEl.textContent = section.title;
+                sectionEl.appendChild(titleEl);
+
+                const gridEl = document.createElement('div');
+                gridEl.className = 'person-field-grid';
+
+                items.forEach(item => {
+                    const fieldEl = document.createElement('div');
+                    fieldEl.className = 'person-field';
+
+                    const labelEl = document.createElement('span');
+                    labelEl.className = 'person-field-label';
+                    labelEl.textContent = item.label;
+                    fieldEl.appendChild(labelEl);
+
+                    const valueEl = document.createElement('span');
+                    valueEl.className = 'person-field-value';
+                    valueEl.textContent = item.value;
+                    fieldEl.appendChild(valueEl);
+
+                    gridEl.appendChild(fieldEl);
                 });
+
+                sectionEl.appendChild(gridEl);
+                container.appendChild(sectionEl);
+            }
+
+            updatePopulationTable(population) {
+                const container = document.getElementById('populationTable');
+                container.innerHTML = '';
                 
-                const columns = ['Name', ...Array.from(allKeys)];
-                
-                // Create header
-                const thead = document.createElement('thead');
-                const headerRow = document.createElement('tr');
-                columns.forEach(col => {
-                    const th = document.createElement('th');
-                    th.textContent = col;
-                    headerRow.appendChild(th);
-                });
-                thead.appendChild(headerRow);
-                table.appendChild(thead);
-                
-                // Create body
-                const tbody = document.createElement('tbody');
+                if (!population || Object.keys(population).length === 0) {
+                    container.innerHTML = '<div class="population-empty">No population data available</div>';
+                    return;
+                }
+
                 Object.entries(population).forEach(([name, data]) => {
-                    const row = document.createElement('tr');
-                    
-                    // Name column
-                    const nameCell = document.createElement('td');
-                    nameCell.textContent = name;
-                    row.appendChild(nameCell);
-                    
-                    // Data columns
-                    Array.from(allKeys).forEach(key => {
-                        const cell = document.createElement('td');
-                        const value = data[key];
-                        if (Array.isArray(value)) {
-                            cell.textContent = value.join(', ');
-                        } else if (value && typeof value === 'object') {
-                            // Handle objects by extracting keys
-                            cell.textContent = Object.keys(value).join(', ');
-                        } else {
-                            cell.textContent = (value !== undefined && value !== null && value !== '') ? value : '';
-                        }
-                        row.appendChild(cell);
+                    const person = data || {};
+                    const detailsEl = document.createElement('details');
+                    detailsEl.className = 'person-card';
+
+                    const summaryEl = document.createElement('summary');
+                    summaryEl.className = 'person-summary';
+
+                    const headerEl = document.createElement('div');
+                    headerEl.className = 'person-header';
+
+                    const nameBlockEl = document.createElement('div');
+                    nameBlockEl.className = 'person-name-block';
+
+                    const nameEl = document.createElement('div');
+                    nameEl.className = 'person-name';
+                    nameEl.textContent = person.name || name;
+                    nameBlockEl.appendChild(nameEl);
+
+                    const subtitleEl = document.createElement('div');
+                    subtitleEl.className = 'person-subtitle';
+                    subtitleEl.textContent = [this.humanizePopulationText(person.gender), this.humanizePopulationText(person.profession || 'tribe member')]
+                        .filter(Boolean)
+                        .join(' • ');
+                    nameBlockEl.appendChild(subtitleEl);
+
+                    headerEl.appendChild(nameBlockEl);
+
+                    const badgesEl = document.createElement('div');
+                    badgesEl.className = 'person-badges';
+                    this.getPopulationBadges(person).forEach(badge => {
+                        const badgeEl = document.createElement('span');
+                        badgeEl.className = `person-badge ${badge.className}`;
+                        badgeEl.textContent = badge.text;
+                        badgesEl.appendChild(badgeEl);
                     });
-                    
-                    tbody.appendChild(row);
+                    headerEl.appendChild(badgesEl);
+                    summaryEl.appendChild(headerEl);
+
+                    const summaryGridEl = document.createElement('div');
+                    summaryGridEl.className = 'person-summary-grid';
+
+                    [
+                        { label: 'Strength', value: this.getPopulationStrength(person) },
+                        { label: 'Health', value: this.getPopulationHealth(person) },
+                        { label: 'Work', value: this.getPopulationWorkStatus(person) },
+                        { label: 'Resources', value: this.getPopulationResources(person) },
+                        { label: 'Faction Status', value: this.getFactionStatus(person) }
+                    ].filter(item => item.value).forEach(item => {
+                        const statEl = document.createElement('div');
+                        statEl.className = 'person-stat';
+
+                        const labelEl = document.createElement('span');
+                        labelEl.className = 'person-stat-label';
+                        labelEl.textContent = item.label;
+                        statEl.appendChild(labelEl);
+
+                        const valueEl = document.createElement('span');
+                        valueEl.className = 'person-stat-value';
+                        valueEl.textContent = item.value;
+                        statEl.appendChild(valueEl);
+
+                        summaryGridEl.appendChild(statEl);
+                    });
+
+                    summaryEl.appendChild(summaryGridEl);
+                    detailsEl.appendChild(summaryEl);
+
+                    const detailsBodyEl = document.createElement('div');
+                    detailsBodyEl.className = 'person-details';
+                    this.getPopulationSections(person).forEach(section => {
+                        this.appendPopulationSection(detailsBodyEl, section);
+                    });
+
+                    detailsEl.appendChild(detailsBodyEl);
+                    container.appendChild(detailsEl);
                 });
-                table.appendChild(tbody);
             }
 
             updateChildrenTable(children) {
@@ -3825,6 +4643,91 @@
 
                 // Update the game status bar with parsed information
                 this.updateGameStatusBar(status);
+            }
+
+            updateConflictBanner(gameState, statusText = '') {
+                const banner = document.getElementById('conflictBanner');
+                const title = document.getElementById('conflictBannerTitle');
+                const chips = document.getElementById('conflictBannerChips');
+                const body = document.getElementById('conflictBannerBody');
+
+                if (!banner || !title || !chips || !body) return;
+
+                const activeViolence = gameState && gameState.violence;
+                const activeDemand = gameState && (gameState.demand || gameState.violence);
+
+                if (!activeDemand) {
+                    banner.classList.remove('active', 'violence');
+                    title.textContent = '';
+                    chips.innerHTML = '';
+                    body.textContent = '';
+                    return;
+                }
+
+                banner.classList.add('active');
+                banner.classList.toggle('violence', !!activeViolence);
+
+                const combatRounds = Number.isFinite(gameState && gameState.combatRounds)
+                    ? gameState.combatRounds
+                    : 0;
+                const combatStatus = combatRounds > 0
+                    ? `Combat has happened for ${combatRounds} round${combatRounds === 1 ? '' : 's'}.`
+                    : 'Combat has not happened yet.';
+
+                const allPlayers = this.currentPopulation
+                    ? Object.values(this.currentPopulation)
+                    : [];
+                const escapedPlayers = allPlayers
+                    .filter(player => player && player.escaped)
+                    .map(player => this.humanizePopulationText(player.name))
+                    .filter(Boolean);
+                const escapedCount = escapedPlayers.length;
+                const pendingViolenceChoices = allPlayers.filter(
+                    player => player && !player.escaped && !player.strategy
+                ).length;
+                const pickStatus = pendingViolenceChoices > 0
+                    ? `${pendingViolenceChoices} player${pendingViolenceChoices === 1 ? '' : 's'} still need to pick attack, run away, or defend for the next round.`
+                    : 'No pending violence choices right now.';
+                const formatNameList = (names) => {
+                    if (!names || names.length === 0) return '';
+                    if (names.length === 1) return names[0];
+                    if (names.length === 2) return `${names[0]} and ${names[1]}`;
+                    return `${names.slice(0, -1).join(', ')}, and ${names[names.length - 1]}`;
+                };
+                const escapeStatus = escapedCount > 0
+                    ? `${formatNameList(escapedPlayers)} ${escapedCount === 1 ? 'has' : 'have'} run away.`
+                    : 'No players have exited combat via run away.';
+
+                chips.textContent = '';
+                const appendConflictChip = (variant, label) => {
+                    const chip = document.createElement('span');
+                    chip.className = `conflict-chip ${variant}`;
+                    chip.textContent = label;
+                    chips.appendChild(chip);
+                };
+
+                appendConflictChip('neutral', `${combatRounds} combat round${combatRounds === 1 ? '' : 's'}`);
+                if (activeViolence) {
+                    const pickClass = pendingViolenceChoices > 0 ? 'warning' : 'good';
+                    const pickLabel = pendingViolenceChoices > 0
+                        ? `Choices pending: ${pendingViolenceChoices}`
+                        : 'All choices submitted';
+                    appendConflictChip(pickClass, pickLabel);
+
+                    const escapeClass = escapedCount > 0 ? 'warning' : 'good';
+                    const escapeLabel = escapedCount > 0
+                        ? `Run aways: ${escapedCount}`
+                        : 'No run aways';
+                    appendConflictChip(escapeClass, escapeLabel);
+                }
+
+                if (activeViolence) {
+                    title.textContent = 'Violence Active';
+                    body.textContent = `The tribe is in open conflict over this demand: ${activeViolence} ${combatStatus} ${pickStatus} ${escapeStatus}`;
+                } else {
+                    title.textContent = 'Demand Active';
+                    body.textContent = `A demand is currently in play: ${activeDemand} ${combatStatus}`;
+                }
             }
 
             updateGameStatusBarWithData(gameState) {
