@@ -11,7 +11,9 @@
   "scripts": {
     "start": "node websocket-server.js",
     "test": "jest",
-    "clear_jest": "jest --clearCache"
+    "clear_jest": "jest --clearCache",
+    "test:browser": "jest --runInBand --runTestsByPath tests/browser-integration.test.js --config='{\"testPathIgnorePatterns\":[\"/node_modules/\"]}'",
+    "test:browser:give-loading": "jest --runInBand --runTestsByPath tests/browser-integration.test.js --config='{\"testPathIgnorePatterns\":[\"/node_modules/\"]}' -t \"give command exits loading state when population data arrives\""
   },
   "dependencies": {
     "bcrypt": "^6.0.0",

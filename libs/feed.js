@@ -222,7 +222,7 @@ function consumeFoodChildren(gameState) {
       }
       if (child.age == 0) {
         birthRoll = dice.roll(3);
-        birth(gameState, child, motherMember, birthRoll);
+        birth(gameState, childName, child, motherMember, birthRoll);
       }
       // Sometimes we get bugs where pregnancy doesn't clear; this will fix it eventually
       if (child.age >= 0) {
@@ -240,7 +240,7 @@ function consumeFoodChildren(gameState) {
           motherMember.nursing = [];
         }
         if (motherMember.nursing.indexOf(childName) == -1) {
-          motherMember.nursing.push(child.name);
+          motherMember.nursing.push(childName);
         }
       }
       if (
@@ -251,7 +251,7 @@ function consumeFoodChildren(gameState) {
       ) {
         childIndex = motherMember.nursing.indexOf(childName);
         motherMember.nursing.splice(childIndex, 1);
-        response += child.name + ' is weaned.\n';
+        response += childName + ' is weaned.\n';
         if (motherMember.nursing && motherMember.nursing.length == 0) {
           delete motherMember.nursing;
         }
@@ -259,12 +259,12 @@ function consumeFoodChildren(gameState) {
     }
     if (child.age >= 24 && !child.newAdult) {
       child.newAdult = true;
-      response += '>> ' + child.name + ' has reached adulthood!\n';
+      response += '>> ' + childName + ' has reached adulthood!\n';
       // clear all guardians
       for (var name in population) {
         player = pop.memberByName(name, gameState);
-        if (player.guarding && player.guarding.includes(child.name)) {
-          const index = player.guarding.indexOf(child.name);
+        if (player.guarding && player.guarding.includes(childName)) {
+          const index = player.guarding.indexOf(childName);
           if (index > -1) {
             player.guarding.splice(index, 1);
             response += name + ' stops watching the new adult.\n';
@@ -273,9 +273,9 @@ function consumeFoodChildren(gameState) {
       }
       for (var sitterName in children) {
         sitter = children[sitterName];
-        if (sitter.babysitting && sitter.babysitting == child.name) {
+        if (sitter.babysitting && sitter.babysitting == childName) {
           delete sitter.babysitting;
-          response += sitter.name + ' stops watching the new adult.\n';
+          response += sitterName + ' stops watching the new adult.\n';
         }
       }
       delete child.guardians;
@@ -295,42 +295,50 @@ function consumeFoodChildren(gameState) {
 }
 module.exports.consumeFoodChildren = consumeFoodChildren;
 
-function birth(gameState, child, motherMember, birthRoll) {
+function birth(gameState, childName, child, motherMember, birthRoll) {
+  // Backward compatibility: birth(gameState, child, motherMember, birthRoll)
+  if (typeof childName === 'object' && childName !== null) {
+    birthRoll = motherMember;
+    motherMember = child;
+    child = childName;
+    childName = motherMember && motherMember.isPregnant ? motherMember.isPregnant : '';
+  }
   response +=
     '\t' +
     motherMember.name +
     ' gives birth to a ' +
     child.gender +
     '-child, ' +
-    child.name;
+    childName;
   pop.history(
     motherMember.name,
     motherMember.name +
       ' gives birth to a ' +
       child.gender +
       '-child, ' +
-      child.name,
+      childName,
     gameState
   );
   if (birthRoll < 5) {
     response += ' but the child did not survive\n';
     child.dead = true;
-    killlib.kill(child.name, 'birth complications', gameState);
-    console.log('removing stillborn ' + child.name);
+    killlib.kill(childName, 'birth complications', gameState);
+    console.log('removing stillborn ' + childName);
     return;
   } else {
     response += '\n';
   }
   delete motherMember.isPregnant;
   //Mothers start guarding their newborns
-  motherGuard(motherMember, child.name);
+  motherGuard(motherMember, childName);
   if (birthRoll == 17) {
     twin = reproLib.addChild(child.mother, child.father, gameState);
+    const twinName = motherMember.isPregnant;
     delete motherMember.isPregnant; // this gets set by addChild, but the child was just born.
     response +=
       motherMember.name +
       ' gives birth to a twin! Meet ' +
-      twin.name +
+      twinName +
       ', a healthy young ' +
       twin.gender +
       '-child.\n';
@@ -338,13 +346,13 @@ function birth(gameState, child, motherMember, birthRoll) {
       motherMember.name,
       motherMember.name +
         ' gives birth to a twin! Meet ' +
-        twin.name +
+        twinName +
         ', a healthy young ' +
         twin.gender +
         '-child',
       gameState
     );
-    motherGuard(motherMember, twin.name);
+    motherGuard(motherMember, twinName);
     twin.age = 0;
   }
 }

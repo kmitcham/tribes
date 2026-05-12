@@ -1011,11 +1011,11 @@ function addChild(mother, father, gameState) {
   child.food = 0;
   child.gender = genders[Math.trunc(Math.random() * genders.length)];
   nextIndex = gameState.conceptionCounter % 26;
-  child.name = getNextChildName(gameState.children, allNames, nextIndex);
-  gameState.children[child.name] = child;
-  console.log('added child ' + child.name);
+  const childName = getNextChildName(gameState.children, allNames, nextIndex);
+  gameState.children[childName] = child;
+  console.log('added child ' + childName);
   motherAsMember = pop.memberByName(mother, gameState);
-  motherAsMember.isPregnant = child.name;
+  motherAsMember.isPregnant = childName;
   if (gameState.reproductionList) {
     const indexOfPreggers = gameState.reproductionList.indexOf(mother);
     if (indexOfPreggers > -1) {

@@ -563,11 +563,166 @@
         }
 
         .population-roster {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 1rem;
             margin-top: 1rem;
-            align-items: start;
+            overflow-x: auto;
+        }
+
+        .population-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .population-table thead {
+            background: linear-gradient(135deg, #f5f7fa 0%, #f0f3f7 100%);
+            border-bottom: 2px solid #cbd5e0;
+        }
+
+        .population-table th {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: #2d3748;
+            font-size: 0.9rem;
+            letter-spacing: 0.02em;
+        }
+
+        .population-table tbody tr {
+            border-bottom: 1px solid #e2e8f0;
+            transition: background-color 0.15s ease;
+        }
+
+        .population-table tbody tr:hover {
+            background-color: rgba(100, 150, 200, 0.05);
+        }
+
+        .population-table td {
+            padding: 0.85rem 1rem;
+            color: #2d3748;
+        }
+
+        .person-name-cell {
+            font-weight: 600;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .profession-icon {
+            width: 1.25rem;
+            text-align: center;
+            font-size: 1rem;
+            line-height: 1;
+            opacity: 0.95;
+        }
+
+        .person-name-male {
+            color: #2563eb;
+        }
+
+        .person-name-female {
+            color: #db2777;
+        }
+
+        .person-name-unknown {
+            color: #6b7280;
+        }
+
+        .gender-row-male { background-color: rgba(37, 99, 235, 0.08); }
+        .gender-row-female { background-color: rgba(219, 39, 119, 0.08); }
+        .gender-row-unknown { background-color: rgba(107, 114, 128, 0.08); }
+
+        .resources-cell {
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            color: #4b5563;
+            line-height: 1.35;
+        }
+
+        .resource-line {
+            display: block;
+        }
+
+        .work-status-cell {
+            font-size: 0.9rem;
+            color: #4b5563;
+        }
+
+        .status-labels {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .status-label-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            align-items: center;
+        }
+
+        .status-label {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            white-space: nowrap;
+        }
+
+        .status-label.injury {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .status-label.illness {
+            background: #fed7aa;
+            color: #92400e;
+        }
+
+        .status-label.pregnant {
+            background: #fce7f3;
+            color: #831843;
+        }
+
+        .status-label.craft {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .status-label.chief {
+            background: #fde68a;
+            color: #713f12;
+        }
+
+        .status-label.nursing {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-label.guarding {
+            background: #e0e7ff;
+            color: #3730a3;
+        }
+
+        .status-label.faction-for {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-label.faction-against {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .status-label.escaped {
+            background: #fecaca;
+            color: #7f1d1d;
+            font-weight: 700;
         }
 
         .population-empty {
@@ -1365,6 +1520,7 @@
                 this.currentChildren = null; // Store current children for child targeting
                 this.currentRomanceLists = null; // Store current romance lists
                 this.currentStatusData = null; // Store current structured game status
+                this.pendingInfoRequests = {}; // De-dupe rapid repeated info requests
                 this.reconnectAttempts = 0;
                 this.maxReconnectAttempts = 1000; // Keep retrying for a long time if server is down (e.g. 5+ minutes)
                 this.reconnectInterval = 2000;
@@ -1750,6 +1906,10 @@
             }
 
             send(data) {
+                if (data && data.type === 'infoRequest' && !this.shouldSendInfoRequest(data.selection)) {
+                    return;
+                }
+
                 if (!this.ws){
                     this.addMessage('WebSocket not initialized; attempting to connect', 'error');
                     this.connectWithFallback()
@@ -1854,7 +2014,7 @@
                 this.hideCommandsSection();
                 this.addMessage(data.message, 'info');
             }
-            
+
             handleCommandList(data) {
                 if (data.commands) {
                     this.commands = data.commands;
@@ -1865,16 +2025,16 @@
                 if (data.isChief !== undefined) {
                     this.chiefStatus = data.isChief;
                 }
-                
+
                 if (data.tribes) {
                     this.currentTribes = data.tribes;
                     this.updateTribeDropdown(data.tribes);
                     this.renderManageTribesList(data.tribes);
                 }
-                
+
                 this.updateCommandList();
                 this.initCommandSearch();
-                
+
                 // Show/hide referee tools based on referee status
                 const refereeSection = document.getElementById('refereeAdminSection');
                 if (refereeSection) {
@@ -1922,6 +2082,32 @@
                 }
             }
 
+            regenerateModalFormIfDataReady(dataLabel) {
+                if (!this.selectedCommand) {
+                    return;
+                }
+
+                const modal = document.getElementById('commandModal');
+                if (!modal || !modal.classList.contains('active')) {
+                    return;
+                }
+
+                const paramsContainer = document.getElementById('modalCommandParameters');
+                if (!paramsContainer) {
+                    return;
+                }
+
+                const cmd = this.selectedCommand.name.toLowerCase();
+                const isGuardIgnore = cmd === 'guard' || cmd === 'ignore';
+                const loadingText = (paramsContainer.textContent || '').toLowerCase();
+                const waitingForPopulation = dataLabel === 'population' && loadingText.includes('loading player data');
+                const waitingForChildren = dataLabel === 'children' && loadingText.includes('loading children data');
+
+                if (isGuardIgnore || waitingForPopulation || waitingForChildren) {
+                    this.generateCommandFormInModal(paramsContainer);
+                }
+            }
+
             handleCommandResponse(data) {
                 const type = data.success ? 'success' : 'error';
                 this.addMessage(data.message, 'command', `[${data.command.toUpperCase()}]`);
@@ -1929,16 +2115,22 @@
             }
 
             handleInfoResponse(data) {
+                if (data && data.label) {
+                    delete this.pendingInfoRequests[data.label];
+                }
+
                 switch (data.label) {
                     case 'population':
                         this.currentPopulation = data.content;
                         this.updatePopulationTable(data.content);
                         // Update command list when population data changes (for chief status)
                         this.updateCommandList();
+                        this.regenerateModalFormIfDataReady('population');
                         break;
                     case 'children':
                         this.currentChildren = data.content; // Store for targeting dropdowns
                         this.updateChildrenTable(data.content);
+                        this.regenerateModalFormIfDataReady('children');
                         break;
                     case 'status':
                         this.currentStatusData = data.gameState || null;
@@ -3300,14 +3492,39 @@
             createUnifiedGuardInterface(container) {
                 const currentPlayerName = document.getElementById('playerName').value;
                 if (!this.currentChildren || !currentPlayerName || !this.currentPopulation) {
-                    container.innerHTML = '<div style="color: #6c757d; font-style: italic;">Loading data...</div>';
+                    const missing = [];
+                    if (!currentPlayerName || !currentPlayerName.trim()) missing.push('player');
+                    if (!this.currentChildren) missing.push('children');
+                    if (!this.currentPopulation) missing.push('population');
+                    container.innerHTML = `<div style="color: #6c757d; font-style: italic;">Loading data... (${missing.join(', ')})</div>`;
                     if (!this.currentChildren) this.send({ type: 'infoRequest', selection: 'children' });
+                    if (!this.currentPopulation) this.send({ type: 'infoRequest', selection: 'population' });
                     return;
                 }
-                
+
+                // Robust: try all keys and .name properties, case-insensitive
+                const lowerName = currentPlayerName.trim().toLowerCase();
+                let currentPlayer = null;
+                // Try direct key match (case-insensitive)
+                for (const key of Object.keys(this.currentPopulation)) {
+                    if (key.trim().toLowerCase() === lowerName) {
+                        currentPlayer = this.currentPopulation[key];
+                        break;
+                    }
+                }
+                // If not found, try .name property (case-insensitive)
+                if (!currentPlayer) {
+                    currentPlayer = Object.values(this.currentPopulation).find(p => (p.name || '').trim().toLowerCase() === lowerName);
+                }
+                // If still not found, show debug info
+                if (!currentPlayer) {
+                    container.innerHTML = `<div style='color: #b91c1c; font-style: italic;'>Could not find player: <b>${currentPlayerName}</b> (tried case-insensitive match on keys and .name)</div>`;
+                    return;
+                }
+
                 const group = document.createElement('div');
                 group.className = 'parameter-group';
-                
+
                 const label = document.createElement('label');
                 label.textContent = 'Children you can guard:';
                 group.appendChild(label);
@@ -3321,20 +3538,19 @@
                 warningMsg.style.marginBottom = '1rem';
                 warningMsg.style.display = 'none';
                 group.appendChild(warningMsg);
-                
+
                 const guardContainer = document.createElement('div');
                 guardContainer.className = 'unified-guard-container';
                 guardContainer.id = 'param_child';
-                
+
                 const eligibleChildren = [];
-                const currentPlayer = this.currentPopulation[currentPlayerName] || Object.values(this.currentPopulation).find(p => p.name === currentPlayerName);
                 const guardedNames = (currentPlayer && currentPlayer.guarding) ? currentPlayer.guarding : [];
-                
+
                 Object.keys(this.currentChildren).forEach(childName => {
                     const child = this.currentChildren[childName];
                     const age = child.age || 0;
                     if (age >= 0 && age < 23) {
-                         eligibleChildren.push({ name: childName, age: age, isGuarded: guardedNames.includes(childName) });
+                        eligibleChildren.push({ childName: childName, age: age, isGuarded: guardedNames.includes(childName) });
                     }
                 });
 
@@ -3346,8 +3562,8 @@
                     titleDiv.style.fontWeight = '600';
                     titleDiv.textContent = 'Set status:';
                     guardContainer.appendChild(titleDiv);
-                    
-                    eligibleChildren.forEach(child => {
+
+                    eligibleChildren.forEach(childInfo => {
                         const childDiv = document.createElement('div');
                         childDiv.className = 'child-guard-option';
                         childDiv.style.cssText = `
@@ -3360,29 +3576,29 @@
                             border-radius: 4px;
                             background: #f8f9fa;
                         `;
-                        
+
                         const childLabel = document.createElement('span');
-                        childLabel.textContent = `${child.name} (age ${child.age / 2})`;
+                        childLabel.textContent = `${childInfo.childName} (age ${childInfo.age / 2})`;
                         childLabel.style.fontWeight = '500';
-                        
+
                         const radioGroup = document.createElement('div');
                         radioGroup.style.cssText = 'display: flex; gap: 1rem;';
-                        
+
                         const guardOption = document.createElement('label');
                         guardOption.style.cssText = 'display: flex; align-items: center; gap: 0.25rem; cursor: pointer;';
                         const guardRadio = document.createElement('input');
                         guardRadio.type = 'radio';
-                        guardRadio.name = `unified_guard_${child.name}`;
+                        guardRadio.name = `unified_guard_${childInfo.childName}`;
                         guardRadio.value = 'guard';
-                        guardRadio.checked = child.isGuarded;
+                        guardRadio.checked = childInfo.isGuarded;
 
                         const ignoreOption = document.createElement('label');
                         ignoreOption.style.cssText = 'display: flex; align-items: center; gap: 0.25rem; cursor: pointer;';
                         const ignoreRadio = document.createElement('input');
                         ignoreRadio.type = 'radio';
-                        ignoreRadio.name = `unified_guard_${child.name}`;
+                        ignoreRadio.name = `unified_guard_${childInfo.childName}`;
                         ignoreRadio.value = 'ignore';
-                        ignoreRadio.checked = !child.isGuarded;
+                        ignoreRadio.checked = !childInfo.isGuarded;
 
                         const validateLimits = () => {
                             const allChecked = guardContainer.querySelectorAll('input[type="radio"][value="guard"]:checked');
@@ -3402,19 +3618,19 @@
 
                         guardOption.appendChild(guardRadio);
                         guardOption.appendChild(document.createTextNode('Guard'));
-                        
+
                         ignoreOption.appendChild(ignoreRadio);
                         ignoreOption.appendChild(document.createTextNode('Ignore'));
-                        
+
                         radioGroup.appendChild(guardOption);
                         radioGroup.appendChild(ignoreOption);
-                        
+
                         childDiv.appendChild(childLabel);
                         childDiv.appendChild(radioGroup);
                         guardContainer.appendChild(childDiv);
                     });
                 }
-                
+
                 group.appendChild(guardContainer);
                 container.appendChild(group);
 
@@ -4125,6 +4341,23 @@
                 });
             }
 
+            shouldSendInfoRequest(selection) {
+                if (!selection) {
+                    return true;
+                }
+
+                const now = Date.now();
+                const minIntervalMs = 500;
+                const lastSentAt = this.pendingInfoRequests[selection] || 0;
+
+                if (now - lastSentAt < minIntervalMs) {
+                    return false;
+                }
+
+                this.pendingInfoRequests[selection] = now;
+                return true;
+            }
+
             handleHelpContent(data) {
                 const helpContent = document.getElementById('helpContent');
                 if (helpContent) {
@@ -4465,6 +4698,44 @@
                 container.appendChild(sectionEl);
             }
 
+            getProfessionIcon(profession) {
+                if (!profession) return '👤';
+                const prof = profession.toLowerCase().replace(/[_-]/g, '');
+                const iconMap = {
+                    'hunter': '𓐬',
+                    'gatherer': '🧺',
+                    'crafter': '🛠️',
+                    'tribemember': '👤'
+                };
+                return iconMap[prof] || '👤';
+            }
+
+            getGenderClass(gender) {
+                if (!gender) return 'person-name-unknown';
+                const g = gender.toLowerCase();
+                if (g === 'male') return 'person-name-male';
+                if (g === 'female') return 'person-name-female';
+                return 'person-name-unknown';
+            }
+
+            getGenderRowClass(gender) {
+                if (!gender) return 'gender-row-unknown';
+                const g = gender.toLowerCase();
+                if (g === 'male') return 'gender-row-male';
+                if (g === 'female') return 'gender-row-female';
+                return 'gender-row-unknown';
+            }
+
+            formatChildNameList(value) {
+                if (Array.isArray(value)) {
+                    return value.filter(Boolean).join(', ');
+                }
+                if (value && typeof value === 'string') {
+                    return value;
+                }
+                return '';
+            }
+
             updatePopulationTable(population) {
                 const container = document.getElementById('populationTable');
                 container.innerHTML = '';
@@ -4474,83 +4745,130 @@
                     return;
                 }
 
+                const table = document.createElement('table');
+                table.className = 'population-table';
+
+                const thead = document.createElement('thead');
+                const headerRow = document.createElement('tr');
+                const headers = ['Name', 'Resources', 'Work/Mating Status', 'Status Labels'];
+                headers.forEach(header => {
+                    const th = document.createElement('th');
+                    th.textContent = header;
+                    headerRow.appendChild(th);
+                });
+                thead.appendChild(headerRow);
+                table.appendChild(thead);
+
+                const tbody = document.createElement('tbody');
+                
                 Object.entries(population).forEach(([name, data]) => {
                     const person = data || {};
-                    const detailsEl = document.createElement('details');
-                    detailsEl.className = 'person-card';
+                    const tr = document.createElement('tr');
+                    tr.className = this.getGenderRowClass(person.gender);
 
-                    const summaryEl = document.createElement('summary');
-                    summaryEl.className = 'person-summary';
+                    // Name column
+                    const nameCell = document.createElement('td');
+                    nameCell.className = `person-name-cell ${this.getGenderClass(person.gender)}`;
 
-                    const headerEl = document.createElement('div');
-                    headerEl.className = 'person-header';
+                    const professionIcon = document.createElement('span');
+                    professionIcon.className = 'profession-icon';
+                    professionIcon.textContent = this.getProfessionIcon(person.profession);
+                    professionIcon.title = this.humanizePopulationText(person.profession || 'tribe member');
+                    nameCell.appendChild(professionIcon);
 
-                    const nameBlockEl = document.createElement('div');
-                    nameBlockEl.className = 'person-name-block';
+                    const nameText = document.createElement('span');
+                    nameText.textContent = person.name || name;
+                    nameCell.appendChild(nameText);
+                    tr.appendChild(nameCell);
 
-                    const nameEl = document.createElement('div');
-                    nameEl.className = 'person-name';
-                    nameEl.textContent = person.name || name;
-                    nameBlockEl.appendChild(nameEl);
+                    // Resources column
+                    const resourcesCell = document.createElement('td');
+                    resourcesCell.className = 'resources-cell';
+                    const resourcesTop = document.createElement('span');
+                    resourcesTop.className = 'resource-line';
+                    resourcesTop.textContent = `Food ${Number(person.food || 0)} • Grain ${Number(person.grain || 0)}`;
+                    resourcesCell.appendChild(resourcesTop);
 
-                    const subtitleEl = document.createElement('div');
-                    subtitleEl.className = 'person-subtitle';
-                    subtitleEl.textContent = [this.humanizePopulationText(person.gender), this.humanizePopulationText(person.profession || 'tribe member')]
-                        .filter(Boolean)
-                        .join(' • ');
-                    nameBlockEl.appendChild(subtitleEl);
+                    const resourcesBottom = document.createElement('span');
+                    resourcesBottom.className = 'resource-line';
+                    resourcesBottom.textContent = `Basket ${Number(person.basket || 0)} • Spearhead ${Number(person.spearhead || 0)}`;
+                    resourcesCell.appendChild(resourcesBottom);
+                    tr.appendChild(resourcesCell);
 
-                    headerEl.appendChild(nameBlockEl);
+                    // Work/Mating Status column
+                    const workCell = document.createElement('td');
+                    workCell.className = 'work-status-cell';
+                    const workStatus = this.getPopulationWorkStatus(person);
+                    workCell.textContent = workStatus || '—';
+                    tr.appendChild(workCell);
 
-                    const badgesEl = document.createElement('div');
-                    badgesEl.className = 'person-badges';
-                    this.getPopulationBadges(person).forEach(badge => {
-                        const badgeEl = document.createElement('span');
-                        badgeEl.className = `person-badge ${badge.className}`;
-                        badgeEl.textContent = badge.text;
-                        badgesEl.appendChild(badgeEl);
-                    });
-                    headerEl.appendChild(badgesEl);
-                    summaryEl.appendChild(headerEl);
+                    // Status labels column
+                    const statusCell = document.createElement('td');
+                    statusCell.className = 'status-labels';
+                    const labels = [];
 
-                    const summaryGridEl = document.createElement('div');
-                    summaryGridEl.className = 'person-summary-grid';
+                    if (Number(person.isInjured) > 0) {
+                        labels.push({ text: `Injured (${person.isInjured})`, class: 'injury' });
+                    }
+                    if (Number(person.isSick) > 0) {
+                        labels.push({ text: `Sick (${person.isSick})`, class: 'illness' });
+                    }
+                    if (person.isPregnant) {
+                        const pregnantWith = this.formatChildNameList(person.isPregnant);
+                        labels.push({ text: pregnantWith ? `Pregnant with ${pregnantWith}` : 'Pregnant', class: 'pregnant' });
+                    }
+                    if (person.canCraft) {
+                        labels.push({ text: 'Can Craft', class: 'craft' });
+                    }
+                    if (person.chief) {
+                        labels.push({ text: 'Chief', class: 'chief' });
+                    }
+                    if (Array.isArray(person.nursing) && person.nursing.length > 0) {
+                        labels.push({ text: `Nursing ${this.formatChildNameList(person.nursing)}`, class: 'nursing' });
+                    }
+                    if (Array.isArray(person.guarding) && person.guarding.length > 0) {
+                        labels.push({ text: `Guarding ${this.formatChildNameList(person.guarding)}`, class: 'guarding' });
+                    }
+                    if (person.faction === 'for') {
+                        labels.push({ text: 'For Demand', class: 'faction-for' });
+                    } else if (person.faction === 'against') {
+                        labels.push({ text: 'Against Demand', class: 'faction-against' });
+                    }
+                    if (person.escaped) {
+                        labels.push({ text: 'Ran Away', class: 'escaped' });
+                    }
 
-                    [
-                        { label: 'Strength', value: this.getPopulationStrength(person) },
-                        { label: 'Health', value: this.getPopulationHealth(person) },
-                        { label: 'Work', value: this.getPopulationWorkStatus(person) },
-                        { label: 'Resources', value: this.getPopulationResources(person) },
-                        { label: 'Faction Status', value: this.getFactionStatus(person) }
-                    ].filter(item => item.value).forEach(item => {
-                        const statEl = document.createElement('div');
-                        statEl.className = 'person-stat';
+                    if (labels.length === 0) {
+                        statusCell.textContent = '—';
+                    } else {
+                        const midpoint = Math.ceil(labels.length / 2);
+                        const firstRowLabels = labels.slice(0, midpoint);
+                        const secondRowLabels = labels.slice(midpoint);
 
-                        const labelEl = document.createElement('span');
-                        labelEl.className = 'person-stat-label';
-                        labelEl.textContent = item.label;
-                        statEl.appendChild(labelEl);
+                        const createLabelRow = (rowLabels) => {
+                            const row = document.createElement('div');
+                            row.className = 'status-label-row';
+                            rowLabels.forEach(label => {
+                                const labelEl = document.createElement('span');
+                                labelEl.className = `status-label ${label.class}`;
+                                labelEl.textContent = label.text;
+                                row.appendChild(labelEl);
+                            });
+                            return row;
+                        };
 
-                        const valueEl = document.createElement('span');
-                        valueEl.className = 'person-stat-value';
-                        valueEl.textContent = item.value;
-                        statEl.appendChild(valueEl);
+                        statusCell.appendChild(createLabelRow(firstRowLabels));
+                        if (secondRowLabels.length > 0) {
+                            statusCell.appendChild(createLabelRow(secondRowLabels));
+                        }
+                    }
 
-                        summaryGridEl.appendChild(statEl);
-                    });
-
-                    summaryEl.appendChild(summaryGridEl);
-                    detailsEl.appendChild(summaryEl);
-
-                    const detailsBodyEl = document.createElement('div');
-                    detailsBodyEl.className = 'person-details';
-                    this.getPopulationSections(person).forEach(section => {
-                        this.appendPopulationSection(detailsBodyEl, section);
-                    });
-
-                    detailsEl.appendChild(detailsBodyEl);
-                    container.appendChild(detailsEl);
+                    tr.appendChild(statusCell);
+                    tbody.appendChild(tr);
                 });
+
+                table.appendChild(tbody);
+                container.appendChild(table);
             }
 
             updateChildrenTable(children) {
@@ -4562,36 +4880,17 @@
                     return;
                 }
 
-                // Compute guards for each child
-                if (this.currentPopulation) {
-                    Object.keys(children).forEach(childName => {
-                        const guards = [];
-                        Object.values(this.currentPopulation).forEach(person => {
-                            if (person.guarding && person.guarding.includes(childName)) {
-                                guards.push(person.name);
-                            }
-                        });
-                        // check for babysitters
-                        Object.values(children).forEach(sitter => {
-                            if (sitter.age >= 23 && sitter.babysitting === childName) {
-                                guards.push(sitter.name);
-                            }
-                        });
-                        if (guards.length > 0) {
-                            children[childName].Guards = guards.join(', ');
-                        } else {
-                            // Ensure the column always exists for every child
-                            children[childName].Guards = ''; 
-                        }
-                    });
-                }
+                // Keep this renderer side-effect free to avoid request loops.
+                // Any server/client guard syncing should be driven by command flows, not table paint.
                 
                 // Similar implementation to population table
+                // Remove 'Guards' from columns
                 const allKeys = new Set();
                 Object.values(children).forEach(child => {
-                    Object.keys(child).forEach(key => allKeys.add(key));
+                    Object.keys(child).forEach(key => {
+                        if (key !== 'Guards') allKeys.add(key);
+                    });
                 });
-                
                 const columns = ['Name', ...Array.from(allKeys)];
                 
                 const thead = document.createElement('thead');
@@ -4617,7 +4916,11 @@
                         const value = data[key];
                         if (key === 'age') {
                             const ageVal = typeof value === 'number' ? value : 0;
-                            cell.textContent = ageVal / 2;
+                            if (ageVal < 0) {
+                                cell.textContent = 'unborn';
+                            } else {
+                                cell.textContent = ageVal / 2;
+                            }
                         } else if (Array.isArray(value)) {
                             cell.textContent = value.join(', ');
                         } else if (value && typeof value === 'object') {

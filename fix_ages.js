@@ -5,8 +5,8 @@ text = text.replace(/opt.textContent = \`\$\{childName\} \(age \$\{age\}\)\`;/g,
     "opt.textContent = \`\$\{childName\} (age \$\{age / 2\})\`;");
 text = text.replace(/opt.textContent = \`\$\{childName\} \(age \$\{age\}, food \$\{food\}\) \$\{status\}\`;/g, 
     "opt.textContent = \`\$\{childName\} (age \$\{age / 2\}, food \$\{food\}) \$\{status\}\`;");
-text = text.replace(/childLabel.textContent = \`\$\{child.name\} \(age \$\{child.age\}\)\`;/g, 
-    "childLabel.textContent = \`\$\{child.name\} (age \$\{child.age / 2\})\`;");
+text = text.replace(/childLabel.textContent = \`\$\{childInfo.childName\} \(age \$\{childInfo.age\}\)\`;/g, 
+    "childLabel.textContent = \`\$\{childInfo.childName\} (age \$\{childInfo.age / 2\})\`;");
 
 text = text.replace(/cell\.textContent = Object\.keys\(value\)\.join\(\', \'\);\n                        \} else \{\n                            cell\.textContent = value \|\| \'\'/,
 `} else if (key === 'age' && typeof value === 'number') {

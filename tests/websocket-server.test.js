@@ -927,7 +927,7 @@ describe('WebSocket Server Utility Functions', () => {
 
       const cleaned = wsServer.removeFatherReferences(children);
 
-      expect(cleaned.child1.name).toBe('child1');
+      expect(cleaned.child1.name).toBeUndefined();
       expect(cleaned.child1.age).toBe(5);
       expect(cleaned.child1.mother).toBe('player1');
       expect(cleaned.child1.father).toBeUndefined();

@@ -1936,7 +1936,7 @@ class TribesClient {
       ignoreContainer.innerHTML =
         '<div style="margin-bottom: 0.5rem; font-weight: 600;">Set guard status for your children:</div>';
 
-      guardedChildren.forEach((child) => {
+      guardedChildren.forEach((childInfo) => {
         const childDiv = document.createElement('div');
         childDiv.className = 'child-guard-option';
         childDiv.style.cssText = `
@@ -1951,7 +1951,7 @@ class TribesClient {
                         `;
 
         const childLabel = document.createElement('span');
-        childLabel.textContent = `${child.name} (age ${child.age})`;
+        childLabel.textContent = `${childInfo.childName} (age ${childInfo.age})`;
         childLabel.style.fontWeight = '500';
 
         const radioGroup = document.createElement('div');
@@ -1962,7 +1962,7 @@ class TribesClient {
           'display: flex; align-items: center; gap: 0.25rem; cursor: pointer;';
         const guardRadio = document.createElement('input');
         guardRadio.type = 'radio';
-        guardRadio.name = `guard_${child.name}`;
+        guardRadio.name = `guard_${childInfo.childName}`;
         guardRadio.value = 'guard';
         guardRadio.checked = true; // Default to guard
         guardOption.appendChild(guardRadio);
@@ -1973,7 +1973,7 @@ class TribesClient {
           'display: flex; align-items: center; gap: 0.25rem; cursor: pointer;';
         const ignoreRadio = document.createElement('input');
         ignoreRadio.type = 'radio';
-        ignoreRadio.name = `guard_${child.name}`;
+        ignoreRadio.name = `guard_${childInfo.childName}`;
         ignoreRadio.value = 'ignore';
         ignoreOption.appendChild(ignoreRadio);
         ignoreOption.appendChild(document.createTextNode('Ignore'));

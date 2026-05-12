@@ -1,3 +1,47 @@
+    test('guard and ignore work for player name casing (Kevin, kevin, KEVIN)', async () => {
+        // Add Kevin to the test tribe population
+        await page.evaluate(() => {
+            const pop = window.tribesClient?.currentPopulation;
+            if (pop && !pop['Kevin']) {
+                pop['Kevin'] = {
+                    name: 'Kevin',
+                    gender: 'male',
+                    food: 6,
+                    grain: 0,
+                    basket: 1,
+                    spearhead: 0,
+                    profession: 'gatherer',
+                    worked: false,
+                    activity: 'idle',
+                    inviteList: [],
+                    consentDict: {}
+                };
+            }
+        });
+
+        for (const casing of ['Kevin', 'kevin', 'KEVIN']) {
+            await loginAs(casing);
+            await openCommand('guard');
+            // Should show the unified guard UI and not error
+            const guardModalText = await page.$eval('#commandModal', el => el.innerText);
+            expect(guardModalText.toLowerCase()).toContain('children you can guard');
+
+            // Try to guard Pebble if present
+            const hasPebble = await page.$('input[name="unified_guard_Pebble"][value="guard"]') !== null;
+            if (hasPebble) {
+                await page.click('input[name="unified_guard_Pebble"][value="guard"]');
+                await page.click('#modalExecuteBtn');
+                await new Promise(r => setTimeout(r, 1000));
+                const msg = await page.$eval('#messagesContainer', c => c.innerText);
+                expect(msg).toMatch(/Kevin starts guarding Pebble|kevin starts guarding Pebble|KEVIN starts guarding Pebble/i);
+            }
+
+            await openCommand('ignore');
+            // Should show the unified guard UI and not error
+            const ignoreModalText = await page.$eval('#commandModal', el => el.innerText);
+            expect(ignoreModalText.toLowerCase()).toContain('children you can guard');
+        }
+    }, 20000);
 process.env.JEST_USE_REAL_TIMERS = 'true';
 const puppeteer = globalThis.puppeteer || {
     launch: async () => {
@@ -404,5 +448,37 @@ describe('Browser Integration: tribes-interface.html', () => {
         await page.evaluate(() => window.tribesClient.refreshGameData());
         await new Promise((resolve) => setTimeout(resolve, 1000));
         expect(await getPlayerGuarding('eggplant')).toEqual([]);
+    }, 20000);
+
+    test('give command exits loading state when population data arrives', async () => {
+        await loginAs('eggplant');
+
+        await page.evaluate(() => {
+            const client = window.tribesClient;
+            client.__testPopulationSnapshot = client.currentPopulation;
+            client.currentPopulation = null;
+        });
+
+        await openCommand('give');
+        await page.waitForFunction(() => {
+            const el = document.getElementById('modalCommandParameters');
+            return el && el.innerText.toLowerCase().includes('loading player data');
+        });
+
+        await page.evaluate(() => {
+            const client = window.tribesClient;
+            client.handleInfoResponse({
+                label: 'population',
+                content: client.__testPopulationSnapshot,
+            });
+        });
+
+        await page.waitForFunction(() => {
+            const params = document.getElementById('modalCommandParameters');
+            if (!params) return false;
+            const loading = params.innerText.toLowerCase().includes('loading player data');
+            const hasTargetSelect = !!params.querySelector('select[id^="param_"]');
+            return !loading && hasTargetSelect;
+        });
     }, 20000);
 });

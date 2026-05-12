@@ -39,7 +39,7 @@ const newCode = `createUnifiedGuardInterface(container) {
                         \`;
                         
                         const childLabel = document.createElement('span');
-                        childLabel.textContent = \`\${child.name} (age \${child.age})\`;
+                        childLabel.textContent = \`\${childInfo.childName} (age \${childInfo.age})\`;
                         childLabel.style.fontWeight = '500';
                         
                         const radioGroup = document.createElement('div');
@@ -48,7 +48,7 @@ const newCode = `createUnifiedGuardInterface(container) {
                         ignoreOption.style.cssText = 'display: flex; align-items: center; gap: 0.25rem; cursor: pointer;';
                         const ignoreRadio = document.createElement('input');
                         ignoreRadio.type = 'radio';
-                        ignoreRadio.name = \`unified_guard_\${child.name}\`;
+                        ignoreRadio.name = \`unified_guard_\${childInfo.childName}\`;
                         ignoreRadio.value = 'ignore';
                         ignoreRadio.checked = !child.isGuarded;
 

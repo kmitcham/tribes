@@ -9,6 +9,7 @@ const tribesRegistry = require('./libs/tribesRegistry.js');
 const util = require('./libs/util.js');
 const pop = require('./libs/population.js');
 const help = require('./libs/help.js');
+const guardlib = require('./libs/guardCode.js');
 
 const logger = require('./libs/logger.js');
 const PORT = process.env.PORT || 8000;
@@ -543,6 +544,19 @@ async function handleWebSocketMessage(ws, data) {
 
   // Track this client's player name if provided
   if (data.playerName) {
+    // If this socket was previously associated with a different player key,
+    // remove it first to avoid private-message cross-delivery.
+    if (
+      ws.currentPlayer &&
+      ws.currentPlayer !== data.playerName &&
+      connectedClients.has(ws.currentPlayer)
+    ) {
+      connectedClients.get(ws.currentPlayer).delete(ws);
+      if (connectedClients.get(ws.currentPlayer).size === 0) {
+        connectedClients.delete(ws.currentPlayer);
+      }
+    }
+
     if (!connectedClients.has(data.playerName)) {
       connectedClients.set(data.playerName, new Set());
     }
@@ -743,6 +757,7 @@ function handleInfoRequest(ws, data, gameState) {
       };
       break;
     case 'children':
+      refreshChildGuardians(gameState.children, gameState.population);
       messageData = {
         type: 'infoRequest',
         label: 'children',
@@ -963,7 +978,7 @@ async function refreshTribeGameData(gameState, tribeName) {
   const childrenData = {
     type: 'infoRequest',
     label: 'children',
-    content: removeFatherReferences(gameState.children),
+    content: removeFatherReferences(refreshChildGuardians(gameState.children, gameState.population)),
   };
 
   const statusData = {
@@ -1836,7 +1851,7 @@ function removeClunkyKeys(population) {
 
 function removeFatherReferences(children) {
   const cleanedChildren = {};
-  const excludeKeys = ['father', 'fatherName'];
+  const excludeKeys = ['father', 'fatherName', 'name'];
 
   for (const [name, childData] of Object.entries(children || {})) {
     const cleaned = {};
@@ -1848,6 +1863,19 @@ function removeFatherReferences(children) {
     cleanedChildren[name] = cleaned;
   }
   return cleanedChildren;
+}
+
+function refreshChildGuardians(children, population) {
+  for (const [childName, child] of Object.entries(children || {})) {
+    if (!child || typeof child.age !== 'number' || child.age < 0 || child.age >= 23) {
+      delete child.guardians;
+      continue;
+    }
+
+    guardlib.findGuardValueForChild(childName, population || {}, children || {});
+  }
+
+  return children;
 }
 
 function arrayMatch(array1, array2) {

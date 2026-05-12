@@ -60,11 +60,24 @@ function loadJson(fileName) {
 }
 module.exports.loadJson = loadJson;
 
+function removeChildNameFields(children) {
+  if (!children) {
+    return;
+  }
+  for (const childName in children) {
+    const child = children[childName];
+    if (child && child['name']) {
+      delete child['name'];
+    }
+  }
+}
+
 function loadTribe(tribeName) {
   fileName = './tribe-data/' + tribeName + '/' + tribeName + '.json';
   if (fs.existsSync(fileName)) {
     try {
       gameState = loadJson(fileName);
+      removeChildNameFields(gameState.children);
       populationLib.normalizePopulationResources(gameState);
       return gameState;
     } catch (err) {
@@ -90,6 +103,7 @@ function loadTribe(tribeName) {
 module.exports.loadTribe = loadTribe;
 
 function actuallyWriteToDisk(fileName, jsonData) {
+  removeChildNameFields(jsonData.children);
   populationLib.normalizePopulationResources(jsonData);
   (jsonString = JSON.stringify(jsonData, null, 2)),
     (err) => {
