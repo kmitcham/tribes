@@ -93,7 +93,7 @@ describe('kill function', () => {
     expect(gameState.graveyard.Baby.deathMessage).toBe('illness');
     expect(gameState.graveyard.Baby.deathSeason).toBe(3);
     expect(gameState.children).not.toHaveProperty(childName);
-    expect(gameState.messages['tribe']).toContain('baby killed by illness');
+    expect(gameState.messages['tribe']).toContain('Baby killed by illness');
   });
 
   test('should handle persons who are pregnant', () => {
@@ -134,7 +134,7 @@ describe('kill function', () => {
     expect(gameState.graveyard).toHaveProperty('Unborn_baby');
     expect(gameState.messages['tribe']).toContain('mary killed by accident');
     expect(gameState.messages['tribe']).toContain(
-      'Unborn_baby killed by mother-died'
+      'Unborn_baby died in utero after mother died'
     );
   });
 

@@ -545,7 +545,8 @@ function graveyard(displayName, gameState) {
     for (var name in gameState.graveyard) {
       // TODO flesh this out
       person = gameState.graveyard[name];
-      response += '\n ' + person.name + ' died of ' + person.deathMessage;
+      const displayName = person.name || name;
+      response += '\n ' + displayName + ' died of ' + person.deathMessage;
       if (person.mother) {
         response += ' parents:' + person.mother;
         if (gameState.secretMating && !gameState.ended) {

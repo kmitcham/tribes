@@ -25,8 +25,15 @@ function kill(name, message, gameState) {
   } else {
     gameState.graveyard = {};
   }
+  const isMotherDied = message === 'mother-died';
+  const deathSummary = isMotherDied
+    ? 'died in utero after mother died'
+    : 'killed by ' + message;
+
   person = populationLib.memberByName(name, gameState);
+  let displayName = name;
   if (person) {
+    displayName = person.name || name;
     person.deathMessage = message;
     person.deathSeason = gameState.seasonCounter;
     if (person.isPregnant) {
@@ -45,6 +52,10 @@ function kill(name, message, gameState) {
     guardlib.unguardChild(childName, population);
     clearNursingPregnant(childName, gameState.population);
     var child = children[childName];
+    if (!child.name) {
+      child.name = childName;
+    }
+    displayName = child.name || childName;
     child.deathMessage = message;
     child.deathSeason = gameState.seasonCounter;
     gameState.graveyard[childName] = child;
@@ -54,8 +65,8 @@ function kill(name, message, gameState) {
     console.log('Tried to kill ' + name + ' but could not find them');
     return;
   }
-  textLib.addMessage(gameState, 'tribe', name + ' killed by ' + message);
-  populationLib.history(name, name + ' killed by ' + message, gameState);
+  textLib.addMessage(gameState, 'tribe', displayName + ' ' + deathSummary);
+  populationLib.history(displayName, displayName + ' ' + deathSummary, gameState);
   return;
 }
 module.exports.kill = kill;

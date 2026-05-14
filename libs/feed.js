@@ -432,9 +432,9 @@ function consumeFoodPlayers(gameState) {
         mom.grain = mom.grain + mom.food;
         mom.food = 0;
         if (mom.grain < 0) {
-          childname = mom.isPregnant;
+          const childName = mom.isPregnant;
           response +=
-            target + ' lost her child ' + childname + ' due to lack of food\n';
+            target + ' lost her child ' + childName + ' due to lack of food\n';
           killlib.kill(childName, 'prenatal starvation', gameState);
           delete mom.isPregnant;
           mom.grain = 0;
