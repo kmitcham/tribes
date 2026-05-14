@@ -52,8 +52,11 @@ function decree(gameState, actorName, number, lawText) {
     console.log('Initializing laws');
   }
   if (!number) {
-    number = Object.keys(gameState.laws).length;
-    console.log('defauting law number ' + number);
+    number = 1;
+    while (Object.prototype.hasOwnProperty.call(gameState.laws, String(number))) {
+      number += 1;
+    }
+    console.log('defaulting law number ' + number);
   }
   gameState.laws[number] = law;
   text.addMessage(gameState, 'tribe', 'Your chief creates a new law: ' + law);

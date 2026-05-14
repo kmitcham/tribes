@@ -225,3 +225,28 @@ test('startWork reports active demand details when blocked', () => {
     'You cannot start a new round while there is an active demand. Active demand: share fish equally'
   );
 });
+
+test('decree without number defaults to first available law number', () => {
+  gameState.population['Alice'].chief = true;
+  gameState.laws = {
+    1: 'Existing law one',
+    3: 'Existing law three',
+  };
+
+  chiefLib.decree(gameState, 'Alice', null, 'A non-colliding law');
+
+  assert.strictEqual(gameState.laws[1], 'Existing law one');
+  assert.strictEqual(gameState.laws[3], 'Existing law three');
+  assert.strictEqual(gameState.laws[2], 'A non-colliding law');
+  assert.strictEqual(gameState.saveRequired, true);
+});
+
+test('decree without number starts at 1 when no laws exist', () => {
+  gameState.population['Alice'].chief = true;
+  delete gameState.laws;
+
+  chiefLib.decree(gameState, 'Alice', undefined, 'First law');
+
+  assert.strictEqual(gameState.laws[1], 'First law');
+  assert.strictEqual(gameState.saveRequired, true);
+});
