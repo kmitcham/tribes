@@ -17,13 +17,22 @@ module.exports = {
 
 function idle(interaction, gameState) {
   var sourceName = interaction.member.displayName;
-  player = pop.memberByName(sourceName, gameState);
-  msg = worklib.canWork(gameState, player);
-
-  if (msg) {
-    text.addMessage(gameState, sourceName, msg);
+  var player = pop.memberByName(sourceName, gameState);
+  if (!player) {
+    text.addMessage(gameState, sourceName, 'Only tribe members can idle.  Maybe !join');
     return;
   }
+
+  if (gameState.workRound == false) {
+    text.addMessage(gameState, sourceName, 'Can only idle during the work round');
+    return;
+  }
+
+  if (player.worked == true) {
+    text.addMessage(gameState, sourceName, 'You cannot idle (again) this round');
+    return;
+  }
+
   player.activity = 'idle';
   message = sourceName + ' does nothing for a whole season.';
   pop.history(sourceName, ' does nothing for a season.', gameState);
