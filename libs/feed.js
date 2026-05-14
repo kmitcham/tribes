@@ -9,6 +9,8 @@ const killlib = require('./kill.js');
 function feed(unused, player, amount, inputChildList, gameState) {
   children = gameState.children;
   let message = player['name'] + ' goes to feed the children.  \n';
+  const specialNotes = [];
+  let feedDetails = '';
   var showErrors = true;
   if (amount == 0 || amount > 2) {
     text.addMessage(
@@ -26,6 +28,10 @@ function feed(unused, player, amount, inputChildList, gameState) {
     if (!children[childName]) {
       if (cName.toLowerCase() == '!all') {
         showErrors = false;
+        const allHungryNote = player.name + ' feeds all the hungry children.';
+        if (!specialNotes.includes(allHungryNote)) {
+          specialNotes.push(allHungryNote);
+        }
         for (var childName in children) {
           var child = children[childName];
           if (
@@ -41,6 +47,11 @@ function feed(unused, player, amount, inputChildList, gameState) {
       // this seems to be feeding based on mother?
       var parent = pop.memberByName(cName, gameState);
       if (parent && parent.gender && parent.gender == 'female') {
+        const parentNote =
+          player.name + ' feeds all the children of ' + parent.name + '.';
+        if (!specialNotes.includes(parentNote)) {
+          specialNotes.push(parentNote);
+        }
         for (var filterChildName in children) {
           var filterChild = children[filterChildName];
           if (filterChild.mother == parent.name) {
@@ -102,6 +113,7 @@ function feed(unused, player, amount, inputChildList, gameState) {
         feedAtLeastOneChild = true;
       }
       message +=
+      feedDetails +=
         player.name +
         ' feeds ' +
         amountForThisChild +
@@ -110,9 +122,9 @@ function feed(unused, player, amount, inputChildList, gameState) {
         '.  ';
       children[childName].food += Number(amountForThisChild);
       if (children[childName].food != 2) {
-        message += childName + ' could eat more.  ';
+        feedDetails += childName + ' could eat more.  ';
       }
-      message += '\n';
+      feedDetails += '\n';
     } else {
       text.addMessage(
         gameState,
@@ -123,8 +135,12 @@ function feed(unused, player, amount, inputChildList, gameState) {
     }
   }
   if (!feedAtLeastOneChild) {
-    message += 'No children were fed.';
+    feedDetails += 'No children were fed.';
   }
+  if (specialNotes.length > 0) {
+    message += specialNotes.join('\n') + '\n';
+  }
+  message += feedDetails;
   text.addMessage(gameState, 'tribe', message);
   return 0;
 }

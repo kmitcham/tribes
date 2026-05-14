@@ -85,6 +85,7 @@ describe('feed function', () => {
     };
     feed(dummyMessage, gameState.population.p1, 2, ['p2'], gameState);
     response = gameState.messages['tribe'];
+    expect(response).toContain('p1 feeds all the children of p2.');
     expect(response).toContain('p1 feeds 2 to C1');
     expect(response).toContain('p1 feeds 2 to C2');
   });
@@ -135,6 +136,7 @@ describe('feed function', () => {
     feed(null, gameState.population.p1, 2, ['!all'], gameState);
     response = gameState.messages['tribe'];
 
+    expect(response).toContain('p1 feeds all the hungry children.');
     expect(response).toContain('p1 feeds 2 to C1');
     expect(response).toContain('p1 feeds 2 to C2');
     expect(response).toContain('p1 feeds 2 to C3');
