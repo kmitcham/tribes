@@ -640,20 +640,42 @@
             opacity: 0.95;
         }
 
+        .gender-icon {
+            width: 1.1rem;
+            text-align: center;
+            font-size: 1rem;
+            line-height: 1;
+            font-weight: 700;
+        }
+
+        .gender-icon-male {
+            color: #003fc4;
+        }
+
+        .gender-icon-female {
+            color: #b0004f;
+        }
+
+        .gender-icon-unknown {
+            color: #4b5563;
+        }
+
         .person-name-male {
-            color: #2563eb;
+            color: #003fc4;
+            font-weight: 700;
         }
 
         .person-name-female {
-            color: #db2777;
+            color: #b0004f;
+            font-weight: 700;
         }
 
         .person-name-unknown {
             color: #6b7280;
         }
 
-        .gender-row-male { background-color: rgba(37, 99, 235, 0.08); }
-        .gender-row-female { background-color: rgba(219, 39, 119, 0.08); }
+        .gender-row-male { background-color: rgba(0, 63, 196, 0.16); }
+        .gender-row-female { background-color: rgba(176, 0, 79, 0.16); }
         .gender-row-unknown { background-color: rgba(107, 114, 128, 0.08); }
 
         .resources-cell {
@@ -4786,6 +4808,14 @@
                 return 'gender-row-unknown';
             }
 
+            getGenderSymbol(gender) {
+                if (!gender) return { symbol: '?', className: 'gender-icon-unknown', label: 'Unknown gender' };
+                const g = gender.toLowerCase();
+                if (g === 'male') return { symbol: '♂', className: 'gender-icon-male', label: 'Male' };
+                if (g === 'female') return { symbol: '♀', className: 'gender-icon-female', label: 'Female' };
+                return { symbol: '?', className: 'gender-icon-unknown', label: this.humanizePopulationText(g) };
+            }
+
             formatChildNameList(value) {
                 if (Array.isArray(value)) {
                     return value.filter(Boolean).join(', ');
@@ -4835,6 +4865,13 @@
                     professionIcon.textContent = this.getProfessionIcon(person.profession);
                     professionIcon.title = this.humanizePopulationText(person.profession || 'tribe member');
                     nameCell.appendChild(professionIcon);
+
+                    const genderMeta = this.getGenderSymbol(person.gender);
+                    const genderIcon = document.createElement('span');
+                    genderIcon.className = `gender-icon ${genderMeta.className}`;
+                    genderIcon.textContent = genderMeta.symbol;
+                    genderIcon.title = genderMeta.label;
+                    nameCell.appendChild(genderIcon);
 
                     const nameText = document.createElement('span');
                     nameText.textContent = person.name || name;

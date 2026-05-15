@@ -43,7 +43,15 @@
         }
     }, 20000);
 process.env.JEST_USE_REAL_TIMERS = 'true';
-const puppeteer = globalThis.puppeteer || {
+const localPuppeteer = (() => {
+    try {
+        return require('puppeteer');
+    } catch (error) {
+        return null;
+    }
+})();
+
+const puppeteer = globalThis.puppeteer || localPuppeteer || {
     launch: async () => {
         if (!globalThis.browser) {
             throw new Error('Puppeteer is not available in the test environment.');
