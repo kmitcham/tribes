@@ -4978,22 +4978,30 @@
                     Array.from(allKeys).forEach(key => {
                         const cell = document.createElement('td');
                         const value = data[key];
-                        if (key === 'age') {
-                            const ageVal = typeof value === 'number' ? value : 0;
-                            if (ageVal < 0) {
-                                cell.textContent = 'unborn';
+                            if (key === 'age') {
+                                const ageVal = typeof value === 'number' ? value : 0;
+                                if (ageVal < 0) {
+                                    cell.textContent = 'unborn';
+                                } else {
+                                    cell.textContent = ageVal / 2;
+                                }
+                            } else if (key === 'food') {
+                                // Show 'N/A' for young adults (age >= 24)
+                                const ageVal = typeof data['age'] === 'number' ? data['age'] : 0;
+                                if (ageVal >= 24) {
+                                    cell.textContent = 'N/A';
+                                } else {
+                                    cell.textContent = (value !== undefined && value !== null && value !== '') ? value : '';
+                                }
+                            } else if (Array.isArray(value)) {
+                                cell.textContent = value.join(', ');
+                            } else if (value && typeof value === 'object') {
+                                // Handle objects like guardians by extracting keys
+                                cell.textContent = Object.keys(value).join(', ');
                             } else {
-                                cell.textContent = ageVal / 2;
+                                cell.textContent = (value !== undefined && value !== null && value !== '') ? value : '';
                             }
-                        } else if (Array.isArray(value)) {
-                            cell.textContent = value.join(', ');
-                        } else if (value && typeof value === 'object') {
-                            // Handle objects like guardians by extracting keys
-                            cell.textContent = Object.keys(value).join(', ');
-                        } else {
-                            cell.textContent = (value !== undefined && value !== null && value !== '') ? value : '';
-                        }
-                        row.appendChild(cell);
+                            row.appendChild(cell);
                     });
                     
                     tbody.appendChild(row);
