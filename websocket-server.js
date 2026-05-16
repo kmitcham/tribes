@@ -187,6 +187,28 @@ function getClientIP(ws, req) {
   );
 }
 
+function normalizePlayerName(name) {
+  if (typeof name !== 'string') return '';
+  return name.trim();
+}
+
+function findStoredUserName(name) {
+  const normalized = normalizePlayerName(name);
+  if (!normalized) return null;
+  if (usersDict[normalized]) return normalized;
+
+  const lowered = normalized.toLowerCase();
+  return (
+    Object.keys(usersDict).find(
+      (existingName) => existingName.toLowerCase() === lowered
+    ) || null
+  );
+}
+
+function samePlayerName(a, b) {
+  return normalizePlayerName(a).toLowerCase() === normalizePlayerName(b).toLowerCase();
+}
+
 function loadCommands() {
   const commandsPath = path.join(__dirname, 'commands');
   const commandFolders = fs.readdirSync(commandsPath);
@@ -535,6 +557,15 @@ async function handleWebSocketMessage(ws, data) {
   let tribe = data.tribe || 'bug';
   let gameState = await getGameState(tribe);
   logWithTimestamp('got gamestate for', tribe);
+
+  // Normalize to canonical stored casing when a known user logs in with different capitalization.
+  if (data.playerName) {
+    const canonicalPlayerName = findStoredUserName(data.playerName);
+    if (canonicalPlayerName) {
+      data.playerName = canonicalPlayerName;
+    }
+  }
+
   // Track this client's tribe connection
   if (!tribeConnections.has(tribe)) {
     tribeConnections.set(tribe, new Set());
@@ -1225,6 +1256,7 @@ async function handleRegisterRequest(ws, data, gameState) {
 
     // If registration/login successful, associate WebSocket with session
     if (result.label === 'success' && result.sessionToken) {
+      data.playerName = result.playerName;
       ws.sessionToken = result.sessionToken;
       ws.playerName = result.playerName;
       ws.currentPlayer = result.playerName;
@@ -1607,27 +1639,32 @@ async function handleImportGame(ws, data, currentGameState) {
 }
 
 async function validateUser(userData) {
+  const inputName = normalizePlayerName(userData.playerName);
+  const storedName = findStoredUserName(inputName);
+
   // Check if user has a valid session token
   if (userData.sessionToken) {
     const session = validateSession(userData.sessionToken);
-    if (session && session.playerName === userData.playerName) {
+    if (session && samePlayerName(session.playerName, inputName)) {
       // Update last connected time for session authentication
-      const user = usersDict[userData.playerName];
+      const sessionStoredName = findStoredUserName(session.playerName);
+      const user = sessionStoredName ? usersDict[sessionStoredName] : null;
       if (user) {
         user.lastConnected = new Date().toISOString();
         actuallyWriteToDisk('./tribe-data/users.json', usersDict);
       }
+      userData.playerName = session.playerName;
       return true;
     }
     // If session is invalid, fall through to password authentication
   }
 
-  if (!userData.playerName || userData.playerName.length === 0) {
+  if (!inputName || inputName.length === 0) {
     return false;
   }
 
   // Check rate limiting
-  const identifier = userData.playerName;
+  const identifier = inputName.toLowerCase();
   const attemptData = loginAttempts.get(identifier) || {
     count: 0,
     lastAttempt: 0,
@@ -1638,7 +1675,12 @@ async function validateUser(userData) {
     throw new Error(`Account locked. Try again later.`);
   }
 
-  const user = usersDict[userData.playerName];
+  if (!storedName) {
+    return false; // User doesn't exist
+  }
+
+  userData.playerName = storedName;
+  const user = usersDict[storedName];
   if (!user) {
     return false; // User doesn't exist
   }
@@ -1676,7 +1718,7 @@ async function validateUser(userData) {
 }
 
 async function registerUser(userData) {
-  const name = userData.playerName || userData.name;
+  const name = normalizePlayerName(userData.playerName || userData.name);
   const email = userData.email;
   let password = userData.password;
   const clientIP = userData.clientIP || 'unknown';
@@ -1685,22 +1727,11 @@ async function registerUser(userData) {
     throw new Error('Player name is required');
   }
 
-  // Check for case-insensitive name collision
-  const normalizedName = name.trim().toLowerCase();
-  const caseInsensitiveMatch = Object.keys(usersDict).find(
-    (existingName) => existingName.toLowerCase() === normalizedName
-  );
+  const storedName = findStoredUserName(name);
 
-  if (caseInsensitiveMatch && caseInsensitiveMatch !== name) {
-    logWithTimestamp(
-      `[SECURITY] Registration failed: name already exists with different case '${caseInsensitiveMatch}'`
-    );
-    throw new Error('Name already registered (case-insensitive match)');
-  }
-
-  if (usersDict[name]) {
+  if (storedName) {
     // User exists - this is a login attempt
-    const user = usersDict[name];
+    const user = usersDict[storedName];
 
     // If existing user has no password, they can login without password (legacy)
     if (!user.password || user.password === '') {
@@ -1708,13 +1739,13 @@ async function registerUser(userData) {
       user.lastConnected = new Date().toISOString();
       actuallyWriteToDisk('./tribe-data/users.json', usersDict);
 
-      const token = createSession(name, clientIP);
+      const token = createSession(storedName, clientIP);
       return {
         type: 'registration',
         label: 'success',
         content: 'success',
         sessionToken: token,
-        playerName: name,
+        playerName: storedName,
       };
     }
 
@@ -1731,13 +1762,13 @@ async function registerUser(userData) {
     user.lastConnected = new Date().toISOString();
     actuallyWriteToDisk('./tribe-data/users.json', usersDict);
 
-    const token = createSession(name, clientIP);
+    const token = createSession(storedName, clientIP);
     return {
       type: 'registration',
       label: 'success',
       content: 'success',
       sessionToken: token,
-      playerName: name,
+      playerName: storedName,
     };
   } else {
     // New user registration
