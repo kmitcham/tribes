@@ -2,6 +2,7 @@
 const {
   feed,
   checkFood,
+  consumeFood,
   consumeFoodChildren,
   birth,
 } = require('../libs/feed.js');
@@ -341,6 +342,107 @@ describe('feed function', () => {
       'You do not have enough food or grain to feed Child1'
     );
   });
+
+  test('feeds multiple children without message accumulation', () => {
+    // Setup: Multiple hungry children
+    gameState.children = {
+      Child1: { food: 0, newAdult: false },
+      Child2: { food: 0, newAdult: false },
+      Child3: { food: 0, newAdult: false },
+    };
+    player.food = 30;
+    player.grain = 0;
+
+    feed('', player, 2, ['child1', 'child2', 'child3'], gameState);
+
+    const response = gameState.messages['tribe'];
+    
+    // Verify each child is mentioned exactly once in a feed line
+    const child1Matches = (response.match(/feeds 2 to Child1/g) || []).length;
+    const child2Matches = (response.match(/feeds 2 to Child2/g) || []).length;
+    const child3Matches = (response.match(/feeds 2 to Child3/g) || []).length;
+
+    expect(child1Matches).toBe(1);
+    expect(child2Matches).toBe(1);
+    expect(child3Matches).toBe(1);
+
+    // Verify message is reasonable length (not exponentially accumulated)
+    // A non-accumulated message should be around 150-250 chars
+    // An exponentially accumulated message would be 1000+ chars
+    expect(response.length).toBeLessThan(500);
+  });
+
+  test('feeds all hungry children without exponential message growth', () => {
+    // Setup: 4 hungry children (bigger number to make exponential accumulation obvious)
+    gameState.children = {
+      Hungry1: { food: 0, newAdult: false },
+      Hungry2: { food: 0, newAdult: false },
+      Hungry3: { food: 0, newAdult: false },
+      Hungry4: { food: 0, newAdult: false },
+    };
+    player.food = 50;
+    player.grain = 0;
+
+    feed('', player, 2, ['!all'], gameState);
+
+    const response = gameState.messages['tribe'];
+    
+    // With exponential accumulation, message would contain:
+    // Hungry1 (1x), then Hungry1+Hungry2 (2x), then Hungry1+Hungry2+Hungry3 (3x)
+    // So Hungry1 would appear 6 times total
+    // With fix, each child should appear exactly once
+    const hungry1Mentions = (response.match(/Hungry1/g) || []).length;
+    const hungry4Mentions = (response.match(/Hungry4/g) || []).length;
+
+    // Should have exactly 2 mentions each: once in "feeds X to ChildY" and once in "ChildY could eat more"
+    expect(hungry1Mentions).toBeLessThanOrEqual(2);
+    expect(hungry4Mentions).toBeLessThanOrEqual(2);
+
+    // Message length sanity check - 4 children fed should be ~300-400 chars max
+    // Exponential accumulation would easily exceed 1000+ chars
+    expect(response.length).toBeLessThan(600);
+  });
+
+  test('feeds two specific children and verifies output', () => {
+    // Setup: Two children to feed and one unfed child
+    gameState.children = {
+      Child1: { food: 0, newAdult: false },
+      Child2: { food: 0, newAdult: false },
+      UnfedChild: { food: 0, newAdult: false },
+    };
+    player.food = 10;
+    player.grain = 0;
+
+    // Feed two specific children
+    feed('', player, 2, ['child1', 'child2'], gameState);
+
+    const response = gameState.messages['tribe'];
+
+    // Verify the fed children are mentioned with correct amounts
+    expect(response).toMatch(/feeds 2 to Child1/);
+    expect(response).toMatch(/feeds 2 to Child2/);
+
+    // Confirm feed lines are not repeated
+    const child1FeedLineCount =
+      (response.match(/TestPlayer feeds 2 to Child1\./g) || []).length;
+    const child2FeedLineCount =
+      (response.match(/TestPlayer feeds 2 to Child2\./g) || []).length;
+    expect(child1FeedLineCount).toBe(1);
+    expect(child2FeedLineCount).toBe(1);
+
+    // Verify the unfed child is not mentioned
+    expect(response).not.toMatch(/UnfedChild/);
+
+    // Verify the player's food is reduced correctly
+    expect(player.food).toBe(6);
+
+    // Verify the fed children's food is updated correctly
+    expect(gameState.children['Child1'].food).toBe(2);
+    expect(gameState.children['Child2'].food).toBe(2);
+
+    // Verify the unfed child's food remains unchanged
+    expect(gameState.children['UnfedChild'].food).toBe(0);
+  });
 });
 
 // Import necessary dependencies
@@ -621,5 +723,87 @@ describe('consumeFoodChildren Function Tests', () => {
     expect(response).toContain('Child1');
     expect(response).toContain('Child2 has starved to death');
     expect(response).toContain('Child3 has reached adulthood');
+  });
+});
+
+describe('consumeFood death summary integration', () => {
+  it('reports starvation and no-milk deaths once with friendly wording', () => {
+    const gameState = {
+      seasonCounter: 10,
+      population: {
+        Mom: {
+          name: 'Mom',
+          gender: 'female',
+          food: 0,
+          grain: 0,
+          nursing: ['baby1', 'baby2'],
+        },
+        Xan: {
+          name: 'Xan',
+          gender: 'male',
+          food: 4,
+          grain: 0,
+        },
+      },
+      children: {
+        Baby1: {
+          name: 'Baby1',
+          mother: 'Mom',
+          father: 'Xan',
+          age: 4,
+          food: 2,
+          gender: 'female',
+        },
+        Baby2: {
+          name: 'Baby2',
+          mother: 'Mom',
+          father: 'Xan',
+          age: 4,
+          food: 2,
+          gender: 'male',
+        },
+      },
+    };
+
+    const response = consumeFood(gameState);
+
+    expect(response).toContain('Food round results:');
+    expect(response).toContain('Adults starved: Mom.');
+    expect(response).toContain('No children starved from hunger.');
+    expect(response).toContain('Children died from no-milk: Baby1, Baby2.');
+
+    // Ensure old misleading line is gone for no-milk child deaths.
+    expect(response).not.toContain('No children starved!');
+
+    // Ensure summary does not repeat the same victim/cause lines.
+    const momStarveCount =
+      (response.match(/Adults starved: Mom\./g) || []).length;
+    const noMilkLineCount =
+      (response.match(/Children died from no-milk: Baby1, Baby2\./g) || [])
+        .length;
+    expect(momStarveCount).toBe(1);
+    expect(noMilkLineCount).toBe(1);
+
+    // Survivor correctness: Xan remains alive, Mom is removed.
+    expect(gameState.population['Xan']).toBeDefined();
+    expect(gameState.population['Mom']).toBeUndefined();
+  });
+
+  it('does not inject duplicate kill-lines into food summary output', () => {
+    const gameState = {
+      seasonCounter: 2,
+      population: {
+        Clawtooth: { name: 'Clawtooth', gender: 'male', food: 0, grain: 0 },
+        Xan: { name: 'Xan', gender: 'male', food: 4, grain: 0 },
+      },
+      children: {},
+    };
+
+    const response = consumeFood(gameState);
+
+    // Only the new summary format should appear in consumeFood output.
+    expect(response).toContain('Adults starved: Clawtooth.');
+    expect(response).not.toContain('Clawtooth killed by starvation');
+    expect(response).not.toContain('Clawtooth has starved to death');
   });
 });

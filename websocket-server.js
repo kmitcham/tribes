@@ -1685,11 +1685,13 @@ async function validateUser(userData) {
     return false; // User doesn't exist
   }
 
-  // If user has no password set, they can login without password (legacy compatibility)
+  // AUTH POLICY (intentional): name-only accounts are valid.
+  // Do not require a password when the stored account has an empty password.
+  // This preserves long-standing gameplay behavior for legacy tribes.
   if (!user.password || user.password === '') {
-    // Update last connected time for legacy authentication
     user.lastConnected = new Date().toISOString();
     actuallyWriteToDisk('./tribe-data/users.json', usersDict);
+    clearFailedAttempts(identifier);
     return true;
   }
 
@@ -1733,9 +1735,13 @@ async function registerUser(userData) {
     // User exists - this is a login attempt
     const user = usersDict[storedName];
 
-    // If existing user has no password, they can login without password (legacy)
+    // AUTH POLICY (intentional): existing no-password users may login with name alone.
+    // If a password is provided, treat this as an upgrade and set it.
     if (!user.password || user.password === '') {
-      // Update last connected time for existing user
+      if (password && password.trim() !== '') {
+        validatePassword(password);
+        user.password = await hashPassword(password);
+      }
       user.lastConnected = new Date().toISOString();
       actuallyWriteToDisk('./tribe-data/users.json', usersDict);
 
@@ -1773,14 +1779,11 @@ async function registerUser(userData) {
   } else {
     // New user registration
     if (!password || password.trim() === '') {
-      // Allow new users without password for now (legacy compatibility)
-      // But log this for security awareness
-      logWithTimestamp(
-        `[SECURITY] New user '${name}' registered without password`
-      );
+      // AUTH POLICY (intentional): new user registration can be name-only.
+      // Keep empty password as a first-class supported state.
       password = '';
     } else {
-      // Validate password strength for new users who choose to set one
+      // Validate password strength and hash when provided
       validatePassword(password);
       password = await hashPassword(password);
     }
@@ -2061,6 +2064,8 @@ module.exports = {
   cleanupExpiredSessions,
 
   // Authentication helpers
+  registerUser,
+  validateUser,
   validatePassword,
   recordFailedAttempt,
   clearFailedAttempts,

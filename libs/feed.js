@@ -112,7 +112,6 @@ function feed(unused, player, amount, inputChildList, gameState) {
         player['grain'] -= amountForThisChild - foodExpended;
         feedAtLeastOneChild = true;
       }
-      message +=
       feedDetails +=
         player.name +
         ' feeds ' +
@@ -228,7 +227,9 @@ function consumeFoodChildren(gameState) {
     if (child.age < 24) {
       child.food -= 2;
       if (child.food < 0) {
-        response += ' child:' + childName + ' has starved to death.\n';
+        if (!gameState._suppressImmediateDeathMessages) {
+          response += ' child:' + childName + ' has starved to death.\n';
+        }
         child.dead = true;
         if (motherMember && motherMember.isPregnant) {
           delete motherMember.isPregnant;
@@ -304,7 +305,7 @@ function consumeFoodChildren(gameState) {
     killlib.kill(perishedChildren[i], 'starvation', gameState);
     console.log('removing child corpse ' + corpse);
   }
-  if (perishedChildren.length == 0) {
+  if (perishedChildren.length == 0 && !gameState._suppressImmediateDeathMessages) {
     response += 'No children starved!';
   }
   return response;
@@ -401,15 +402,78 @@ function consumeFood(gameState) {
     return;
   }
   console.log('adults are eating');
+  gameState._foodRoundDeathEvents = [];
+  gameState._suppressImmediateDeathMessages = true;
   response = 'Food round results:\n';
   //console.log('food response is '+response)
   response += consumeFoodPlayers(gameState);
   //console.log('food response is '+response)
   response += consumeFoodChildren(gameState);
+  response += summarizeFoodRoundDeaths(gameState);
   //console.log('food response is '+response)
+  delete gameState._suppressImmediateDeathMessages;
+  delete gameState._foodRoundDeathEvents;
   return response;
 }
 module.exports.consumeFood = consumeFood;
+
+function summarizeFoodRoundDeaths(gameState) {
+  var events = (gameState && gameState._foodRoundDeathEvents) || [];
+  if (!events.length) {
+    return '  No adults starved.\nNo children starved.\n';
+  }
+
+  var adultsStarved = [];
+  var childrenStarved = [];
+  var childrenNoMilk = [];
+  var otherDeaths = [];
+
+  for (var i = 0; i < events.length; i++) {
+    var evt = events[i];
+    if (!evt || !evt.name) {
+      continue;
+    }
+    if (!evt.isChild && evt.cause === 'starvation') {
+      adultsStarved.push(evt.name);
+      continue;
+    }
+    if (evt.isChild && evt.cause === 'starvation') {
+      childrenStarved.push(evt.name);
+      continue;
+    }
+    if (evt.isChild && evt.cause === 'no-milk') {
+      childrenNoMilk.push(evt.name);
+      continue;
+    }
+    otherDeaths.push(evt.name + ' (' + evt.cause + ')');
+  }
+
+  var summary = '';
+  if (adultsStarved.length) {
+    summary += '  Adults starved: ' + adultsStarved.join(', ') + '.\n';
+  } else {
+    summary += '  No adults starved.\n';
+  }
+
+  if (childrenStarved.length) {
+    summary += '  Children starved: ' + childrenStarved.join(', ') + '.\n';
+  } else if (childrenNoMilk.length) {
+    summary += '  No children starved from hunger.\n';
+  } else {
+    summary += 'No children starved.\n';
+  }
+
+  if (childrenNoMilk.length) {
+    summary +=
+      '  Children died from no-milk: ' + childrenNoMilk.join(', ') + '.\n';
+  }
+
+  if (otherDeaths.length) {
+    summary += '  Other deaths: ' + otherDeaths.join(', ') + '.\n';
+  }
+
+  return summary;
+}
 
 function consumeFoodPlayers(gameState) {
   perished = [];
@@ -426,7 +490,9 @@ function consumeFoodPlayers(gameState) {
       person.grain = person.grain + person.food;
       person.food = 0;
       if (person.grain < 0) {
-        response += '  ' + person.name + ' has starved to death.\n';
+        if (!gameState._suppressImmediateDeathMessages) {
+          response += '  ' + person.name + ' has starved to death.\n';
+        }
         person.grain = 0;
         perished.push(target);
       }
@@ -467,7 +533,7 @@ function consumeFoodPlayers(gameState) {
     console.log('removing corpse ' + corpse);
     killlib.kill(perished[i], 'starvation', gameState);
   }
-  if (perished.length == 0) {
+  if (perished.length == 0 && !gameState._suppressImmediateDeathMessages) {
     response += 'No adults starved! \n';
   }
   return response;

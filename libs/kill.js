@@ -15,9 +15,9 @@ function kill(name, message, gameState) {
       ' at seasonCount ' +
       gameState.seasonCounter
   );
-  population = gameState.population;
-  children = gameState.children;
-  childName = textLib.capitalizeFirstLetter(name);
+  const population = gameState.population;
+  const children = gameState.children;
+  const childName = textLib.capitalizeFirstLetter(name);
   if (!message || message == '') {
     message = 'unknown causes';
   }
@@ -30,10 +30,12 @@ function kill(name, message, gameState) {
     ? 'died in utero after mother died'
     : 'killed by ' + message;
 
-  person = populationLib.memberByName(name, gameState);
+  const person = populationLib.memberByName(name, gameState);
   let displayName = name;
+  let isChildDeath = false;
   if (person) {
     displayName = person.name || name;
+    const personKey = getKeyByValue(gameState.population, person);
     person.deathMessage = message;
     person.deathSeason = gameState.seasonCounter;
     if (person.isPregnant) {
@@ -44,14 +46,14 @@ function kill(name, message, gameState) {
         kill(childName, 'no-milk', gameState)
       );
     }
-    personKey = getKeyByValue(gameState.population, person);
     gameState.graveyard[name] = person;
     delete population[personKey];
     removeNameFromAllRelationshipLists(name, gameState.population, false);
   } else if (childName in children) {
+    isChildDeath = true;
     guardlib.unguardChild(childName, population);
     clearNursingPregnant(childName, gameState.population);
-    var child = children[childName];
+    const child = children[childName];
     if (!child.name) {
       child.name = childName;
     }
@@ -65,7 +67,28 @@ function kill(name, message, gameState) {
     console.log('Tried to kill ' + name + ' but could not find them');
     return;
   }
-  textLib.addMessage(gameState, 'tribe', displayName + ' ' + deathSummary);
+
+  if (!gameState._foodRoundDeathEvents) {
+    gameState._foodRoundDeathEvents = [];
+  }
+
+  const deathEventKey =
+    String(displayName).toLowerCase() + '|' + String(message).toLowerCase();
+  const hasEvent = gameState._foodRoundDeathEvents.some(
+    (evt) => evt && evt.key === deathEventKey
+  );
+  if (!hasEvent) {
+    gameState._foodRoundDeathEvents.push({
+      key: deathEventKey,
+      name: displayName,
+      cause: message,
+      isChild: isChildDeath,
+    });
+  }
+
+  if (!gameState._suppressImmediateDeathMessages) {
+    textLib.addMessage(gameState, 'tribe', displayName + ' ' + deathSummary);
+  }
   populationLib.history(displayName, displayName + ' ' + deathSummary, gameState);
   return;
 }
