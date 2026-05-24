@@ -187,6 +187,21 @@ class TribesClient {
     return parameters;
   }
 
+  getMissingRequiredParameters(parameters) {
+    const required = this.selectedCommand?.options
+      ? this.selectedCommand.options.filter((opt) => opt.required)
+      : [];
+
+    const isMissingRequired = (value) => {
+      if (value === undefined || value === null) return true;
+      if (typeof value === 'string') return value.trim() === '';
+      if (Array.isArray(value)) return value.length === 0;
+      return false;
+    };
+
+    return required.filter((opt) => isMissingRequired(parameters[opt.name]));
+  }
+
   isOrderingOption(optionName) {
     const orderingNames = [
       'invite',
@@ -719,6 +734,19 @@ describe('TribesClient Command System', () => {
       expect(parameters).toEqual({
         invitelist: ['OnlyPlayer'],
       });
+    });
+
+    test('should not treat required boolean false as missing', () => {
+      tribesClient.selectedCommand = {
+        name: 'secrets',
+        options: [{ name: 'willtrain', required: true, type: 'boolean' }],
+      };
+
+      const missing = tribesClient.getMissingRequiredParameters({
+        willtrain: false,
+      });
+
+      expect(missing).toEqual([]);
     });
   });
 

@@ -1356,19 +1356,41 @@
 
         @media (max-width: 768px) {
             .container {
-                grid-template-columns: 1fr;
-                grid-template-rows: auto auto;
+                display: flex;
+                flex-direction: column;
                 max-width: 100%;
                 padding: 0.5rem;
             }
-            
-            .sidebar {
-                order: 2;
-                margin-bottom: 1rem;
+
+            /* Flatten wrappers so we can intentionally order mobile sections */
+            .sidebar,
+            .main-content {
+                display: contents;
             }
             
-            .main-content {
+            /* Requested mobile flow: commands -> game messages -> people/data */
+            .commands-section {
                 order: 1;
+                margin-top: 0;
+            }
+            
+            .command-panel {
+                order: 2;
+            }
+
+            .data-section {
+                order: 3;
+                min-height: 300px; /* Reasonable minimum on mobile */
+            }
+
+            /* Keep secondary blocks after the primary gameplay flow */
+            .user-info {
+                order: 4;
+                margin-top: 1rem;
+            }
+
+            .help-section {
+                order: 5;
             }
 
             .modal-popup {
@@ -1378,10 +1400,6 @@
             
             .messages-container {
                 max-height: min(40vh, 400px); /* Smaller height on mobile */
-            }
-            
-            .data-section {
-                min-height: 300px; /* Reasonable minimum on mobile */
             }
         }
     </style>
@@ -3847,7 +3865,20 @@
 
                 // Validation
                 const required = this.selectedCommand.options ? this.selectedCommand.options.filter(opt => opt.required) : [];
-                const missing = required.filter(opt => !parameters[opt.name] || parameters[opt.name] === '');
+                const isMissingRequired = (value) => {
+                    if (value === undefined || value === null) {
+                        return true;
+                    }
+                    if (typeof value === 'string') {
+                        return value.trim() === '';
+                    }
+                    if (Array.isArray(value)) {
+                        return value.length === 0;
+                    }
+                    // Important: boolean false is a valid, intentional value for required boolean options.
+                    return false;
+                };
+                const missing = required.filter(opt => isMissingRequired(parameters[opt.name]));
                 
                 if (missing.length > 0) {
                     this.addMessage(`Missing required parameters: ${missing.map(opt => opt.name).join(', ')}`, 'error');
@@ -4562,6 +4593,13 @@
                 return states.length > 0 ? states.join(' • ') : 'Healthy';
             }
 
+            getSecretsStatus(person) {
+                if (person && person.canCraft && person.noTeach !== true) {
+                    return 'Will Train';
+                }
+                return '';
+            }
+
             getPopulationWorkStatus(person) {
                 if (person.escaped) {
                     return 'Ran away from combat';
@@ -4677,7 +4715,7 @@
                             { label: 'Current Activity', value: this.formatPopulationValue('activity', person.activity) },
                             { label: 'Guarding', value: this.formatPopulationValue('guarding', person.guarding) },
                             { label: 'Can Craft', value: person.canCraft ? 'Yes' : '' },
-                            { label: 'Not Teaching', value: person.noTeach ? 'Yes' : '' }
+                            { label: 'Crafting', value: this.getSecretsStatus(person) }
                         ]
                     },
                     {
@@ -4917,6 +4955,10 @@
                     }
                     if (person.canCraft) {
                         labels.push({ text: 'Can Craft', class: 'craft' });
+                    }
+                    const secretsStatus = this.getSecretsStatus(person);
+                    if (secretsStatus) {
+                        labels.push({ text: `Crafting: ${secretsStatus}`, class: 'craft' });
                     }
                     if (person.chief) {
                         labels.push({ text: 'Chief', class: 'chief' });

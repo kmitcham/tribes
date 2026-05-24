@@ -42,7 +42,9 @@ function kill(name, message, gameState) {
       kill(person.isPregnant, 'mother-died', gameState);
     }
     if (person.nursing) {
-      person.nursing.forEach((childName) =>
+      // Iterate over a snapshot because recursive child kills mutate nursing lists.
+      var nursingChildren = person.nursing.slice();
+      nursingChildren.forEach((childName) =>
         kill(childName, 'no-milk', gameState)
       );
     }
@@ -52,7 +54,6 @@ function kill(name, message, gameState) {
   } else if (childName in children) {
     isChildDeath = true;
     guardlib.unguardChild(childName, population);
-    clearNursingPregnant(childName, gameState.population);
     const child = children[childName];
     if (!child.name) {
       child.name = childName;
@@ -110,6 +111,7 @@ function removeNameFromAllRelationshipLists(targetName, population, isChild = fa
   if (!population) {
     return;
   }
+  var lowerTargetName = String(targetName).toLowerCase();
   for (var personName in population) {
     var person = population[personName];
     if (!person) {
@@ -122,6 +124,14 @@ function removeNameFromAllRelationshipLists(targetName, population, isChild = fa
     // to avoid accidentally unguarding a child that shares a name with a dead adult
     if (isChild) {
       removeNameFromArray(person.guarding, targetName);
+      removeNameFromArray(person.nursing, targetName);
+
+      if (
+        person.isPregnant &&
+        String(person.isPregnant).toLowerCase() === lowerTargetName
+      ) {
+        person.isPregnant = '';
+      }
     }
 
     if (person.consentDict && typeof person.consentDict === 'object') {
@@ -147,23 +157,8 @@ function removeNameFromAllRelationshipLists(targetName, population, isChild = fa
     if (person.guarding && person.guarding.length === 0) {
       delete person.guarding;
     }
-  }
-}
-
-function clearNursingPregnant(childName, population) {
-  for (personName in population) {
-    person = population[personName];
-    if (person.nursing && person.nursing.indexOf(childName) > -1) {
-      childIndex = person.nursing.indexOf(childName);
-      person.nursing.splice(childIndex, 1);
-      console.log(person.name + ' is no longer nursing ' + childName);
-      if (person.nursing.length == 0) {
-        delete person.nursing;
-      }
-    }
-    if (person.isPregnant && person.isPregnant == childName) {
-      person.isPregnant = '';
-      console.log(person.name + ' is no longer pregnant with ' + childName);
+    if (person.nursing && person.nursing.length === 0) {
+      delete person.nursing;
     }
   }
 }
