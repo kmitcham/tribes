@@ -9,7 +9,7 @@
     "url": "https://kevinmitcham.com"
   },
   "scripts": {
-    "start": "node websocket-server.js",
+    "start": "node scripts/start-with-build-meta.js",
     "test": "jest",
     "clear_jest": "jest --clearCache",
     "test:browser": "jest --runInBand --runTestsByPath tests/browser-integration.test.js --config='{\"testPathIgnorePatterns\":[\"/node_modules/\"]}'",

@@ -25,6 +25,13 @@ fi
 export NODE_ENV=development
 export PORT=8000
 
+# Surface commit metadata in the UI when running locally.
+if command -v git >/dev/null 2>&1 && git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    export TRIBES_LAST_COMMIT_DATE="${TRIBES_LAST_COMMIT_DATE:-$(git log -1 --format=%cI 2>/dev/null || true)}"
+    export TRIBES_LAST_COMMIT_DATE_SHORT="${TRIBES_LAST_COMMIT_DATE_SHORT:-$(git log -1 --format=%cs 2>/dev/null || true)}"
+    export TRIBES_LAST_COMMIT_HASH="${TRIBES_LAST_COMMIT_HASH:-$(git rev-parse --short HEAD 2>/dev/null || true)}"
+fi
+
 echo "🚀 Starting Tribes server on port $PORT..."
 echo ""
 echo "🌐 Local access:"

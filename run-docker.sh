@@ -3,6 +3,13 @@
 # Run script for Tribes Game Docker container
 echo "Starting Tribes Game server..."
 
+# Prefer git metadata when available, but allow CI/env-provided values.
+if command -v git >/dev/null 2>&1 && git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  TRIBES_LAST_COMMIT_DATE="${TRIBES_LAST_COMMIT_DATE:-$(git log -1 --format=%cI 2>/dev/null || true)}"
+  TRIBES_LAST_COMMIT_DATE_SHORT="${TRIBES_LAST_COMMIT_DATE_SHORT:-$(git log -1 --format=%cs 2>/dev/null || true)}"
+  TRIBES_LAST_COMMIT_HASH="${TRIBES_LAST_COMMIT_HASH:-$(git rev-parse --short HEAD 2>/dev/null || true)}"
+fi
+
 # Stop existing container if it exists
 docker stop tribes-server 2>/dev/null
 docker rm tribes-server 2>/dev/null
@@ -11,6 +18,9 @@ docker rm tribes-server 2>/dev/null
 docker run -d \
   --name tribes-server \
   -p 0.0.0.0:8000:8000 \
+  -e TRIBES_LAST_COMMIT_DATE="$TRIBES_LAST_COMMIT_DATE" \
+  -e TRIBES_LAST_COMMIT_DATE_SHORT="$TRIBES_LAST_COMMIT_DATE_SHORT" \
+  -e TRIBES_LAST_COMMIT_HASH="$TRIBES_LAST_COMMIT_HASH" \
   -v $(pwd)/tribe-data/bear:/app/tribe-data/bear \
   -v $(pwd)/tribe-data/flounder:/app/tribe-data/flounder \
   -v $(pwd)/tribe-data/bug:/app/tribe-data/bug \

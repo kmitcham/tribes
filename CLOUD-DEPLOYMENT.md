@@ -76,7 +76,13 @@ Set these environment variables in your cloud service:
 ```bash
 PORT=8000                    # Container port
 NODE_ENV=production         # Production optimizations
+TRIBES_LAST_COMMIT_DATE=2026-05-25T18:12:00Z  # Optional: shown in UI footer
+TRIBES_LAST_COMMIT_HASH=abc1234               # Optional: available for diagnostics
 ```
+
+If your host has no git access, set TRIBES_LAST_COMMIT_DATE in your deploy pipeline.
+The included GitHub Actions workflow now exports commit metadata automatically via GITHUB_ENV,
+so downstream build/deploy steps can pass these through without needing git on the runtime host.
 
 ## Debugging
 

@@ -15,6 +15,24 @@ const logger = require('./libs/logger.js');
 const PORT = process.env.PORT || 8000;
 const referees = require('./libs/referees.json');
 
+function getLastCommitInfo() {
+  const lastCommitDate =
+    process.env.TRIBES_LAST_COMMIT_DATE ||
+    process.env.SOURCE_COMMIT_DATE ||
+    null;
+
+  return {
+    lastCommitDate,
+    lastCommitDateShort: process.env.TRIBES_LAST_COMMIT_DATE_SHORT || null,
+    lastCommitHash:
+      process.env.TRIBES_LAST_COMMIT_HASH ||
+      process.env.SOURCE_COMMIT ||
+      null,
+  };
+}
+
+const LAST_COMMIT_INFO = getLastCommitInfo();
+
 // Timestamped logging function
 function logWithTimestamp(message, ...args) {
   const timestamp = new Date().toLocaleString();
@@ -391,9 +409,10 @@ function startServer() {
 
               // Insert WebSocket config right after the <head> tag
               const configScript = `<script>window.TRIBES_WS_CONFIG = ${JSON.stringify(wsConfig)};</script>`;
+              const buildInfoScript = `<script>window.TRIBES_BUILD_INFO = ${JSON.stringify(LAST_COMMIT_INFO)};</script>`;
               const modifiedData = data.replace(
                 '<head>',
-                '<head>\n    ' + configScript
+                '<head>\n    ' + configScript + '\n    ' + buildInfoScript
               );
 
               res.writeHead(200, { 'Content-Type': 'text/html' });

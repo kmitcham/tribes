@@ -97,6 +97,21 @@
             font-size: 1.1rem;
         }
 
+        .status-item.connection-status-indicator.connected {
+            background: rgba(40, 167, 69, 0.28);
+            border-color: rgba(40, 167, 69, 0.55);
+        }
+
+        .status-item.connection-status-indicator.connecting {
+            background: rgba(255, 193, 7, 0.28);
+            border-color: rgba(255, 193, 7, 0.55);
+        }
+
+        .status-item.connection-status-indicator.disconnected {
+            background: rgba(220, 53, 69, 0.25);
+            border-color: rgba(220, 53, 69, 0.5);
+        }
+
         .container {
             max-width: 2400px; /* Increased for larger screens */
             margin: 0 auto;
@@ -1367,15 +1382,37 @@
             .main-content {
                 display: contents;
             }
-            
-            /* Requested mobile flow: commands -> game messages -> people/data */
-            .commands-section {
+
+            /* Mobile flow before login: login first, then command selection */
+            .user-info {
                 order: 1;
                 margin-top: 0;
             }
-            
-            .command-panel {
+
+            .commands-section {
                 order: 2;
+                margin-top: 0;
+                display: contents;
+            }
+
+            .commands-section h3 {
+                order: 1;
+                margin-bottom: 0.5rem;
+            }
+
+            .command-search-container {
+                order: 2;
+            }
+
+            .command-list {
+                order: 3;
+                max-height: 180px;
+                overflow-y: auto;
+            }
+
+            #refereeAdminSection {
+                order: 9;
+                margin-top: 0.5rem;
             }
 
             .data-section {
@@ -1383,21 +1420,44 @@
                 min-height: 300px; /* Reasonable minimum on mobile */
             }
 
-            /* Keep secondary blocks after the primary gameplay flow */
-            .user-info {
+            .command-panel {
                 order: 4;
-                margin-top: 1rem;
             }
 
             .help-section {
                 order: 5;
             }
 
+            /* After login on mobile, demote and collapse login controls */
+            body.mobile-logged-in .user-info {
+                order: 6;
+            }
+
+            body.mobile-logged-in .user-info.minimized {
+                padding: 0.4rem 0.6rem;
+                opacity: 1;
+                border: 1px dashed #cbd5e1;
+                background: #f8fafc;
+            }
+
+            body.mobile-logged-in .user-info.minimized .form-group,
+            body.mobile-logged-in .user-info.minimized #registerBtn,
+            body.mobile-logged-in .user-info.minimized #logoutBtn,
+            body.mobile-logged-in .user-info.minimized #logoutAllBtn {
+                display: none !important;
+            }
+
+            body.mobile-logged-in .user-info.minimized #expandLoginBtn {
+                width: auto;
+                margin: 0;
+                padding: 0.45rem 0.75rem;
+                font-size: 0.75rem;
+            }
             .modal-popup {
                 margin: 1rem;
                 width: calc(100% - 2rem);
             }
-            
+
             .messages-container {
                 max-height: min(40vh, 400px); /* Smaller height on mobile */
             }
@@ -1409,7 +1469,6 @@
         <div class="header-main">
             <div class="header-content">
                 <h1><a href="https://www.sjgames.com/tribes/"><img src="https://www.sjgames.com/tribes/img/logo.png" alt="Tribes Logo"></a>
-                <div class="connection-status" id="connectionStatus">Connecting...</div>
             </div>
         </div>
         
@@ -1429,6 +1488,14 @@
             <div class="status-item" id="locationStatus">
                 <span class="status-icon">🌍</span>
                 <span>Location: Unknown</span>
+            </div>
+            <div class="status-item" id="lastUpdatedStatus">
+                <span class="status-icon">🗓️</span>
+                <span id="lastUpdatedText">Updated: loading...</span>
+            </div>
+            <div class="status-item connection-status-indicator connecting" id="connectionStatus">
+                <span class="status-icon">🔄</span>
+                <span>Connecting...</span>
             </div>
         </div>
     </div>
@@ -1964,17 +2031,19 @@
 
             updateConnectionStatus(status) {
                 const statusEl = document.getElementById('connectionStatus');
-                statusEl.className = `connection-status ${status}`;
+                if (!statusEl) return;
+
+                statusEl.className = `status-item connection-status-indicator ${status}`;
                 
                 switch (status) {
                     case 'connected':
-                        statusEl.textContent = '✅ Connected to Tribes Server';
+                        statusEl.innerHTML = '<span class="status-icon">✅</span><span>Connected to server</span>';
                         break;
                     case 'connecting':
-                        statusEl.textContent = '🔄 Connecting...';
+                        statusEl.innerHTML = '<span class="status-icon">🔄</span><span>Connecting...</span>';
                         break;
                     case 'disconnected':
-                        statusEl.textContent = '❌ Disconnected from Server';
+                        statusEl.innerHTML = '<span class="status-icon">❌</span><span>Disconnected from server</span>';
                         break;
                 }
             }
@@ -2281,9 +2350,16 @@
                 }
             }
 
+            syncMobileLayoutState() {
+                const isMobile = window.matchMedia('(max-width: 768px)').matches;
+                document.body.classList.toggle('mobile-view', isMobile);
+                document.body.classList.toggle('mobile-logged-in', isMobile && this.isLoggedIn);
+            }
+
             minimizeLoginArea() {
                 const userInfo = document.querySelector('.user-info');
                 userInfo.classList.add('minimized');
+                this.syncMobileLayoutState();
             }
 
             expandLoginArea() {
@@ -2291,6 +2367,7 @@
                 userInfo.classList.remove('minimized');
                 this.isLoggedIn = false; // Reset login state when expanding login area
                 this.hideCommandsSection(); // Hide commands when going back to login
+                this.syncMobileLayoutState();
             }
 
             hideCommandsSection() {
@@ -5337,6 +5414,9 @@
             initializeEventListeners() {
                 // Register button
                 document.getElementById('registerBtn').onclick = () => this.registerPlayer();
+
+                // Keep mobile ordering in sync with viewport changes.
+                window.addEventListener('resize', () => this.syncMobileLayoutState());
                 
                 // Expand login area button
                 document.getElementById('expandLoginBtn').onclick = () => this.expandLoginArea();
@@ -5403,6 +5483,8 @@
                         document.getElementById(`${targetTab}Tab`).classList.add('active');
                     };
                 });
+
+                this.syncMobileLayoutState();
             }
 
             // Handle export game response
@@ -5686,6 +5768,39 @@
 
         // Initialize the client when page loads
         window.addEventListener('DOMContentLoaded', () => {
+            const renderLastCommitDate = () => {
+                const target = document.getElementById('lastUpdatedText');
+                if (!target) return;
+
+                const buildInfo = window.TRIBES_BUILD_INFO || {};
+                let sourceDate = buildInfo.lastCommitDate;
+
+                if (!sourceDate) {
+                    sourceDate = document.querySelector('meta[name="interface-version"]')?.content || null;
+                }
+
+                if (!sourceDate) {
+                    target.textContent = 'Updated: unavailable';
+                    return;
+                }
+
+                const parsedDate = new Date(sourceDate);
+                if (Number.isNaN(parsedDate.getTime())) {
+                    target.textContent = `Updated: ${sourceDate}`;
+                    return;
+                }
+
+                const formattedDate = parsedDate.toLocaleDateString(undefined, {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                });
+
+                target.textContent = `Updated: ${formattedDate}`;
+            };
+
+            renderLastCommitDate();
+
             // Add timestamped logging function
             window.logWithTimestamp = function(message, ...args) {
                 const timestamp = new Date().toLocaleString();

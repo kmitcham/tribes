@@ -618,7 +618,7 @@ test('run endgame', () => {
   endLib.endGame(endGameState);
   actualMessage = endGameState.messages['tribe'];
   expect(actualMessage).toContain('The fate of the children');
-  expect(actualMessage).toContain('The tribe was');
+  expect(actualMessage).toContain('Tribe result:');
   expect(actualMessage).toContain('banished');
 });
 
@@ -815,7 +815,7 @@ test('run scoreChildren', () => {
     },
   };
   scoreMessage = endLib.scoreChildrenMessage(endGameState);
-  expect(scoreMessage).toContain('BethMitcham(m): 13');
+  expect(scoreMessage).toContain('BethMitcham ♂️ (m) — 13 children');
 });
 
 test('run scoreChildren simple', () => {
@@ -1146,9 +1146,9 @@ test('run scoreChildren simple', () => {
     },
   };
   scoreMessage = endLib.scoreChildrenMessage(endGameState);
-  expect(scoreMessage).toContain('BethMitcham(m): 3');
-  expect(scoreMessage).toContain('notlink(f): 3');
-  expect(scoreMessage).toContain('otherFemale(f): 1');
+  expect(scoreMessage).toContain('BethMitcham ♂️ (m) — 3 children');
+  expect(scoreMessage).toContain('notlink ♀️ (f) — 3 children');
+  expect(scoreMessage).toContain('otherFemale ♀️ (f) — 1 child');
 });
 
 test('run scoreChildren trivial', () => {
@@ -1191,5 +1191,5 @@ test('run scoreChildren trivial', () => {
     banished: {},
   };
   scoreMessage = endLib.scoreChildrenMessage(endGameState);
-  expect(scoreMessage).toContain('BethMitcham(m): 2');
+  expect(scoreMessage).toContain('BethMitcham ♂️ (m) — 2 children');
 });

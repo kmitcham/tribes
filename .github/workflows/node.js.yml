@@ -20,6 +20,11 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      - name: Export commit metadata
+        run: |
+          echo "TRIBES_LAST_COMMIT_DATE=$(git log -1 --format=%cI)" >> "$GITHUB_ENV"
+          echo "TRIBES_LAST_COMMIT_DATE_SHORT=$(git log -1 --format=%cs)" >> "$GITHUB_ENV"
+          echo "TRIBES_LAST_COMMIT_HASH=${GITHUB_SHA::7}" >> "$GITHUB_ENV"
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:

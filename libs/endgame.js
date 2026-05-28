@@ -58,26 +58,30 @@ function scoreTribe(gameState) {
 
 module.exports.endGame = endGame;
 function endGame(gameState, bot) {
-  adultCount = 0;
-  newAdultCount = 0;
-  population = gameState.population;
-  deadAdults = countDeadAdults(gameState);
-  banishCount = 0;
+  let adultCount = 0;
+  let newAdultCount = 0;
+  let population = gameState.population;
+  let deadAdults = countDeadAdults(gameState);
+  let banishCount = 0;
   if (gameState.banished != null) {
     banishCount = Object.keys(gameState.banished).length;
   }
   if (gameState.ended) {
-    text.addMessage(gameState, actorName, 'The game has ended already.');
+    text.addMessage(gameState, 'tribe', 'The game has ended already.');
     return;
   }
-  response = '### --- GAME OVER --- ### \n';
-  children = gameState.children;
+
+  const responseLines = ['### --- GAME OVER --- ###'];
+  const children = gameState.children || {};
+
   if (children) {
-    response += 'The fate of the children:\n';
+    responseLines.push('');
+    responseLines.push('👶 The fate of the children:');
     gameState.secretMating = false;
     gameState.gameOver = true;
-    for (childName in children) {
-      var child = children[childName];
+
+    for (const childName in children) {
+      const child = children[childName];
       console.log(
         'end game scoring for ' +
           childName +
@@ -87,50 +91,70 @@ function endGame(gameState, bot) {
           Number(child.age) +
           2
       );
+
       if (!child.newAdult) {
-        var roll = dice.roll(3);
-        response +=
-          '\t' +
-          childName +
-          ' [' +
-          roll +
-          ' vs ' +
-          childSurvivalChance[Number(child.age) + 2] +
-          '] ';
+        const roll = dice.roll(3);
+        const survivalTarget = childSurvivalChance[Number(child.age) + 2];
+
         if (roll <= childSurvivalChance[Number(child.age) + 2]) {
           child.newAdult = true;
-          response += 'grows up\n';
+          responseLines.push(
+            '- ' +
+              childName +
+              ' [' +
+              roll +
+              ' vs ' +
+              survivalTarget +
+              '] grows up ✅'
+          );
         } else {
-          response += 'dies young\n';
+          responseLines.push(
+            '- ' +
+              childName +
+              ' [' +
+              roll +
+              ' vs ' +
+              survivalTarget +
+              '] dies young 💀'
+          );
           killlib.kill(childName, 'endgame scoring', gameState);
         }
+      } else {
+        responseLines.push('- ' + childName + ' is already an adult ✅');
       }
+
       if (child.newAdult) {
         adultCount++;
         newAdultCount++;
       }
     }
   }
+
   adultCount += Object.keys(population).length;
-  response +=
-    'The tribe lost ' +
-    deadAdults +
-    ' members and banished ' +
-    banishCount +
-    '.\n';
-  response +=
-    'Count of surviving adults is:' +
-    adultCount +
-    ' (' +
-    newAdultCount +
-    ' new adults)\n';
-  response +=
-    'The tribe acquired  ' + gameState.foodAcquired + ' food and grain.\n';
-  response += 'At least ' + gameState.spoiled + ' food was lost to spoilage.\n';
-  response += 'The tribe was ' + scoreTribe(gameState);
+
+  responseLines.push('');
+  responseLines.push(
+    '📉 Losses: ' + deadAdults + ' dead, ' + banishCount + ' banished.'
+  );
+  responseLines.push(
+    '🧑‍🤝‍🧑 Surviving adults: ' +
+      adultCount +
+      ' (' +
+      newAdultCount +
+      ' new adults)'
+  );
+  responseLines.push(
+    '🍖 Food acquired: ' + (gameState.foodAcquired == null ? 0 : gameState.foodAcquired)
+  );
+  responseLines.push(
+    '🪰 Food spoiled: at least ' + (gameState.spoiled == null ? 0 : gameState.spoiled)
+  );
+  responseLines.push('🏕️ Tribe result: ' + scoreTribe(gameState));
+
+  const response = responseLines.join('\n');
   gameState.ended = true;
   text.addMessage(gameState, 'tribe', response);
-  childrenMessage = scoreChildrenMessage(gameState);
+  const childrenMessage = scoreChildrenMessage(gameState);
   text.addMessage(gameState, 'tribe', childrenMessage);
 
   return response;
@@ -138,72 +162,284 @@ function endGame(gameState, bot) {
 
 module.exports.scoreMessage = scoreMessage;
 function scoreMessage(gameState, bot) {
-  tribeResult = scoreTribe(gameState);
-  messageText =
-    '###---> Score for the tribe:' +
+  const tribeResult = scoreTribe(gameState);
+  const messageText =
+    '### ---> Score for the tribe: ' +
     tribeResult +
-    ' <---###\n' +
+    ' <--- ###\n\n' +
     scoreChildrenMessage(gameState);
   return messageText;
 }
 
+function normalizeGender(gender) {
+  if (gender == null) {
+    return '?';
+  }
+  const normalized = String(gender).toLowerCase();
+  if (normalized.startsWith('f')) {
+    return 'f';
+  }
+  if (normalized.startsWith('m')) {
+    return 'm';
+  }
+  return '?';
+}
+
+function genderIcon(genderCode) {
+  if (genderCode === 'f') {
+    return '♀️';
+  }
+  if (genderCode === 'm') {
+    return '♂️';
+  }
+  return '⚪';
+}
+
+function isChildRecord(record) {
+  return !!record && typeof record === 'object' && 'age' in record && !('profession' in record);
+}
+
+function isAdultRecord(record) {
+  if (!record || typeof record !== 'object') {
+    return false;
+  }
+  if ('profession' in record) {
+    return true;
+  }
+  if ('age' in record) {
+    return false;
+  }
+  return true;
+}
+
+function findInDictionaryByName(name, dictionary) {
+  if (!dictionary || !name) {
+    return null;
+  }
+  const target = String(name).toLowerCase();
+  for (const key in dictionary) {
+    const record = dictionary[key] || {};
+    const candidateName = (record.name || key || '').toString().toLowerCase();
+    if (key.toString().toLowerCase() === target || candidateName === target) {
+      return { key: key, record: record };
+    }
+  }
+  return null;
+}
+
+function determineAdultStatus(name, gameState) {
+  const inPopulation = findInDictionaryByName(name, gameState.population);
+  if (inPopulation) {
+    return { status: 'living', record: inPopulation.record, key: inPopulation.key };
+  }
+  const inBanished = findInDictionaryByName(name, gameState.banished);
+  if (inBanished) {
+    return { status: 'banished', record: inBanished.record, key: inBanished.key };
+  }
+  const inGraveyard = findInDictionaryByName(name, gameState.graveyard);
+  if (inGraveyard) {
+    return { status: 'dead', record: inGraveyard.record, key: inGraveyard.key };
+  }
+  return { status: 'unknown', record: null, key: name };
+}
+
+function statusIcon(status) {
+  if (status === 'living') {
+    return '🟢';
+  }
+  if (status === 'banished') {
+    return '🚫';
+  }
+  if (status === 'dead') {
+    return '🪦';
+  }
+  return '❔';
+}
+
+function scoreIcon(score) {
+  if (score >= 8) {
+    return '🏆';
+  }
+  if (score >= 5) {
+    return '🌟';
+  }
+  if (score >= 1) {
+    return '✨';
+  }
+  return '🌱';
+}
+
+function addAdultNamesFromDictionary(dictionary, includeRecordCheck, target) {
+  if (!dictionary) {
+    return;
+  }
+  for (const key in dictionary) {
+    const record = dictionary[key] || {};
+    if (includeRecordCheck && !isAdultRecord(record)) {
+      continue;
+    }
+    const name = record.name || key;
+    if (name) {
+      target.add(name);
+    }
+  }
+}
+
+function buildParentRows(gameState, children) {
+  const adultNames = new Set();
+  addAdultNamesFromDictionary(gameState.population, false, adultNames);
+  addAdultNamesFromDictionary(gameState.banished, false, adultNames);
+  addAdultNamesFromDictionary(gameState.graveyard, true, adultNames);
+
+  const rowsByLowerName = {};
+
+  function ensureRow(parentName) {
+    if (!parentName) {
+      return null;
+    }
+    const lookup = determineAdultStatus(parentName, gameState);
+    const displayName =
+      (lookup.record && lookup.record.name) || lookup.key || parentName;
+    const key = String(displayName).toLowerCase();
+
+    if (!rowsByLowerName[key]) {
+      rowsByLowerName[key] = {
+        name: displayName,
+        gender: normalizeGender(lookup.record && lookup.record.gender),
+        score: 0,
+        status: lookup.status,
+      };
+    }
+    return rowsByLowerName[key];
+  }
+
+  adultNames.forEach((adultName) => {
+    ensureRow(adultName);
+  });
+
+  for (const childName in children) {
+    const child = children[childName] || {};
+    const motherRow = ensureRow(child.mother);
+    if (motherRow) {
+      motherRow.score++;
+    }
+    const fatherRow = ensureRow(child.father);
+    if (fatherRow) {
+      fatherRow.score++;
+    }
+  }
+
+  return Object.values(rowsByLowerName).sort((a, b) => {
+    if (b.score !== a.score) {
+      return b.score - a.score;
+    }
+    return a.name.toLowerCase().localeCompare(b.name.toLowerCase());
+  });
+}
+
+function buildChildOutcomeRows(gameState) {
+  const rowsByLowerName = {};
+  const children = gameState.children || {};
+  const graveyard = gameState.graveyard || {};
+
+  function setRow(name, rowData) {
+    if (!name) {
+      return;
+    }
+    const key = String(name).toLowerCase();
+    rowsByLowerName[key] = Object.assign({}, rowsByLowerName[key] || {}, rowData);
+  }
+
+  for (const childKey in children) {
+    const child = children[childKey] || {};
+    const childName = child.name || childKey;
+    const childStatus = child.newAdult ? 'grew up' : 'still a child';
+    setRow(childName, {
+      name: childName,
+      gender: normalizeGender(child.gender),
+      mother: child.mother || '?',
+      father: child.father || '?',
+      status: childStatus,
+      statusIcon: child.newAdult ? '✅' : '🧒',
+    });
+  }
+
+  for (const graveKey in graveyard) {
+    const member = graveyard[graveKey] || {};
+    if (!isChildRecord(member)) {
+      continue;
+    }
+    const childName = member.name || graveKey;
+    setRow(childName, {
+      name: childName,
+      gender: normalizeGender(member.gender),
+      mother: member.mother || '?',
+      father: member.father || '?',
+      status: 'dead',
+      statusIcon: '💀',
+    });
+  }
+
+  return Object.values(rowsByLowerName).sort((a, b) =>
+    a.name.toLowerCase().localeCompare(b.name.toLowerCase())
+  );
+}
+
 module.exports.scoreChildrenMessage = scoreChildrenMessage;
 function scoreChildrenMessage(gameState) {
-  children = gameState.children;
-  var parentScores = {};
-  for (childName in children) {
-    var child = children[childName];
-    if (parentScores[child.mother]) {
-      parentScores[child.mother]++;
-    } else {
-      parentScores[child.mother] = 1;
-    }
-    if (parentScores[child.father]) {
-      parentScores[child.father]++;
-    } else {
-      parentScores[child.father] = 1;
-    }
-  }
-  if (Object.keys(parentScores).length == 0) {
-    return 'No surving children were found, so all individual scores are zero.';
-  }
-  var message = 'Child scores:\n';
+  const children = gameState.children || {};
+  const childRows = buildChildOutcomeRows(gameState);
+  const parentRows = buildParentRows(gameState, children);
 
-  for (parentName in parentScores) {
-    member = pop.memberByName(parentName, gameState);
-    if (member) {
-      if (member.gender == 'female') {
-        message +=
-          '\t' +
-          member.name +
-          '(' +
-          member.gender.substring(0, 1) +
-          '): ' +
-          parentScores[parentName];
-      } else if (gameState.ended) {
-        message +=
-          '\t' +
-          member.name +
-          '(' +
-          member.gender.substring(0, 1) +
-          '): ' +
-          parentScores[parentName];
-      }
-    } else {
-      message +=
-        'Banished or dead: ' +
-        [parentName] +
-        ' with score ' +
-        parentScores[parentName];
-      console.log(
-        'Banished or dead: ' +
-          [parentName] +
-          ' with score ' +
-          parentScores[parentName]
-      );
-    }
+  if (childRows.length === 0) {
+    return '👶 No children were found, so all individual scores are zero.';
   }
-  return message;
+
+  const lines = [];
+  lines.push('👶 Final children list (parentage + status):');
+  childRows.forEach((row) => {
+    lines.push(
+      '- ' +
+        row.name +
+        ' ' +
+        genderIcon(row.gender) +
+        ' (' +
+        row.gender +
+        ') — mother: ' +
+        row.mother +
+        ', father: ' +
+        row.father +
+        ' • ' +
+        row.statusIcon +
+        ' ' +
+        row.status
+    );
+  });
+
+  lines.push('');
+  lines.push('👨‍👩‍👧‍👦 Parent scores (women and men sorted together):');
+  parentRows.forEach((row) => {
+    lines.push(
+      '- ' +
+        scoreIcon(row.score) +
+        ' ' +
+        row.name +
+        ' ' +
+        genderIcon(row.gender) +
+        ' (' +
+        row.gender +
+        ') — ' +
+        row.score +
+        ' child' +
+        (row.score === 1 ? '' : 'ren') +
+        ' • ' +
+        statusIcon(row.status) +
+        ' ' +
+        row.status
+    );
+  });
+
+  return lines.join('\n');
 }
 
 module.exports.countDeadAdults = countDeadAdults;

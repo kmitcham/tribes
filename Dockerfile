@@ -23,9 +23,17 @@ RUN mkdir -p /app/archive /app/logs /app/tribe-data/bug /app/tribe-data/bear /ap
 # Expose the port the app runs on
 EXPOSE 8000
 
+# Build metadata injected at image build time
+ARG TRIBES_LAST_COMMIT_DATE
+ARG TRIBES_LAST_COMMIT_DATE_SHORT
+ARG TRIBES_LAST_COMMIT_HASH
+
 # Set environment variables
 ENV PORT=8000
 ENV NODE_ENV=production
+ENV TRIBES_LAST_COMMIT_DATE=${TRIBES_LAST_COMMIT_DATE}
+ENV TRIBES_LAST_COMMIT_DATE_SHORT=${TRIBES_LAST_COMMIT_DATE_SHORT}
+ENV TRIBES_LAST_COMMIT_HASH=${TRIBES_LAST_COMMIT_HASH}
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
