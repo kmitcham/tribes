@@ -5,6 +5,23 @@ const text = require('./textprocess.js');
 const reproLib = require('./reproduction.js');
 const killlib = require('./kill.js');
 
+function resolveMotherNameFromChildren(inputName, children) {
+  if (!inputName || !children) {
+    return null;
+  }
+  const target = String(inputName).toLowerCase();
+  for (const childName in children) {
+    const child = children[childName];
+    if (!child || !child.mother) {
+      continue;
+    }
+    if (String(child.mother).toLowerCase() === target) {
+      return child.mother;
+    }
+  }
+  return null;
+}
+
 // unused is deprecated
 function feed(unused, player, amount, inputChildList, gameState) {
   children = gameState.children;
@@ -45,16 +62,20 @@ function feed(unused, player, amount, inputChildList, gameState) {
         continue;
       }
       // this seems to be feeding based on mother?
-      var parent = pop.memberByName(cName, gameState);
-      if (parent && parent.gender && parent.gender == 'female') {
+      const motherName = resolveMotherNameFromChildren(cName, children);
+      if (motherName) {
         const parentNote =
-          player.name + ' feeds all the children of ' + parent.name + '.';
+          player.name + ' feeds all the children of ' + motherName + '.';
         if (!specialNotes.includes(parentNote)) {
           specialNotes.push(parentNote);
         }
         for (var filterChildName in children) {
           var filterChild = children[filterChildName];
-          if (filterChild.mother == parent.name) {
+          if (
+            filterChild.mother &&
+            String(filterChild.mother).toLowerCase() ===
+              String(motherName).toLowerCase()
+          ) {
             if (
               !(filterChild.newAdult && filterChild.newAdult == true) ||
               filterChild.food < 2

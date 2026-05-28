@@ -91,6 +91,60 @@ describe('feed function', () => {
     expect(response).toContain('p1 feeds 2 to C2');
   });
 
+  test('feed filtered by mother name even when mother is not in population', () => {
+    var gameState = {
+      population: {
+        p1: {
+          name: 'p1',
+          gender: 'male',
+          activity: 'gather',
+          food: 20,
+          grain: 10,
+        },
+      },
+      children: {
+        C1: {
+          mother: 'lostMom',
+          father: 'p1',
+          age: 4,
+          food: 0,
+          gender: 'female',
+          name: 'C1',
+        },
+        C2: {
+          mother: 'lostMom',
+          father: 'p1',
+          age: 1,
+          food: 0,
+          gender: 'female',
+          name: 'C2',
+        },
+        C3: {
+          mother: 'otherMom',
+          father: 'p1',
+          age: 1,
+          food: 0,
+          gender: 'female',
+          name: 'C3',
+        },
+      },
+      banished: {
+        lostMom: {
+          name: 'lostMom',
+          gender: 'female',
+        },
+      },
+    };
+
+    feed(null, gameState.population.p1, 2, ['lostMom'], gameState);
+    response = gameState.messages['tribe'];
+
+    expect(response).toContain('p1 feeds all the children of lostMom.');
+    expect(response).toContain('p1 feeds 2 to C1');
+    expect(response).toContain('p1 feeds 2 to C2');
+    expect(response).not.toContain('p1 feeds 2 to C3');
+  });
+
   test('feed !all', () => {
     var gameState = {
       population: {
