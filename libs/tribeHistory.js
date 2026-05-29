@@ -7,7 +7,7 @@ function showTribeHistory(playerName, gameState) {
     text.addMessage(
       gameState,
       playerName,
-      'No tribe in this channel.  Do you want to /join and create one?'
+      'No tribe in this channel.  Do you want to join and create one?'
     );
     return;
   }

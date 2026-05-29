@@ -31,7 +31,7 @@ function hunt(gameState, sourceName, forceRoll) {
     text.addMessage(
       gameState,
       sourceName,
-      'The game is over.  Maybe you want to /join to start a new game?'
+      'The game is over.  Maybe you want to join to start a new game?'
     );
     return;
   }

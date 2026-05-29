@@ -750,7 +750,7 @@ function globalMatingCheck(gameState) {
     text.addMessage(
       gameState,
       'tribe',
-      '(awaiting invitations or /pass from ' + inviteCheck + ')'
+      '(awaiting invitations or pass from ' + inviteCheck + ')'
     );
     allDone = false;
   } else {
@@ -1201,7 +1201,7 @@ function startReproductionChecks(gameState, actorName) {
     text.addMessage(
       gameState,
       actorName,
-      'The game is over.  Maybe you want to /join to start a new game?'
+      'The game is over.  Maybe you want to join to start a new game?'
     );
     return;
   }

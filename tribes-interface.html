@@ -2532,6 +2532,7 @@
                 const container = document.getElementById('commandList');
                 container.innerHTML = '';
                 const playerIsChief = this.isCurrentPlayerChief();
+                const playerCanCraft = this.isCurrentPlayerCanCraft();
                 
                 // Commands that are not needed with the GUI
                 // invite/consent/decline are unified under the romance command in the UI
@@ -2549,24 +2550,51 @@
                     item.dataset.category = command.category;
                     
                     const isChiefCommand = this.isChiefCommand(command.description);
+                    const isSecretsCommand = name.toLowerCase() === 'secrets';
+                    const secretsBlocked = isSecretsCommand && playerCanCraft === false;
                     
                     // Add disabled class if it's a chief command and player is not chief
-                    if (isChiefCommand && !playerIsChief) {
+                    if ((isChiefCommand && !playerIsChief) || secretsBlocked) {
                         item.classList.add('disabled');
                     }
+
+                    const requirementLabel =
+                        (isChiefCommand && !playerIsChief)
+                            ? ' [Requires Chief]'
+                            : (secretsBlocked ? ' [Requires Craft Knowledge]' : '');
+
                     item.innerHTML = `
                         <div class="command-name">${name}${isChiefCommand ? ' 👑' : ''}</div>
-                        <div class="command-desc">${command.description}${isChiefCommand && !playerIsChief ? ' [Requires Chief]' : ''}</div>
+                        <div class="command-desc">${command.description}${requirementLabel}</div>
                     `;
                     item.onclick = () => {
                         if (isChiefCommand && !playerIsChief) {
                             this.addMessage('⚠️ This command requires chief privileges', 'error');
                             return;
                         }
+                        if (secretsBlocked) {
+                            this.addMessage('⚠️ Only players who know crafting can use secrets', 'error');
+                            return;
+                        }
                         this.selectCommand(name);
                     };
                     container.appendChild(item);
                 });
+            }
+
+            isCurrentPlayerCanCraft() {
+                const playerName = document.getElementById('playerName').value;
+                if (!playerName || !this.currentPopulation) {
+                    // Unknown state: do not block the command list yet.
+                    return null;
+                }
+
+                const player = this.currentPopulation[playerName];
+                if (!player) {
+                    return null;
+                }
+
+                return player.canCraft === true || player.profession === 'crafter';
             }
 
             selectCommand(commandName) {
@@ -3603,10 +3631,17 @@
                         input.id = `param_${option.name}`;
                         input.required = option.required;
                         
-                        // Restore preserved value for checkbox
+                        // Restore preserved value for checkbox first.
                         if (preservedValues.hasOwnProperty(option.name)) {
                             input.checked = preservedValues[option.name];
                             console.log('Restored checkbox value for', option.name, ':', preservedValues[option.name]);
+                        } else if (this.selectedCommand.name.toLowerCase() === 'secrets' && option.name === 'willtrain') {
+                            // Prefill secrets toggle from player's current teaching flag.
+                            const currentPlayerName = document.getElementById('playerName').value;
+                            const currentPlayer = this.currentPopulation && this.currentPopulation[currentPlayerName];
+                            if (currentPlayer) {
+                                input.checked = !(currentPlayer.noTeach === true);
+                            }
                         }
                         
                         const checkboxLabel = document.createElement('label');

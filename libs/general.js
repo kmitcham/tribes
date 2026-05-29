@@ -8,7 +8,7 @@ function give(gameState, sourceName, targetName, amount, item) {
     text.addMessage(
       gameState,
       sourceName,
-      'The game is over.  Maybe you want to /join to start a new game?'
+      'The game is over.  Maybe you want to join to start a new game?'
     );
     return;
   }
@@ -172,7 +172,7 @@ function makeJerky(sourceName, amount, gameState, bot) {
     text.addMessage(
       gameState,
       sourceName,
-      'The game is over.  Maybe you want to /join to start a new game?'
+      'The game is over.  Maybe you want to join to start a new game?'
     );
     return;
   }
@@ -212,7 +212,7 @@ function law(displayName, gameState) {
     text.addMessage(
       gameState,
       displayName,
-      'The game is over.  Maybe you want to /join to start a new game?'
+      'The game is over.  Maybe you want to join to start a new game?'
     );
     return;
   }

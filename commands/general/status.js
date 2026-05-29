@@ -22,7 +22,7 @@ function onCommand(interaction, gameState) {
     text.addMessage(
       gameState,
       displayName,
-      'No tribe in this channel.  Do you want to /join and create one?'
+      'No tribe in this channel.  Do you want to join and create one?'
     );
     return;
   }

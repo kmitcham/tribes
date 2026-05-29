@@ -107,7 +107,7 @@ function banishAdmin(gameState, actorName, targetName, reason) {
     text.addMessage(
       gameState,
       actorName,
-      'The game is over.  Maybe you want to /join to start a new game?'
+      'The game is over.  Maybe you want to join to start a new game?'
     );
     return;
   }

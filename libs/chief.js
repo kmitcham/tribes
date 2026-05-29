@@ -19,12 +19,12 @@ function close(actorName, gameState) {
   }
   gameState.open = false;
   if (gameState.open) {
-    text.addMessage(gameState, 'tribe', 'The tribe is open to all who /join');
+    text.addMessage(gameState, 'tribe', 'The tribe is open to all who join');
   } else {
     text.addMessage(
       gameState,
       'tribe',
-      'The tribe is closed; the chief must /induct new members'
+      'The tribe is closed; the chief must induct new members'
     );
   }
   gameState.saveRequired = true;
@@ -42,7 +42,7 @@ function decree(gameState, actorName, number, lawText) {
     text.addMessage(
       gameState,
       actorName,
-      'The game is over.  Maybe you want to /join to start a new game?'
+      'The game is over.  Maybe you want to join to start a new game?'
     );
     return;
   }
@@ -82,7 +82,7 @@ function induct(gameState, sourceName, targetName, gender) {
     text.addMessage(
       gameState,
       sourceName,
-      'The game is over.  Maybe you want to /join to start a new game?'
+      'The game is over.  Maybe you want to join to start a new game?'
     );
     return;
   }
@@ -307,7 +307,7 @@ function doChance(rollValue, gameState) {
       break;
     case 8:
       message +=
-        'Favorable weather conditions allow the tribe to make “jerky,” which keeps very well. Each person may trade Food counters for Grain counters (representing the jerky), at a rate of 3 Food for 1 Grain.  Syntax: /jerky <amount of food>';
+        'Favorable weather conditions allow the tribe to make “jerky,” which keeps very well. Each person may trade Food counters for Grain counters (representing the jerky), at a rate of 3 Food for 1 Grain.  Syntax: jerky <amount of food>';
       gameState.canJerky = true;
       break;
     case 7:
@@ -397,7 +397,7 @@ function startWork(actorName, gameState) {
     text.addMessage(
       gameState,
       actorName,
-      'The game is over.  Maybe you want to /join to start a new game?'
+      'The game is over.  Maybe you want to join to start a new game?'
     );
     return;
   }

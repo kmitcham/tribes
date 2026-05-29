@@ -43,7 +43,7 @@ function specialize(playerName, profession, gameState) {
   helpMessage +=
     'Before you set out, you might consider waiting for a crafter to make you a spearhead which gives you a bonus to your roll. \n';
   helpMessage +=
-    'You can also gather, but at a penalty. If your tribe has someone who knows how to craft, you can try to learn that skill with `/train`';
+    'You can also gather, but at a penalty. If your tribe has someone who knows how to craft, you can try to learn that skill with `train`';
   helpMessage += 'A hunting result looks like this: \n';
   helpMessage +=
     'playername goes hunting. [13] +strong +spearhead\n    sturgeon +40 food\n The spearhead broke! (roll 1)\nThe game track goes from 1 to 2\n\n';
@@ -63,7 +63,7 @@ function specialize(playerName, profession, gameState) {
     helpMessage += 'You can guard up to two children while crafting. \n';
     helpMessage += 'You can also gather  or hunt, but at a penalty. \n';
     helpMessage +=
-      'By default, you will train others in crafting if they take a season to train.  To toggle this setting, use `/secrets`.';
+      'By default, you will train others in crafting if they take a season to train.  To toggle this setting, use `secrets`.';
   }
   if (profession.startsWith('g')) {
     profession = 'gatherer';
@@ -75,7 +75,7 @@ function specialize(playerName, profession, gameState) {
     helpMessage +=
       'Before you set out, you might consider waiting for a crafter to make you a basket which gives you an additional gather attempt. \n';
     helpMessage +=
-      'You can also hunt, but at a penalty. If your tribe has someone who knows how to craft, you can try to learn that skill with `/train`\n';
+      'You can also hunt, but at a penalty. If your tribe has someone who knows how to craft, you can try to learn that skill with `train`\n';
     helpMessage += 'A gathering result looks like this:\n';
     helpMessage +=
       'playername gathers [11]-season mushrooms (6) basket: [4]clams (4)\n';

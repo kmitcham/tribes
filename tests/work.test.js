@@ -72,7 +72,7 @@ describe('Work Module Tests', () => {
       expect(text.addMessage).toHaveBeenCalledWith(
         mockGameState,
         'testPlayer',
-        'The game is over.  Maybe you want to /join to start a new game?'
+        'The game is over.  Maybe you want to join to start a new game?'
       );
     });
 

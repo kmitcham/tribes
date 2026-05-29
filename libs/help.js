@@ -1,7 +1,5 @@
 function playerHelpBasic() {
-  text =
-    '<required argument to command> [optional arguement] < option1 |or| option2 >';
-  text += '\n';
+  text = "";
   text += '###General Commands###\n';
   text +=
     ' babysit <adult child> <target child> a mother can ask her adult child to watch a child\n';
@@ -44,8 +42,7 @@ function playerHelpRounds() {
   text += ' feed <amt> <childName | mothername | !all >  [<more childNames>]\n';
   text += '-=Reproduction Commands=-\n';
   text += ' romance  Open your romance panel. Set who to invite (in priority order) and how to respond to invitations from others. One Save sends both your invite list and your consent/decline choices together.\n';
-  text += '\tAdd !pass to the end of your invite list to give up if everyone you invited declines.\n';
-  text += '\tDiscord users can still use invite, consent, decline, and pass commands directly.\n';
+  text += '\tUse the "Give up if everyone declines" option in the romance panel when you want to skip reproduction after all invitees decline.\n';
   text += ' scorechildren  count number of children by parent';
   return text;
 }

@@ -54,7 +54,7 @@ function gameStateMessage(gameState) {
   if (gameState.reproductionRound) {
     if (reproLib.canStillInvite(gameState)) {
       message +=
-        ' (reproduction round: awaiting invitations or /pass from ' +
+        ' (reproduction round: awaiting invitations or pass from ' +
         reproLib.canStillInvite(gameState) +
         ')';
     } else if (gameState.needChanceRoll) {

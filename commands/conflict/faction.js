@@ -38,7 +38,7 @@ function setFaction(gameState, actorName, side) {
     text.addMessage(
       gameState,
       actorName,
-      'faction syntax is /faction <for|against|neutral>'
+      'faction syntax is faction <for|against|neutral>'
     );
     return;
   }
