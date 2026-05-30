@@ -1360,6 +1360,12 @@
             margin-top: auto;
         }
 
+        .footer-meta {
+            margin-top: 0.4rem;
+            font-size: 0.9rem;
+            color: #777;
+        }
+
         .footer a {
             color: #667eea;
             text-decoration: none;
@@ -1489,9 +1495,13 @@
                 <span class="status-icon">🌍</span>
                 <span>Location: Unknown</span>
             </div>
-            <div class="status-item" id="lastUpdatedStatus">
-                <span class="status-icon">🗓️</span>
-                <span id="lastUpdatedText">Updated: loading...</span>
+            <div class="status-item" id="gameTrackStatus">
+                <span class="status-icon">🎯</span>
+                <span>Game Track: ?</span>
+            </div>
+            <div class="status-item" id="yearStatus">
+                <span class="status-icon">📅</span>
+                <span>Year: ?</span>
             </div>
             <div class="status-item connection-status-indicator connecting" id="connectionStatus">
                 <span class="status-icon">🔄</span>
@@ -1621,7 +1631,6 @@
                     <div class="tabs">
                         <div class="tab active" data-tab="population">Population</div>
                         <div class="tab" data-tab="children">Children</div>
-                        <div class="tab" data-tab="status">Game Status</div>
                     </div>
                     
                     <div class="tab-content active" id="populationTab">
@@ -1638,12 +1647,6 @@
                                 </tr>
                             </thead>
                         </table>
-                    </div>
-                    
-                    <div class="tab-content" id="statusTab">
-                        <div class="status-text" id="statusText">
-                            Click "Refresh Game Data" to load game status
-                        </div>
                     </div>
                 </div>
             </div>
@@ -3758,12 +3761,38 @@
 
                 const eligibleChildren = [];
                 const guardedNames = (currentPlayer && currentPlayer.guarding) ? currentPlayer.guarding : [];
+                const findCurrentGuardValue = (childName) => {
+                    const child = this.currentChildren[childName] || {};
+                    if (typeof child.guardValue === 'number' && Number.isFinite(child.guardValue)) {
+                        return child.guardValue;
+                    }
+
+                    let guardValue = 0;
+                    Object.values(this.currentPopulation || {}).forEach(person => {
+                        if (Array.isArray(person.guarding) && person.guarding.length > 0 && person.guarding.includes(childName)) {
+                            guardValue += 1 / person.guarding.length;
+                        }
+                    });
+
+                    Object.entries(this.currentChildren || {}).forEach(([name, candidate]) => {
+                        if (candidate && candidate.age >= 23 && candidate.babysitting === childName) {
+                            guardValue += 1;
+                        }
+                    });
+
+                    return Math.round(guardValue * 100) / 100;
+                };
 
                 Object.keys(this.currentChildren).forEach(childName => {
                     const child = this.currentChildren[childName];
                     const age = child.age || 0;
                     if (age >= 0 && age < 23) {
-                        eligibleChildren.push({ childName: childName, age: age, isGuarded: guardedNames.includes(childName) });
+                        eligibleChildren.push({
+                            childName: childName,
+                            age: age,
+                            isGuarded: guardedNames.includes(childName),
+                            currentGuardValue: findCurrentGuardValue(childName),
+                        });
                     }
                 });
 
@@ -3791,7 +3820,7 @@
                         `;
 
                         const childLabel = document.createElement('span');
-                        childLabel.textContent = `${childInfo.childName} (age ${childInfo.age / 2})`;
+                        childLabel.textContent = `${childInfo.childName} (age ${childInfo.age / 2}) Guard Value: ${childInfo.currentGuardValue}`;
                         childLabel.style.fontWeight = '500';
 
                         const radioGroup = document.createElement('div');
@@ -5144,10 +5173,38 @@
                 const allKeys = new Set();
                 Object.values(children).forEach(child => {
                     Object.keys(child).forEach(key => {
-                        if (key !== 'Guards') allKeys.add(key);
+                        if (key !== 'Guards' && key.toLowerCase() !== 'gender') allKeys.add(key);
                     });
                 });
-                const columns = ['Name', ...Array.from(allKeys)];
+                const orderedKeys = Array.from(allKeys).filter(key => key !== 'guardValue');
+                const guardiansIndex = orderedKeys.indexOf('guardians');
+                if (guardiansIndex >= 0) {
+                    orderedKeys.splice(guardiansIndex, 0, 'guardValue');
+                } else {
+                    orderedKeys.push('guardValue');
+                }
+
+                const columns = ['Name', ...orderedKeys.map(key => key === 'guardValue' ? 'Guard Value' : key)];
+
+                const getCurrentGuardValue = (childData) => {
+                    if (typeof childData.guardValue === 'number' && Number.isFinite(childData.guardValue)) {
+                        return childData.guardValue;
+                    }
+
+                    if (!childData.guardians || typeof childData.guardians !== 'object') {
+                        return 0;
+                    }
+
+                    let total = 0;
+                    Object.values(childData.guardians).forEach(weight => {
+                        const numericWeight = Number(weight);
+                        if (Number.isFinite(numericWeight) && numericWeight > 0) {
+                            total += 1 / numericWeight;
+                        }
+                    });
+
+                    return Math.round(total * 100) / 100;
+                };
                 
                 const thead = document.createElement('thead');
                 const headerRow = document.createElement('tr');
@@ -5162,26 +5219,55 @@
                 const tbody = document.createElement('tbody');
                 Object.entries(children).forEach(([name, data]) => {
                     const row = document.createElement('tr');
+                    row.className = this.getGenderRowClass(data && data.gender);
+                    const childAge = typeof data['age'] === 'number' ? data['age'] : 0;
+                    const isYoungAdult = childAge >= 24;
                     
                     const nameCell = document.createElement('td');
-                    nameCell.textContent = name;
+                    nameCell.className = `person-name-cell ${this.getGenderClass(data && data.gender)}`;
+
+                    const genderMeta = this.getGenderSymbol(data && data.gender);
+                    const genderIcon = document.createElement('span');
+                    genderIcon.className = `gender-icon ${genderMeta.className}`;
+                    genderIcon.textContent = genderMeta.symbol;
+                    genderIcon.title = genderMeta.label;
+                    nameCell.appendChild(genderIcon);
+
+                    const nameText = document.createElement('span');
+                    nameText.textContent = name;
+                    nameCell.appendChild(nameText);
                     row.appendChild(nameCell);
                     
-                    Array.from(allKeys).forEach(key => {
+                    orderedKeys.forEach(key => {
                         const cell = document.createElement('td');
-                        const value = data[key];
+                        const value = key === 'guardValue' ? getCurrentGuardValue(data) : data[key];
                             if (key === 'age') {
                                 const ageVal = typeof value === 'number' ? value : 0;
                                 if (ageVal < 0) {
-                                    cell.textContent = 'unborn';
+                                    cell.textContent = `unborn:${ageVal / 2}`;
                                 } else {
                                     cell.textContent = ageVal / 2;
                                 }
+                            } else if (key === 'guardValue') {
+                                if (isYoungAdult) {
+                                    cell.textContent = 'n/a';
+                                } else {
+                                    const rounded = Math.round(Number(value || 0) * 100) / 100;
+                                    cell.textContent = Number.isFinite(rounded) ? String(rounded) : '0';
+                                }
                             } else if (key === 'food') {
                                 // Show 'N/A' for young adults (age >= 24)
-                                const ageVal = typeof data['age'] === 'number' ? data['age'] : 0;
-                                if (ageVal >= 24) {
+                                if (isYoungAdult) {
                                     cell.textContent = 'N/A';
+                                } else {
+                                    cell.textContent = (value !== undefined && value !== null && value !== '') ? value : '';
+                                }
+                            } else if (key === 'guardians') {
+                                if (isYoungAdult) {
+                                    cell.textContent = 'n/a';
+                                } else if (value && typeof value === 'object') {
+                                    // Handle objects like guardians by extracting keys
+                                    cell.textContent = Object.keys(value).join(', ');
                                 } else {
                                     cell.textContent = (value !== undefined && value !== null && value !== '') ? value : '';
                                 }
@@ -5301,6 +5387,8 @@
                 const roundStatus = document.getElementById('roundStatus');
                 const seasonStatus = document.getElementById('seasonStatus');
                 const locationStatus = document.getElementById('locationStatus');
+                const yearStatus = document.getElementById('yearStatus');
+                const gameTrackStatus = document.getElementById('gameTrackStatus');
 
                 if (gameState.startStamp) {
                     const tribe = document.getElementById('tribeSelect').value || 'default';
@@ -5312,7 +5400,7 @@
                     localStorage.setItem(startStampKey, gameState.startStamp);
                 }
 
-                if (!roundStatus || !seasonStatus || !locationStatus) return;
+                if (!roundStatus || !seasonStatus || !locationStatus || !yearStatus || !gameTrackStatus) return;
 
                 // Round type detection using structured data
                 let roundIcon = '⚙️';
@@ -5376,10 +5464,19 @@
                     }
                 }
 
+                const yearValue = Number.isFinite(gameState.year)
+                    ? gameState.year
+                    : (Number.isFinite(gameState.seasonCounter) ? Math.floor(gameState.seasonCounter / 2) : '?');
+
+                const currentTrack = this.currentStatusData && this.currentStatusData.gameTrack;
+                const gameTrackValue = Number.isFinite(currentTrack) ? currentTrack : '?';
+
                 // Update the status bar elements
                 roundStatus.innerHTML = `<span class="status-icon">${roundIcon}</span><span>${roundText}</span>`;
                 seasonStatus.innerHTML = `<span class="status-icon">${seasonIcon}</span><span>${seasonText}</span>`;
                 locationStatus.innerHTML = `<span class="status-icon">${locationIcon}</span><span>${locationText}</span>`;
+                yearStatus.innerHTML = `<span class="status-icon">📅</span><span>Year: ${yearValue}</span>`;
+                gameTrackStatus.innerHTML = `<span class="status-icon">🎯</span><span>Game Track: ${gameTrackValue}</span>`;
             }
 
             updateGameStatusBar(status) {
@@ -5387,8 +5484,10 @@
                 const roundStatus = document.getElementById('roundStatus');
                 const seasonStatus = document.getElementById('seasonStatus');
                 const locationStatus = document.getElementById('locationStatus');
+                const yearStatus = document.getElementById('yearStatus');
+                const gameTrackStatus = document.getElementById('gameTrackStatus');
 
-                if (!roundStatus || !seasonStatus || !locationStatus) return;
+                if (!roundStatus || !seasonStatus || !locationStatus || !yearStatus || !gameTrackStatus) return;
 
                 let roundIcon = '⚙️';
                 let roundText = 'Unknown Round';
@@ -5440,10 +5539,22 @@
                     locationText = 'Desert';
                 }
 
+                const yearMatch = status.match(/Year\s+([0-9]+(?:\.[0-9]+)?)/i);
+                const gameTrackMatch = status.match(/game\s+track\s+is\s+at\s+([0-9]+)/i);
+                const yearValue = yearMatch ? yearMatch[1] : '?';
+                const gameTrackValue = gameTrackMatch ? gameTrackMatch[1] : '?';
+
+                if (!this.currentStatusData) {
+                    this.currentStatusData = {};
+                }
+                this.currentStatusData.gameTrack = gameTrackMatch ? Number(gameTrackMatch[1]) : null;
+
                 // Update the status bar elements
                 roundStatus.innerHTML = `<span class="status-icon">${roundIcon}</span><span>${roundText}</span>`;
                 seasonStatus.innerHTML = `<span class="status-icon">${seasonIcon}</span><span>${seasonText}</span>`;
                 locationStatus.innerHTML = `<span class="status-icon">${locationIcon}</span><span>${locationText}</span>`;
+                yearStatus.innerHTML = `<span class="status-icon">📅</span><span>Year: ${yearValue}</span>`;
+                gameTrackStatus.innerHTML = `<span class="status-icon">🎯</span><span>Game Track: ${gameTrackValue}</span>`;
             }
 
             initializeEventListeners() {
@@ -5804,7 +5915,7 @@
         // Initialize the client when page loads
         window.addEventListener('DOMContentLoaded', () => {
             const renderLastCommitDate = () => {
-                const target = document.getElementById('lastUpdatedText');
+                const target = document.getElementById('footerUpdatedText');
                 if (!target) return;
 
                 const buildInfo = window.TRIBES_BUILD_INFO || {};
@@ -5948,6 +6059,7 @@
         <a href="https://www.sjgames.com/tribes/" title="Tribes Game">Get the real game and play with friends in person!</a>
         <p class="credits">Game Design by <b><a href="https://www.davidbrin.com">David Brin</a></b> and <a href="http://sj.sjgames.com/"><b>Steve Jackson</b></a>
         <a href="https://www.flaticon.com/free-icons/caveman" title="caveman icons">Caveman icons created by Freepik - Flaticon</a>
+        <div class="footer-meta" id="footerUpdatedText">Updated: loading...</div>
     </div>
 
 </body>

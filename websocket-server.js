@@ -261,7 +261,6 @@ function loadCommands() {
   }
 
   console.log(`Loaded ${commands.size} commands total`);
-  console.log('Tribes WebSocket Server starting...');
 }
 
 // Create mock interaction object for websocket compatibility
@@ -509,7 +508,8 @@ function startServer() {
             'Received:',
             data.type,
             data.command || '',
-            `from ${data.playerName || ws.playerName || 'unknown'}`
+            `from ${data.playerName || ws.playerName || 'unknown'}`,
+            `tribe ${data.tribe || 'bug'}`
           );
 
           // Store client IP for session management
@@ -575,7 +575,6 @@ function startServer() {
 async function handleWebSocketMessage(ws, data) {
   let tribe = data.tribe || 'bug';
   let gameState = await getGameState(tribe);
-  logWithTimestamp('got gamestate for', tribe);
 
   // Normalize to canonical stored casing when a known user logs in with different capitalization.
   if (data.playerName) {
@@ -613,9 +612,6 @@ async function handleWebSocketMessage(ws, data) {
     connectedClients.get(data.playerName).add(ws);
     ws.currentPlayer = data.playerName; // Store player name on websocket for cleanup
   }
-  logWithTimestamp('added a client record  for', data.playerName);
-  logWithTimestamp('data type', data.type);
-
   switch (data.type) {
     case 'authenticateSession':
       handleSessionAuthentication(ws, data);
@@ -666,7 +662,13 @@ async function handleWebSocketMessage(ws, data) {
       break;
 
     default:
-      logWithTimestamp('default case ', data.playerName);
+      logWithTimestamp(
+        '[WARN] Unknown request type',
+        data.type,
+        `from ${data.playerName || ws.playerName || 'unknown'}`,
+        `tribe ${data.tribe || ws.currentTribe || 'unknown'}`,
+        `clientId ${data.clientId || 'none'}`
+      );
 
       ws.send(
         JSON.stringify({
@@ -704,8 +706,6 @@ function handleSessionAuthentication(ws, data) {
         clientId: data.clientId,
       })
     );
-    logWithTimestamp('sent sessionAuthResponse', data.clientId);
-
     return;
   }
 
@@ -1215,10 +1215,6 @@ function handleListCommands(ws, data, gameState) {
 
   // Check if the current player is a referee
   const isRef = playerName && referees.includes(playerName);
-  logWithTimestamp(`[REF CHECK] Player "${playerName}" isRef: ${isRef}`);
-
-  logWithTimestamp(`[CHIEF CHECK] Final isChief status: ${isChief}`);
-
   // Sort commands alphabetically by name
   const sortedCommands = Array.from(commands.entries()).sort(([a], [b]) =>
     a.localeCompare(b)
@@ -1333,7 +1329,6 @@ async function handleRomanceRequest(ws, data, gameState) {
 
 function sendSecrets(ws, data, gameState) {
   const romanceUpdate = processRomance(data, gameState);
-  console.log('sending romance secret ' + JSON.stringify(romanceUpdate));
   ws.send(JSON.stringify(romanceUpdate));
 }
 

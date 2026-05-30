@@ -70,7 +70,7 @@ function startFood(gameState, bot) {
   text.addMessage(
     gameState,
     'tribe',
-    '\n==>Starting the food and trading round.  Use /foodcheck to be sure everyone has enough to eat, or they will starve<=='
+    '\n==>Starting the food and trading round.  Use foodcheck to be sure everyone has enough to eat, or they will starve<=='
   );
   message = util.gameStateMessage(gameState);
   var d = new Date();
