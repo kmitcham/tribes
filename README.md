@@ -117,7 +117,8 @@ The game includes all original Discord commands, organized into categories:
 
 ### 👶 Reproduction Commands
 
-- `romance`, `invite`, `consent`, `decline` - Relationship management
+- `romance`, `pass` - Relationship management
+- `invite`, `consent`, `decline` are managed through the unified `romance` panel in the UI
 - `babysit`, `children` - Child care
 
 ### 🔄 Rounds Commands

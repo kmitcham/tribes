@@ -2392,7 +2392,7 @@
                 let currentHighlight = -1;
                 let filteredCommands = [];
                 
-                const hiddenCommands = ['children', 'inventory'];
+                const hiddenCommands = ['children', 'inventory', 'invite', 'consent', 'decline'];
                 const commandNames = Object.keys(this.commands)
                     .filter(name => !hiddenCommands.includes(name))
                     .sort();
@@ -2537,8 +2537,9 @@
                 const playerIsChief = this.isCurrentPlayerChief();
                 const playerCanCraft = this.isCurrentPlayerCanCraft();
                 
-                // Commands that are not needed with the GUI
-                // invite/consent/decline are unified under the romance command in the UI
+                // Commands that are not needed with the GUI.
+                // Romance-related direct commands are hidden in favor of the unified romance panel.
+                // Keep pass visible so players can still explicitly pass.
                 const hiddenCommands = ['children', 'inventory', 'invite', 'consent', 'decline'];
                 
                 // Sort commands alphabetically by name and filter out hidden commands
