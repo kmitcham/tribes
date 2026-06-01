@@ -826,6 +826,7 @@ function handleInfoRequest(ws, data, gameState) {
           workRound: gameState.workRound,
           foodRound: gameState.foodRound,
           reproductionRound: gameState.reproductionRound,
+          matingComplete: gameState.matingComplete === true,
           seasonCounter: gameState.seasonCounter,
           currentLocationName: gameState.currentLocationName,
           year: Math.floor(gameState.seasonCounter / 2),
@@ -1040,6 +1041,7 @@ async function refreshTribeGameData(gameState, tribeName) {
       workRound: gameState.workRound,
       foodRound: gameState.foodRound,
       reproductionRound: gameState.reproductionRound,
+      matingComplete: gameState.matingComplete === true,
       seasonCounter: gameState.seasonCounter,
       currentLocationName: gameState.currentLocationName,
       year: Math.floor(gameState.seasonCounter / 2),
@@ -1070,29 +1072,8 @@ async function sendGameMessages(ws, gameState, data) {
   if (!gameState.messages) return;
 
   const tribe = data.tribe || 'bug';
-
-  // Send tribe-wide messages to ALL players in this tribe
-  if (gameState.messages.tribe) {
-    const tribeMembers = tribeConnections.get(tribe);
-    if (tribeMembers && tribeMembers.size > 0) {
-      const tribeMessage = {
-        type: 'tribeMessage',
-        message: gameState.messages.tribe,
-        clientId: data.clientId,
-      };
-
-      // Send to all connected players in this tribe
-      for (const tribeWs of tribeMembers) {
-        if (tribeWs.readyState === 1) {
-          // WebSocket.OPEN
-          try {
-            tribeWs.send(JSON.stringify(tribeMessage));
-          } catch (error) {
-            console.error('Error sending tribe message:', error);
-          }
-        }
-      }
-    }
+  const tribeMessageContent = gameState.messages.tribe;
+  if (tribeMessageContent) {
     delete gameState.messages.tribe;
   }
 
@@ -1148,6 +1129,30 @@ async function sendGameMessages(ws, gameState, data) {
       }
     } else {
       logWithTimestamp(`Message for offline player ${recipient}: ${message}`);
+    }
+  }
+
+  // Send tribe-wide messages to ALL players in this tribe after private messages
+  if (tribeMessageContent) {
+    const tribeMembers = tribeConnections.get(tribe);
+    if (tribeMembers && tribeMembers.size > 0) {
+      const tribeMessage = {
+        type: 'tribeMessage',
+        message: tribeMessageContent,
+        clientId: data.clientId,
+      };
+
+      // Send to all connected players in this tribe
+      for (const tribeWs of tribeMembers) {
+        if (tribeWs.readyState === 1) {
+          // WebSocket.OPEN
+          try {
+            tribeWs.send(JSON.stringify(tribeMessage));
+          } catch (error) {
+            console.error('Error sending tribe message:', error);
+          }
+        }
+      }
     }
   }
 

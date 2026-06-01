@@ -59,6 +59,7 @@ function startFoodFilter(actorName, gameState, bot) {
   }
   return startFood(gameState, bot);
 }
+module.exports.startFoodFilter = startFoodFilter;
 
 function startFood(gameState, bot) {
   gameState.workRound = false;

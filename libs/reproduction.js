@@ -139,6 +139,19 @@ function canStillInvite(gameState) {
 }
 module.exports.canStillInvite = canStillInvite;
 
+function canStillInviteCount(gameState) {
+  population = gameState.population;
+  var count = 0;
+  for (var personName in population) {
+    person = population[personName];
+    if (!person.cannotInvite) {
+      count++;
+    }
+  }
+  return count;
+}
+module.exports.canStillInviteCount = canStillInviteCount;
+
 function handleReproductionList(actorName, arrayOfNames, listName, gameState) {
   console.log(
     'Building ' + listName + ' for ' + actorName + ' args ' + arrayOfNames
@@ -745,12 +758,17 @@ function globalMatingCheck(gameState) {
     }
   }
   inviteCheck = canStillInvite(gameState);
+  const inviteCount = canStillInviteCount(gameState);
   console.log('After mating checks, inviteCheck is: ' + inviteCheck);
-  if (inviteCheck) {
+  if (inviteCount > 0) {
     text.addMessage(
       gameState,
       'tribe',
-      '(awaiting invitations or pass from ' + inviteCheck + ')'
+      '(awaiting invitations or pass from ' +
+        inviteCount +
+        ' player' +
+        (inviteCount === 1 ? '' : 's') +
+        ')'
     );
     allDone = false;
   } else {
@@ -798,6 +816,7 @@ function globalMatingCheck(gameState) {
     }
     text.addMessage(gameState, 'tribe', 'Time for chance.');
     gameState.doneMating = true;
+    gameState.matingComplete = true;
     gameState.saveRequired = true;
   } else {
     text.addMessage(

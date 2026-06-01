@@ -38,6 +38,7 @@ function initGame(gameName) {
   gameState.foodRound = false;
   gameState.reproductionRound = false;
   gameState.needChanceRoll = true;
+  gameState.matingComplete = false;
   gameState.canJerky = false;
   saveTribe(gameState);
   return gameState;

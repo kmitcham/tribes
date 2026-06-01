@@ -52,10 +52,13 @@ function gameStateMessage(gameState) {
     message += '  (food round)';
   }
   if (gameState.reproductionRound) {
-    if (reproLib.canStillInvite(gameState)) {
+    const pendingInviteCount = reproLib.canStillInviteCount(gameState);
+    if (pendingInviteCount > 0) {
       message +=
         ' (reproduction round: awaiting invitations or pass from ' +
-        reproLib.canStillInvite(gameState) +
+        pendingInviteCount +
+        ' player' +
+        (pendingInviteCount === 1 ? '' : 's') +
         ')';
     } else if (gameState.needChanceRoll) {
       message += ' (reproduction round, awaiting chance)';

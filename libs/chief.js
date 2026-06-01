@@ -445,6 +445,7 @@ function startWork(actorName, gameState) {
   gameState.foodRound = false;
   gameState.reproductionRound = false;
   gameState.doneMating = false;
+  gameState.matingComplete = false;
   gameState.canJerky = false;
   reproLib.clearReproduction(gameState);
   text.addMessage(gameState, 'tribe', utils.gameStateMessage(gameState));

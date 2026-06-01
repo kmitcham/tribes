@@ -69,6 +69,10 @@
             margin-bottom: 0.5rem;
         }
 
+        .tribes-logo {
+            display: inline-block;
+        }
+
         .game-status-bar {
             background: linear-gradient(135deg, #2c3e50, #34495e);
             color: white;
@@ -110,6 +114,11 @@
         .status-item.connection-status-indicator.disconnected {
             background: rgba(220, 53, 69, 0.25);
             border-color: rgba(220, 53, 69, 0.5);
+        }
+
+        .status-item.waiting-status-indicator {
+            background: rgba(255, 193, 7, 0.22);
+            border-color: rgba(255, 193, 7, 0.48);
         }
 
         .container {
@@ -1376,6 +1385,46 @@
         }
 
         @media (max-width: 768px) {
+            .tribes-logo {
+                display: none;
+            }
+
+            .game-status-bar {
+                margin: 6px -0.5rem -0.5rem -0.5rem;
+                padding: 6px 8px;
+                gap: 6px;
+                font-size: 0.72rem;
+                display: grid;
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                align-items: stretch;
+                justify-items: stretch;
+            }
+
+            .game-status-bar .header-icons {
+                display: none;
+            }
+
+            .game-status-bar .status-item {
+                min-width: 0;
+                justify-content: center;
+                padding: 3px 6px;
+                gap: 4px;
+                border-radius: 10px;
+            }
+
+            .game-status-bar .status-icon {
+                font-size: 0.9rem;
+                flex-shrink: 0;
+            }
+
+            .game-status-bar .status-item span:last-child {
+                display: block;
+                min-width: 0;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
             .container {
                 display: flex;
                 flex-direction: column;
@@ -1422,12 +1471,12 @@
             }
 
             .data-section {
-                order: 3;
+                order: 4;
                 min-height: 300px; /* Reasonable minimum on mobile */
             }
 
             .command-panel {
-                order: 4;
+                order: 3;
             }
 
             .help-section {
@@ -1474,7 +1523,7 @@
     <div class="header">
         <div class="header-main">
             <div class="header-content">
-                <h1><a href="https://www.sjgames.com/tribes/"><img src="https://www.sjgames.com/tribes/img/logo.png" alt="Tribes Logo"></a>
+                <h1><a href="https://www.sjgames.com/tribes/"><img class="tribes-logo" src="https://www.sjgames.com/tribes/img/logo.png" alt="Tribes Logo"></a>
             </div>
         </div>
         
@@ -1493,15 +1542,11 @@
             </div>
             <div class="status-item" id="locationStatus">
                 <span class="status-icon">🌍</span>
-                <span>Location: Unknown</span>
+                <span>Unknown: Track ?</span>
             </div>
-            <div class="status-item" id="gameTrackStatus">
-                <span class="status-icon">🎯</span>
-                <span>Game Track: ?</span>
-            </div>
-            <div class="status-item" id="yearStatus">
-                <span class="status-icon">📅</span>
-                <span>Year: ?</span>
+            <div class="status-item waiting-status-indicator" id="waitingStatus" style="display: none;">
+                <span class="status-icon">⏳</span>
+                <span></span>
             </div>
             <div class="status-item connection-status-indicator connecting" id="connectionStatus">
                 <span class="status-icon">🔄</span>
@@ -1605,7 +1650,7 @@
             <div class="command-panel">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
                     <div>
-                        <h3 id="selectedCommandName">Game Messages</h3>
+                        <h3 id="selectedCommandName">Messages</h3>
                         <p id="selectedCommandDesc" style="margin: 0;">Command responses and game updates will appear below.</p>
                     </div>
                     <button class="btn btn-small" id="clearMessagesBtn" title="Clear message history">🗑️ Clear</button>
@@ -1617,8 +1662,8 @@
             <!-- Data Display Section -->
             <div class="data-section">
                 <div class="section-header">
-                    <div class="section-title">Game Data</div>
-                    <button class="btn btn-small" id="refreshDataBtn">Refresh Game Data</button>
+                    <div class="section-title">Population</div>
+                    <button class="btn btn-small" id="refreshDataBtn">Refresh Population</button>
                 </div>
 
                 <div id="conflictBanner" class="conflict-banner">
@@ -1635,7 +1680,7 @@
                     
                     <div class="tab-content active" id="populationTab">
                         <div id="populationTable" class="population-roster">
-                            <div class="population-empty">Click "Refresh Game Data" to load population data</div>
+                            <div class="population-empty">Click "Refresh Population" to load population data</div>
                         </div>
                     </div>
                     
@@ -1643,7 +1688,7 @@
                         <table id="childrenTable">
                             <thead>
                                 <tr>
-                                    <td colspan="100%">Click "Refresh Game Data" to load children data</td>
+                                    <td colspan="100%">Click "Refresh Population" to load children data</td>
                                 </tr>
                             </thead>
                         </table>
@@ -2271,6 +2316,7 @@
                         this.updatePopulationTable(data.content);
                         // Update command list when population data changes (for chief status)
                         this.updateCommandList();
+                        this.updateWaitingStatusChip();
                         this.regenerateModalFormIfDataReady('population');
                         break;
                     case 'children':
@@ -2291,10 +2337,12 @@
                         if (this.currentPopulation) {
                             this.updatePopulationTable(this.currentPopulation);
                         }
+                        this.updateWaitingStatusChip();
                         break;
                     case 'romance':
                         this.currentRomanceLists = data.content;
                         this.displayCurrentRomanceLists(data.content);
+                        this.updateWaitingStatusChip();
                         
                         // Also regenerate form to populate defaults if the modal is currently showing
                         const romanceModal = document.getElementById('commandModal');
@@ -2938,7 +2986,7 @@
                 const passLabel = document.createElement('label');
                 passLabel.htmlFor = 'invite_append_pass';
                 passLabel.style.cursor = 'pointer';
-                passLabel.innerHTML = '<strong>Give up if everyone declines</strong> — adds <code>!pass</code> so you skip reproduction if all your invitees say no';
+                passLabel.innerHTML = '<strong>Give up if everyone declines</strong> — skip reproduction if all your invitees say no';
                 passWrap.appendChild(passCheck);
                 passWrap.appendChild(passLabel);
                 container.appendChild(passWrap);
@@ -3905,17 +3953,16 @@
             }
 
             isCurrentPlayerChief() {
-                // Use server-provided chief status if available
-                if (typeof this.chiefStatus === 'boolean') {
-                    return this.chiefStatus;
-                }
-                
-                // Fallback: check population data
+                // Prefer live population data when available.
                 const playerName = document.getElementById('playerName').value;
                 console.log('Checking chief status for player:', playerName);
                 console.log('Current population:', this.currentPopulation);
                 
                 if (!playerName || !this.currentPopulation) {
+                    // Fall back to server-provided status when population is unavailable.
+                    if (typeof this.chiefStatus === 'boolean') {
+                        return this.chiefStatus;
+                    }
                     console.log('Missing player name or population data - defaulting to non-chief');
                     return false;
                 }
@@ -3924,6 +3971,9 @@
                 console.log('Player object:', player);
                 
                 if (!player) {
+                    if (typeof this.chiefStatus === 'boolean') {
+                        return this.chiefStatus;
+                    }
                     console.log('Player not found in population - defaulting to non-chief');
                     return false;
                 }
@@ -5384,12 +5434,234 @@
                 }
             }
 
+            getCurrentPlayerPopulationEntry() {
+                const population = this.currentPopulation || {};
+                const playerName = String(document.getElementById('playerName')?.value || '').trim();
+                if (!playerName) {
+                    return null;
+                }
+
+                if (population[playerName]) {
+                    return { key: playerName, member: population[playerName] };
+                }
+
+                const playerLower = playerName.toLowerCase();
+                for (const [key, member] of Object.entries(population)) {
+                    if (!member) {
+                        continue;
+                    }
+                    if (String(key).toLowerCase() === playerLower) {
+                        return { key, member };
+                    }
+                    if (member.name && String(member.name).toLowerCase() === playerLower) {
+                        return { key, member };
+                    }
+                }
+                return null;
+            }
+
+            findPopulationEntryByName(name) {
+                if (!name || !this.currentPopulation) {
+                    return null;
+                }
+
+                const targetLower = String(name).trim().toLowerCase();
+                for (const [key, member] of Object.entries(this.currentPopulation)) {
+                    if (!member) {
+                        continue;
+                    }
+                    if (String(key).toLowerCase() === targetLower) {
+                        return { key, member };
+                    }
+                    if (member.name && String(member.name).toLowerCase() === targetLower) {
+                        return { key, member };
+                    }
+                }
+                return null;
+            }
+
+            namesMatch(a, b) {
+                return String(a || '').trim().toLowerCase() === String(b || '').trim().toLowerCase();
+            }
+
+            getInviteTargetName(invitingMember) {
+                if (!invitingMember || invitingMember.cannotInvite) {
+                    return null;
+                }
+
+                const inviteList = Array.isArray(invitingMember.inviteList) ? invitingMember.inviteList : [];
+                if (inviteList.length === 0) {
+                    return null;
+                }
+
+                const idx = Number.isFinite(invitingMember.inviteIndex) ? invitingMember.inviteIndex : 0;
+                const target = inviteList[idx];
+                if (!target) {
+                    return null;
+                }
+
+                const cleanTarget = String(target).trim();
+                if (!cleanTarget || cleanTarget === '!pass' || cleanTarget === '!save') {
+                    return null;
+                }
+
+                return cleanTarget;
+            }
+
+            getConsentResponse(targetMember, inviterKey, inviterDisplayName) {
+                if (!targetMember) {
+                    return null;
+                }
+
+                const consentDict = {
+                    ...(targetMember.consentDict || {}),
+                };
+
+                if (!Object.keys(consentDict).length && this.currentRomanceLists?.consentDict) {
+                    Object.assign(consentDict, this.currentRomanceLists.consentDict);
+                }
+
+                if (consentDict[inviterKey] !== undefined) {
+                    return consentDict[inviterKey];
+                }
+                if (inviterDisplayName && consentDict[inviterDisplayName] !== undefined) {
+                    return consentDict[inviterDisplayName];
+                }
+                if (consentDict['!all'] !== undefined) {
+                    return consentDict['!all'];
+                }
+                return null;
+            }
+
+            getWaitingStatusInfo() {
+                const state = this.currentStatusData || {};
+                const playerEntry = this.getCurrentPlayerPopulationEntry();
+                if (!playerEntry || !this.currentPopulation) {
+                    return null;
+                }
+
+                const currentPlayerKey = playerEntry.key;
+                const currentPlayer = playerEntry.member;
+                const currentPlayerName = currentPlayer?.name || currentPlayerKey;
+                const isChief = this.isCurrentPlayerChief() || !!currentPlayer?.chief;
+                const populationMembers = Object.values(this.currentPopulation).filter((m) => m && typeof m === 'object');
+
+                if (state.workRound) {
+                    if (currentPlayer?.worked !== true) {
+                        return {
+                            icon: '🛠️',
+                            text: 'Waiting on you: take your work-round action.',
+                        };
+                    }
+
+                    if (isChief && populationMembers.length > 0 && populationMembers.every((m) => m.worked === true)) {
+                        return {
+                            icon: '👑',
+                            text: 'All players worked. Chief should advance the round.',
+                        };
+                    }
+                }
+
+                if (state.reproductionRound) {
+                    if (isChief && state.matingComplete === true && state.doneMating === true) {
+                        return {
+                            icon: '👑',
+                            text: 'Mating complete. Chief needs to migrate and/or roll chance.',
+                        };
+                    }
+
+                    let needsInviteResponse = false;
+                    for (const [inviterKey, inviterMember] of Object.entries(this.currentPopulation)) {
+                        const targetName = this.getInviteTargetName(inviterMember);
+                        if (!targetName) {
+                            continue;
+                        }
+                        if (!this.namesMatch(targetName, currentPlayerKey) && !this.namesMatch(targetName, currentPlayerName)) {
+                            continue;
+                        }
+
+                        const response = this.getConsentResponse(
+                            currentPlayer,
+                            inviterKey,
+                            inviterMember?.name || inviterKey
+                        );
+                        if (response !== 'consent' && response !== 'decline') {
+                            needsInviteResponse = true;
+                            break;
+                        }
+                    }
+
+                    let needsInviteRevision = false;
+                    const myTarget = this.getInviteTargetName(currentPlayer);
+                    if (myTarget) {
+                        const targetEntry = this.findPopulationEntryByName(myTarget);
+                        if (!targetEntry) {
+                            needsInviteRevision = true;
+                        } else {
+                            const targetResponse = this.getConsentResponse(
+                                targetEntry.member,
+                                currentPlayerKey,
+                                currentPlayerName
+                            );
+                            if (targetResponse !== 'consent' && targetResponse !== 'decline') {
+                                needsInviteRevision = true;
+                            }
+                        }
+                    }
+
+                    if (needsInviteResponse && needsInviteRevision) {
+                        return {
+                            icon: '💕',
+                            text: 'Waiting on you: respond to invites and revise your invite list.',
+                        };
+                    }
+                    if (needsInviteResponse) {
+                        return {
+                            icon: '💕',
+                            text: 'Waiting on you: respond to an invitation.',
+                        };
+                    }
+                    if (needsInviteRevision) {
+                        return {
+                            icon: '💕',
+                            text: 'Waiting on you: revise invites or skip a non-responsive partner.',
+                        };
+                    }
+                }
+
+                return null;
+            }
+
+            updateWaitingStatusChip() {
+                const waitingStatus = document.getElementById('waitingStatus');
+                if (!waitingStatus) {
+                    return;
+                }
+
+                const waitingInfo = this.getWaitingStatusInfo();
+                if (!waitingInfo) {
+                    waitingStatus.style.display = 'none';
+                    return;
+                }
+
+                waitingStatus.style.display = 'flex';
+                waitingStatus.innerHTML = `<span class="status-icon">${waitingInfo.icon}</span><span>${waitingInfo.text}</span>`;
+            }
+
             updateGameStatusBarWithData(gameState) {
                 const roundStatus = document.getElementById('roundStatus');
                 const seasonStatus = document.getElementById('seasonStatus');
                 const locationStatus = document.getElementById('locationStatus');
-                const yearStatus = document.getElementById('yearStatus');
-                const gameTrackStatus = document.getElementById('gameTrackStatus');
+                const statusTextElement = document.getElementById('statusText');
+
+                const renderStatusItem = (el, icon, text) => {
+                    const content = String(text ?? '');
+                    const shouldHide = content.includes('?') || content.toLowerCase().includes('unknown');
+                    el.style.display = shouldHide ? 'none' : 'flex';
+                    if (!shouldHide) {
+                        el.innerHTML = `<span class="status-icon">${icon}</span><span>${content}</span>`;
+                    }
+                };
 
                 if (gameState.startStamp) {
                     const tribe = document.getElementById('tribeSelect').value || 'default';
@@ -5401,11 +5673,22 @@
                     localStorage.setItem(startStampKey, gameState.startStamp);
                 }
 
-                if (!roundStatus || !seasonStatus || !locationStatus || !yearStatus || !gameTrackStatus) return;
+                if (!roundStatus || !seasonStatus || !locationStatus) return;
 
                 // Round type detection using structured data
                 let roundIcon = '⚙️';
                 let roundText = 'Work Round';
+                const roundHint = String(gameState.round || '').toLowerCase();
+                const statusHint = String(statusTextElement ? statusTextElement.textContent : '').toLowerCase();
+                const isMigrateChancePhase = gameState.reproductionRound && gameState.matingComplete === true;
+                const isPostReproductionStep =
+                    (gameState.reproductionRound || roundHint.includes('repro')) &&
+                    (
+                        roundHint.includes('awaiting chance') ||
+                        roundHint.includes('awaiting migration') ||
+                        statusHint.includes('awaiting chance') ||
+                        statusHint.includes('awaiting migration')
+                    );
                 
                 if (gameState.workRound) {
                     roundIcon = '⚙️';
@@ -5413,15 +5696,18 @@
                 } else if (gameState.foodRound) {
                     roundIcon = '🍖';
                     roundText = 'Food Round';
+                } else if (isMigrateChancePhase || isPostReproductionStep) {
+                    roundIcon = '🧭';
+                    roundText = 'Migrate/Chance';
                 } else if (gameState.reproductionRound) {
                     roundIcon = '💕';
                     roundText = 'Reproduction Round';
                 } else if (gameState.round) {
                     // Fallback to round string if boolean flags not set
-                    if (gameState.round.toLowerCase().includes('food')) {
+                    if (roundHint.includes('food')) {
                         roundIcon = '🍖';
                         roundText = 'Food Round';
-                    } else if (gameState.round.toLowerCase().includes('repro')) {
+                    } else if (roundHint.includes('repro')) {
                         roundIcon = '💕';
                         roundText = 'Reproduction Round';
                     }
@@ -5468,16 +5754,17 @@
                 const yearValue = Number.isFinite(gameState.year)
                     ? gameState.year
                     : (Number.isFinite(gameState.seasonCounter) ? Math.floor(gameState.seasonCounter / 2) : '?');
+                const seasonYearText = yearValue === '?' ? seasonText : `${seasonText} • Year ${yearValue}`;
 
                 const currentTrack = this.currentStatusData && this.currentStatusData.gameTrack;
                 const gameTrackValue = Number.isFinite(currentTrack) ? currentTrack : '?';
+                const locationTrackText = `${locationText}: Track ${gameTrackValue}`;
 
                 // Update the status bar elements
-                roundStatus.innerHTML = `<span class="status-icon">${roundIcon}</span><span>${roundText}</span>`;
-                seasonStatus.innerHTML = `<span class="status-icon">${seasonIcon}</span><span>${seasonText}</span>`;
-                locationStatus.innerHTML = `<span class="status-icon">${locationIcon}</span><span>${locationText}</span>`;
-                yearStatus.innerHTML = `<span class="status-icon">📅</span><span>Year: ${yearValue}</span>`;
-                gameTrackStatus.innerHTML = `<span class="status-icon">🎯</span><span>Game Track: ${gameTrackValue}</span>`;
+                renderStatusItem(roundStatus, roundIcon, roundText);
+                renderStatusItem(seasonStatus, seasonIcon, seasonYearText);
+                renderStatusItem(locationStatus, locationIcon, locationTrackText);
+                this.updateWaitingStatusChip();
             }
 
             updateGameStatusBar(status) {
@@ -5485,21 +5772,33 @@
                 const roundStatus = document.getElementById('roundStatus');
                 const seasonStatus = document.getElementById('seasonStatus');
                 const locationStatus = document.getElementById('locationStatus');
-                const yearStatus = document.getElementById('yearStatus');
-                const gameTrackStatus = document.getElementById('gameTrackStatus');
 
-                if (!roundStatus || !seasonStatus || !locationStatus || !yearStatus || !gameTrackStatus) return;
+                const renderStatusItem = (el, icon, text) => {
+                    const content = String(text ?? '');
+                    const shouldHide = content.includes('?') || content.toLowerCase().includes('unknown');
+                    el.style.display = shouldHide ? 'none' : 'flex';
+                    if (!shouldHide) {
+                        el.innerHTML = `<span class="status-icon">${icon}</span><span>${content}</span>`;
+                    }
+                };
+
+                if (!roundStatus || !seasonStatus || !locationStatus) return;
 
                 let roundIcon = '⚙️';
                 let roundText = 'Unknown Round';
+                const statusLower = status.toLowerCase();
+                const isPostReproductionStep = statusLower.includes('awaiting chance') || statusLower.includes('awaiting migration');
                 
-                if (status.toLowerCase().includes('work')) {
+                if (isPostReproductionStep) {
+                    roundIcon = '🧭';
+                    roundText = 'Transition Phase';
+                } else if (statusLower.includes('work')) {
                     roundIcon = '⚙️';
                     roundText = 'Work Round';
-                } else if (status.toLowerCase().includes('food')) {
+                } else if (statusLower.includes('food')) {
                     roundIcon = '🍖';
                     roundText = 'Food Round';
-                } else if (status.toLowerCase().includes('reproduction') || status.toLowerCase().includes('romance')) {
+                } else if (statusLower.includes('reproduction') || statusLower.includes('romance')) {
                     roundIcon = '💕';
                     roundText = 'Reproduction Round';
                 }
@@ -5508,10 +5807,10 @@
                 let seasonIcon = '☀️';
                 let seasonText = 'Warm Season';
                 
-                if (status.toLowerCase().includes('winter') || status.toLowerCase().includes('cold')) {
+                if (statusLower.includes('winter') || statusLower.includes('cold')) {
                     seasonIcon = '❄️';
                     seasonText = 'Cold Season';
-                } else if (status.toLowerCase().includes('summer') || status.toLowerCase().includes('warm')) {
+                } else if (statusLower.includes('summer') || statusLower.includes('warm')) {
                     seasonIcon = '☀️';
                     seasonText = 'Warm Season';
                 }
@@ -5520,22 +5819,22 @@
                 let locationIcon = '🌍';
                 let locationText = 'Unknown Location';
                 
-                if (status.toLowerCase().includes('veldt')) {
+                if (statusLower.includes('veldt')) {
                     locationIcon = '🌾';
                     locationText = 'Veldt';
-                } else if (status.toLowerCase().includes('forest')) {
+                } else if (statusLower.includes('forest')) {
                     locationIcon = '🌲';
                     locationText = 'Forest';
-                } else if (status.toLowerCase().includes('marsh')) {
+                } else if (statusLower.includes('marsh')) {
                     locationIcon = '🐸';
                     locationText = 'Marsh';
-                } else if (status.toLowerCase().includes('hills')) {
+                } else if (statusLower.includes('hills')) {
                     locationIcon = '⛰️';
                     locationText = 'Hills';
-                } else if (status.toLowerCase().includes('mountain')) {
+                } else if (statusLower.includes('mountain')) {
                     locationIcon = '🏔️';
                     locationText = 'Mountains';
-                } else if (status.toLowerCase().includes('desert')) {
+                } else if (statusLower.includes('desert')) {
                     locationIcon = '🏜️';
                     locationText = 'Desert';
                 }
@@ -5544,6 +5843,8 @@
                 const gameTrackMatch = status.match(/game\s+track\s+is\s+at\s+([0-9]+)/i);
                 const yearValue = yearMatch ? yearMatch[1] : '?';
                 const gameTrackValue = gameTrackMatch ? gameTrackMatch[1] : '?';
+                const seasonYearText = yearValue === '?' ? seasonText : `${seasonText} • Year ${yearValue}`;
+                const locationTrackText = `${locationText}: Track ${gameTrackValue}`;
 
                 if (!this.currentStatusData) {
                     this.currentStatusData = {};
@@ -5551,11 +5852,10 @@
                 this.currentStatusData.gameTrack = gameTrackMatch ? Number(gameTrackMatch[1]) : null;
 
                 // Update the status bar elements
-                roundStatus.innerHTML = `<span class="status-icon">${roundIcon}</span><span>${roundText}</span>`;
-                seasonStatus.innerHTML = `<span class="status-icon">${seasonIcon}</span><span>${seasonText}</span>`;
-                locationStatus.innerHTML = `<span class="status-icon">${locationIcon}</span><span>${locationText}</span>`;
-                yearStatus.innerHTML = `<span class="status-icon">📅</span><span>Year: ${yearValue}</span>`;
-                gameTrackStatus.innerHTML = `<span class="status-icon">🎯</span><span>Game Track: ${gameTrackValue}</span>`;
+                renderStatusItem(roundStatus, roundIcon, roundText);
+                renderStatusItem(seasonStatus, seasonIcon, seasonYearText);
+                renderStatusItem(locationStatus, locationIcon, locationTrackText);
+                this.updateWaitingStatusChip();
             }
 
             initializeEventListeners() {
@@ -5598,6 +5898,7 @@
                     this.currentPopulation = null; // Clear population cache to trigger gender filtering refresh
                     this.requestCommandList(); // Refresh command list in case chief status changed
                     this.updateCommandList(); // Update command list immediately for chief status
+                    this.updateWaitingStatusChip();
                     
                     // Clear message display when switching players  
                     const container = document.getElementById('messagesContainer');

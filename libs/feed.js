@@ -230,6 +230,60 @@ function checkFood(gameState, bot) {
 }
 module.exports.checkFood = checkFood;
 
+function getFoodRoundRisk(gameState) {
+  var adultsStarve = [];
+  var childrenStarve = [];
+  var prenatalStarve = [];
+  var population = gameState.population || {};
+  var children = gameState.children || {};
+
+  for (var targetName in population) {
+    var person = pop.memberByName(targetName, gameState);
+    if (!person) {
+      continue;
+    }
+
+    var totalStores = Number(person.food || 0) + Number(person.grain || 0);
+    if (totalStores < 4) {
+      adultsStarve.push(person.name || targetName);
+    }
+
+    if (
+      person.gender == 'female' &&
+      childLib.countChildrenOfParentUnderAge(children, targetName, 4) > 1 &&
+      person.isPregnant
+    ) {
+      var postMealStores = totalStores - 4;
+      if (postMealStores < 2) {
+        prenatalStarve.push(person.isPregnant);
+      }
+    }
+  }
+
+  for (var childName in children) {
+    var child = children[childName];
+    if (!child || child.dead) {
+      continue;
+    }
+    if (child.newAdult && child.newAdult == true) {
+      continue;
+    }
+    if (Number(child.age) >= 24) {
+      continue;
+    }
+    if (Number(child.food || 0) < 2) {
+      childrenStarve.push(childName);
+    }
+  }
+
+  return {
+    adultsStarve: adultsStarve,
+    childrenStarve: childrenStarve,
+    prenatalStarve: prenatalStarve,
+  };
+}
+module.exports.getFoodRoundRisk = getFoodRoundRisk;
+
 function consumeFoodChildren(gameState) {
   response = '';
   perishedChildren = [];
