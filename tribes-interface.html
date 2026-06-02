@@ -121,6 +121,57 @@
             border-color: rgba(255, 193, 7, 0.48);
         }
 
+        .collapsible-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .collapsible-header h3,
+        .collapsible-header h4 {
+            margin: 0;
+        }
+
+        .collapsible-toggle-btn {
+            width: 22px;
+            height: 22px;
+            margin: 0;
+            padding: 0;
+            border: 1px solid #cbd5e1;
+            border-radius: 999px;
+            background: #ffffff;
+            color: #334155;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 700;
+            line-height: 1;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+        }
+
+        .collapsible-toggle-btn:hover {
+            background: #f8fafc;
+            border-color: #94a3b8;
+            transform: scale(1.03);
+        }
+
+        .collapsible-toggle-btn:focus {
+            outline: 2px solid #93c5fd;
+            outline-offset: 1px;
+        }
+
+        .login-collapsible-body {
+            display: block;
+        }
+
+        #refereeAdminSection.collapsed .referee-tools-body {
+            display: none;
+        }
+
         .container {
             max-width: 2400px; /* Increased for larger screens */
             margin: 0 auto;
@@ -1279,7 +1330,6 @@
         /* Login area state modifications */
         .user-info.minimized {
             padding: 0.5rem;
-            opacity: 0.7;
             transition: all 0.3s ease;
         }
 
@@ -1288,19 +1338,8 @@
             margin-bottom: 0.25rem;
         }
 
-        .user-info.minimized .form-group {
-            margin-bottom: 0.25rem;
-        }
-
-        .user-info.minimized .btn {
-            opacity: 0.5;
-            pointer-events: none;
-        }
-
-        .user-info.minimized #expandLoginBtn {
-            opacity: 1;
-            pointer-events: auto;
-            display: block !important;
+        .user-info.minimized .login-collapsible-body {
+            display: none;
         }
 
         #expandLoginBtn {
@@ -1559,6 +1598,13 @@
         <div class="sidebar">
             <!-- User Info Section -->
             <div class="user-info">
+                <div class="collapsible-header">
+                    <h3>Login</h3>
+                    <button class="collapsible-toggle-btn" id="toggleLoginSectionBtn" type="button">−</button>
+                </div>
+
+                <div class="login-collapsible-body">
+
                 <div class="form-group">
                     <label for="tribeSelect">Tribe: <span id="tribeRemembered" style="color: #28a745; font-size: 0.8em; display: none;">💾</span></label>
                     <select id="tribeSelect">
@@ -1586,6 +1632,7 @@
                 <button class="btn" id="logoutBtn" onclick="window.tribesClient.logout()" style="display: none; background: #dc3545;">Logout</button>
                 <button class="btn" id="logoutAllBtn" onclick="window.tribesClient.logout(true)" style="display: none; background: #6f42c1; margin-top: 0.25rem;">Logout All Devices</button>
                 <button class="btn btn-small" id="expandLoginBtn" style="display: none; margin-top: 0.5rem; font-size: 0.8rem;">✏️ Edit Login</button>
+                </div>
             </div>
 
             <!-- Commands Section -->
@@ -1594,9 +1641,12 @@
                 
                 <!-- Referee Admin Section -->
                 <div id="refereeAdminSection" style="display: none; margin-bottom: 1rem; padding: 1rem; border: 2px solid #dc3545; border-radius: 8px; background: #f8f9fa;">
-                    <h4 style="color: #dc3545; margin-bottom: 1rem;">🛡️ Referee Tools</h4>
-                    
-                    <div class="form-group">
+                    <div class="collapsible-header">
+                        <h4 style="color: #dc3545;">🛡️ Referee Tools</h4>
+                        <button class="collapsible-toggle-btn" id="toggleRefereeToolsBtn" type="button">−</button>
+                    </div>
+
+                    <div class="form-group referee-tools-body">
                         <button class="btn btn-small" onclick="tribesClient.exportGame()" style="background: #28a745; margin-bottom: 0.5rem;">
                             📤 Export Game Data
                         </button>
@@ -2410,15 +2460,46 @@
             minimizeLoginArea() {
                 const userInfo = document.querySelector('.user-info');
                 userInfo.classList.add('minimized');
+                const toggleLoginBtn = document.getElementById('toggleLoginSectionBtn');
+                if (toggleLoginBtn) {
+                    toggleLoginBtn.textContent = '+';
+                }
                 this.syncMobileLayoutState();
             }
 
             expandLoginArea() {
                 const userInfo = document.querySelector('.user-info');
                 userInfo.classList.remove('minimized');
+                const toggleLoginBtn = document.getElementById('toggleLoginSectionBtn');
+                if (toggleLoginBtn) {
+                    toggleLoginBtn.textContent = '−';
+                }
                 this.isLoggedIn = false; // Reset login state when expanding login area
                 this.hideCommandsSection(); // Hide commands when going back to login
                 this.syncMobileLayoutState();
+            }
+
+            toggleLoginSection() {
+                const userInfo = document.querySelector('.user-info');
+                const toggleLoginBtn = document.getElementById('toggleLoginSectionBtn');
+                if (!userInfo || !toggleLoginBtn) {
+                    return;
+                }
+
+                const minimized = userInfo.classList.toggle('minimized');
+                toggleLoginBtn.textContent = minimized ? '+' : '−';
+                this.syncMobileLayoutState();
+            }
+
+            toggleRefereeToolsSection() {
+                const refereeSection = document.getElementById('refereeAdminSection');
+                const toggleRefBtn = document.getElementById('toggleRefereeToolsBtn');
+                if (!refereeSection || !toggleRefBtn) {
+                    return;
+                }
+
+                const collapsed = refereeSection.classList.toggle('collapsed');
+                toggleRefBtn.textContent = collapsed ? '+' : '−';
             }
 
             hideCommandsSection() {
@@ -5680,9 +5761,9 @@
                 let roundText = 'Work Round';
                 const roundHint = String(gameState.round || '').toLowerCase();
                 const statusHint = String(statusTextElement ? statusTextElement.textContent : '').toLowerCase();
-                const isMigrateChancePhase = gameState.reproductionRound && gameState.matingComplete === true;
+                const isMigrateChancePhase = gameState.reproductionRound === true && gameState.matingComplete === true;
                 const isPostReproductionStep =
-                    (gameState.reproductionRound || roundHint.includes('repro')) &&
+                    (gameState.reproductionRound === true || roundHint.includes('repro')) &&
                     (
                         roundHint.includes('awaiting chance') ||
                         roundHint.includes('awaiting migration') ||
@@ -5690,18 +5771,24 @@
                         statusHint.includes('awaiting migration')
                     );
                 
-                if (gameState.workRound) {
+                // Prioritize explicit boolean flags over text heuristics
+                if (gameState.workRound === true) {
                     roundIcon = '⚙️';
                     roundText = 'Work Round';
-                } else if (gameState.foodRound) {
+                } else if (gameState.foodRound === true) {
                     roundIcon = '🍖';
                     roundText = 'Food Round';
-                } else if (isMigrateChancePhase || isPostReproductionStep) {
-                    roundIcon = '🧭';
-                    roundText = 'Migrate/Chance';
-                } else if (gameState.reproductionRound) {
-                    roundIcon = '💕';
-                    roundText = 'Reproduction Round';
+                } else if (gameState.reproductionRound === true) {
+                    if (isMigrateChancePhase) {
+                        roundIcon = '🧭';
+                        roundText = 'Migrate/Chance';
+                    } else if (isPostReproductionStep) {
+                        roundIcon = '🧭';
+                        roundText = 'Migrate/Chance';
+                    } else {
+                        roundIcon = '💕';
+                        roundText = 'Reproduction Round';
+                    }
                 } else if (gameState.round) {
                     // Fallback to round string if boolean flags not set
                     if (roundHint.includes('food')) {
@@ -5789,18 +5876,24 @@
                 const statusLower = status.toLowerCase();
                 const isPostReproductionStep = statusLower.includes('awaiting chance') || statusLower.includes('awaiting migration');
                 
-                if (isPostReproductionStep) {
-                    roundIcon = '🧭';
-                    roundText = 'Transition Phase';
-                } else if (statusLower.includes('work')) {
+                // Prioritize explicit round type over transition states
+                if (statusLower.includes('work')) {
                     roundIcon = '⚙️';
                     roundText = 'Work Round';
                 } else if (statusLower.includes('food')) {
                     roundIcon = '🍖';
                     roundText = 'Food Round';
                 } else if (statusLower.includes('reproduction') || statusLower.includes('romance')) {
-                    roundIcon = '💕';
-                    roundText = 'Reproduction Round';
+                    if (isPostReproductionStep) {
+                        roundIcon = '🧭';
+                        roundText = 'Migrate/Chance';
+                    } else {
+                        roundIcon = '💕';
+                        roundText = 'Reproduction Round';
+                    }
+                } else if (isPostReproductionStep) {
+                    roundIcon = '🧭';
+                    roundText = 'Migrate/Chance';
                 }
 
                 // Season detection
@@ -5867,6 +5960,18 @@
                 
                 // Expand login area button
                 document.getElementById('expandLoginBtn').onclick = () => this.expandLoginArea();
+
+                // Toggle login section collapse/expand
+                const toggleLoginBtn = document.getElementById('toggleLoginSectionBtn');
+                if (toggleLoginBtn) {
+                    toggleLoginBtn.onclick = () => this.toggleLoginSection();
+                }
+
+                // Toggle referee tools collapse/expand
+                const toggleRefBtn = document.getElementById('toggleRefereeToolsBtn');
+                if (toggleRefBtn) {
+                    toggleRefBtn.onclick = () => this.toggleRefereeToolsSection();
+                }
                 
                 // Refresh data button
                 document.getElementById('refreshDataBtn').onclick = () => this.refreshGameData();
