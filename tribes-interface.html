@@ -3222,6 +3222,10 @@
                 const needsChildrenData = this.selectedCommand.options.some(option => 
                     this.isChildTargetingOption(option.name)
                 );
+
+                const needsHistorySubjectData = this.selectedCommand.options.some(option =>
+                    this.isHistorySubjectOption(option)
+                );
                 
                 if ((needsPlayerData || needsPopulationForSecrets) && !this.currentPopulation) {
                     // Fetch population data first
@@ -3236,6 +3240,12 @@
                     this.send({ type: 'infoRequest', selection: 'children' });
                     // Show loading message
                     container.innerHTML = '<div>Loading children data...</div>';
+                    return;
+                }
+
+                if (needsHistorySubjectData && !this.currentPopulation) {
+                    this.send({ type: 'infoRequest', selection: 'population' });
+                    container.innerHTML = '<div>Loading player data...</div>';
                     return;
                 }
                 
@@ -3323,10 +3333,11 @@
                     group.appendChild(label);
                     
                     let input;
-                    if (option.choices && option.choices.length > 0) {
-                        // Existing choice dropdown
+                    const dynamicChoices = this.getChoicesForOption(option);
+                    if (dynamicChoices && dynamicChoices.length > 0) {
+                        // Existing choice dropdown or dynamic choices
                         input = document.createElement('select');
-                        option.choices.forEach(choice => {
+                        dynamicChoices.forEach(choice => {
                             const opt = document.createElement('option');
                             opt.value = choice.value;
                             opt.textContent = choice.name;
@@ -3476,6 +3487,40 @@
                 );
             }
 
+            isHistorySubjectOption(option) {
+                if (!this.selectedCommand || !option) {
+                    return false;
+                }
+                const cmdName = String(this.selectedCommand.name || '').toLowerCase();
+                return cmdName === 'history' && String(option.name || '').toLowerCase() === 'subject';
+            }
+
+            getChoicesForOption(option) {
+                if (!option) {
+                    return [];
+                }
+
+                if (this.isHistorySubjectOption(option)) {
+                    const keywordChoices = Array.isArray(option.choices) ? option.choices.slice() : [];
+                    const names = this.currentPopulation ? Object.keys(this.currentPopulation) : [];
+                    const nameChoices = names.map((playerName) => ({
+                        name: `player: ${playerName}`,
+                        value: playerName,
+                    }));
+                    const normalizedExistingValues = new Set(
+                        keywordChoices.map((choice) => String(choice.value || '').toLowerCase())
+                    );
+                    nameChoices.forEach((choice) => {
+                        if (!normalizedExistingValues.has(String(choice.value).toLowerCase())) {
+                            keywordChoices.push(choice);
+                        }
+                    });
+                    return keywordChoices;
+                }
+
+                return option.choices || [];
+            }
+
             isChildTargetingOption(optionName) {
                 // List of parameter names that should show child dropdowns
                 const childTargetingNames = [
@@ -3567,10 +3612,11 @@
                     group.appendChild(label);
                     
                     let input;
-                    if (option.choices && option.choices.length > 0) {
-                        // Existing choice dropdown
+                    const dynamicChoices = this.getChoicesForOption(option);
+                    if (dynamicChoices && dynamicChoices.length > 0) {
+                        // Existing choice dropdown or dynamic choices
                         input = document.createElement('select');
-                        option.choices.forEach(choice => {
+                        dynamicChoices.forEach(choice => {
                             const opt = document.createElement('option');
                             opt.value = choice.value;
                             opt.textContent = choice.name;

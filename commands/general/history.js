@@ -2,15 +2,29 @@ const {
   SlashCommandBuilder,
   EmbedBuilder,
 } = require('../../libs/command-builders.js');
-const text = require('../../libs/textprocess.js');
-const pop = require('../../libs/population.js');
+const tribeHistory = require('../../libs/tribeHistory.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('history')
-    .setDescription('History of your activity in the tribe'),
+    .setDescription('Search your history + tribe history by subject and years back')
+    .addStringOption((option) =>
+      option
+        .setName('subject')
+        .setDescription('Choose a person/subject filter')
+        .addChoices(...tribeHistory.getHistorySubjectChoices())
+        .setRequired(false)
+    )
+    .addIntegerOption((option) =>
+      option
+        .setName('years_back')
+        .setDescription('How many years back to search (0 = current year only)')
+        .setRequired(false)
+    ),
   async execute(interaction, gameState) {
     var playerName = interaction.member.displayName;
-    pop.showHistory(playerName, gameState);
+    var subject = interaction.options.getString('subject') || 'all';
+    var yearsBack = interaction.options.getInteger('years_back');
+    tribeHistory.showCombinedHistory(playerName, gameState, subject, yearsBack);
   },
 };

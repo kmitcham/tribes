@@ -1,6 +1,204 @@
 const text = require('./textprocess.js');
 const pop = require('./population.js');
 
+const SUBJECT_KEYWORDS = {
+  hunting: ['hunt', 'hunting', 'goes hunting'],
+  gathering: ['gathers'],
+  crafting: ['craft', 'crafts'],
+  reproduction: ['reproduction', 'mating', 'pregnant', 'birth', 'blessed with a child'],
+  romance: ['invite', 'invitation', 'consent', 'decline', 'share good feelings'],
+  childcare: ['feed', 'feeds', 'children', 'guard', 'guarding', 'nursing'],
+  chance: ['chance'],
+  migration: ['migrate', 'migrates', 'migration', 'route to', 'location'],
+  combat: ['violence', 'attacks', 'combat', 'faction', 'demand', 'fight'],
+  trade: [' gives ', ' gives', 'trade', 'converts', 'jerky'],
+  laws: ['law', 'decree', 'chief creates a new law'],
+};
+
+function getHistorySubjectChoices() {
+  const keywordChoices = Object.keys(SUBJECT_KEYWORDS).map((key) => ({
+    name: key,
+    value: key,
+  }));
+  return [
+    { name: 'all events', value: 'all' },
+    { name: 'me (my name)', value: 'me' },
+    ...keywordChoices,
+  ];
+}
+
+function parseHistorySeason(message) {
+  if (!message || typeof message !== 'string') {
+    return null;
+  }
+  var match = message.match(/^\s*([0-9]+(?:\.[0-9]+)?)\s*:/);
+  if (!match) {
+    return null;
+  }
+  var season = Number(match[1]);
+  return Number.isFinite(season) ? season : null;
+}
+
+function normalizeYearsBack(yearsBack) {
+  if (yearsBack === null || yearsBack === undefined || yearsBack === '') {
+    return null;
+  }
+  var parsed = Number(yearsBack);
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    return null;
+  }
+  return parsed;
+}
+
+function matchesYearsBack(message, gameState, yearsBack) {
+  var years = normalizeYearsBack(yearsBack);
+  if (years === null) {
+    return true;
+  }
+  var currentYear = Number(gameState && gameState.seasonCounter) / 2;
+  if (!Number.isFinite(currentYear)) {
+    return true;
+  }
+  var season = parseHistorySeason(message);
+  if (season === null) {
+    return true;
+  }
+  return season >= currentYear - years;
+}
+
+function matchesSubject(message, subject, playerName) {
+  if (!subject || subject === 'all') {
+    return true;
+  }
+  var messageLower = String(message || '').toLowerCase();
+  var subjectLower = String(subject).toLowerCase();
+
+  if (subjectLower === 'me') {
+    return messageLower.includes(String(playerName || '').toLowerCase());
+  }
+
+  if (subjectLower === 'chance') {
+    // Match explicit chance-stage entries, not incidental references like "After chance"
+    return (
+      /\bchance\s+[0-9]+\s*:/.test(messageLower)
+    );
+  }
+
+  if (subjectLower === 'give') {
+    if (messageLower.includes('gives birth')) {
+      return false;
+    }
+    return /\b(give|gives|gave|given)\b/.test(messageLower);
+  }
+
+  if (subjectLower === 'trade') {
+    if (messageLower.includes('gives birth')) {
+      return false;
+    }
+    return (
+      /\b(give|gives|gave|given)\b/.test(messageLower) ||
+      messageLower.includes('trade') ||
+      messageLower.includes('converts') ||
+      messageLower.includes('jerky')
+    );
+  }
+
+  var keywordList = SUBJECT_KEYWORDS[subjectLower];
+  if (keywordList && keywordList.length > 0) {
+    return keywordList.some((keyword) => messageLower.includes(keyword));
+  }
+
+  return messageLower.includes(subjectLower);
+}
+
+function hasHistoryMembership(playerName, gameState) {
+  var player = pop.memberByName(playerName, gameState);
+  if (player) {
+    return true;
+  }
+  return !!pop.deadOrBanishedByName(playerName, gameState);
+}
+
+function showCombinedHistory(playerName, gameState, subject, yearsBack) {
+  if (!gameState) {
+    console.warn('showCombinedHistory called with no gameState');
+    text.addMessage(
+      gameState,
+      playerName,
+      'No tribe in this channel.  Do you want to join and create one?'
+    );
+    return;
+  }
+
+  if (!hasHistoryMembership(playerName, gameState)) {
+    text.addMessage(
+      gameState,
+      playerName,
+      'You have no history with this tribe'
+    );
+    return;
+  }
+
+  var player = pop.memberByName(playerName, gameState);
+  var personalHistory = player && player.history ? player.history : [];
+  var tribeHistory = Array.isArray(gameState.tribeHistory)
+    ? gameState.tribeHistory
+    : [];
+
+  var hasSubjectOption = !!subject && String(subject).toLowerCase() !== 'all';
+  var hasYearsOption =
+    yearsBack !== undefined && yearsBack !== null && yearsBack !== '';
+  if (hasSubjectOption || hasYearsOption) {
+    var optionSummary = hasSubjectOption ? String(subject) : 'all';
+    if (hasYearsOption) {
+      optionSummary += ' years_back=' + String(yearsBack);
+    }
+    text.addMessage(gameState, playerName, 'History:' + optionSummary);
+  }
+
+  var combined = [];
+  for (const entry of personalHistory) {
+    combined.push({ source: 'Your history', message: entry });
+  }
+  for (const entry of tribeHistory) {
+    combined.push({ source: 'Tribe history', message: entry });
+  }
+
+  var filtered = combined.filter(
+    (entry) =>
+      matchesYearsBack(entry.message, gameState, yearsBack) &&
+      matchesSubject(entry.message, subject, playerName)
+  );
+
+  filtered.sort((left, right) => {
+    var leftSeason = parseHistorySeason(left.message);
+    var rightSeason = parseHistorySeason(right.message);
+    if (leftSeason === null && rightSeason === null) {
+      return 0;
+    }
+    if (leftSeason === null) {
+      return 1;
+    }
+    if (rightSeason === null) {
+      return -1;
+    }
+    return leftSeason - rightSeason;
+  });
+
+  if (filtered.length === 0) {
+    text.addMessage(
+      gameState,
+      playerName,
+      'No history entries match that subject and years-back filter.'
+    );
+    return;
+  }
+
+  for (const entry of filtered) {
+    text.addMessage(gameState, playerName, '[' + entry.source + '] ' + entry.message);
+  }
+}
+
 function showTribeHistory(playerName, gameState) {
   if (!gameState) {
     console.warn('showTribeHistory called with no gameState');
@@ -43,3 +241,5 @@ function showTribeHistory(playerName, gameState) {
 }
 
 module.exports.showTribeHistory = showTribeHistory;
+module.exports.showCombinedHistory = showCombinedHistory;
+module.exports.getHistorySubjectChoices = getHistorySubjectChoices;
