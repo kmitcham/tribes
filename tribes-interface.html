@@ -612,6 +612,17 @@
             color: #495057;
         }
 
+        .message.history-response {
+            background-color: #fff4e5;
+            border-left: 4px solid #fd7e14;
+            color: #7a3e00;
+        }
+
+        .message.history-response .message-type-label {
+            background-color: #fd7e14;
+            color: #ffffff;
+        }
+
         .message-type-label {
             font-weight: bold;
             padding: 2px 6px;
@@ -3430,6 +3441,10 @@
                     input.id = `param_${option.name}`;
                     input.placeholder = option.description || '';
                     input.className = 'form-control';
+
+                    if (this.isHistoryYearsBackOption(option) && !input.value) {
+                        input.value = '1';
+                    }
                     
                     // Apply same styling as other inputs
                     input.style.width = '100%';
@@ -3493,6 +3508,14 @@
                 }
                 const cmdName = String(this.selectedCommand.name || '').toLowerCase();
                 return cmdName === 'history' && String(option.name || '').toLowerCase() === 'subject';
+            }
+
+            isHistoryYearsBackOption(option) {
+                if (!this.selectedCommand || !option) {
+                    return false;
+                }
+                const cmdName = String(this.selectedCommand.name || '').toLowerCase();
+                return cmdName === 'history' && String(option.name || '').toLowerCase() === 'years_back';
             }
 
             getChoicesForOption(option) {
@@ -3858,6 +3881,8 @@
                                 input.value = preservedValues[option.name];
                             }
                             console.log('Restored value for', option.name, ':', preservedValues[option.name]);
+                        } else if (this.isHistoryYearsBackOption(option)) {
+                            input.value = '1';
                         }
                         
                         group.appendChild(input);
@@ -4610,6 +4635,17 @@
                     return;
                 }
                 text = text.trim();
+
+                const normalizedText = text.toLowerCase();
+                const normalizedTypeLabel = String(typeLabel || '').toLowerCase();
+                const isHistoryResponse =
+                    normalizedTypeLabel.includes('history') ||
+                    normalizedText.startsWith('history:') ||
+                    normalizedText.startsWith('[your history]') ||
+                    normalizedText.startsWith('[tribe history]');
+                if (isHistoryResponse) {
+                    message.classList.add('history-response');
+                }
 
                 if (isRestored) {
                     message.classList.add('restored');

@@ -1234,7 +1234,10 @@ function handleListCommands(ws, data, gameState) {
       continue;
     }
 
-    let commandOptions = command.data.options || [];
+    let commandOptions =
+      typeof command.getOptions === 'function'
+        ? command.getOptions(gameState)
+        : command.data.options || [];
 
     // Filter out force options if the player is not a referee
     if (!isRef) {

@@ -66,9 +66,35 @@ function setFaction(gameState, actorName, side) {
     );
     return;
   }
+  const previousSide = player.faction;
   player.faction = side;
+  announceAffectedSideScores(gameState, previousSide, side);
   violencelib.getFactionResult(gameState);
   gameState.saveRequired = true;
   return;
+}
+
+function announceAffectedSideScores(gameState, previousSide, newSide) {
+  const trackedSides = ['for', 'against'];
+  const affected = [];
+  if (trackedSides.includes(previousSide)) {
+    affected.push(previousSide);
+  }
+  if (trackedSides.includes(newSide) && !affected.includes(newSide)) {
+    affected.push(newSide);
+  }
+  if (affected.length === 0) {
+    return;
+  }
+
+  const scores = violencelib.getFactionScores(gameState);
+  for (const side of affected) {
+    const label = side === 'for' ? 'FOR' : 'AGAINST';
+    text.addMessage(
+      gameState,
+      'tribe',
+      `${label} side score is now ${scores[side]}.`
+    );
+  }
 }
 module.exports.setFaction = setFaction;

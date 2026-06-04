@@ -167,6 +167,33 @@ function factionHasCrafter(faction) {
   return false;
 }
 
+function getFactionScores(gameState) {
+  var gameFactions = getGameFactions(gameState);
+  var forScore = getFactionBaseScore(gameFactions['for']);
+  var againstScore = getFactionBaseScore(gameFactions['against']);
+  var neutralScore = getFactionBaseScore(gameFactions['neutral']);
+  var undeclaredScore = getFactionBaseScore(gameFactions['undeclared']);
+
+  var forCraft = factionHasCrafter(gameFactions['for']);
+  var conCraft = factionHasCrafter(gameFactions['against']);
+  var neuCraft = factionHasCrafter(gameFactions['neutral']);
+  var undCraft = factionHasCrafter(gameFactions['undeclared']);
+  if (forCraft && !conCraft && !neuCraft && !undCraft) {
+    forScore += 2;
+  }
+  if (!forCraft && conCraft && !neuCraft && !undCraft) {
+    againstScore += 2;
+  }
+
+  return {
+    for: forScore,
+    against: againstScore,
+    neutral: neutralScore,
+    undeclared: undeclaredScore,
+  };
+}
+module.exports.getFactionScores = getFactionScores;
+
 const getFactionResult = (gameState) => {
   response = '';
   gameFactions = getGameFactions(gameState);
@@ -187,10 +214,11 @@ const getFactionResult = (gameState) => {
     }
     return response;
   }
-  forScore = getFactionBaseScore(gameFactions['for']);
-  againstScore = getFactionBaseScore(gameFactions['against']);
-  neutralScore = getFactionBaseScore(gameFactions['neutral']);
-  undeclaredScore = getFactionBaseScore(gameFactions['undeclared']);
+  const scores = getFactionScores(gameState);
+  forScore = scores.for;
+  againstScore = scores.against;
+  neutralScore = scores.neutral;
+  undeclaredScore = scores.undeclared;
   console.log(
     'Faction scores: For:' +
       forScore +
@@ -201,16 +229,6 @@ const getFactionResult = (gameState) => {
       ' undeclared:' +
       undeclaredScore
   );
-  forCraft = factionHasCrafter(gameFactions['for']);
-  conCraft = factionHasCrafter(gameFactions['against']);
-  neuCraft = factionHasCrafter(gameFactions['neutral']);
-  undCraft = factionHasCrafter(gameFactions['undeclared']);
-  if (forCraft && !conCraft && !neuCraft && !undCraft) {
-    forScore += 2;
-  }
-  if (!forCraft && conCraft && !neuCraft && !undCraft) {
-    againstScore += 2;
-  }
 
   // if there are not enough undeclared people to swing the vote, we can end it immediately.
   if (forScore >= 2 * (againstScore + undeclaredScore)) {
