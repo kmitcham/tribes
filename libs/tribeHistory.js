@@ -67,10 +67,24 @@ function matchesYearsBack(message, gameState, yearsBack) {
 }
 
 function matchesSubject(message, subject, playerName) {
+  var messageLower = String(message || '').toLowerCase();
+
+  const isStartOfYearMessage =
+    messageLower.includes('starting the work round') ||
+    messageLower.includes('start work round');
+
+  const hasFoodOrStarved =
+    messageLower.includes('food') || messageLower.includes('starved')
+    || messageLower.includes('round');
+
+  if (isStartOfYearMessage) {
+    return false;
+  }
+
   if (!subject || subject === 'all') {
     return true;
   }
-  var messageLower = String(message || '').toLowerCase();
+
   var subjectLower = String(subject).toLowerCase();
 
   if (subjectLower === 'me') {
@@ -81,6 +95,32 @@ function matchesSubject(message, subject, playerName) {
     // Match explicit chance-stage entries, not incidental references like "After chance"
     return (
       /\bchance\s+[0-9]+\s*:/.test(messageLower)
+    );
+  }
+
+  if (subjectLower === 'reproduction') {
+    if (hasFoodOrStarved) {
+      return false;
+    }
+    return (
+      messageLower.includes('reproduction') ||
+      messageLower.includes('mating') ||
+      messageLower.includes('pregnant') ||
+      messageLower.includes('birth') ||
+      messageLower.includes('blessed with a child')
+    );
+  }
+
+  if (subjectLower === 'romance') {
+    if (hasFoodOrStarved) {
+      return false;
+    }
+    return (
+      messageLower.includes('invite') ||
+      messageLower.includes('invitation') ||
+      messageLower.includes('consent') ||
+      messageLower.includes('decline') ||
+      messageLower.includes('share good feelings')
     );
   }
 

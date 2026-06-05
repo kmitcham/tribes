@@ -2720,7 +2720,20 @@
                             this.addMessage('⚠️ Only players who know crafting can use secrets', 'error');
                             return;
                         }
-                        this.selectCommand(name);
+                        const searchInput = document.getElementById('commandSearchInput');
+                        const goBtn = document.getElementById('commandGoBtn');
+                        const suggestions = document.getElementById('commandSuggestions');
+
+                        if (searchInput) {
+                            searchInput.value = name;
+                            searchInput.focus();
+                        }
+                        if (goBtn) {
+                            goBtn.disabled = false;
+                        }
+                        if (suggestions) {
+                            suggestions.style.display = 'none';
+                        }
                     };
                     container.appendChild(item);
                 });

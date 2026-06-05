@@ -230,4 +230,137 @@ describe('tribeHistory.js', () => {
       '[Tribe history] 9: eggplant gives birth to a male-child, Jade'
     );
   });
+
+  test('showCombinedHistory romance filter should ignore food round recap', () => {
+    gameState.seasonCounter = 20;
+    gameState.tribeHistory = [
+      '9: Food round results: ... After chance, the tribe can decide to move.  No adults starved! No children starved!',
+      '9: ursa invite you to share good feelings',
+    ];
+    pop.memberByName.mockReturnValue({
+      name: playerName,
+      history: [],
+    });
+
+    tribeHistory.showCombinedHistory(playerName, gameState, 'romance', 5);
+
+    expect(text.addMessage).toHaveBeenCalledWith(
+      gameState,
+      playerName,
+      '[Tribe history] 9: ursa invite you to share good feelings'
+    );
+    expect(text.addMessage).not.toHaveBeenCalledWith(
+      gameState,
+      playerName,
+      '[Tribe history] 9: Food round results: ... After chance, the tribe can decide to move.  No adults starved! No children starved!'
+    );
+  });
+
+  test('showCombinedHistory reproduction filter should ignore food round recap', () => {
+    gameState.seasonCounter = 20;
+    gameState.tribeHistory = [
+      '9: Food round results: eggplant eats extra food due to multiple children under 2. No adults starved! No children starved!==> Starting the Reproduction round; invite other tribe members to reproduce.<==After chance, the tribe can decide to move.',
+      '9: ursa has been blessed with a child: Karoo',
+    ];
+    pop.memberByName.mockReturnValue({
+      name: playerName,
+      history: [],
+    });
+
+    tribeHistory.showCombinedHistory(playerName, gameState, 'reproduction', 5);
+
+    expect(text.addMessage).toHaveBeenCalledWith(
+      gameState,
+      playerName,
+      '[Tribe history] 9: ursa has been blessed with a child: Karoo'
+    );
+    expect(text.addMessage).not.toHaveBeenCalledWith(
+      gameState,
+      playerName,
+      '[Tribe history] 9: Food round results: eggplant eats extra food due to multiple children under 2. No adults starved! No children starved!==> Starting the Reproduction round; invite other tribe members to reproduce.<==After chance, the tribe can decide to move.'
+    );
+  });
+
+  test('showCombinedHistory romance filter should ignore messages containing food or starved', () => {
+    gameState.seasonCounter = 20;
+    gameState.tribeHistory = [
+      '9: ursa invite you to share good feelings',
+      '9: ursa invite you to share good feelings and food',
+      '9: no one starved, but the tribe kept going',
+    ];
+    pop.memberByName.mockReturnValue({
+      name: playerName,
+      history: [],
+    });
+
+    tribeHistory.showCombinedHistory(playerName, gameState, 'romance', 5);
+
+    expect(text.addMessage).toHaveBeenCalledWith(
+      gameState,
+      playerName,
+      '[Tribe history] 9: ursa invite you to share good feelings'
+    );
+    expect(text.addMessage).not.toHaveBeenCalledWith(
+      gameState,
+      playerName,
+      '[Tribe history] 9: ursa invite you to share good feelings and food'
+    );
+    expect(text.addMessage).not.toHaveBeenCalledWith(
+      gameState,
+      playerName,
+      '[Tribe history] 9: no one starved, but the tribe kept going'
+    );
+  });
+
+  test('showCombinedHistory reproduction filter should ignore messages containing food or starved', () => {
+    gameState.seasonCounter = 20;
+    gameState.tribeHistory = [
+      '9: ursa has been blessed with a child: Karoo',
+      '9: ursa has been blessed with a child: Karoo and got food',
+      '9: no adults starved in the food round',
+    ];
+    pop.memberByName.mockReturnValue({
+      name: playerName,
+      history: [],
+    });
+
+    tribeHistory.showCombinedHistory(playerName, gameState, 'reproduction', 5);
+
+    expect(text.addMessage).toHaveBeenCalledWith(
+      gameState,
+      playerName,
+      '[Tribe history] 9: ursa has been blessed with a child: Karoo'
+    );
+    expect(text.addMessage).not.toHaveBeenCalledWith(
+      gameState,
+      playerName,
+      '[Tribe history] 9: ursa has been blessed with a child: Karoo and got food'
+    );
+    expect(text.addMessage).not.toHaveBeenCalledWith(
+      gameState,
+      playerName,
+      '[Tribe history] 9: no adults starved in the food round'
+    );
+  });
+
+  test('showCombinedHistory should ignore the start of work round message', () => {
+    gameState.seasonCounter = 20;
+    gameState.tribeHistory = [
+      '10: ==>Starting the work round. Guard (or ignore) your children, then craft, gather, hunt, assist or train.<==',
+      '10: ursa got sick – eat 2 extra food and miss next turn.',
+    ];
+
+    tribeHistory.showCombinedHistory(playerName, gameState, 'all', 5);
+
+    expect(text.addMessage).toHaveBeenCalledWith(
+      gameState,
+      playerName,
+      '[Tribe history] 10: ursa got sick – eat 2 extra food and miss next turn.'
+    );
+    expect(text.addMessage).not.toHaveBeenCalledWith(
+      gameState,
+      playerName,
+      '[Tribe history] 10: ==>Starting the work round. Guard (or ignore) your children, then craft, gather, hunt, assist or train.<=='
+    );
+  });
 });
