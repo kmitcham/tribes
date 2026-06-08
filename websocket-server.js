@@ -68,6 +68,8 @@ let usersDict = {};
 // Track connected clients and their player names
 let connectedClients = new Map(); // Map of playerName -> Set of WebSocket connections
 let tribeConnections = new Map(); // Map of tribeName -> Set of WebSocket connections
+let pendingMessages = new Map(); // Map of playerName::tribeName -> Array<{ type, message, timestamp }>
+const MAX_PENDING_MESSAGES_PER_PLAYER_TRIBE = 200;
 
 // Rate limiting for authentication attempts
 let loginAttempts = new Map(); // Map of identifier -> { count, lastAttempt, lockoutUntil }
@@ -225,6 +227,98 @@ function findStoredUserName(name) {
 
 function samePlayerName(a, b) {
   return normalizePlayerName(a).toLowerCase() === normalizePlayerName(b).toLowerCase();
+}
+
+function pendingMessageKey(playerName, tribeName) {
+  return `${normalizePlayerName(playerName)}::${normalizePlayerName(tribeName || 'bug')}`;
+}
+
+function hasOpenConnectionInTribe(playerName, tribeName) {
+  if (!playerName) return false;
+
+  let connections = connectedClients.get(playerName);
+  if (!connections) {
+    const matchedName = Array.from(connectedClients.keys()).find((existing) =>
+      samePlayerName(existing, playerName)
+    );
+    if (matchedName) {
+      connections = connectedClients.get(matchedName);
+    }
+  }
+
+  if (!connections || connections.size === 0) {
+    return false;
+  }
+
+  for (const connection of connections) {
+    if (
+      connection.readyState === WebSocket.OPEN &&
+      normalizePlayerName(connection.currentTribe) ===
+        normalizePlayerName(tribeName || 'bug')
+    ) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function queuePendingMessage(playerName, tribeName, payload) {
+  if (!playerName || !payload || !payload.type || !payload.message) {
+    return;
+  }
+
+  const key = pendingMessageKey(playerName, tribeName);
+  const queue = pendingMessages.get(key) || [];
+  queue.push({
+    type: payload.type,
+    message: payload.message,
+    timestamp: Date.now(),
+  });
+
+  const overflowCount =
+    queue.length - MAX_PENDING_MESSAGES_PER_PLAYER_TRIBE;
+  if (overflowCount > 0) {
+    queue.splice(0, overflowCount);
+    logWithTimestamp(
+      '[ERROR] Dropped pending messages due to per-player tribe queue limit',
+      `player=${normalizePlayerName(playerName)}`,
+      `tribe=${normalizePlayerName(tribeName || 'bug')}`,
+      `dropped=${overflowCount}`,
+      `limit=${MAX_PENDING_MESSAGES_PER_PLAYER_TRIBE}`
+    );
+  }
+
+  pendingMessages.set(key, queue);
+}
+
+function replayPendingMessages(ws, playerName, tribeName, clientId) {
+  if (!ws || ws.readyState !== WebSocket.OPEN || !playerName) {
+    return;
+  }
+
+  const key = pendingMessageKey(playerName, tribeName);
+  const queue = pendingMessages.get(key);
+  if (!queue || queue.length === 0) {
+    return;
+  }
+
+  for (const pending of queue) {
+    ws.send(
+      JSON.stringify({
+        type: pending.type,
+        message: pending.message,
+        replay: true,
+        replayedAt: Date.now(),
+        clientId,
+      })
+    );
+  }
+
+  pendingMessages.delete(key);
+  logWithTimestamp(
+    `[REPLAY] Delivered ${queue.length} queued messages to ${playerName} for tribe ${tribeName || 'bug'}`
+  );
 }
 
 function loadCommands() {
@@ -746,6 +840,13 @@ function handleSessionAuthentication(ws, data) {
       clientId: data.clientId,
     })
   );
+
+  replayPendingMessages(
+    ws,
+    session.playerName,
+    ws.currentTribe || data.tribe || 'bug',
+    data.clientId
+  );
 }
 
 function handleLogout(ws, data) {
@@ -923,6 +1024,8 @@ async function handleCommandRequest(ws, data, gameState) {
     );
     return;
   }
+
+  replayPendingMessages(ws, data.playerName, data.tribe || 'bug', data.clientId);
 
   try {
     // Create mock interaction object
@@ -1111,6 +1214,7 @@ async function sendGameMessages(ws, gameState, data) {
         recipientConnections = connectedClients.get(member.name);
       }
     }
+    let deliveredToAnyConnection = false;
     if (recipientConnections && recipientConnections.size > 0) {
       for (const recipientWs of recipientConnections) {
         if (recipientWs.readyState === 1) {
@@ -1122,6 +1226,7 @@ async function sendGameMessages(ws, gameState, data) {
                 clientId: data.clientId,
               })
             );
+            deliveredToAnyConnection = true;
           } catch (error) {
             console.error(`Error sending message to ${recipient}:`, error);
           }
@@ -1129,6 +1234,13 @@ async function sendGameMessages(ws, gameState, data) {
       }
     } else {
       logWithTimestamp(`Message for offline player ${recipient}: ${message}`);
+    }
+
+    if (!deliveredToAnyConnection) {
+      queuePendingMessage(recipient, tribe, {
+        type: 'privateMessage',
+        message,
+      });
     }
   }
 
@@ -1151,6 +1263,18 @@ async function sendGameMessages(ws, gameState, data) {
           } catch (error) {
             console.error('Error sending tribe message:', error);
           }
+        }
+      }
+    }
+
+    // Replay path: if a player is offline for this tribe, queue tribe-wide messages.
+    if (gameState.population) {
+      for (const tribePlayer of Object.keys(gameState.population)) {
+        if (!hasOpenConnectionInTribe(tribePlayer, tribe)) {
+          queuePendingMessage(tribePlayer, tribe, {
+            type: 'tribeMessage',
+            message: tribeMessageContent,
+          });
         }
       }
     }
@@ -1295,6 +1419,12 @@ async function handleRegisterRequest(ws, data, gameState) {
 
     // Send any secret/private data after successful registration
     if (result.label === 'success') {
+      replayPendingMessages(
+        ws,
+        result.playerName,
+        ws.currentTribe || data.tribe || 'bug',
+        data.clientId
+      );
       sendSecrets(ws, data, gameState);
     }
   } catch (error) {

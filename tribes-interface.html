@@ -3420,6 +3420,15 @@
                     if (dynamicChoices && dynamicChoices.length > 0) {
                         // Existing choice dropdown or dynamic choices
                         input = document.createElement('select');
+                        if (!option.required) {
+                            const emptyOption = document.createElement('option');
+                            emptyOption.value = '';
+                            emptyOption.textContent =
+                                this.selectedCommand.name.toLowerCase() === 'join' && option.name === 'profession'
+                                    ? 'Decide later'
+                                    : 'No selection';
+                            input.appendChild(emptyOption);
+                        }
                         dynamicChoices.forEach(choice => {
                             const opt = document.createElement('option');
                             opt.value = choice.value;
@@ -3711,6 +3720,15 @@
                     if (dynamicChoices && dynamicChoices.length > 0) {
                         // Existing choice dropdown or dynamic choices
                         input = document.createElement('select');
+                        if (!option.required) {
+                            const emptyOption = document.createElement('option');
+                            emptyOption.value = '';
+                            emptyOption.textContent =
+                                this.selectedCommand.name.toLowerCase() === 'join' && option.name === 'profession'
+                                    ? 'Decide later'
+                                    : 'No selection';
+                            input.appendChild(emptyOption);
+                        }
                         dynamicChoices.forEach(choice => {
                             const opt = document.createElement('option');
                             opt.value = choice.value;
@@ -5027,29 +5045,6 @@
                 return '';
             }
 
-            getPopulationWorkStatus(person) {
-                if (person.escaped) {
-                    return 'Ran away from combat';
-                }
-
-                if (Number(person.isInjured) > 0 || Number(person.isSick) > 0) {
-                    return 'Recovering';
-                }
-
-                if (person.worked) {
-                    if (person.activity && person.activity !== 'idle') {
-                        return `Worked: ${this.humanizePopulationText(person.activity)}`;
-                    }
-                    return 'Worked this round';
-                }
-
-                if (person.activity && person.activity !== 'idle' && person.activity !== 'recovery') {
-                    return this.humanizePopulationText(person.activity);
-                }
-
-                return 'Available to work';
-            }
-
             getPopulationResources(person) {
                 const food = Number(person.food || 0);
                 const grain = Number(person.grain || 0);
@@ -5138,7 +5133,7 @@
                     {
                         title: 'Work',
                         items: [
-                            { label: 'Work Status', value: this.getPopulationWorkStatus(person) },
+                            { label: 'Work Status', value: this.formatPopulationValue('activity', person.activity || (person.worked ? 'worked' : '')) },
                             { label: 'Current Activity', value: this.formatPopulationValue('activity', person.activity) },
                             { label: 'Guarding', value: this.formatPopulationValue('guarding', person.guarding) },
                             { label: 'Can Craft', value: person.canCraft ? 'Yes' : '' },
@@ -5361,7 +5356,7 @@
                     // Work/Mating Status column
                     const workCell = document.createElement('td');
                     workCell.className = 'work-status-cell';
-                    const workStatus = this.getPopulationWorkStatus(person);
+                    const workStatus = this.formatPopulationValue('activity', person.activity || (person.worked ? 'worked' : ''));
                     workCell.textContent = workStatus || '—';
                     tr.appendChild(workCell);
 
@@ -5664,7 +5659,7 @@
                     title.textContent = 'Violence Active';
                     body.textContent = `The tribe is in open conflict over this demand: ${activeViolence} ${combatStatus} ${pickStatus} ${escapeStatus}`;
                 } else {
-                    title.textContent = 'Demand Active';
+                    title.textContent = 'Conflict Details';
                     body.textContent = `A demand is currently in play: ${activeDemand} ${combatStatus}`;
                 }
             }
@@ -5781,6 +5776,13 @@
                 const isChief = this.isCurrentPlayerChief() || !!currentPlayer?.chief;
                 const populationMembers = Object.values(this.currentPopulation).filter((m) => m && typeof m === 'object');
 
+                if (state.demand && !state.violence && !currentPlayer?.faction) {
+                    return {
+                        icon: '⚖️',
+                        text: "Wating on you to use the 'faction' command to take a side",
+                    };
+                }
+
                 if (state.workRound) {
                     if (currentPlayer?.worked !== true) {
                         return {
@@ -5887,6 +5889,7 @@
                 const roundStatus = document.getElementById('roundStatus');
                 const seasonStatus = document.getElementById('seasonStatus');
                 const locationStatus = document.getElementById('locationStatus');
+                const conflictStatus = document.getElementById('conflictStatus');
                 const statusTextElement = document.getElementById('statusText');
 
                 const renderStatusItem = (el, icon, text) => {
@@ -6005,6 +6008,20 @@
                 renderStatusItem(roundStatus, roundIcon, roundText);
                 renderStatusItem(seasonStatus, seasonIcon, seasonYearText);
                 renderStatusItem(locationStatus, locationIcon, locationTrackText);
+
+                if (conflictStatus) {
+                    const isViolence = !!gameState.violence;
+                    const hasDemand = !!(gameState.demand || gameState.violence);
+                    if (!hasDemand) {
+                        conflictStatus.style.display = 'none';
+                    } else if (isViolence) {
+                        conflictStatus.style.display = 'flex';
+                        conflictStatus.innerHTML = '<span class="status-icon">⚔️</span><span>Violence Active</span>';
+                    } else {
+                        conflictStatus.style.display = 'flex';
+                        conflictStatus.innerHTML = '<span class="status-icon">⚖️</span><span>Demand Active</span>';
+                    }
+                }
                 this.updateWaitingStatusChip();
             }
 
@@ -6013,6 +6030,7 @@
                 const roundStatus = document.getElementById('roundStatus');
                 const seasonStatus = document.getElementById('seasonStatus');
                 const locationStatus = document.getElementById('locationStatus');
+                const conflictStatus = document.getElementById('conflictStatus');
 
                 const renderStatusItem = (el, icon, text) => {
                     const content = String(text ?? '');
@@ -6102,6 +6120,23 @@
                 renderStatusItem(roundStatus, roundIcon, roundText);
                 renderStatusItem(seasonStatus, seasonIcon, seasonYearText);
                 renderStatusItem(locationStatus, locationIcon, locationTrackText);
+                if (conflictStatus) {
+                    if (!this.currentStatusData) {
+                        conflictStatus.style.display = 'none';
+                    } else {
+                        const isViolence = !!this.currentStatusData.violence;
+                        const hasDemand = !!(this.currentStatusData.demand || this.currentStatusData.violence);
+                        if (!hasDemand) {
+                            conflictStatus.style.display = 'none';
+                        } else if (isViolence) {
+                            conflictStatus.style.display = 'flex';
+                            conflictStatus.innerHTML = '<span class="status-icon">⚔️</span><span>Violence Active</span>';
+                        } else {
+                            conflictStatus.style.display = 'flex';
+                            conflictStatus.innerHTML = '<span class="status-icon">⚖️</span><span>Demand Active</span>';
+                        }
+                    }
+                }
                 this.updateWaitingStatusChip();
             }
 
@@ -6612,6 +6647,20 @@
             <div class="modal-actions">
                 <button class="btn btn-secondary" id="modalCancelBtn">Cancel</button>
                 <button class="btn" id="modalExecuteBtn">Execute Command</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Orientation Modal -->
+    <div class="modal-overlay" id="orientationModal">
+        <div class="modal-popup" style="max-width: 620px;">
+            <div class="modal-header">
+                <div class="modal-title">Welcome To Tribes</div>
+                <button class="modal-close" onclick="window.tribesClient.closeOrientationModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="orientationModalBody" style="white-space: pre-wrap;"></div>
+            <div class="modal-actions">
+                <button class="btn" onclick="window.tribesClient.closeOrientationModal()">Got it</button>
             </div>
         </div>
     </div>
