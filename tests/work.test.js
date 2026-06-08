@@ -260,7 +260,7 @@ describe('Work Module Tests', () => {
       expect(dice.roll).toHaveBeenCalledWith(1);
       expect(mockPlayer.basket).toBe(1);
       expect(mockPlayer.worked).toBe(true);
-      expect(mockPlayer.activity).toBe('craft');
+      expect(mockPlayer.activity).toBe('crafted');
       expect(mockGameState.saveRequired).toBe(true);
     });
 
@@ -273,7 +273,7 @@ describe('Work Module Tests', () => {
       expect(dice.roll).toHaveBeenCalledWith(1);
       expect(mockPlayer.spearhead).toBe(1);
       expect(mockPlayer.worked).toBe(true);
-      expect(mockPlayer.activity).toBe('craft');
+      expect(mockPlayer.activity).toBe('crafted');
       expect(mockGameState.saveRequired).toBe(true);
     });
 
@@ -363,7 +363,7 @@ describe('Work Module Tests', () => {
       expect(dice.roll).toHaveBeenCalledWith(2);
       expect(mockPlayer.canCraft).toBe(true);
       expect(mockPlayer.worked).toBe(true);
-      expect(mockPlayer.activity).toBe('training');
+      expect(mockPlayer.activity).toBe('trained');
       expect(text.addMessage).toHaveBeenCalledWith(
         mockGameState,
         'tribe',
@@ -379,7 +379,7 @@ describe('Work Module Tests', () => {
       expect(dice.roll).toHaveBeenCalledWith(2);
       expect(mockPlayer.canCraft).toBeFalsy();
       expect(mockPlayer.worked).toBe(true);
-      expect(mockPlayer.activity).toBe('training');
+      expect(mockPlayer.activity).toBe('trained');
       expect(text.addMessage).toHaveBeenCalledWith(
         mockGameState,
         'tribe',

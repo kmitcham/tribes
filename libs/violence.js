@@ -406,6 +406,15 @@ const resolveSingleAttack = (attacker, defender, roll, gameState) => {
   }
   if (defender.hits == 2) {
     defender.isInjured = 4;
+    if (defender.strength == 'weak') {
+      response += defender.name + ' is too weak to survive and is killed!';
+      killlib.kill(
+        defender.name,
+        'killed by ' + attacker.name + ' over ' + gameState.violence,
+        gameState
+      );
+      return response + '\n';
+    }
     defender.strength = 'weak';
     response += defender.name + ' is crippled, and becomes Weak!';
   }
@@ -442,6 +451,7 @@ const resolveViolence = (gameState) => {
     response =
       'The following players still need to chose between !attack <name>, !run, or !defend: ';
     response += undecided.join(',');
+    text.addMessage(gameState, 'tribe', response);
     return response;
   }
   if (attackers.length == 0) {
@@ -484,9 +494,9 @@ const resolveViolence = (gameState) => {
   }
   // giving defenders first strike, in case attack makes someone weak
   for (const defenderName in defenderTargets) {
-    attackers = defenderTargets[defenderName];
-    const randomIndex = Math.trunc(Math.random() * attackers.length);
-    const targetName = attackers[randomIndex];
+    const defenderAttackers = defenderTargets[defenderName];
+    const randomIndex = Math.trunc(Math.random() * defenderAttackers.length);
+    const targetName = defenderAttackers[randomIndex];
     //console.log('defender first strike vs '+defenderName)
     const attacker = pop.memberByName(defenderName, gameState);
     if (attacker && attacker.strategy == 'defend') {

@@ -22,8 +22,9 @@ module.exports = {
     .addStringOption((option) =>
       option
         .setName('profession')
-        .setDescription('one of (hunter, gatherer, crafter)')
+        .setDescription('one of (hunter, gatherer, crafter) or decide later')
         .addChoices(
+          { name: 'decide later', value: 'none' },
           { name: 'hunter', value: 'hunter' },
           { name: 'crafter', value: 'crafter' },
           { name: 'gatherer', value: 'gatherer' }
@@ -34,6 +35,9 @@ module.exports = {
     var nickName = interaction.nickName; // set by tribesBot in main handling, since it needed the client
     gender = interaction.options.getString('gender');
     profession = interaction.options.getString('profession');
+    if (profession === 'none' || profession === 'later' || profession === 'delay') {
+      profession = null;
+    }
     join(nickName, gameState, gender, profession, interaction.user);
   },
 };

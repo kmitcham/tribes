@@ -179,7 +179,7 @@ function craft(gameState, sourceName, item, forceRoll) {
       item;
   }
   pop.history(sourceName, message, gameState);
-  player.activity = 'craft';
+  player.activity = 'crafted';
   player.worked = true;
   gameState.saveRequired = true;
 
@@ -237,7 +237,7 @@ function train(gameState, sourceName, forceRoll) {
       learnRoll +
       ']';
   }
-  player.activity = 'training';
+  player.activity = 'trained';
   player.worked = true;
   pop.history(sourceName, message, gameState);
   gameState.required = true;

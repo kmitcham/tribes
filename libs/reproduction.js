@@ -524,16 +524,8 @@ function globalMatingCheck(gameState) {
     return 'It is not the mating round';
   }
   var inviteCheck = canStillInvite(gameState);
-  if (inviteCheck.length < 1) {
-    text.addMessage(
-      gameState,
-      'tribe',
-      '---> Reproductive activites are complete for the season <---'
-    );
-    return 'Mating is complete';
-  }
   var allDone = true;
-  var actionableInvites = true;
+  var actionableInvites = inviteCheck.length > 0;
   var population = gameState.population;
   var doneMating = [];
   var whoNeedsToGiveAnAnswer = [];

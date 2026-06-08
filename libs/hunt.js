@@ -114,7 +114,7 @@ module.exports.hunt = (playername, player, rollValue, gameState) => {
     ' to ' +
     gameState.gameTrack[gameState.currentLocationName];
 
-  player.activity = 'hunt';
+  player.activity = 'hunted';
   player.worked = true;
   gameState.saveRequired = true;
   text.addMessage(gameState, 'tribe', message);

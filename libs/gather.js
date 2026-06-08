@@ -106,7 +106,7 @@ module.exports.gather = (playername, player, rollValue, gameState) => {
       player.basket -= 1;
     }
   }
-  player.activity = 'gather';
+  player.activity = 'gathered';
   player.worked = true;
   text.addMessage(gameState, 'tribe', message);
   return message;

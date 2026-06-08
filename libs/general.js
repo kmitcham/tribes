@@ -80,7 +80,7 @@ function legalGive(gameState, sourceName, item, amount) {
   }
   if (
     'activity' in sourcePerson &&
-    sourcePerson.activity == 'hunt' &&
+    (sourcePerson.activity == 'hunt' || sourcePerson.activity == 'hunted') &&
     item == 'spearhead' &&
     gameState.round == 'work' &&
     sourcePerson.spearhead - amount < 1

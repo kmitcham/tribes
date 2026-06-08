@@ -246,13 +246,15 @@ describe('Browser Integration: tribes-interface.html', () => {
             title: document.getElementById('conflictBannerTitle').textContent,
             chips: document.getElementById('conflictBannerChips').innerText,
             body: document.getElementById('conflictBannerBody').textContent,
-            isViolence: document.getElementById('conflictBanner').classList.contains('violence')
+            isViolence: document.getElementById('conflictBanner').classList.contains('violence'),
+            topConflictText: document.getElementById('conflictStatus')?.innerText || ''
         }));
 
-        expect(bannerState.title).toBe('Demand Active');
+        expect(bannerState.title).toBe('Conflict Details');
         expect(bannerState.body).toContain('share fish');
         expect(bannerState.body).toContain('Combat has not happened yet.');
         expect(bannerState.chips).toContain('0 combat rounds');
+        expect(bannerState.topConflictText).toContain('Demand Active');
         expect(bannerState.isViolence).toBe(false);
 
         const violenceState = { ...demandState, violence: 'share fish', combatRounds: 2 };
@@ -269,7 +271,8 @@ describe('Browser Integration: tribes-interface.html', () => {
             title: document.getElementById('conflictBannerTitle').textContent,
             chips: document.getElementById('conflictBannerChips').innerText,
             body: document.getElementById('conflictBannerBody').textContent,
-            isViolence: document.getElementById('conflictBanner').classList.contains('violence')
+            isViolence: document.getElementById('conflictBanner').classList.contains('violence'),
+            topConflictText: document.getElementById('conflictStatus')?.innerText || ''
         }));
 
         expect(bannerState.title).toBe('Violence Active');
@@ -278,6 +281,7 @@ describe('Browser Integration: tribes-interface.html', () => {
         expect(bannerState.body).toContain('still need to pick attack, run away, or defend for the next round.');
         expect(bannerState.body).toContain('No players have exited combat via run away.');
         expect(bannerState.chips).toContain('2 combat rounds');
+        expect(bannerState.topConflictText).toContain('Violence Active');
         expect(bannerState.chips).toContain('Choices pending');
         expect(bannerState.chips).toContain('No run aways');
         expect(bannerState.isViolence).toBe(true);

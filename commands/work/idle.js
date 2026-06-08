@@ -33,7 +33,7 @@ function idle(interaction, gameState) {
     return;
   }
 
-  player.activity = 'idle';
+  player.activity = 'idled';
   message = sourceName + ' does nothing for a whole season.';
   pop.history(sourceName, ' does nothing for a season.', gameState);
   player.worked = true;

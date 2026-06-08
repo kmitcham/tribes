@@ -130,6 +130,38 @@ test('bonus checking ', () => {
   expect(violencelib.computeBonus(attacker, defender)).toBeLessThan(-12);
 });
 
+test('already weak defender dies on second hit', () => {
+  const gameState = {
+    seasonCounter: 1,
+    violence: 'test issue',
+    population: {
+      attacker: {
+        name: 'attacker',
+        gender: 'male',
+      },
+      defender: {
+        name: 'defender',
+        gender: 'male',
+        strength: 'weak',
+        isInjured: 2,
+      },
+    },
+    children: {},
+    graveyard: {},
+  };
+
+  const result = violencelib.resolveSingleAttack(
+    gameState.population.attacker,
+    gameState.population.defender,
+    12,
+    gameState
+  );
+
+  expect(result).toContain('is too weak to survive and is killed!');
+  expect(gameState.population.defender).toBeUndefined();
+  expect(gameState.graveyard.defender).toBeDefined();
+});
+
 test('Faction Voting -> balanced', () => {
   var gameState = {
     population: {
@@ -413,6 +445,31 @@ test('escaped players with run strategy do not delay violence resolution', () =>
   expect(response).not.toContain('still need to chose');
 });
 
+test('resolveViolence broadcasts undecided strategy prompt to tribe messages', () => {
+  var gameState = {
+    violence: 'test violence',
+    messages: {},
+    population: {
+      pro1: {
+        name: 'pro1',
+        faction: 'for',
+        strategy: 'attack',
+        attack_target: 'con1',
+      },
+      con1: {
+        name: 'con1',
+        faction: 'against',
+      },
+    },
+  };
+
+  var response = violencelib.resolveViolence(gameState);
+
+  expect(response).toContain('still need to chose');
+  expect(gameState.messages.tribe).toContain('still need to chose');
+  expect(gameState.messages.tribe).toContain('con1');
+});
+
 test('conflict-end announces no winner when both factions escaped', () => {
   var gameState = {
     violence: 'food sharing',
@@ -515,9 +572,9 @@ test('ResolveViolence for fatality', () => {
   var actual = violencelib.resolveViolence(gameState);
   actual = gameState.messages['tribe'];
 
-  expect(actual).toContain('pro1 attacks con1');
-  expect(actual).toContain('demander attacks con1');
-  //expect(actual).toContain("dump")
+  expect(actual).toContain('demander attacks con1x');
+  expect(actual).toContain('con1x is too weak to survive and is killed!');
+  expect(actual).toContain('No defender gives no result');
 });
 test('Faction Voting -> closely balanced For slightly ahead', () => {
   var gameState = {
