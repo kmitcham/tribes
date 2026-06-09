@@ -101,7 +101,7 @@ function canWork(gameState, player) {
     return msg;
   }
   if (player == null) {
-    msg = 'Only tribe members can work.  Maybe !join';
+    msg = 'Only tribe members can work.  Maybe join';
     return msg;
   }
   if (player.isInjured && player.isInjured > 0) {

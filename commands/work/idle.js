@@ -19,7 +19,7 @@ function idle(interaction, gameState) {
   var sourceName = interaction.member.displayName;
   var player = pop.memberByName(sourceName, gameState);
   if (!player) {
-    text.addMessage(gameState, sourceName, 'Only tribe members can idle.  Maybe !join');
+    text.addMessage(gameState, sourceName, 'Only tribe members can idle.  Maybe join');
     return;
   }
 

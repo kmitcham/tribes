@@ -575,6 +575,9 @@ test('ResolveViolence for fatality', () => {
   expect(actual).toContain('demander attacks con1x');
   expect(actual).toContain('con1x is too weak to survive and is killed!');
   expect(actual).toContain('No defender gives no result');
+  expect(gameState.messages['con1x']).toContain(
+    'You were killed by demander in violence over "test violence".'
+  );
 });
 test('Faction Voting -> closely balanced For slightly ahead', () => {
   var gameState = {

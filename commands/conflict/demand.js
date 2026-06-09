@@ -59,7 +59,7 @@ function demand(gameState, actorName, demandText) {
     text.addMessage(
       gameState,
       actorName,
-      'Syntax: !demand <text of your demand here>'
+      'Syntax: demand <text of your demand here>'
     );
     return;
   }

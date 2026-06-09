@@ -4974,6 +4974,13 @@
                     return '';
                 }
 
+                if (key === 'activity' && typeof value === 'string') {
+                    const normalizedActivity = value.trim().toLowerCase();
+                    if (normalizedActivity === 'hunt') {
+                        value = 'hunted';
+                    }
+                }
+
                 if (Array.isArray(value)) {
                     return value.length > 0 ? value.join(', ') : '';
                 }

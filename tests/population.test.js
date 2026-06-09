@@ -126,6 +126,21 @@ test('person by ignoresCase with spaces', () => {
   expect(actualName).toEqual(expectName);
 });
 
+test('normalizePlayerResources maps legacy hunt activity to hunted', () => {
+  var player = {
+    name: 'hunter1',
+    food: 5,
+    grain: 2,
+    basket: 1,
+    spearhead: 1,
+    activity: 'Hunt',
+  };
+
+  pop.normalizePlayerResources(player);
+
+  expect(player.activity).toBe('hunted');
+});
+
 test('memberByName normalizes null stored resources to zero', () => {
   var gameState = {
     population: {

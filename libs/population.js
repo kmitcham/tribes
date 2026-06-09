@@ -20,6 +20,12 @@ function normalizePlayerResources(player) {
   player.grain = normalizeStoredResourceValue(player.grain);
   player.basket = normalizeStoredResourceValue(player.basket);
   player.spearhead = normalizeStoredResourceValue(player.spearhead);
+  if (typeof player.activity === 'string') {
+    var normalizedActivity = player.activity.trim().toLowerCase();
+    if (normalizedActivity === 'hunt') {
+      player.activity = 'hunted';
+    }
+  }
   return player;
 }
 module.exports.normalizePlayerResources = normalizePlayerResources;

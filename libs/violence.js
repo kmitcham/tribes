@@ -330,6 +330,19 @@ function displayFaction(faction) {
   message += ' are ';
   return message;
 }
+
+function addViolenceDeathMessage(gameState, defenderName, attackerName) {
+  if (!defenderName || !attackerName) {
+    return;
+  }
+  const demandText = gameState && gameState.violence ? gameState.violence : 'the active demand';
+  text.addMessage(
+    gameState,
+    defenderName,
+    'You were killed by ' + attackerName + ' in violence over "' + demandText + '".'
+  );
+}
+
 const computeBonus = (attacker, defender) => {
   var bonus = 0;
   response = attacker.name + ' attacks!  ';
@@ -408,6 +421,7 @@ const resolveSingleAttack = (attacker, defender, roll, gameState) => {
     defender.isInjured = 4;
     if (defender.strength == 'weak') {
       response += defender.name + ' is too weak to survive and is killed!';
+      addViolenceDeathMessage(gameState, defender.name, attacker.name);
       killlib.kill(
         defender.name,
         'killed by ' + attacker.name + ' over ' + gameState.violence,
@@ -421,6 +435,7 @@ const resolveSingleAttack = (attacker, defender, roll, gameState) => {
   gameState.population[defender.name] = defender;
   if (defender.hits >= 3) {
     response += defender.name + ' is killed!';
+    addViolenceDeathMessage(gameState, defender.name, attacker.name);
     killlib.kill(
       defender.name,
       'killed by ' + attacker.name + ' over ' + gameState.violence,
@@ -449,7 +464,7 @@ const resolveViolence = (gameState) => {
   }
   if (undecided.length > 0) {
     response =
-      'The following players still need to chose between !attack <name>, !run, or !defend: ';
+      'The following players still need to chose between attack <name>, run, or defend: ';
     response += undecided.join(',');
     text.addMessage(gameState, 'tribe', response);
     return response;

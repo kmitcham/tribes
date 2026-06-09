@@ -168,7 +168,7 @@ describe('Work Module Tests', () => {
     test('should return message when player is null', () => {
       const result = canWork(mockGameState, null);
 
-      expect(result).toBe('Only tribe members can work.  Maybe !join');
+      expect(result).toBe('Only tribe members can work.  Maybe join');
     });
 
     test('should return message when player is injured', () => {
