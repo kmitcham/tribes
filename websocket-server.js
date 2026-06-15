@@ -10,8 +10,7 @@ const util = require('./libs/util.js');
 const pop = require('./libs/population.js');
 const help = require('./libs/help.js');
 const guardlib = require('./libs/guardCode.js');
-
-const logger = require('./libs/logger.js');
+const jsonUtils = require('./libs/jsonUtils.js');
 const PORT = process.env.PORT || 8000;
 const referees = require('./libs/referees.json');
 
@@ -2071,25 +2070,16 @@ function arrayMatch(array1, array2) {
 }
 
 function loadJson(fileName) {
-  try {
-    const rawdata = fs.readFileSync(fileName);
-    if (!rawdata || rawdata.byteLength === 0) {
-      return {};
-    }
-    return JSON.parse(rawdata);
-  } catch (err) {
-    console.log('Error parsing file ' + fileName + ': ' + err);
-    return {};
-  }
+  return jsonUtils.loadJson(fileName, {});
 }
 
 function actuallyWriteToDisk(fileName, jsonData) {
   try {
-    const jsonString = JSON.stringify(jsonData, null, 2);
-    fs.writeFileSync(fileName, jsonString);
+    jsonUtils.writeJson(fileName, jsonData);
     console.log(fileName + ' saved!');
   } catch (err) {
     console.log('Save failed for ' + fileName + ': ' + err);
+    throw err;
   }
 }
 

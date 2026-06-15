@@ -4,6 +4,7 @@ const dice = require('./dice.js');
 const referees = require('./referees.json');
 
 function give(gameState, sourceName, targetName, amount, item) {
+  let response = '';
   if (gameState.ended) {
     text.addMessage(
       gameState,
@@ -67,6 +68,7 @@ function give(gameState, sourceName, targetName, amount, item) {
 module.exports.give = give;
 
 function legalGive(gameState, sourceName, item, amount) {
+  let response = '';
   const sourcePerson = pop.memberByName(sourceName, gameState);
   if (!sourcePerson) {
     response = 'You are not a member of tribe';
@@ -99,6 +101,8 @@ function legalGive(gameState, sourceName, item, amount) {
 }
 
 function inventory(gameState, targetName, actorName) {
+  let response = '';
+  let person;
   if (!targetName) {
     response = 'Whole Tribe Inventory:';
     for (var personName in gameState.population) {
@@ -122,7 +126,7 @@ function inventoryMessage(person) {
   if (!person) {
     return 'No person ' + person;
   }
-  message = '***' + person.name + '***';
+  let message = '***' + person.name + '***';
   if (person.nickname) {
     message += ' (' + person.nickname + ')';
   }
@@ -176,7 +180,7 @@ function makeJerky(sourceName, amount, gameState, bot) {
     );
     return;
   }
-  player = pop.memberByName(sourceName, gameState);
+  const player = pop.memberByName(sourceName, gameState);
   if (!player) {
     text.addMessage(gameState, sourceName, 'Only tribe members can make jerky.');
     return;
@@ -187,17 +191,17 @@ function makeJerky(sourceName, amount, gameState, bot) {
     return;
   }
   amount = Math.floor(amount);
-  actualFood = Number(player.food) || 0;
-  actualGrain = Number(player.grain) || 0;
+  const actualFood = Number(player.food) || 0;
+  const actualGrain = Number(player.grain) || 0;
   if (amount > actualFood) {
     amount = actualFood;
   }
-  extra = amount % 3;
-  jerky = (amount - extra) / 3;
-  leftover = amount - jerky * 3;
+  const extra = amount % 3;
+  const jerky = (amount - extra) / 3;
+  const leftover = amount - jerky * 3;
   player.food = actualFood - amount + leftover;
   player.grain = actualGrain + jerky;
-  message =
+  const message =
     sourceName + ' converts ' + jerky * 3 + ' food into ' + jerky + ' jerky';
   text.addMessage(gameState, 'tribe', message);
   gameState.saveRequired = true;
@@ -216,11 +220,11 @@ function law(displayName, gameState) {
     );
     return;
   }
-  laws = gameState.laws;
+  const laws = gameState.laws || {};
   if (laws) {
     response = 'The laws are:';
   }
-  for (number in laws) {
+  for (const number in laws) {
     response += '\n\t' + number + '\t' + laws[number];
   }
   // possibly the person is not a member of the tribe, and just wants to see the laws
@@ -231,6 +235,10 @@ function law(displayName, gameState) {
 module.exports.law = law;
 
 function sacrifice(gameState, sourceName, item, amount, rollOf2dice) {
+  let response = '';
+  let net;
+  let ritualResults;
+  let rndMsg;
   if (item.startsWith('g')) {
     item = 'grain';
   } else if (item.startsWith('f')) {

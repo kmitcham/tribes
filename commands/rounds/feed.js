@@ -1,6 +1,5 @@
 const {
   SlashCommandBuilder,
-  EmbedBuilder,
 } = require('../../libs/command-builders.js');
 const pop = require('../../libs/population.js');
 const feedlib = require('../../libs/feed.js');
@@ -73,14 +72,5 @@ function feed(interaction, gameState) {
   message = feedlib.feed(interaction, player, amount, childList, gameState);
   console.log('return ' + message);
   gameState.saveRequired = true;
-  return;
-}
-
-function onError(interaction, response) {
-  interaction.user.send(response);
-  const embed = new EmbedBuilder().setDescription(response);
-  interaction
-    .reply({ embeds: [embed], ephemeral: true }) // error message
-    .catch(console.error);
   return;
 }

@@ -1,6 +1,5 @@
 const {
   SlashCommandBuilder,
-  EmbedBuilder,
 } = require('../../libs/command-builders.js');
 const pop = require('../../libs/population');
 const text = require('../../libs/textprocess');
@@ -29,15 +28,15 @@ module.exports = {
 
 function skip(gameState, actorName, targetName) {
   var actor = pop.memberByName(actorName, gameState);
-  if (!actor.chief) {
+  if (!actor || !actor.chief) {
     text.addMessage(
       gameState,
       actorName,
-      command + ' requires chief priviliges'
+      'skip requires chief privileges'
     );
     return;
   }
-  target = pop.memberByName(targetName, gameState);
+  var target = pop.memberByName(targetName, gameState);
   if (!target) {
     text.addMessage(
       gameState,

@@ -4,8 +4,10 @@ const chiefLib = require('../libs/chief.js');
 console.log = jest.fn();
 
 let gameState;
+let randomSpy;
 
 beforeEach(() => {
+  randomSpy = jest.spyOn(Math, 'random').mockReturnValue(0);
   // Set up a fresh gameState before each test
   gameState = {
     population: {
@@ -26,6 +28,12 @@ beforeEach(() => {
     currentLocationName: 'forest',
     season: 'summer',
   };
+});
+
+afterEach(() => {
+  if (randomSpy) {
+    randomSpy.mockRestore();
+  }
 });
 
 test('should handle a person growing stronger (roll 16-18)', () => {

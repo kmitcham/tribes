@@ -1,6 +1,6 @@
 const pop = require('./population.js');
 const text = require('./textprocess.js');
-const dice = require('./dice');
+const dice = require('./dice.js');
 const gatherlib = require('./gather.js');
 const referees = require('./referees.json');
 const locations = require('./locations.json');
@@ -147,8 +147,8 @@ function craft(gameState, sourceName, item, forceRoll) {
   } else if (item.startsWith('s')) {
     item = 'spearhead';
   } else {
-    response = 'Unrecognized item ' + item;
-    return onError(interaction, response);
+    text.addMessage(gameState, sourceName, 'Unrecognized item ' + item);
+    return;
   }
 
   var craftRoll = dice.roll(1);

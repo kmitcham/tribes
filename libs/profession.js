@@ -1,5 +1,5 @@
-const pop = require('./population');
-const text = require('./textprocess');
+const pop = require('./population.js');
+const text = require('./textprocess.js');
 
 const professionList = ['hunter', 'gatherer', 'crafter'];
 

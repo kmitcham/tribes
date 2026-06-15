@@ -1,12 +1,7 @@
 const {
   SlashCommandBuilder,
-  EmbedBuilder,
 } = require('../../libs/command-builders.js');
 const worklib = require('../../libs/work.js');
-const text = require('../../libs/textprocess.js');
-const pop = require('../../libs/population.js');
-const dice = require('../../libs/dice.js');
-const referees = require('../../libs/referees.json');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -24,12 +19,3 @@ module.exports = {
     worklib.train(gameState, sourceName, forceRoll);
   },
 };
-
-function onError(interaction, response) {
-  interaction.user.send(response);
-  const embed = new EmbedBuilder().setDescription(response);
-  interaction
-    .reply({ embeds: [embed], ephemeral: true }) // error message
-    .catch(console.error);
-  return;
-}

@@ -2,29 +2,15 @@
 // Run this script with: node migrate-users.js
 
 const fs = require('fs');
-const path = require('path');
+const jsonUtils = require('./libs/jsonUtils.js');
 
 function loadJson(fileName) {
-  try {
-    const rawdata = fs.readFileSync(fileName);
-    if (!rawdata || rawdata.byteLength === 0) {
-      return {};
-    }
-    return JSON.parse(rawdata);
-  } catch (err) {
-    console.log('Error parsing file ' + fileName + ': ' + err);
-    return {};
-  }
+  return jsonUtils.loadJson(fileName, {});
 }
 
 function writeJson(fileName, jsonData) {
-  try {
-    const jsonString = JSON.stringify(jsonData, null, 2);
-    fs.writeFileSync(fileName, jsonString);
-    console.log(fileName + ' updated!');
-  } catch (err) {
-    console.log('Save failed for ' + fileName + ': ' + err);
-  }
+  jsonUtils.writeJson(fileName, jsonData);
+  console.log(fileName + ' updated!');
 }
 
 function migrateUsers() {
@@ -110,5 +96,10 @@ function migrateUsers() {
 }
 
 if (require.main === module) {
-  migrateUsers();
+  try {
+    migrateUsers();
+  } catch (err) {
+    console.error('Migration failed:', err.message);
+    process.exit(1);
+  }
 }

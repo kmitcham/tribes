@@ -420,11 +420,16 @@ const resolveSingleAttack = (attacker, defender, roll, gameState) => {
   if (defender.hits == 2) {
     defender.isInjured = 4;
     if (defender.strength == 'weak') {
+      const creditedAttacker =
+        (gameState &&
+          gameState._firstAttackerByTarget &&
+          gameState._firstAttackerByTarget[defender.name]) ||
+        attacker.name;
       response += defender.name + ' is too weak to survive and is killed!';
-      addViolenceDeathMessage(gameState, defender.name, attacker.name);
+      addViolenceDeathMessage(gameState, defender.name, creditedAttacker);
       killlib.kill(
         defender.name,
-        'killed by ' + attacker.name + ' over ' + gameState.violence,
+        'killed by ' + creditedAttacker + ' over ' + gameState.violence,
         gameState
       );
       return response + '\n';
@@ -434,11 +439,16 @@ const resolveSingleAttack = (attacker, defender, roll, gameState) => {
   }
   gameState.population[defender.name] = defender;
   if (defender.hits >= 3) {
+    const creditedAttacker =
+      (gameState &&
+        gameState._firstAttackerByTarget &&
+        gameState._firstAttackerByTarget[defender.name]) ||
+      attacker.name;
     response += defender.name + ' is killed!';
-    addViolenceDeathMessage(gameState, defender.name, attacker.name);
+    addViolenceDeathMessage(gameState, defender.name, creditedAttacker);
     killlib.kill(
       defender.name,
-      'killed by ' + attacker.name + ' over ' + gameState.violence,
+      'killed by ' + creditedAttacker + ' over ' + gameState.violence,
       gameState
     );
   }
@@ -496,9 +506,13 @@ const resolveViolence = (gameState) => {
     return response;
   }
   const defenderTargets = {};
+  gameState._firstAttackerByTarget = {};
   for (const attackerName of attackers) {
     const attacker = population[attackerName];
     const targetName = attacker.attack_target;
+    if (targetName && !gameState._firstAttackerByTarget[targetName]) {
+      gameState._firstAttackerByTarget[targetName] = attackerName;
+    }
     if (defenderTargets[targetName]) {
       //console.log(' defenderTargets adds '+attackerName)
       defenderTargets[targetName].push(attackerName);
@@ -561,5 +575,6 @@ const resolveViolence = (gameState) => {
     // this should stop recursing if nobody wants to fight anymore.  I hope.
     resolveViolence(gameState);
   }
+  delete gameState._firstAttackerByTarget;
 };
 module.exports.resolveViolence = resolveViolence;

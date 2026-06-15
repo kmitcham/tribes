@@ -1,14 +1,14 @@
 const fs = require('fs');
 const path = require('path');
-const WebSocket = require('ws');
 const locations = require('./locations.json');
+const jsonUtils = require('./jsonUtils.js');
 const populationLib = require('./population.js');
 
 // NOTE: Removed unused WebSocket server creation that was causing test failures
 // const server = new WebSocket.Server({ port: 8383 });
 
 function initGame(gameName) {
-  gameState = {};
+  const gameState = {};
   if (!gameName) {
     console.log('init game without a name');
     gameName = '';
@@ -28,8 +28,8 @@ function initGame(gameName) {
   gameState.population = {};
   gameState.graveyard = {};
   gameState.children = {};
-  messages = {};
-  for (locationName in locations) {
+  gameState.messages = {};
+  for (const locationName in locations) {
     gameState.gameTrack[locationName] = 1;
   }
   gameState.currentLocationName = 'veldt';
@@ -46,18 +46,7 @@ function initGame(gameName) {
 module.exports.initGame = initGame;
 
 function loadJson(fileName) {
-  let rawdata = fs.readFileSync(fileName);
-  if (!rawdata || rawdata.byteLength == 0) {
-    return {};
-  }
-  var parsedData = {};
-  try {
-    parsedData = JSON.parse(rawdata, {});
-  } catch (err) {
-    console.log('error parsing gamefile:' + err);
-    throw err;
-  }
-  return parsedData;
+  return jsonUtils.loadJson(fileName, {});
 }
 module.exports.loadJson = loadJson;
 
@@ -74,10 +63,10 @@ function removeChildNameFields(children) {
 }
 
 function loadTribe(tribeName) {
-  fileName = './tribe-data/' + tribeName + '/' + tribeName + '.json';
+  const fileName = './tribe-data/' + tribeName + '/' + tribeName + '.json';
   if (fs.existsSync(fileName)) {
     try {
-      gameState = loadJson(fileName);
+      const gameState = loadJson(fileName);
       removeChildNameFields(gameState.children);
       populationLib.normalizePopulationResources(gameState);
       return gameState;
@@ -106,27 +95,11 @@ module.exports.loadTribe = loadTribe;
 function actuallyWriteToDisk(fileName, jsonData) {
   removeChildNameFields(jsonData.children);
   populationLib.normalizePopulationResources(jsonData);
-  (jsonString = JSON.stringify(jsonData, null, 2)),
-    (err) => {
-      // Checking for errors
-      if (err) {
-        console.log('error with jsonification of ' + fileName + ' ' + err);
-        throw err;
-      }
-    };
   try {
-    fs.writeFileSync(fileName, jsonString, (err) => {
-      if (err) throw err;
-    });
-    checkedData = loadJson(fileName);
-    (checkedString = JSON.stringify(checkedData, null, 2)),
-      (err) => {
-        // Checking for errors
-        if (err) {
-          console.log('error 2 with jsonification of ' + fileName + ' ' + err);
-          throw err;
-        }
-      };
+    jsonUtils.writeJson(fileName, jsonData);
+    const checkedData = loadJson(fileName);
+    const jsonString = JSON.stringify(jsonData, null, 2);
+    const checkedString = JSON.stringify(checkedData, null, 2);
     if (checkedString === jsonString) {
       console.log('checked data match');
     } else {
@@ -134,21 +107,22 @@ function actuallyWriteToDisk(fileName, jsonData) {
     }
   } catch (err) {
     console.log('save failed. ' + err);
+    throw err;
   }
   console.log(fileName + ' saved!');
 }
 
 async function saveGameState(gameState, tribeName) {
-  var d = new Date();
-  var saveTime = d.toISOString();
+  const d = new Date();
+  let saveTime = d.toISOString();
   saveTime = saveTime.replace(/\//g, '-');
   gameState.lastSaved = saveTime;
   console.log('trying to save ' + tribeName);
-  saveFileName = './tribe-data/' + tribeName + '/' + tribeName + '.json';
+  const saveFileName = './tribe-data/' + tribeName + '/' + tribeName + '.json';
   console.log('trying to save ' + tribeName + ' as ' + saveFileName);
   actuallyWriteToDisk(saveFileName, gameState);
   try {
-    checkGame = loadJson(saveFileName);
+    loadJson(saveFileName);
   } catch (err) {
     console.log('Failed to load saved file for ' + saveFileName);
     console.log(err);
@@ -156,14 +130,14 @@ async function saveGameState(gameState, tribeName) {
   console.log('saved file :' + saveFileName + ' at ' + saveTime);
 }
 async function saveTribe(gameState) {
-  tribeName = gameState.name;
+  const tribeName = gameState.name;
   saveGameState(gameState, tribeName);
 }
 module.exports.saveTribe = saveTribe;
 
 async function archiveTribe(gameState) {
-  var d = new Date();
-  var saveTime = d.toISOString();
+  const d = new Date();
+  let saveTime = d.toISOString();
   saveTime = saveTime.replace(/\//g, '-');
   gameState.lastSaved = saveTime;
 
@@ -175,8 +149,9 @@ async function archiveTribe(gameState) {
   }
 
   // Otherwise, create regular snapshot and manage snapshot count
-  archiveName = gameState.name + '-' + saveTime;
-  saveFileName = './tribe-data/' + gameState.name + '/' + archiveName + '.json';
+  const archiveName = gameState.name + '-' + saveTime;
+  const saveFileName =
+    './tribe-data/' + gameState.name + '/' + archiveName + '.json';
   actuallyWriteToDisk(saveFileName, gameState);
 
   // Manage snapshots - keep only 3 most recent

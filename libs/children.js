@@ -1,7 +1,6 @@
 const guardlib = require('./guardCode.js');
-const { child } = require('winston');
-const pop = require('./population');
-const text = require('./textprocess');
+const pop = require('./population.js');
+const text = require('./textprocess.js');
 
 function showChildrenPrep(
   gameState,

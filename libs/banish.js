@@ -1,5 +1,5 @@
 const populationLib = require('./population.js');
-const text = require('./textprocess');
+const text = require('./textprocess.js');
 
 function banish(gameState, targetName, reason) {
   const population = gameState.population;

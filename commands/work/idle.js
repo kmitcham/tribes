@@ -1,8 +1,6 @@
 const {
   SlashCommandBuilder,
-  EmbedBuilder,
 } = require('../../libs/command-builders.js');
-const worklib = require('../../libs/work.js');
 const text = require('../../libs/textprocess.js');
 const pop = require('../../libs/population.js');
 
@@ -39,13 +37,4 @@ function idle(interaction, gameState) {
   player.worked = true;
   gameState.saveRequired = true;
   text.addMessage(gameState, 'tribe', message);
-}
-
-function onError(interaction, response) {
-  interaction.user.send(response);
-  const embed = new EmbedBuilder().setDescription(response);
-  interaction
-    .reply({ embeds: [embed], ephemeral: true }) // error message
-    .catch(console.error);
-  return;
 }

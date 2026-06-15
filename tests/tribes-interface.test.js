@@ -497,8 +497,13 @@ class TribesClient {
 describe('Tribes Interface Client', () => {
   let client;
   let mockLocalStorage;
+  let dateNowSpy;
+  let randomSpy;
 
   beforeEach(() => {
+    dateNowSpy = jest.spyOn(Date, 'now').mockReturnValue(1700000000000);
+    randomSpy = jest.spyOn(Math, 'random').mockReturnValue(0.123456789);
+
     // Clear DOM
     mockElements.playerName.value = '';
     mockElements.playerPassword.value = '';
@@ -521,6 +526,15 @@ describe('Tribes Interface Client', () => {
 
     // Clear mocks
     jest.clearAllMocks();
+  });
+
+  afterEach(() => {
+    if (dateNowSpy) {
+      dateNowSpy.mockRestore();
+    }
+    if (randomSpy) {
+      randomSpy.mockRestore();
+    }
   });
 
   describe('Session Management', () => {

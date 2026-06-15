@@ -2,10 +2,9 @@ const fs = require('fs');
 const path = require('path');
 const guardlib = require('./guardCode.js');
 const dice = require('./dice.js');
-const tribeUtil = require('./util.js');
 const referees = require('./referees.json');
-const text = require('./textprocess');
-const pop = require('./population');
+const text = require('./textprocess.js');
+const pop = require('./population.js');
 const reproLib = require('./reproduction.js');
 const locations = require('./locations.json');
 const utils = require('./util.js');
@@ -14,7 +13,7 @@ const kill = require('./kill.js');
 function close(actorName, gameState) {
   var player = pop.memberByName(actorName, gameState);
   if (!player || !player.chief) {
-    text.addMessage(gameState, actorName, 'close requires chief priviliges');
+    text.addMessage(gameState, actorName, 'close requires chief privileges');
     return;
   }
   gameState.open = false;
@@ -34,8 +33,9 @@ module.exports.close = close;
 
 function decree(gameState, actorName, number, lawText) {
   var player = pop.memberByName(actorName, gameState);
+  let law = lawText;
   if (!player.chief) {
-    text.addMessage(gameState, actorName, 'decree requires chief priviliges');
+    text.addMessage(gameState, actorName, 'decree requires chief privileges');
     return;
   }
   if (gameState.ended) {
@@ -46,7 +46,6 @@ function decree(gameState, actorName, number, lawText) {
     );
     return;
   }
-  law = lawText;
   if (!gameState.laws) {
     gameState.laws = {};
     console.log('Initializing laws');
@@ -67,6 +66,7 @@ module.exports.decree = decree;
 
 function induct(gameState, sourceName, targetName, gender) {
   var chief = pop.memberByName(sourceName, gameState);
+  let response = '';
 
   if (!chief) {
     response = 'You must be in the tribe to do that';
@@ -115,13 +115,14 @@ function induct(gameState, sourceName, targetName, gender) {
   }
 
   console.log('message b');
-  profession = null; // default to no profession
+  const profession = null; // default to no profession
   pop.addToPopulation(gameState, targetName, gender, profession, null);
 }
 module.exports.induct = induct;
 
 function isChanceLegal(gameState, actorName, forceRoll) {
-  isRef = referees.includes(actorName);
+  const isRef = referees.includes(actorName);
+  let chanceRoll;
   if (isRef && forceRoll) {
     chanceRoll = forceRoll;
     if (chanceRoll < 3 || 18 < chanceRoll) {
@@ -155,10 +156,21 @@ function isChanceLegal(gameState, actorName, forceRoll) {
 module.exports.isChanceLegal = isChanceLegal;
 
 function doChance(rollValue, gameState) {
-  population = gameState.population;
-  children = gameState.children;
+  const population = gameState.population;
+  const children = gameState.children;
+  let chanceRoll = Number(rollValue);
+  let message = '';
+  let name;
+  let person;
+  let amount;
+  let childName;
+  let gift;
+  let motherName;
+  let mother;
+  let name2;
+  let person2;
+  let message2;
 
-  chanceRoll = Number(rollValue);
   if (!chanceRoll || chanceRoll < 3 || chanceRoll > 18) {
     console.log(' invalid chance roll' + rollValue);
     chanceRoll = dice.roll(3);
@@ -192,7 +204,7 @@ function doChance(rollValue, gameState) {
     case 15:
       message +=
         'Fungus! All stored food in the whole tribe, except grain, spoils and is lost.';
-      for (var name in population) {
+      for (name in population) {
         person = population[name];
         pop.history(name, 'Lost ' + person.food + ' to fungus', gameState);
         gameState.spoiled += person.food;
@@ -216,6 +228,11 @@ function doChance(rollValue, gameState) {
         name2 = pop.randomMemberName(population);
         if (name != name2) {
           person2 = population[name2];
+          message2 =
+            name2 +
+            "'s [" +
+            person2.food +
+            '] food is also spoiled, in a strange coincidence.';
           message +=
             name2 +
             "'s [" +
@@ -274,9 +291,9 @@ function doChance(rollValue, gameState) {
       break;
     case 11:
       message += 'Locusts! Each player loses two dice of stored food';
-      for (var name in population) {
+      for (name in population) {
         person = pop.memberByName(name, gameState);
-        var amount = dice.roll(2);
+        amount = dice.roll(2);
         if (amount > person.food) {
           amount = person.food;
         }
@@ -314,7 +331,7 @@ function doChance(rollValue, gameState) {
       message +=
         'FIRE! The hunting track moves to 20 (no game!) The tribe must migrate to another area immediately (Section 9 of the rulebook). ';
       if (
-        tribeUtil.isColdSeason(gameState) &&
+        utils.isColdSeason(gameState) &&
         (gameState.currentLocationName == 'marsh' ||
           gameState.currentLocationName == 'hills')
       ) {
@@ -405,7 +422,7 @@ function startWork(actorName, gameState) {
     text.addMessage(
       gameState,
       actorName,
-      'startwork requires chief priviliges'
+      'startwork requires chief privileges'
     );
     return;
   }
@@ -424,8 +441,8 @@ function startWork(actorName, gameState) {
   gameState.archiveRequired = true;
   recoverGameTracks(gameState);
   // clear out old activities
-  for (personName in gameState.population) {
-    person = pop.memberByName(personName, gameState);
+  for (const personName in gameState.population) {
+    const person = pop.memberByName(personName, gameState);
     delete person.activity;
     if (person.payTwoOrDie == true) {
       var owed = 2;
@@ -467,7 +484,7 @@ module.exports.startWork = startWork;
 
 function recoverGameTracks(gameState) {
   if (utils.isColdSeason(gameState)) {
-    for (locationName in locations) {
+    for (const locationName in locations) {
       const modifier = locations[locationName]['game_track_recover'];
       const oldTrack = gameState.gameTrack[locationName];
       gameState.gameTrack[locationName] -= modifier;

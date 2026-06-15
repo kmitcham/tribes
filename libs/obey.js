@@ -1,7 +1,7 @@
 const text = require('./textprocess.js');
-const pop = require('./population');
+const pop = require('./population.js');
 const huntlib = require('./hunt.js');
-const dice = require('./dice');
+const dice = require('./dice.js');
 const worklib = require('./work.js');
 
 // obeyList is one or more of: craft, hunt, gather, giveall, idle, watch, ignore

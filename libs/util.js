@@ -17,7 +17,7 @@ function gameStateMessage(gameState) {
   var numAdults = Object.keys(gameState.population).length;
   var numKids = Object.keys(gameState.children).length;
   var message = 'Year ' + gameState.seasonCounter / 2 + ', ';
-  season = 'warm season.';
+  let season = 'warm season.';
   if (gameState.seasonCounter % 2 == 0) {
     season = 'cold season.';
   }
@@ -74,9 +74,9 @@ function gameStateMessage(gameState) {
 module.exports.gameStateMessage = gameStateMessage;
 
 function countByType(dictionary, key, value) {
-  count = 0;
-  for (elementName in dictionary) {
-    element = dictionary[elementName];
+  let count = 0;
+  for (const elementName in dictionary) {
+    const element = dictionary[elementName];
     if (element[key] && element[key] == value) {
       count++;
     }

@@ -1,10 +1,10 @@
 const genders = ['male', 'female'];
 const allNames = require('./names.json');
-const text = require('./textprocess');
-const dice = require('./dice');
-const pop = require('./population');
-const feed = require('./feed');
-const end = require('./endgame');
+const text = require('./textprocess.js');
+const dice = require('./dice.js');
+const pop = require('./population.js');
+const feed = require('./feed.js');
+const end = require('./endgame.js');
 
 function eligibleMates(name, population, debug = false) {
   matcher = population[name];

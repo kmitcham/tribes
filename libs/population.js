@@ -1,6 +1,6 @@
 const text = require('./textprocess.js');
-const dice = require('./dice');
-const prof = require('./profession');
+const dice = require('./dice.js');
+const prof = require('./profession.js');
 const help = require('./help.js');
 
 function normalizeStoredResourceValue(value) {

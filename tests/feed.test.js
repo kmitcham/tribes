@@ -528,10 +528,13 @@ global.reproLib = mockReproLib;
 
 describe('consumeFoodChildren Function Tests', () => {
   let gameState;
+  let twinCounter;
 
   beforeEach(() => {
     // Reset all mocks
     jest.clearAllMocks();
+
+    twinCounter = 0;
 
     // Set up a fresh gameState before each test
     gameState = {
@@ -593,11 +596,12 @@ describe('consumeFoodChildren Function Tests', () => {
     });
 
     mockReproLib.addChild.mockImplementation((mother, father, state) => {
+      twinCounter += 1;
       const twin = {
-        name: 'Twin' + Math.random().toString(36).substring(7),
+        name: 'Twin' + twinCounter,
         mother: mother,
         father: father,
-        gender: Math.random() > 0.5 ? 'male' : 'female',
+        gender: 'female',
         age: -1,
         food: 5,
       };

@@ -1,6 +1,5 @@
 const {
   SlashCommandBuilder,
-  EmbedBuilder,
 } = require('../../libs/command-builders.js');
 const pop = require('../../libs/population.js');
 const text = require('../../libs/textprocess.js');
@@ -66,14 +65,5 @@ function join(actorName, gameState, gender, profession, handle) {
 
   pop.addToPopulation(gameState, actorName, gender, profession, handle);
   gameState.saveRequired = true;
-  return;
-}
-
-function onError(interaction, response) {
-  interaction.user.send(response);
-  const embed = new EmbedBuilder().setDescription(response);
-  interaction
-    .reply({ embeds: [embed], ephemeral: true }) // error message
-    .catch(console.error);
   return;
 }

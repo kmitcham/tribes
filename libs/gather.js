@@ -1,13 +1,14 @@
 const locations = require('./locations.json');
-const dice = require('./dice');
-const text = require('./textprocess');
+const dice = require('./dice.js');
+const text = require('./textprocess.js');
 
 //module.exports.hunt = (playername, player, rollValue, gameState) =>{
 //    function gather(playername, player, rollValue,gameState){
 module.exports.gather = (playername, player, rollValue, gameState) => {
   var message = playername + ' gathers [roll ' + rollValue + ']';
   var netRoll = rollValue;
-  modifier = 0;
+  let modifier = 0;
+  let guardCount;
   if (gameState.seasonCounter % 2 == 0) {
     message += '-season ';
     modifier -= 3;
@@ -44,7 +45,7 @@ module.exports.gather = (playername, player, rollValue, gameState) => {
   console.log(
     'gather roll:' + rollValue + ' mod:' + modifier + ' net:' + netRoll
   );
-  gatherData = locations[gameState.currentLocationName]['gather'];
+  const gatherData = locations[gameState.currentLocationName]['gather'];
   var get_message = '';
   var getFood = 0;
   var getGrain = 0;

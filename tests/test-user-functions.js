@@ -1,29 +1,15 @@
 // Direct test of the user tracking functions
 // Run this test with: node test-user-functions.js
 
-const fs = require('fs');
+const jsonUtils = require('../libs/jsonUtils.js');
 
 function loadJson(fileName) {
-  try {
-    const rawdata = fs.readFileSync(fileName);
-    if (!rawdata || rawdata.byteLength === 0) {
-      return {};
-    }
-    return JSON.parse(rawdata);
-  } catch (err) {
-    console.log('Error parsing file ' + fileName + ': ' + err);
-    return {};
-  }
+  return jsonUtils.loadJson(fileName, {});
 }
 
 function actuallyWriteToDisk(fileName, jsonData) {
-  try {
-    const jsonString = JSON.stringify(jsonData, null, 2);
-    fs.writeFileSync(fileName, jsonString);
-    console.log(fileName + ' saved!');
-  } catch (err) {
-    console.log('Save failed for ' + fileName + ': ' + err);
-  }
+  jsonUtils.writeJson(fileName, jsonData);
+  console.log(fileName + ' saved!');
 }
 
 async function testUserTracking() {

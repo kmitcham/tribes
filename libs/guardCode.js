@@ -151,14 +151,3 @@ module.exports.hyenaAttack = (children, gameState) => {
   killlib.kill(leastGuardedName, predator + ' attack', gameState);
   return response;
 };
-function asJson(data) {
-  (foo = JSON.stringify(data, null, 2)),
-    (err) => {
-      // Checking for errors
-      if (err) {
-        console.log('error with jsonification of ' + fileName + ' ' + err);
-        throw err;
-      }
-    };
-  return foo;
-}

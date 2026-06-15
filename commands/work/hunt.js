@@ -1,6 +1,5 @@
 const {
   SlashCommandBuilder,
-  EmbedBuilder,
 } = require('../../libs/command-builders.js');
 const worklib = require('../../libs/work.js');
 const text = require('../../libs/textprocess.js');
@@ -65,13 +64,5 @@ function hunt(gameState, sourceName, forceRoll) {
   }
   //message = hunt(actor, player, huntRoll, gameState)
   message = huntlib.hunt(sourceName, player, huntRoll, gameState);
-  return;
-}
-function onError(interaction, response) {
-  interaction.user.send(response);
-  const embed = new EmbedBuilder().setDescription(response);
-  interaction
-    .reply({ embeds: [embed], ephemeral: true }) // error message
-    .catch(console.error);
   return;
 }

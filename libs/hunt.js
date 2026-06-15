@@ -1,7 +1,7 @@
 const locations = require('./locations.json');
-const dice = require('./dice');
-const text = require('./textprocess');
-const pop = require('./population');
+const dice = require('./dice.js');
+const text = require('./textprocess.js');
+const pop = require('./population.js');
 
 const locationDecay = [
   30, // arrays count from 0 so add extra item
@@ -80,7 +80,7 @@ module.exports.hunt = (playername, player, rollValue, gameState) => {
     if (rollValue + strMod == 3) {
       message += '\nSevere Injury!\n';
       if (player.strength && player.strength == 'strong') {
-        delete person.strength;
+        delete player.strength;
         message += player.name + ' is reduced to average strength.';
       } else {
         player.strength = 'weak';
