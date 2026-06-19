@@ -21,9 +21,9 @@ module.exports = {
     .addStringOption((option) =>
       option
         .setName('profession')
-        .setDescription('one of (hunter, gatherer, crafter) or decide later')
+        .setDescription('one of (hunter, gatherer, crafter) or specialize later')
         .addChoices(
-          { name: 'decide later', value: 'none' },
+          { name: 'specialize later', value: 'none' },
           { name: 'hunter', value: 'hunter' },
           { name: 'crafter', value: 'crafter' },
           { name: 'gatherer', value: 'gatherer' }

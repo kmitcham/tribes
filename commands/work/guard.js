@@ -8,6 +8,7 @@ const pop = require('../../libs/population.js');
 const dice = require('../../libs/dice.js');
 const referees = require('../../libs/referees.json');
 const guardlib = require('../../libs/guardCode.js');
+const guardValidation = require('../../libs/guardValidation.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -65,28 +66,13 @@ function onCommand(interaction, gameState) {
   var c5Name = interaction.options.getString('child5');
   var c6Name = interaction.options.getString('child6');
 
-  var person = pop.memberByName(actorName, gameState);
-  if (!person) {
-    text.addMessage(gameState, actorName, 'FAIL: you are not a person');
+  const validation = guardValidation.validateGuardingChange(actorName, gameState);
+  if (validation.error) {
+    text.addMessage(gameState, actorName, validation.error);
     return;
   }
-  if (person.worked == true) {
-    text.addMessage(
-      gameState,
-      actorName,
-      'You can not change guard status after having worked.'
-    );
-    return;
-  }
-  if (gameState.workRound == false) {
-    text.addMessage(
-      gameState,
-      actorName,
-      'You can not change guard status outside the work round'
-    );
-    return;
-  }
-  response = '';
+  const person = validation.person;
+  let response = '';
   response += guardChild(actorName, gameState, c1Name) + '\n';
 
   if (c2Name) response += guardChild(actorName, gameState, c2Name) + '\n';
@@ -117,7 +103,7 @@ function onCommand(interaction, gameState) {
 
 function guardChild(actorName, gameState, cName) {
   var person = pop.memberByName(actorName, gameState);
-  children = gameState.children;
+  const children = gameState.children;
   var response = '';
   if (!person) {
     return 'FAIL: you are not a person';
@@ -138,9 +124,9 @@ function guardChild(actorName, gameState, cName) {
   if (person.isSick && person.isSick > 0) {
     return 'FAIL You are too sick to watch children';
   }
-  childName = text.capitalizeFirstLetter(cName);
+  const childName = text.capitalizeFirstLetter(cName);
   console.log('checking ' + childName);
-  child = children[childName];
+  const child = children[childName];
   if (!child) {
     return 'FAIL Could not find child: ' + childName;
   } else if (person.guarding && person.guarding.indexOf(childName) != -1) {

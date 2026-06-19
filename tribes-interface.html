@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="interface-version" content="2026-02-21T18:00:00.000Z">
+    <meta name="interface-version" content="2026-06-18T00:00:00.000Z">
     <title>Tribes Game Interface</title>
     <style>
         * {
@@ -3536,6 +3536,64 @@
                     
                     group.appendChild(input);
                     
+                    // Add filter checkbox for feed command's child targeting
+                    const isFeedingCommand = this.selectedCommand && this.selectedCommand.name.toLowerCase() === 'feed';
+                    const isChildOption = this.isChildTargetingOption(option.name);
+                    if (
+                        isFeedingCommand &&
+                        isChildOption &&
+                        input.tagName === 'SELECT' &&
+                        this.shouldShowFeedMigrationFilter()
+                    ) {
+                        const filterCheckboxContainer = document.createElement('div');
+                        filterCheckboxContainer.className = 'checkbox-container';
+                        filterCheckboxContainer.style.marginTop = '0.5rem';
+                        
+                        const filterCheckbox = document.createElement('input');
+                        filterCheckbox.type = 'checkbox';
+                        filterCheckbox.id = `filter_${option.name}_under2years`;
+                        
+                        const filterLabel = document.createElement('label');
+                        filterLabel.setAttribute('for', filterCheckbox.id);
+                        filterLabel.textContent = 'Show only children under 2 years (including unborn) for migration';
+                        filterLabel.className = 'checkbox-label';
+                        
+                        filterCheckboxContainer.appendChild(filterCheckbox);
+                        filterCheckboxContainer.appendChild(filterLabel);
+                        group.appendChild(filterCheckboxContainer);
+                        
+                        // Add event listener for filtering
+                        filterCheckbox.addEventListener('change', (e) => {
+                            const showOnlyYoung = e.target.checked;
+                            const options = input.querySelectorAll('option');
+                            
+                            options.forEach(opt => {
+                                // Don't filter special options like "All hungry children" or mother names
+                                const isChildOption = opt.getAttribute('data-is-child') === 'true';
+                                const isSeparator = opt.disabled;
+                                
+                                if (!isChildOption && !isSeparator) {
+                                    // Special option - always show
+                                    opt.style.display = '';
+                                } else if (isChildOption) {
+                                    // Child option - filter by age
+                                    const age = parseInt(opt.getAttribute('data-age')) || 0;
+                                    if (showOnlyYoung) {
+                                        // Show only children under 2 years (age < 4, since age 4 = 2 years)
+                                        // Also show unborn (age < 0)
+                                        opt.style.display = age < 4 ? '' : 'none';
+                                    } else {
+                                        // Show all children
+                                        opt.style.display = '';
+                                    }
+                                } else if (isSeparator) {
+                                    // Separator - keep it visible but its relevance depends on visible options
+                                    opt.style.display = '';
+                                }
+                            });
+                        });
+                    }
+                    
                     // Add helper text for reproduction commands
                     if ((this.isPlayerTargetingOption(option.name) || this.isOrderingOption(option.name)) && 
                         this.isReproductionCommand(this.selectedCommand.name)) {
@@ -3656,6 +3714,28 @@
                 ];
                 
                 return reproductionCommands.includes(commandName);
+            }
+
+            shouldShowFeedMigrationFilter() {
+                const state = this.currentStatusData || {};
+                const roundHint = String(state.round || '').toLowerCase();
+                const statusTextElement = document.getElementById('statusText');
+                const statusHint = String(
+                    statusTextElement ? statusTextElement.textContent : ''
+                ).toLowerCase();
+
+                const isMigrateChancePhase =
+                    state.reproductionRound === true && state.matingComplete === true;
+                const isPostReproductionStep =
+                    (state.reproductionRound === true || roundHint.includes('repro')) &&
+                    (
+                        roundHint.includes('awaiting chance') ||
+                        roundHint.includes('awaiting migration') ||
+                        statusHint.includes('awaiting chance') ||
+                        statusHint.includes('awaiting migration')
+                    );
+
+                return isMigrateChancePhase || isPostReproductionStep;
             }
 
             getValidTargetsForReproduction(currentPlayerName) {
@@ -3805,6 +3885,10 @@
                                         const age = child.age || 0;
                                         const status = food >= 2 ? '🍎' : '😋'; // Fed or hungry
                                         opt.textContent = `${childName} (age ${age / 2}, food ${food}) ${status}`;
+                                        
+                                        // Store age as data attribute for filtering in feed command
+                                        opt.setAttribute('data-age', age);
+                                        opt.setAttribute('data-is-child', 'true');
                                         
                                         input.appendChild(opt);
                                     } else {
@@ -3976,6 +4060,59 @@
                         }
                         
                         group.appendChild(input);
+
+                        // Feed migration helper: filter child dropdown to under 2 years (4 seasons), including unborn.
+                        const isFeedCommand =
+                            this.selectedCommand &&
+                            this.selectedCommand.name.toLowerCase() === 'feed';
+                        const isChildTargeting = this.isChildTargetingOption(option.name);
+                        if (
+                            isFeedCommand &&
+                            isChildTargeting &&
+                            input.tagName === 'SELECT' &&
+                            this.shouldShowFeedMigrationFilter()
+                        ) {
+                            const filterCheckboxContainer = document.createElement('div');
+                            filterCheckboxContainer.className = 'checkbox-container';
+                            filterCheckboxContainer.style.marginTop = '0.5rem';
+
+                            const filterCheckbox = document.createElement('input');
+                            filterCheckbox.type = 'checkbox';
+                            filterCheckbox.id = `filter_${option.name}_under2years`;
+
+                            const filterLabel = document.createElement('label');
+                            filterLabel.setAttribute('for', filterCheckbox.id);
+                            filterLabel.textContent = 'Migration: Show only children under 2 years (including unborn)';
+                            filterLabel.className = 'checkbox-label';
+
+                            filterCheckboxContainer.appendChild(filterCheckbox);
+                            filterCheckboxContainer.appendChild(filterLabel);
+                            group.appendChild(filterCheckboxContainer);
+
+                            filterCheckbox.addEventListener('change', (e) => {
+                                const showOnlyYoung = e.target.checked;
+                                const options = input.querySelectorAll('option');
+
+                                options.forEach((opt) => {
+                                    const optionIsChild =
+                                        opt.getAttribute('data-is-child') === 'true';
+                                    const isSeparator = opt.disabled;
+
+                                    if (!optionIsChild && !isSeparator) {
+                                        opt.style.display = '';
+                                    } else if (optionIsChild) {
+                                        const age = parseInt(opt.getAttribute('data-age')) || 0;
+                                        opt.style.display = showOnlyYoung
+                                            ? age < 4
+                                                ? ''
+                                                : 'none'
+                                            : '';
+                                    } else if (isSeparator) {
+                                        opt.style.display = '';
+                                    }
+                                });
+                            });
+                        }
                     }
                     
                     // Add help text for player targeting options in reproduction commands

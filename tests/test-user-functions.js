@@ -3,9 +3,7 @@
 
 const jsonUtils = require('../libs/jsonUtils.js');
 
-function loadJson(fileName) {
-  return jsonUtils.loadJson(fileName, {});
-}
+const loadJson = jsonUtils.loadJson;
 
 function actuallyWriteToDisk(fileName, jsonData) {
   jsonUtils.writeJson(fileName, jsonData);

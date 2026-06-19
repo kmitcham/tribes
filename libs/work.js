@@ -19,8 +19,8 @@ function gather(gameState, sourceName, forceRoll) {
     return;
   }
 
-  player = pop.memberByName(sourceName, gameState);
-  msg = canWork(gameState, player);
+  const player = pop.memberByName(sourceName, gameState);
+  const msg = canWork(gameState, player);
 
   if (msg) {
     text.addMessage(gameState, sourceName, msg);
@@ -43,16 +43,16 @@ function gather(gameState, sourceName, forceRoll) {
       return;
     }
   }
-  message = gatherlib.gather(sourceName, player, gatherRoll, gameState);
+  const message = gatherlib.gather(sourceName, player, gatherRoll, gameState);
   pop.history(sourceName, message, gameState);
   gameState.saveRequired = true;
 }
 module.exports.gather = gather;
 
 function gatherDataFor(locationName, roll) {
-  resourceData = locations[locationName]['gather'];
-  maxRoll = resourceData[resourceData.length - 1][0];
-  minRoll = resourceData[0][0];
+  const resourceData = locations[locationName]['gather'];
+  const maxRoll = resourceData[resourceData.length - 1][0];
+  const minRoll = resourceData[0][0];
   if (roll > maxRoll) {
     roll = maxRoll;
   }
@@ -78,8 +78,8 @@ module.exports.gatherDataFor = gatherDataFor;
 // this is used by Ready
 function listReadyToWork(population) {
   var unworked = [];
-  for (playerName in population) {
-    person = population[playerName];
+  for (const playerName in population) {
+    const person = population[playerName];
     // edit can leave isinjured as the string 'false'
     if (
       person.worked ||
@@ -96,6 +96,7 @@ function listReadyToWork(population) {
 module.exports.listReadyToWork = listReadyToWork;
 
 function canWork(gameState, player) {
+  let msg;
   if (gameState.workRound == false) {
     msg = 'Can only work during the work round';
     return msg;
@@ -121,8 +122,8 @@ function canWork(gameState, player) {
 module.exports.canWork = canWork;
 
 function craft(gameState, sourceName, item, forceRoll) {
-  player = pop.memberByName(sourceName, gameState);
-  msg = canWork(gameState, player);
+  const player = pop.memberByName(sourceName, gameState);
+  const msg = canWork(gameState, player);
 
   if (msg) {
     text.addMessage(gameState, sourceName, msg);
@@ -189,8 +190,8 @@ module.exports.craft = craft;
 
 function train(gameState, sourceName, forceRoll) {
   var population = gameState.population;
-  player = pop.memberByName(sourceName, gameState);
-  msg = canWork(gameState, player);
+  const player = pop.memberByName(sourceName, gameState);
+  const msg = canWork(gameState, player);
 
   if (msg) {
     text.addMessage(gameState, sourceName, msg);
@@ -219,7 +220,7 @@ function train(gameState, sourceName, forceRoll) {
     );
     return;
   }
-  learnRoll = dice.roll(2);
+  let learnRoll = dice.roll(2);
   if (referees.includes(sourceName) && forceRoll) {
     learnRoll = forceRoll;
     if (learnRoll < 2 || 12 < learnRoll) {
@@ -229,9 +230,9 @@ function train(gameState, sourceName, forceRoll) {
   }
   if (learnRoll >= 10) {
     player.canCraft = true;
-    message = player.name + ' learns to craft. [' + learnRoll + ']';
+    var message = player.name + ' learns to craft. [' + learnRoll + ']';
   } else {
-    message =
+    var message =
       player.name +
       ' studies crafting technique, but does not understand it yet. [' +
       learnRoll +
@@ -247,7 +248,7 @@ function train(gameState, sourceName, forceRoll) {
 module.exports.train = train;
 
 function setSecrets(gameState, actorName, willTrain) {
-  member = pop.memberByName(actorName, gameState);
+  const member = pop.memberByName(actorName, gameState);
   if (member && member.canCraft == true) {
     if (willTrain) {
       delete member.noTeach;

@@ -6,6 +6,7 @@ const {
 const guardlib = require('../../libs/guardCode.js');
 const text = require('../../libs/textprocess.js');
 const pop = require('../../libs/population.js');
+const guardValidation = require('../../libs/guardValidation.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -55,30 +56,12 @@ module.exports = {
 };
 
 function ignoreChildren(gameState, actorName, cName, cName2, cName3, cName4, cName5) {
-  var person = pop.memberByName(actorName, gameState);
-
-  if (!person) {
-    text.addMessage(gameState, actorName, 'FAIL: you are not a person');
+  const validation = guardValidation.validateGuardingChange(actorName, gameState);
+  if (validation.error) {
+    text.addMessage(gameState, actorName, validation.error);
     return;
   }
-
-  if (person.worked == true) {
-    text.addMessage(
-      gameState,
-      actorName,
-      'You can not change guard status after having worked.'
-    );
-    return;
-  }
-  if (gameState.workRound == false) {
-    text.addMessage(
-      gameState,
-      actorName,
-      'You can not change guard status outside the work round.'
-    );
-    return;
-  }
-  response = '';
+  let response = '';
   response += ignoreChild(gameState, actorName, cName) + '\n';
   if (cName2) {
     response += ignoreChild(gameState, actorName, cName2) + '\n';
@@ -102,7 +85,7 @@ function ignoreChildren(gameState, actorName, cName, cName2, cName3, cName4, cNa
 
 function ignoreChild(gameState, actorName, cName) {
   var person = pop.memberByName(actorName, gameState);
-  children = gameState.children;
+  const children = gameState.children;
   var response = '';
   if (!person) {
     return 'FAIL: you are not a person';
@@ -122,14 +105,14 @@ function ignoreChild(gameState, actorName, cName) {
       return actorName + ' is not guarding anyone.\n';
     }
   }
-  childName = text.capitalizeFirstLetter(cName);
-  child = children[childName];
+  const childName = text.capitalizeFirstLetter(cName);
+  const child = children[childName];
   if (!child) {
     return 'FAIL: Could not find child: ' + childName;
   } else if (!person.guarding || person.guarding.indexOf(childName) == -1) {
     return 'FAIL: You are not guarding ' + childName;
   } else {
-    childIndex = person.guarding.indexOf(childName);
+    const childIndex = person.guarding.indexOf(childName);
     if (childIndex > -1) {
       person.guarding.splice(childIndex, 1);
       if (person.guarding.length === 0) {

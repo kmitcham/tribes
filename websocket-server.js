@@ -11,6 +11,7 @@ const pop = require('./libs/population.js');
 const help = require('./libs/help.js');
 const guardlib = require('./libs/guardCode.js');
 const jsonUtils = require('./libs/jsonUtils.js');
+const logger = require('./libs/logger.js');
 const PORT = process.env.PORT || 8000;
 const referees = require('./libs/referees.json');
 
@@ -35,29 +36,20 @@ const LAST_COMMIT_INFO = getLastCommitInfo();
 // Timestamped logging function
 function logWithTimestamp(message, ...args) {
   const timestamp = new Date().toLocaleString();
-  const logMessage = `[${timestamp}] ${message} ${args.join(' ')}`;
-
-  // Log to console
-  console.log(`[${timestamp}]`, message, ...args);
-
-  // Log to file
-  try {
-    // Ensure logs directory exists
-    const logsDir = path.join(__dirname, 'logs');
-    if (!fs.existsSync(logsDir)) {
-      fs.mkdirSync(logsDir, { recursive: true });
-    }
-
-    // Create daily log file name
-    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
-    const logFile = path.join(logsDir, `tribes-${today}.log`);
-
-    // Append to log file
-    fs.appendFileSync(logFile, logMessage + '\n');
-  } catch (error) {
-    // If logging to file fails, at least log the error to console
-    console.error('[LOG ERROR] Failed to write to log file:', error.message);
-  }
+  const renderedArgs = args
+    .map((arg) => {
+      if (typeof arg === 'string') {
+        return arg;
+      }
+      try {
+        return JSON.stringify(arg);
+      } catch (err) {
+        return String(arg);
+      }
+    })
+    .join(' ');
+  const logMessage = `[${timestamp}] ${message}${renderedArgs ? ' ' + renderedArgs : ''}`;
+  logger.accessLog.info(logMessage);
 }
 
 let wss;
@@ -353,7 +345,7 @@ function loadCommands() {
     }
   }
 
-  console.log(`Loaded ${commands.size} commands total`);
+  logWithTimestamp(`Loaded ${commands.size} commands total`);
 }
 
 // Create mock interaction object for websocket compatibility
@@ -407,7 +399,7 @@ function createMockInteraction(data, ws, gameState) {
         id: `user_${paramValue}`,
         send: (message) => {
           // Mock send function - could log or handle differently if needed
-          console.log(`[MOCK] Message to ${paramValue}: ${message}`);
+          logWithTimestamp(`[MOCK] Message to ${paramValue}: ${message}`);
         },
       };
     },
@@ -2069,16 +2061,14 @@ function arrayMatch(array1, array2) {
   return array1.sort().join(',') === array2.sort().join(',');
 }
 
-function loadJson(fileName) {
-  return jsonUtils.loadJson(fileName, {});
-}
+const loadJson = jsonUtils.loadJson;
 
 function actuallyWriteToDisk(fileName, jsonData) {
   try {
     jsonUtils.writeJson(fileName, jsonData);
-    console.log(fileName + ' saved!');
+    logWithTimestamp(fileName + ' saved!');
   } catch (err) {
-    console.log('Save failed for ' + fileName + ': ' + err);
+    logger.errorLog.error('Save failed for ' + fileName + ': ' + err);
     throw err;
   }
 }
@@ -2191,8 +2181,8 @@ const isTesting =
 if (isMainModule && !isTesting) {
   loadCommands();
   startServer();
-  console.log('Tribes WebSocket Server starting...');
-  console.log(`Available commands: ${Array.from(commands.keys()).join(', ')}`);
+  logWithTimestamp('Tribes WebSocket Server starting...');
+  logWithTimestamp(`Available commands: ${Array.from(commands.keys()).join(', ')}`);
 }
 
 // Export functions for testing

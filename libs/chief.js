@@ -9,6 +9,7 @@ const reproLib = require('./reproduction.js');
 const locations = require('./locations.json');
 const utils = require('./util.js');
 const kill = require('./kill.js');
+const logger = require('./logger.js');
 
 function close(actorName, gameState) {
   var player = pop.memberByName(actorName, gameState);
@@ -48,14 +49,14 @@ function decree(gameState, actorName, number, lawText) {
   }
   if (!gameState.laws) {
     gameState.laws = {};
-    console.log('Initializing laws');
+    logger.accessLog.info('Initializing laws');
   }
   if (!number) {
     number = 1;
     while (Object.prototype.hasOwnProperty.call(gameState.laws, String(number))) {
       number += 1;
     }
-    console.log('defaulting law number ' + number);
+    logger.accessLog.info('defaulting law number ' + number);
   }
   gameState.laws[number] = law;
   text.addMessage(gameState, 'tribe', 'Your chief creates a new law: ' + law);
@@ -108,13 +109,13 @@ function induct(gameState, sourceName, targetName, gender) {
     }
     targetName = matchedKey;
   } catch (error) {
-    console.error('Error checking users.json:', error);
+    logger.errorLog.error('Error checking users.json: ' + error);
     const response = 'Error validating user. Please try again.';
     text.addMessage(gameState, sourceName, response);
     return;
   }
 
-  console.log('message b');
+  logger.accessLog.info('message b');
   const profession = null; // default to no profession
   pop.addToPopulation(gameState, targetName, gender, profession, null);
 }
@@ -172,7 +173,7 @@ function doChance(rollValue, gameState) {
   let message2;
 
   if (!chanceRoll || chanceRoll < 3 || chanceRoll > 18) {
-    console.log(' invalid chance roll' + rollValue);
+    logger.accessLog.info(' invalid chance roll' + rollValue);
     chanceRoll = dice.roll(3);
   }
   message = 'Chance ' + chanceRoll + ': ';
@@ -204,7 +205,7 @@ function doChance(rollValue, gameState) {
     case 15:
       message +=
         'Fungus! All stored food in the whole tribe, except grain, spoils and is lost.';
-      for (name in population) {
+      for (const name in population) {
         person = population[name];
         pop.history(name, 'Lost ' + person.food + ' to fungus', gameState);
         gameState.spoiled += person.food;
@@ -260,7 +261,7 @@ function doChance(rollValue, gameState) {
       if (gameState.children) {
         message +=
           'The younger tribesfolk gather food. Each child over 4 years old brings 2 Food to their mother. Each New Adult brings 4 Food to their mother.';
-        for (childName in children) {
+        for (const childName in children) {
           var child = children[childName];
           if (child.age > 8) {
             // age in seasons
@@ -291,7 +292,7 @@ function doChance(rollValue, gameState) {
       break;
     case 11:
       message += 'Locusts! Each player loses two dice of stored food';
-      for (name in population) {
+      for (const name in population) {
         person = pop.memberByName(name, gameState);
         amount = dice.roll(2);
         if (amount > person.food) {
@@ -335,7 +336,7 @@ function doChance(rollValue, gameState) {
         (gameState.currentLocationName == 'marsh' ||
           gameState.currentLocationName == 'hills')
       ) {
-        console.log('rerolling winter fire in the marsh or hills');
+        logger.accessLog.info('rerolling winter fire in the marsh or hills');
         message = doChance(dice.roll(3), gameState);
         return message;
       } else {
@@ -469,13 +470,13 @@ function startWork(actorName, gameState) {
   text.addMessage(
     gameState,
     'tribe',
-    '==>Starting the work round.  Guard (or ignore) your children, then craft, gather, hunt, assist or train.<=='
+    '==>Starting the work round.  Guard (or ignore) your children, then craft, gather, hunt, idle or train.<=='
   );
   gameState.saveRequired = true;
   var d = new Date();
   var saveTime = d.toISOString();
   saveTime = saveTime.replace(/\//g, '-');
-  console.log(
+  logger.accessLog.info(
     saveTime + ' start work round  season:' + gameState.seasonCounter
   );
   return;
@@ -491,7 +492,7 @@ function recoverGameTracks(gameState) {
       if (gameState.gameTrack[locationName] < 1) {
         gameState.gameTrack[locationName] = 1;
       }
-      console.log(
+      logger.accessLog.info(
         locationName +
           ' game_track moves from ' +
           oldTrack +

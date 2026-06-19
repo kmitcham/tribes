@@ -6,7 +6,8 @@ const dice = require('./dice.js');
 module.exports.demand = (playerName, demandText, gameState) => {
   // fail if already has a demand in place
   // fail if player not in tribe
-  response = player = gameState['population'][playerName];
+  const player = gameState['population'][playerName];
+  const response = player;
   gameState['demand'] = demandText;
   player['faction'] = 'for';
   text.addMessage(gameState, 'tribe', playerName + ' DEMANDS: ' + demandText);
@@ -18,9 +19,9 @@ function getGameFactions(gameState) {
   var conList = [];
   var neutralList = [];
   var undeclaredList = [];
-  population = gameState['population'];
-  for (playerName in population) {
-    player = population[playerName];
+  const population = gameState['population'];
+  for (const playerName in population) {
+    const player = population[playerName];
     if (!player['faction']) {
       undeclaredList.push(player);
     } else if (player['faction'] == 'neutral') {
@@ -128,7 +129,7 @@ function moreFactionViolenceRequired(gameState) {
 
 function getFactionBaseScore(faction) {
   var score = 0;
-  for (person of faction) {
+  for (const person of faction) {
     if (person.gender == 'male') {
       score += 4;
     } else {
@@ -159,7 +160,7 @@ function getFactionBaseScore(faction) {
 module.exports.getFactionBaseScore = getFactionBaseScore;
 
 function factionHasCrafter(faction) {
-  for (person of faction) {
+  for (const person of faction) {
     if (person.canCraft) {
       return true;
     }
@@ -195,9 +196,9 @@ function getFactionScores(gameState) {
 module.exports.getFactionScores = getFactionScores;
 
 const getFactionResult = (gameState) => {
-  response = '';
-  gameFactions = getGameFactions(gameState);
-  demand = gameState['demand'];
+  let response = '';
+  const gameFactions = getGameFactions(gameState);
+  const demand = gameState['demand'];
   var forScore = 0;
   var againstScore = 0;
 
@@ -209,7 +210,7 @@ const getFactionResult = (gameState) => {
     console.log('nobody wants the demand anymore');
     delete gameState['demand'];
     delete gameState.violenceRounds;
-    for (playerName in gameState['population']) {
+    for (const playerName in gameState['population']) {
       delete gameState['population'][playerName]['faction'];
     }
     return response;
@@ -217,8 +218,8 @@ const getFactionResult = (gameState) => {
   const scores = getFactionScores(gameState);
   forScore = scores.for;
   againstScore = scores.against;
-  neutralScore = scores.neutral;
-  undeclaredScore = scores.undeclared;
+  const neutralScore = scores.neutral;
+  const undeclaredScore = scores.undeclared;
   console.log(
     'Faction scores: For:' +
       forScore +
@@ -238,7 +239,7 @@ const getFactionResult = (gameState) => {
       ').  The demand to ' +
       gameState.demand +
       ' should be done immediately.';
-    for (playerName in gameState['population']) {
+    for (const playerName in gameState['population']) {
       delete gameState['population'][playerName]['faction'];
     }
     console.log(
@@ -254,7 +255,7 @@ const getFactionResult = (gameState) => {
       '). The demand to ' +
       gameState.demand +
       ' should be ignored.';
-    for (playerName in gameState['population']) {
+    for (const playerName in gameState['population']) {
       delete gameState['population'][playerName]['faction'];
     }
     delete gameState.violenceRounds;
@@ -306,7 +307,7 @@ const getFactionResult = (gameState) => {
     }
     console.log('The demand has been resolved.  Deleting: ' + gameState.demand);
     delete gameState['demand'];
-    for (playerName in gameState['population']) {
+    for (const playerName in gameState['population']) {
       delete gameState['population'][playerName]['faction'];
     }
     console.log('Deleted: ' + gameState.demand);
@@ -316,14 +317,14 @@ const getFactionResult = (gameState) => {
 module.exports.getFactionResult = getFactionResult;
 
 function displayFaction(faction) {
-  message = '';
-  names = [];
+  let message = '';
+  const names = [];
   if (faction.length < 1) {
     return 'Nobody is ';
   } else if (faction.length == 1) {
     return faction[0].name + ' is ';
   }
-  for (person of faction) {
+  for (const person of faction) {
     names.push(person.name);
   }
   message = names.join(', ');
@@ -345,7 +346,6 @@ function addViolenceDeathMessage(gameState, defenderName, attackerName) {
 
 const computeBonus = (attacker, defender) => {
   var bonus = 0;
-  response = attacker.name + ' attacks!  ';
   if (attacker.spearhead > 0) {
     bonus += 2;
   }
@@ -388,9 +388,9 @@ const resolveSingleAttack = (attacker, defender, roll, gameState) => {
     );
     return 'No defender gives no result\n';
   }
-  bonus = computeBonus(attacker, defender);
-  netRoll = roll + bonus;
-  response =
+  const bonus = computeBonus(attacker, defender);
+  const netRoll = roll + bonus;
+  let response =
     attacker.name +
     ' attacks ' +
     defender.name +

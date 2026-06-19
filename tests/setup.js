@@ -7,6 +7,19 @@
 // Set test environment before anything else loads
 process.env.NODE_ENV = 'test';
 
+const originalGlobals = {
+  console: global.console,
+  WebSocket: global.WebSocket,
+  document: global.document,
+  window: global.window,
+  setTimeout: global.setTimeout,
+  setInterval: global.setInterval,
+  clearTimeout: global.clearTimeout,
+  clearInterval: global.clearInterval,
+  createMockCommand: global.createMockCommand,
+  createMockParameters: global.createMockParameters,
+};
+
 // Mock console methods to reduce noise in tests
 global.console = {
   ...console,
@@ -277,3 +290,24 @@ console.warn = (...args) => {
 
   originalConsoleWarn(...args);
 };
+
+afterAll(() => {
+  const restore = (key, value) => {
+    if (typeof value === 'undefined') {
+      delete global[key];
+    } else {
+      global[key] = value;
+    }
+  };
+
+  restore('console', originalGlobals.console);
+  restore('WebSocket', originalGlobals.WebSocket);
+  restore('document', originalGlobals.document);
+  restore('window', originalGlobals.window);
+  restore('setTimeout', originalGlobals.setTimeout);
+  restore('setInterval', originalGlobals.setInterval);
+  restore('clearTimeout', originalGlobals.clearTimeout);
+  restore('clearInterval', originalGlobals.clearInterval);
+  restore('createMockCommand', originalGlobals.createMockCommand);
+  restore('createMockParameters', originalGlobals.createMockParameters);
+});

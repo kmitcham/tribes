@@ -34,17 +34,18 @@ const childSurvivalChance = [
 
 module.exports.scoreTribe = scoreTribe;
 function scoreTribe(gameState) {
-  population = gameState.population;
-  banished = gameState.banished;
-  deadAdults = countDeadAdults(gameState);
-  banishCount = 0;
+  const population = gameState.population;
+  const banished = gameState.banished;
+  const deadAdults = countDeadAdults(gameState);
+  let banishCount = 0;
   if (banished != null) {
     banishCount = Object.keys(banished).length;
   }
-  initialPlayers = Object.keys(population).length + banishCount + deadAdults;
-  tribeTotal =
+  const initialPlayers =
+    Object.keys(population).length + banishCount + deadAdults;
+  const tribeTotal =
     Object.keys(population).length + Object.keys(gameState.children).length;
-  tribeResult = 'Unsuccessful';
+  let tribeResult = 'Unsuccessful';
   if (tribeTotal < 2 * initialPlayers) {
     tribeResult = 'Marginally successful';
   } else if (tribeTotal < 3 * initialPlayers) {
@@ -444,10 +445,10 @@ function scoreChildrenMessage(gameState) {
 
 module.exports.countDeadAdults = countDeadAdults;
 function countDeadAdults(gameState) {
-  graveyard = gameState.graveyard;
-  deadAdults = 0;
-  for (entryName in graveyard) {
-    member = graveyard[entryName];
+  const graveyard = gameState.graveyard;
+  let deadAdults = 0;
+  for (const entryName in graveyard) {
+    const member = graveyard[entryName];
     if ('profession' in member) {
       deadAdults++;
     } else if ('age' in member) {
@@ -474,7 +475,7 @@ function setReminder(gameState, bot) {
     console.log('Can not setReminder with maxSeasons and endTime');
     return;
   }
-  turnsRemaining = 20;
+  let turnsRemaining = 20;
   // get turnsRemaining
   if (gameState.maxSeasons < gameState.seasonCounter) {
     turnsRemaining = gameState.maxSeasons - gameState.seasonCounter;
@@ -482,21 +483,25 @@ function setReminder(gameState, bot) {
     console.log('Failed to get maxSeasons ');
   }
   // get timeRemaining
-  nowStamp = performance.now();
+  const nowStamp = performance.now();
   // set duration = timeRemaining/turnsRemaing in minutes
+  let targetDuration;
   if (gameState.endTimestamp > nowStamp) {
-    timeRemainingMillis = gameState.endTimestamp - nowStamp;
+    const timeRemainingMillis = gameState.endTimestamp - nowStamp;
     targetDuration = timeRemainingMillis / turnsRemaining;
   } else {
+    const timeRemainingMillis = gameState.endTimestamp - nowStamp;
     targetDuration = gameState.endTimestamp - gameState.startStamp;
     targetDuration = timeRemainingMillis / gameState.maxSeasons;
     console.log('Defaulting time remaining since they went over');
   }
-  delayMillis = targetDuration / turnsRemaining;
+  let delayMillis = targetDuration / turnsRemaining;
   if (delayMillis < 2 * 60 * 1000) {
     console.log('min interval for reminder is 2 minutes');
     delayMillis = 2 * 60 * 1000;
   }
+  const message =
+    'You have taken more than expected for this round. This puts the tribe at risk of running long.';
   // set message = "You have taken more than "+duration+" minutes for this round.  This puts you at risk for taking longer than intended."
   gameState.reminderId = setTimeout(
     playReminder,
@@ -540,7 +545,7 @@ module.exports.run = async (bot, message, args, data) => {
       message.reply(module.exports.help.usage);
     }
   } else {
-    delay = args;
+    const delay = args;
     if (message) {
       message.reply('Setting delay to ' + delay);
     }

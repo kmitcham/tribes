@@ -5,6 +5,8 @@ const text = require('./textprocess.js');
 const reproLib = require('./reproduction.js');
 const killlib = require('./kill.js');
 
+let response = '';
+
 function resolveMotherNameFromChildren(inputName, children) {
   if (!inputName || !children) {
     return null;
@@ -24,7 +26,7 @@ function resolveMotherNameFromChildren(inputName, children) {
 
 // unused is deprecated
 function feed(unused, player, amount, inputChildList, gameState) {
-  children = gameState.children;
+  const children = gameState.children;
   let message = player['name'] + ' goes to feed the children.  \n';
   const specialNotes = [];
   let feedDetails = '';
@@ -38,9 +40,9 @@ function feed(unused, player, amount, inputChildList, gameState) {
     return;
   }
 
-  feedAtLeastOneChild = false;
-  for (cName of inputChildList) {
-    childName = text.capitalizeFirstLetter(cName);
+  let feedAtLeastOneChild = false;
+  for (const cName of inputChildList) {
+    const childName = text.capitalizeFirstLetter(cName);
     amount = Number(amount);
     if (!children[childName]) {
       if (cName.toLowerCase() == '!all') {
@@ -49,14 +51,14 @@ function feed(unused, player, amount, inputChildList, gameState) {
         if (!specialNotes.includes(allHungryNote)) {
           specialNotes.push(allHungryNote);
         }
-        for (var childName in children) {
-          var child = children[childName];
+        for (var allChildName in children) {
+          var child = children[allChildName];
           if (
             !('newAdult' in child && child.newAdult == true) ||
             child.food >= 2
           ) {
-            inputChildList.push(childName);
-            console.log('adding to inputChildList:' + childName);
+            inputChildList.push(allChildName);
+            console.log('adding to inputChildList:' + allChildName);
           }
         }
         continue;
@@ -90,8 +92,8 @@ function feed(unused, player, amount, inputChildList, gameState) {
       text.addMessage(gameState, player.name, 'no such child as ' + childName);
       continue;
     }
-    child = children[childName];
-    if (Number(child.food) >= 2) {
+    const targetChild = children[childName];
+    if (Number(targetChild.food) >= 2) {
       if (showErrors) {
         text.addMessage(
           gameState,
@@ -101,7 +103,7 @@ function feed(unused, player, amount, inputChildList, gameState) {
       }
       continue;
     }
-    if (child.food + amount > 2) {
+    if (targetChild.food + amount > 2) {
       if (showErrors) {
         text.addMessage(
           gameState,
@@ -110,7 +112,7 @@ function feed(unused, player, amount, inputChildList, gameState) {
         );
       }
     }
-    if (child.newAdult && child.newAdult == true) {
+    if (targetChild.newAdult && targetChild.newAdult == true) {
       if (showErrors) {
         text.addMessage(
           gameState,
@@ -121,7 +123,7 @@ function feed(unused, player, amount, inputChildList, gameState) {
       continue;
     }
     var amountForThisChild =
-      child.food + amount > 2 ? amount - child.food : amount;
+      targetChild.food + amount > 2 ? amount - targetChild.food : amount;
 
     if (player['food'] + player['grain'] >= amountForThisChild) {
       if (player['food'] >= amountForThisChild) {
@@ -169,16 +171,16 @@ module.exports.feed = feed;
 // Side effect: if everyone has enough food, and it is foodRound, start reproduction round.
 function checkFood(gameState, bot) {
   var message = '';
-  hungryAdults = [];
-  happyAdults = [];
-  worriedAdults = [];
-  hungryChildren = [];
-  satedChildren = [];
-  children = gameState.children;
-  population = gameState.population;
+  const hungryAdults = [];
+  const happyAdults = [];
+  const worriedAdults = [];
+  const hungryChildren = [];
+  const satedChildren = [];
+  const children = gameState.children;
+  const population = gameState.population;
   for (var targetName in population) {
-    person = pop.memberByName(targetName, gameState);
-    hunger = 4;
+    const person = pop.memberByName(targetName, gameState);
+    let hunger = 4;
     if (
       person.gender == 'female' &&
       childLib.countChildrenOfParentUnderAge(children, targetName, 4) > 1
@@ -286,14 +288,14 @@ module.exports.getFoodRoundRisk = getFoodRoundRisk;
 
 function consumeFoodChildren(gameState) {
   response = '';
-  perishedChildren = [];
-  population = gameState.population;
-  children = gameState.children;
+  const perishedChildren = [];
+  const population = gameState.population;
+  const children = gameState.children;
 
   console.log('children are eating');
-  for (childName in children) {
+  for (const childName in children) {
     var child = children[childName];
-    motherMember = pop.memberByName(child.mother, gameState);
+    const motherMember = pop.memberByName(child.mother, gameState);
     if (child.dead) {
       continue;
     }
@@ -313,7 +315,7 @@ function consumeFoodChildren(gameState) {
         continue;
       }
       if (child.age == 0) {
-        birthRoll = dice.roll(3);
+        const birthRoll = dice.roll(3);
         birth(gameState, childName, child, motherMember, birthRoll);
       }
       // Sometimes we get bugs where pregnancy doesn't clear; this will fix it eventually
@@ -341,7 +343,7 @@ function consumeFoodChildren(gameState) {
         motherMember.nursing &&
         motherMember.nursing.indexOf(childName) > -1
       ) {
-        childIndex = motherMember.nursing.indexOf(childName);
+        const childIndex = motherMember.nursing.indexOf(childName);
         motherMember.nursing.splice(childIndex, 1);
         response += childName + ' is weaned.\n';
         if (motherMember.nursing && motherMember.nursing.length == 0) {
@@ -354,7 +356,7 @@ function consumeFoodChildren(gameState) {
       response += '>> ' + childName + ' has reached adulthood!\n';
       // clear all guardians
       for (var name in population) {
-        player = pop.memberByName(name, gameState);
+        const player = pop.memberByName(name, gameState);
         if (player.guarding && player.guarding.includes(childName)) {
           const index = player.guarding.indexOf(childName);
           if (index > -1) {
@@ -364,7 +366,7 @@ function consumeFoodChildren(gameState) {
         }
       }
       for (var sitterName in children) {
-        sitter = children[sitterName];
+        const sitter = children[sitterName];
         if (sitter.babysitting && sitter.babysitting == childName) {
           delete sitter.babysitting;
           response += sitterName + ' stops watching the new adult.\n';
@@ -374,9 +376,9 @@ function consumeFoodChildren(gameState) {
     }
   }
   // clean up the dead
-  perishedCount = perishedChildren.length;
+  const perishedCount = perishedChildren.length;
   for (var i = 0; i < perishedCount; i++) {
-    corpse = perishedChildren[i];
+    const corpse = perishedChildren[i];
     killlib.kill(perishedChildren[i], 'starvation', gameState);
     console.log('removing child corpse ' + corpse);
   }
@@ -424,7 +426,7 @@ function birth(gameState, childName, child, motherMember, birthRoll) {
   //Mothers start guarding their newborns
   motherGuard(motherMember, childName);
   if (birthRoll == 17) {
-    twin = reproLib.addChild(child.mother, child.father, gameState);
+    const twin = reproLib.addChild(child.mother, child.father, gameState);
     const twinName = motherMember.isPregnant;
     delete motherMember.isPregnant; // this gets set by addChild, but the child was just born.
     response +=
@@ -551,9 +553,9 @@ function summarizeFoodRoundDeaths(gameState) {
 }
 
 function consumeFoodPlayers(gameState) {
-  perished = [];
-  population = gameState.population;
-  children = gameState.children;
+  const perished = [];
+  const population = gameState.population;
+  const children = gameState.children;
   var response = '';
   for (var target in population) {
     var hunger = 4;
@@ -604,7 +606,7 @@ function consumeFoodPlayers(gameState) {
   }
   var perishedCount = perished.length;
   for (var i = 0; i < perishedCount; i++) {
-    corpse = perished[i];
+    const corpse = perished[i];
     console.log('removing corpse ' + corpse);
     killlib.kill(perished[i], 'starvation', gameState);
   }

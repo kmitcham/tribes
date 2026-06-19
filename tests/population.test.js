@@ -126,6 +126,26 @@ test('person by ignoresCase with spaces', () => {
   expect(actualName).toEqual(expectName);
 });
 
+test('memberByName should not throw when non-member lookup hits malformed population entry', () => {
+  var gameState = {
+    population: {
+      brokenEntry: {
+        handle: {
+          id: 7,
+        },
+      },
+      pro1: {
+        name: 'pro1',
+        faction: 'for',
+      },
+    },
+    round: 'work',
+  };
+
+  expect(() => pop.memberByName('referee-user', gameState)).not.toThrow();
+  expect(pop.memberByName('referee-user', gameState)).toBeNull();
+});
+
 test('normalizePlayerResources maps legacy hunt activity to hunted', () => {
   var player = {
     name: 'hunter1',

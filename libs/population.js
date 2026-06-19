@@ -100,7 +100,7 @@ function memberByName(name, gameState) {
     );
     return null;
   }
-  cleaned = text.removeSpecialChars(name);
+  const cleaned = text.removeSpecialChars(name);
   if (name != cleaned) {
     console.log(name + ' cleaned into >' + cleaned + '<');
     name = cleaned;
@@ -111,43 +111,49 @@ function memberByName(name, gameState) {
   }
   var person = null;
   var population = gameState.population;
+  var lookupNameLower = String(name).toLowerCase();
   if (population[name] != null) {
     person = population[name];
   } else if (population[name.toLowerCase()] != null) {
     person = population[name.toLowerCase()];
   } else {
     for (var possibleMatch in population) {
-      if (population[possibleMatch].name.toLowerCase() === name.toLowerCase()) {
-        person = population[possibleMatch];
+      var possiblePerson = population[possibleMatch];
+      var possibleName =
+        possiblePerson && typeof possiblePerson.name === 'string'
+          ? possiblePerson.name
+          : null;
+      if (possibleName && possibleName.toLowerCase() === lookupNameLower) {
+        person = possiblePerson;
         console.log('Name match on removing case: ' + name);
         break;
       }
-      if (population[possibleMatch] && population[possibleMatch]['handle']) {
+      if (possiblePerson && possiblePerson['handle']) {
         if (
-          population[possibleMatch]['handle']['username'] === name ||
-          population[possibleMatch]['handle']['displayName'] === name ||
-          population[possibleMatch]['handle']['globalName'] === name ||
-          population[possibleMatch]['handle']['nickname'] === name
+          possiblePerson['handle']['username'] === name ||
+          possiblePerson['handle']['displayName'] === name ||
+          possiblePerson['handle']['globalName'] === name ||
+          possiblePerson['handle']['nickname'] === name
         ) {
-          person = population[possibleMatch];
+          person = possiblePerson;
           console.log('Name match on handle with case: ' + name);
           break;
         }
         if (
-          population[possibleMatch]['handle']['username'] ===
+          possiblePerson['handle']['username'] ===
             name.toLowerCase() ||
-          population[possibleMatch]['handle']['displayName'] ===
+          possiblePerson['handle']['displayName'] ===
             name.toLowerCase() ||
-          population[possibleMatch]['handle']['globalName'] ===
+          possiblePerson['handle']['globalName'] ===
             name.toLowerCase() ||
-          population[possibleMatch]['handle']['nickname'] === name.toLowerCase()
+          possiblePerson['handle']['nickname'] === name.toLowerCase()
         ) {
-          person = population[possibleMatch];
+          person = possiblePerson;
           console.log('Name match handle toLowerCase: ' + name);
           break;
         }
-        if (population[possibleMatch].handle.id == name) {
-          person = population[possibleMatch];
+        if (possiblePerson.handle.id == name) {
+          person = possiblePerson;
           console.log('Name match on id: ' + name);
           break;
         }
@@ -232,35 +238,42 @@ function memberByNameFromDictionary(name, dictionary) {
     );
     return null;
   }
-  cleaned = text.removeSpecialChars(name);
+  const cleaned = text.removeSpecialChars(name);
   if (name != cleaned) {
     console.log(name + ' cleaned into ' + cleaned);
     name = cleaned;
   }
   var person = null;
   var population = dictionary;
+  var lookupNameLower = String(name).toLowerCase();
   if (population[name] != null) {
     person = population[name][0];
   } else if (population[name.toLowerCase()] != null) {
     person = population[name.toLowerCase()][0];
   } else {
     console.log('Exhaustive search in population for ' + name);
-    for (match in population) {
-      if (population[match].name.toLowerCase() === name.toLowerCase()) {
-        person = population[match][0];
+    for (const match in population) {
+      var matchEntry = population[match];
+      var matchRecord = Array.isArray(matchEntry) ? matchEntry[0] : matchEntry;
+      var matchName =
+        matchRecord && typeof matchRecord.name === 'string'
+          ? matchRecord.name
+          : null;
+      if (matchName && matchName.toLowerCase() === lookupNameLower) {
+        person = Array.isArray(matchEntry) ? matchEntry[0] : matchEntry;
         break;
       }
-      if (population[match] && population[match]['handle']) {
+      if (matchRecord && matchRecord['handle']) {
         if (
-          population[match]['handle']['username'] == name ||
-          population[match]['handle']['displayName'] == name ||
-          population[match]['handle']['globalName'] == name
+          matchRecord['handle']['username'] == name ||
+          matchRecord['handle']['displayName'] == name ||
+          matchRecord['handle']['globalName'] == name
         ) {
-          person = population[match][0];
+          person = Array.isArray(matchEntry) ? matchEntry[0] : matchEntry;
           break;
         }
-        if (population[match].handle.id == name) {
-          person = population[match][0];
+        if (matchRecord.handle.id == name) {
+          person = Array.isArray(matchEntry) ? matchEntry[0] : matchEntry;
           break;
         }
       }
@@ -318,7 +331,7 @@ function decrementSickness(population, gameState) {
 module.exports.decrementSickness = decrementSickness;
 
 function history(playerName, message, gameState) {
-  player = memberByName(playerName, gameState);
+  const player = memberByName(playerName, gameState);
   if (player && !player.history) {
     player.history = [];
   }
@@ -355,7 +368,7 @@ function showHistory(playerName, gameState) {
       return;
     }
   }
-  messages = player.history;
+  const messages = player.history;
   if (!messages) {
     text.addMessage(
       gameState,
@@ -376,7 +389,7 @@ module.exports.showHistory = showHistory;
 // possibly could just grab the id or something and find them in the channel for messaging
 function addToPopulation(gameState, sourceName, gender, profession, handle) {
   console.log('joining tribe with sourceName:' + sourceName);
-  target = text.removeSpecialChars(sourceName);
+  const target = text.removeSpecialChars(sourceName);
   if (sourceName != target) {
     text.addMessage(
       gameState,
@@ -389,14 +402,14 @@ function addToPopulation(gameState, sourceName, gender, profession, handle) {
     text.addMessage(gameState, sourceName, target + ' is already in the tribe');
     return;
   }
-  genders = ['male', 'female'];
+  const genders = ['male', 'female'];
   if (gender.startsWith('m')) {
     gender = 'male';
   }
   if (gender.startsWith('f')) {
     gender = 'female';
   }
-  response = target + ' ' + gender + ' joined the tribe.';
+  let response = target + ' ' + gender + ' joined the tribe.';
   var person = {};
   person.gender = gender;
   person.food = 10;
@@ -463,11 +476,11 @@ function vote(gameState, actorName, candidateName) {
     return;
   }
   player.vote = candidate.name;
-  totalVotes = countByType(gameState.population, 'vote', candidate.name);
-  tribeSize = Object.keys(gameState.population).length;
-  droneCount = 0;
-  for (memberName in gameState.population) {
-    temp = population[memberName];
+  var totalVotes = countByType(gameState.population, 'vote', candidate.name);
+  var tribeSize = Object.keys(gameState.population).length;
+  var droneCount = 0;
+  for (const memberName in gameState.population) {
+    const temp = population[memberName];
     if (temp.golem) {
       droneCount = droneCount + 1;
     }
@@ -476,8 +489,8 @@ function vote(gameState, actorName, candidateName) {
 
   // Find current chief (before any changes)
   var currentChief = null;
-  for (personName in gameState.population) {
-    person = memberByName(personName, gameState);
+  for (const personName in gameState.population) {
+    const person = memberByName(personName, gameState);
     if (person.chief) {
       currentChief = person.name;
       break;
@@ -487,8 +500,8 @@ function vote(gameState, actorName, candidateName) {
   // count all existing votes
   if (totalVotes >= (2 / 3) * (tribeSize - droneCount)) {
     // clear the previous chief
-    for (personName in gameState.population) {
-      person = memberByName(personName, gameState);
+    for (const personName in gameState.population) {
+      const person = memberByName(personName, gameState);
       if (person.chief) {
         delete person.chief;
       }
@@ -513,9 +526,9 @@ function vote(gameState, actorName, candidateName) {
 module.exports.vote = vote;
 
 function countByType(dictionary, key, value) {
-  count = 0;
-  for (elementName in dictionary) {
-    element = dictionary[elementName];
+  let count = 0;
+  for (const elementName in dictionary) {
+    const element = dictionary[elementName];
     if (element[key] && element[key] == value) {
       count++;
     }
@@ -526,8 +539,8 @@ module.exports.countByType = countByType;
 
 function getAllNamesByGender(population, gender) {
   var genderedNameList = [];
-  for (memberName in population) {
-    member = population[memberName];
+  for (const memberName in population) {
+    const member = population[memberName];
     if (member.gender == gender) {
       genderedNameList.push(member.name);
     }
@@ -537,7 +550,7 @@ function getAllNamesByGender(population, gender) {
 module.exports.getAllNamesByGender = getAllNamesByGender;
 
 function randomMemberName(population) {
-  nameList = Object.keys(population);
+  const nameList = Object.keys(population);
   var random = Math.trunc(Math.random() * nameList.length);
   return nameList[random];
 }
@@ -550,7 +563,7 @@ function graveyard(displayName, gameState) {
   } else {
     for (var name in gameState.graveyard) {
       // TODO flesh this out
-      person = gameState.graveyard[name];
+      const person = gameState.graveyard[name];
       const displayName = person.name || name;
       response += '\n ' + displayName + ' died of ' + person.deathMessage;
       if (person.mother) {

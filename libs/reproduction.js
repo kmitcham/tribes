@@ -1,3 +1,5 @@
+'use strict';
+
 const genders = ['male', 'female'];
 const allNames = require('./names.json');
 const text = require('./textprocess.js');
@@ -7,8 +9,8 @@ const feed = require('./feed.js');
 const end = require('./endgame.js');
 
 function eligibleMates(name, population, debug = false) {
-  matcher = population[name];
-  cleanName = name;
+  const matcher = population[name];
+  const cleanName = name;
   var potentialMatches = [];
   var response = '';
   if (!matcher) {
@@ -18,7 +20,7 @@ function eligibleMates(name, population, debug = false) {
     if (debug) {
       console.log('checking ' + matchName);
     }
-    potentialMatch = population[matchName];
+    const potentialMatch = population[matchName];
     if (!potentialMatch) {
       console.log('no record for ' + matchName);
       continue;
@@ -66,7 +68,7 @@ function eligibleMates(name, population, debug = false) {
 module.exports.eligibleMates = eligibleMates;
 
 function matingObjections(inviter, target) {
-  response = '';
+  let response = '';
   if (inviter.name === target.name) {
     return 'You cannot invite or consent to yourself.\n';
   }
@@ -82,8 +84,8 @@ function matingObjections(inviter, target) {
 module.exports.matingObjections = matingObjections;
 
 function showMatingLists(actorName, gameState) {
-  response = '';
-  actor = pop.memberByName(actorName, gameState);
+  let response = '';
+  const actor = pop.memberByName(actorName, gameState);
   if (!actor) {
     return actorName + ' not found';
   }
@@ -125,10 +127,10 @@ function showMatingLists(actorName, gameState) {
 module.exports.showMatingLists = showMatingLists;
 
 function canStillInvite(gameState) {
-  population = gameState.population;
+  const population = gameState.population;
   var canInvite = [];
   for (var personName in population) {
-    person = population[personName];
+    const person = population[personName];
     if (person.cannotInvite) {
       // do nothing
     } else {
@@ -140,10 +142,10 @@ function canStillInvite(gameState) {
 module.exports.canStillInvite = canStillInvite;
 
 function canStillInviteCount(gameState) {
-  population = gameState.population;
+  const population = gameState.population;
   var count = 0;
   for (var personName in population) {
-    person = population[personName];
+    const person = population[personName];
     if (!person.cannotInvite) {
       count++;
     }
@@ -163,14 +165,14 @@ function handleReproductionList(actorName, arrayOfNames, listName, gameState) {
     console.log('DELETE in handle list actually called.  SURPRISE!');
     return 'Deleting your empty ' + listName;
   }
-  population = gameState.population;
-  errors = [];
-  list = [];
-  save = false;
-  for (rawTargetName of arrayOfNames) {
+  const population = gameState.population;
+  const errors = [];
+  let list = [];
+  let save = false;
+  for (const rawTargetName of arrayOfNames) {
     console.log('arg: ' + rawTargetName);
-    localErrors = '';
-    targetName = text.removeSpecialChars(rawTargetName);
+    let localErrors = '';
+    let targetName = text.removeSpecialChars(rawTargetName);
     targetName = targetName.trim();
     if (targetName.toLowerCase() == '!pass') {
       if (listName == 'inviteList') {
@@ -219,10 +221,10 @@ function handleReproductionList(actorName, arrayOfNames, listName, gameState) {
       }
     }
   }
-  returnMessage = '';
+  let returnMessage = '';
   if (errors.length > 0) {
     console.log(actorName + ' ' + listName + ' has errors:' + errors);
-    for (error of errors) {
+    for (const error of errors) {
       returnMessage += error + '\n';
     }
     returnMessage += 'Please try again to set your ' + listName + '\n';
@@ -392,7 +394,7 @@ function consent(actorName, arrayOfNames, gameState) {
       'Your consent and decline lists have overlaps.  Decline has priority.'
     );
   }
-  handleMessage = handleReproductionList(
+  const handleMessage = handleReproductionList(
     actorName,
     arrayOfNames,
     'consentList',
@@ -449,14 +451,14 @@ function declinePrep(interaction, gameState) {
     listAsArray = rawList.split(',');
   }
   console.log('applying decline list to mating for ' + sourceName);
-  response = decline(sourceName, listAsArray, gameState);
+  const response = decline(sourceName, listAsArray, gameState);
   console.log('decline response:' + response);
   return;
 }
 module.exports.declinePrep = declinePrep;
 
 function decline(actorName, messageArray, gameState) {
-  person = pop.memberByName(actorName, gameState);
+  const person = pop.memberByName(actorName, gameState);
   
   // if format uses colon dictionary e.g. "Alice: consent"
   if (messageArray.some(s => typeof s === 'string' && s.includes(':'))) {
@@ -482,7 +484,7 @@ function decline(actorName, messageArray, gameState) {
     text.addMessage(gameState, actorName, 'Emptying your declineList');
   } else {
     handleReproductionList(actorName, messageArray, 'declineList', gameState);
-    intersectList = intersect(person.consentList, person.declineList);
+    const intersectList = intersect(person.consentList, person.declineList);
     if (intersectList && intersectList.length > 0) {
       text.addMessage(
         gameState,
@@ -498,9 +500,9 @@ function decline(actorName, messageArray, gameState) {
 module.exports.decline = decline;
 
 function clearReproduction(gameState) {
-  population = gameState.population;
+  const population = gameState.population;
   for (var personName in population) {
-    person = population[personName];
+    const person = population[personName];
     delete person.cannotInvite;
     person.inviteIndex = 0;
   }
@@ -772,16 +774,16 @@ function globalMatingCheck(gameState) {
       'tribe',
       '---> Reproductive activites are complete for the season <---'
     );
-    noPregnancies = true;
+    let noPregnancies = true;
     for (const personName in population) {
-      invitingMember = pop.memberByName(personName, gameState);
+      const invitingMember = pop.memberByName(personName, gameState);
       text.addMessage(
         gameState,
         personName,
         'Reproduction round activities are over.'
       );
       if (invitingMember.hiddenPregnant) {
-        fatherName = invitingMember.hiddenPregnant;
+        const fatherName = invitingMember.hiddenPregnant;
         var child = addChild(invitingMember.name, fatherName, gameState);
         delete invitingMember.hiddenPregnant;
         noPregnancies = false;
@@ -899,7 +901,7 @@ function makeLove(targetName, inviterName, gameState, force = false) {
   const motherKey = pop.getPopulationKey(mother, gameState) || motherName;
   const fatherKey = pop.getPopulationKey(father, gameState) || fatherName;
   console.log('mother:' + motherName + ' father:' + fatherName);
-  spawnChance = 9;
+  let spawnChance = 9;
   if (mother.nursing && mother.nursing.length > 0) {
     spawnChance = 10;
   }
@@ -915,12 +917,12 @@ function makeLove(targetName, inviterName, gameState, force = false) {
       mother.hiddenPregnant = fatherName;
     }
   }
-  motherMessage =
+  const motherMessage =
     'You share good feelings with ' + fatherName + ' [' + roll1 + ']';
-  fatherMessage =
+  const fatherMessage =
     'You share good feelings with ' + motherName + ' [' + roll2 + ']';
-  inviterMessage = 'You share good feelings with ' + targetName;
-  targetMessage = inviterName + ' invite you to share good feelings';
+  const inviterMessage = 'You share good feelings with ' + targetName;
+  const targetMessage = inviterName + ' invite you to share good feelings';
   pop.history(inviterName, inviterMessage, gameState);
   pop.history(targetName, targetMessage, gameState);
   text.addMessage(gameState, motherKey, motherMessage);
@@ -987,7 +989,7 @@ function getNextChildName(children, childNames, nextIndex, gameState) {
     return 'Unpossible';
   }
   var counter = 0;
-  possibleName = possibles[Math.trunc(Math.random() * possibles.length)];
+  let possibleName = possibles[Math.trunc(Math.random() * possibles.length)];
   while (counter < 10 && currentNames.indexOf(possibleName) != -1) {
     possibleName = possibles[Math.trunc(Math.random() * possibles.length)];
     counter = counter + 1;
@@ -1021,11 +1023,11 @@ function addChild(mother, father, gameState) {
   child.age = -2;
   child.food = 0;
   child.gender = genders[Math.trunc(Math.random() * genders.length)];
-  nextIndex = gameState.conceptionCounter % 26;
+  const nextIndex = gameState.conceptionCounter % 26;
   const childName = getNextChildName(gameState.children, allNames, nextIndex);
   gameState.children[childName] = child;
   console.log('added child ' + childName);
-  motherAsMember = pop.memberByName(mother, gameState);
+  const motherAsMember = pop.memberByName(mother, gameState);
   motherAsMember.isPregnant = childName;
   if (gameState.reproductionList) {
     const indexOfPreggers = gameState.reproductionList.indexOf(mother);
@@ -1040,9 +1042,9 @@ function addChild(mother, father, gameState) {
 module.exports.addChild = addChild;
 
 function validateDrone(gameState, actorName, args) {
-  population = gameState.population;
+  const population = gameState.population;
   // is actorname Chief
-  player = population[actorName];
+  const player = population[actorName];
   if (!player || !player.chief) {
     text.addMessage(
       gameState,
@@ -1068,11 +1070,11 @@ function validateDrone(gameState, actorName, args) {
     );
     return;
   }
-  gender = args[1];
-  profession = args[2];
-  droneName = args[3];
-  message = '';
-  fail = false;
+  const gender = args[1];
+  let profession = args[2];
+  const droneName = args[3];
+  let message = '';
+  let fail = false;
   // is args valid gender
   if (
     !(
@@ -1116,7 +1118,7 @@ function validateDrone(gameState, actorName, args) {
     fail = true;
     message += 'Drones need a name that is not already in the tribe.\n';
   }
-  cleanName = droneName;
+  const cleanName = droneName;
   if (
     !cleanName === droneName ||
     droneName === 'chief' ||
@@ -1135,7 +1137,7 @@ module.exports.validateDrone = validateDrone;
 
 function addDrone(gameState, gender, profession, droneName) {
   //
-  droneData = {
+  const droneData = {
     gender: gender,
     golem: true,
     food: 10,
@@ -1159,7 +1161,7 @@ function addDrone(gameState, gender, profession, droneName) {
 module.exports.addDrone = addDrone;
 
 function pass(gameState, actorName) {
-  person = pop.memberByName(actorName, gameState);
+  const person = pop.memberByName(actorName, gameState);
   if (!person) {
     text.addMessage(gameState, actorName, 'You are not in this tribe.');
     return;
@@ -1174,7 +1176,7 @@ function pass(gameState, actorName) {
       return;
     }
     person.cannotInvite = true;
-    result = globalMatingCheck(gameState);
+    const result = globalMatingCheck(gameState);
     text.addMessage(gameState, 'tribe', result);
     return;
   } else {
@@ -1245,7 +1247,7 @@ function startReproduction(gameState) {
   gameState.foodRound = false;
   gameState.reproductionRound = true;
   delete gameState.enoughFood;
-  foodMessage = feed.consumeFood(gameState);
+  let foodMessage = feed.consumeFood(gameState);
   if (Object.keys(gameState.population).length == 0) {
     text.addMessage(
       gameState,

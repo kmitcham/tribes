@@ -4,9 +4,7 @@
 const fs = require('fs');
 const jsonUtils = require('./libs/jsonUtils.js');
 
-function loadJson(fileName) {
-  return jsonUtils.loadJson(fileName, {});
-}
+const loadJson = jsonUtils.loadJson;
 
 function writeJson(fileName, jsonData) {
   jsonUtils.writeJson(fileName, jsonData);

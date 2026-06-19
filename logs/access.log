@@ -1,0 +1,5 @@
+{"level":"info","message":"[6/17/2026, 6:34:25 PM] No existing users.json, starting fresh"}
+{"level":"info","message":"[6/17/2026, 6:34:25 PM] ./tribe-data/users.json saved!"}
+{"level":"info","message":"[6/17/2026, 6:34:25 PM] [SECURITY] New user registered: NoPasswordNewUser"}
+{"level":"info","message":"[6/17/2026, 6:34:25 PM] [SESSION] Created session for NoPasswordNewUser from 127.0.0.1"}
+{"level":"info","message":"[6/17/2026, 6:34:25 PM] ./tribe-data/users.json saved!"}

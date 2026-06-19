@@ -346,7 +346,7 @@ describe('tribeHistory.js', () => {
   test('showCombinedHistory should ignore the start of work round message', () => {
     gameState.seasonCounter = 20;
     gameState.tribeHistory = [
-      '10: ==>Starting the work round. Guard (or ignore) your children, then craft, gather, hunt, assist or train.<==',
+      '10: ==>Starting the work round. Guard (or ignore) your children, then craft, gather, hunt, idle or train.<==',
       '10: ursa got sick – eat 2 extra food and miss next turn.',
     ];
 
@@ -360,7 +360,7 @@ describe('tribeHistory.js', () => {
     expect(text.addMessage).not.toHaveBeenCalledWith(
       gameState,
       playerName,
-      '[Tribe history] 10: ==>Starting the work round. Guard (or ignore) your children, then craft, gather, hunt, assist or train.<=='
+      '[Tribe history] 10: ==>Starting the work round. Guard (or ignore) your children, then craft, gather, hunt, idle or train.<=='
     );
   });
 });

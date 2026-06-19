@@ -45,9 +45,7 @@ function initGame(gameName) {
 }
 module.exports.initGame = initGame;
 
-function loadJson(fileName) {
-  return jsonUtils.loadJson(fileName, {});
-}
+const loadJson = jsonUtils.loadJson;
 module.exports.loadJson = loadJson;
 
 function removeChildNameFields(children) {
