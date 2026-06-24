@@ -159,6 +159,50 @@ function getFactionBaseScore(faction) {
 }
 module.exports.getFactionBaseScore = getFactionBaseScore;
 
+function getMemberFactionValueBreakdown(person) {
+  const parts = [];
+  let score = 0;
+
+  if (person.gender == 'male') {
+    parts.push('male (+4)');
+    score += 4;
+  } else {
+    parts.push('female (+2)');
+    score += 2;
+  }
+  if (person.chief) {
+    parts.push('chief (+2)');
+    score += 2;
+  }
+  if (person.isPregnant) {
+    parts.push('pregnant (+1)');
+    score += 1;
+  }
+  if (person.strength) {
+    if (person.strength == 'weak') {
+      parts.push('weak (-1)');
+      score -= 1;
+    } else {
+      parts.push(person.strength + ' (+1)');
+      score += 1;
+    }
+  }
+  if (person.canCraft) {
+    parts.push('crafter (may add +2 if unique)');
+  }
+  if (person.isInjured && person.isInjured > 0) {
+    parts.push('injured (-1)');
+    score -= 1;
+  }
+  if (person.isSick && person.isSick > 0) {
+    parts.push('sick (-1)');
+    score -= 1;
+  }
+
+  return { score, parts };
+}
+module.exports.getMemberFactionValueBreakdown = getMemberFactionValueBreakdown;
+
 function factionHasCrafter(faction) {
   for (const person of faction) {
     if (person.canCraft) {

@@ -16,12 +16,13 @@ module.exports = {
     .addStringOption((option) =>
       option
         .setName('location')
-        .setDescription('one of (veldt,forest,marsh,hills)')
+        .setDescription('one of (veldt,forest,marsh,hills,overview)')
         .addChoices(
           { name: 'veldt', value: 'veldt' },
           { name: 'forest', value: 'forest' },
           { name: 'marsh', value: 'marsh' },
-          { name: 'hills', value: 'hills' }
+          { name: 'hills', value: 'hills' },
+          { name: 'overview', value: 'overview' }
         )
         .setRequired(false)
     )
@@ -57,13 +58,15 @@ function onCommand(interaction, gameState) {
       targetLocation = 'marsh';
     } else if (targetLocation.toLowerCase().startsWith('h')) {
       targetLocation = 'hills';
+    } else if (targetLocation.toLowerCase().startsWith('o')) {
+      targetLocation = 'overview';
     } else {
       text.addMessage(
         gameState,
         displayName,
         'No such location as ' +
           targetLocation +
-          ' Legal locations: veldt,forest,marsh,hills'
+          ' Legal locations: veldt,forest,marsh,hills,overview'
       );
       return;
     }
@@ -72,6 +75,11 @@ function onCommand(interaction, gameState) {
     'scouting.  location:' + targetLocation + ' nerdOption:' + nerdOption
   );
 
+  if (targetLocation === 'overview') {
+    text.addMessage(gameState, displayName, JSON.stringify(getOverviewData(gameState)));
+    return;
+  }
+
   let response = huntlib.getScoutMessage(targetLocation, gameState);
   if (nerdOption) {
     const gameTrackValue = gameState.gameTrack[targetLocation];
@@ -79,6 +87,14 @@ function onCommand(interaction, gameState) {
   }
   text.addMessage(gameState, displayName, response);
   return;
+}
+
+function getOverviewData(gameState) {
+  const overview = {};
+  for (const locationName in locations) {
+    overview[locationName] = gameState.gameTrack[locationName];
+  }
+  return overview;
 }
 
 function getNerdData(gameTrackValue, nerdOption) {

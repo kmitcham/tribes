@@ -68,6 +68,15 @@ function setFaction(gameState, actorName, side) {
   }
   const previousSide = player.faction;
   player.faction = side;
+  if (side !== 'neutral') {
+    const breakdown = violencelib.getMemberFactionValueBreakdown(player);
+    const detail = breakdown.parts.join(', ');
+    text.addMessage(
+      gameState,
+      actorName,
+      `You bring ${breakdown.score} point${breakdown.score !== 1 ? 's' : ''} to the ${side.toUpperCase()} faction (${detail}).`
+    );
+  }
   announceAffectedSideScores(gameState, previousSide, side);
   violencelib.getFactionResult(gameState);
   gameState.saveRequired = true;

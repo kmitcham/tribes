@@ -30,12 +30,25 @@ module.exports = {
 
 function attack(gameState, actorName, targetName) {
   var player = pop.memberByName(actorName, gameState);
-  targetPlayer = pop.memberByName(targetName, gameState);
+  const targetPlayer = pop.memberByName(targetName, gameState);
   if (!targetPlayer) {
     text.addMessage(
       gameState,
       actorName,
       targetName + ' was not found in the tribe'
+    );
+    return;
+  }
+  if (
+    player &&
+    targetPlayer &&
+    String(player.name || '').toLowerCase() ===
+      String(targetPlayer.name || '').toLowerCase()
+  ) {
+    text.addMessage(
+      gameState,
+      actorName,
+      'You cannot attack yourself.'
     );
     return;
   }
