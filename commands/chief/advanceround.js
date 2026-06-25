@@ -8,7 +8,7 @@ const startFood = require('./startfood.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('nextround')
+    .setName('advanceround')
     .setDescription('Advance to the next round, if legal. (Chief only)'),
 
   async execute(interaction, gameState, bot) {
@@ -16,7 +16,7 @@ module.exports = {
     var actor = pop.memberByName(actorName, gameState);
 
     if (!actor || !actor.chief) {
-      text.addMessage(gameState, actorName, 'nextround requires chief privileges');
+      text.addMessage(gameState, actorName, 'advanceround requires chief privileges');
       return;
     }
 

@@ -5599,7 +5599,7 @@
                     player => player && !player.escaped && !player.strategy
                 ).length;
                 const pickStatus = pendingViolenceChoices > 0
-                    ? `${pendingViolenceChoices} player${pendingViolenceChoices === 1 ? '' : 's'} still need to pick attack, run away, or defend for the next round.`
+                    ? `${pendingViolenceChoices} player${pendingViolenceChoices === 1 ? '' : 's'} still need to pick attack, run away, or defend before the round can advance.`
                     : 'No pending violence choices right now.';
                 const formatNameList = (names) => {
                     if (!names || names.length === 0) return '';

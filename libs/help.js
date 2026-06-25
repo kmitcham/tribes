@@ -74,7 +74,7 @@ function chiefHelp() {
   text +=
     ' startreproduction  start the reproduction round. Also when migration happens\n';
   text +=
-    ' nextround advance to the next legal round transition automatically\n';
+    ' advanceround advance to the next legal round transition automatically\n';
   text += ' chance after mating, chance is required to end the season\n';
   //text+=' command <target> <command>  (order a tribe member.  They might obey)\n'
   text +=
