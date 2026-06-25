@@ -505,6 +505,9 @@ const resolveViolence = (gameState) => {
   const undecided = [];
   const runners = [];
   let response = '';
+  const runnerDescriptions = [];
+  const attackDescriptions = [];
+  const defendDescriptions = [];
   const population = gameState['population'];
   for (const playerName in population) {
     const player = population[playerName];
@@ -575,7 +578,9 @@ const resolveViolence = (gameState) => {
     if (attacker && attacker.strategy == 'defend') {
       const defender = pop.memberByName(targetName, gameState);
       const roll = dice.roll(2);
-      response += resolveSingleAttack(attacker, defender, roll, gameState);
+      defendDescriptions.push(
+        resolveSingleAttack(attacker, defender, roll, gameState)
+      );
     }
   }
   for (const attackerName of attackers) {
@@ -588,7 +593,9 @@ const resolveViolence = (gameState) => {
     const defender = pop.memberByName(targetName, gameState);
     //console.log(attackerName+' attacks '+targetName)
     const roll = dice.roll(2);
-    response += resolveSingleAttack(attacker, defender, roll, gameState);
+    attackDescriptions.push(
+      resolveSingleAttack(attacker, defender, roll, gameState)
+    );
   }
   for (const playerName of runners) {
     const runner = population[playerName];
@@ -596,9 +603,12 @@ const resolveViolence = (gameState) => {
     if (runner) {
       runner.escaped = true;
       runner.strategy = 'run';
-      response += playerName + ' runs away from the fighting.\n';
+      runnerDescriptions.push(playerName + ' runs away from the fighting.\n');
     }
   }
+  response += runnerDescriptions.join('');
+  response += attackDescriptions.join('');
+  response += defendDescriptions.join('');
   // reset the strategies
   for (const playerName in population) {
     const player = population[playerName];

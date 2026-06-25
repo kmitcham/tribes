@@ -430,6 +430,12 @@ test('ResolveViolence first test', () => {
     expect(actual).toContain('demander attacks con1');
     expect(actual).toContain('con1 attacks');
     expect(actual).toContain('con2 runs away from the fighting');
+    expect(actual.indexOf('con2 runs away from the fighting')).toBeLessThan(
+      actual.indexOf('pro1 attacks con1')
+    );
+    expect(actual.indexOf('pro1 attacks con1')).toBeLessThan(
+      actual.indexOf('con1 attacks')
+    );
   });
 });
 

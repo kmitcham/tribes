@@ -278,7 +278,7 @@ describe('Browser Integration: tribes-interface.html', () => {
         expect(bannerState.title).toBe('Violence Active');
         expect(bannerState.body).toContain('share fish');
         expect(bannerState.body).toContain('Combat has happened for 2 rounds.');
-        expect(bannerState.body).toContain('still need to pick attack, run away, or defend for the next round.');
+        expect(bannerState.body).toContain('still need to pick attack, run away, or defend before the round can advance.');
         expect(bannerState.body).toContain('No players have exited combat via run away.');
         expect(bannerState.chips).toContain('2 combat rounds');
         expect(bannerState.topConflictText).toContain('Violence Active');
