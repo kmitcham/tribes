@@ -2741,8 +2741,13 @@
                 // Keep pass visible so players can still explicitly pass.
                 const hiddenCommands = ['children', 'inventory', 'invite', 'consent', 'decline'];
                 
+                // Add combat command if violence is active
+                const isViolenceActive = this.currentStatusData && this.currentStatusData.violence;
+                const combatCommand = isViolenceActive ? { 'combat': { description: 'Choose your combat action: attack, defend, or run away', category: 'conflict' } } : {};
+                
                 // Sort commands alphabetically by name and filter out hidden commands
-                const sortedCommands = Object.entries(this.commands)
+                const allCommands = { ...this.commands, ...combatCommand };
+                const sortedCommands = Object.entries(allCommands)
                     .filter(([name, command]) => !hiddenCommands.includes(name) && (!this.isRefereeCommand(command.description) || this.isReferee))
                     .sort(([a], [b]) => a.localeCompare(b));
                 
@@ -2818,6 +2823,12 @@
                 document.querySelectorAll('.command-item').forEach(item => {
                     item.classList.toggle('selected', item.dataset.command === commandName);
                 });
+                
+                // Special case: combat command opens combat modal directly
+                if (commandName.toLowerCase() === 'combat') {
+                    this.showCombatModal();
+                    return;
+                }
                 
                 const command = this.commands[commandName];
                 this.selectedCommand = { name: commandName, ...command };
@@ -4816,6 +4827,36 @@
                 this.addMessage('Message history cleared', 'info');
             }
 
+            getCombatMessages() {
+                try {
+                    const key = this.getMessageHistoryKey();
+                    const messagesJson = localStorage.getItem(key);
+                    
+                    if (!messagesJson) return [];
+                    
+                    let messages;
+                    try {
+                        messages = JSON.parse(messagesJson);
+                        if (!Array.isArray(messages)) return [];
+                    } catch (parseError) {
+                        return [];
+                    }
+                    
+                    // Filter for combat-related messages
+                    const combatKeywords = ['attack', 'run away', 'escape', 'defend', 'kill', 'dead', 'wounded', 'war'];
+                    const excludedKeywords = ['hunt', 'gather', 'trading', 'romance', 'hunter', 'year'];
+                    return messages.filter(msg => {
+                        if (!msg || !msg.text) return false;
+                        const textLower = String(msg.text).toLowerCase();
+                        if (excludedKeywords.some(keyword => textLower.includes(keyword))) return false;
+                        return combatKeywords.some(keyword => textLower.includes(keyword));
+                    }).slice(-50); // Return last 50 combat messages
+                } catch (error) {
+                    console.warn('Failed to get combat messages:', error);
+                    return [];
+                }
+            }
+
             requestCommandList() {
                 const playerName = document.getElementById('playerName')?.value || '';
                 this.send({ 
@@ -5596,6 +5637,12 @@
                 if (activeViolence) {
                     title.textContent = 'Violence Active';
                     body.textContent = `The tribe is in open conflict over this demand: ${activeViolence} ${combatStatus} ${pickStatus} ${escapeStatus}`;
+                    
+                    // Show combat modal if current player needs to make a choice
+                    const currentPlayer = this.getCurrentPlayerPopulationEntry();
+                    if (currentPlayer && currentPlayer.member && !currentPlayer.member.strategy && !currentPlayer.member.escaped) {
+                        this.showCombatModal();
+                    }
                 } else {
                     title.textContent = 'Conflict Details';
                     body.textContent = `A demand is currently in play: ${activeDemand} ${combatStatus}`;
@@ -6356,6 +6403,163 @@
                     hidden: hidden
                 });
             }
+
+            showCombatModal() {
+                const modal = document.getElementById('combatModal');
+                if (!modal) return;
+                
+                // Populate target list
+                const targetSelect = document.getElementById('combatTargetSelect');
+                if (!targetSelect) return;
+                
+                const currentPlayer = this.getCurrentPlayerPopulationEntry();
+                if (!currentPlayer) {
+                    this.closeCombatModal();
+                    return;
+                }
+                
+                targetSelect.innerHTML = '<option value="">Select target...</option>';
+                
+                const population = this.currentPopulation || {};
+                const targets = Object.values(population)
+                    .filter(player => {
+                        // Filter out: current player, escaped players, dead players
+                        if (!player || !player.name) return false;
+                        if (player.name.toLowerCase() === currentPlayer.member.name.toLowerCase()) return false;
+                        if (player.escaped) return false;
+                        if (player.dead) return false;
+                        return true;
+                    })
+                    .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+                
+                targets.forEach(player => {
+                    const option = document.createElement('option');
+                    option.value = player.name;
+                    option.textContent = player.name;
+                    targetSelect.appendChild(option);
+                });
+
+                const attackRadio = document.getElementById('combatStrategyAttack');
+                if (attackRadio) {
+                    attackRadio.checked = true;
+                }
+                this.updateCombatTargetState();
+                
+                // Populate combat messages from history
+                const combatMessagesContainer = document.getElementById('combatMessagesContainer');
+                if (combatMessagesContainer) {
+                    const combatMessages = this.getCombatMessages();
+                    combatMessagesContainer.innerHTML = '';
+                    if (combatMessages && combatMessages.length > 0) {
+                        combatMessages.forEach(msg => {
+                            const msgDiv = document.createElement('div');
+                            msgDiv.style.padding = '0.5rem 0.75rem';
+                            msgDiv.style.borderBottom = '1px solid #eee';
+                            msgDiv.style.fontSize = '0.9rem';
+                            msgDiv.style.lineHeight = '1.4';
+                            msgDiv.textContent = msg.text;
+                            combatMessagesContainer.appendChild(msgDiv);
+                        });
+                    } else {
+                        const emptyMsg = document.createElement('div');
+                        emptyMsg.style.padding = '1rem';
+                        emptyMsg.style.textAlign = 'center';
+                        emptyMsg.style.color = '#999';
+                        emptyMsg.textContent = 'No combat actions yet. Choose your action below.';
+                        combatMessagesContainer.appendChild(emptyMsg);
+                    }
+                }
+                
+                // Show demand if violence is active
+                const demandDisplay = document.getElementById('combatDemand');
+                if (demandDisplay && this.currentStatusData && this.currentStatusData.violence) {
+                    demandDisplay.textContent = `Demand: ${this.currentStatusData.violence}`;
+                }
+                
+                modal.classList.add('active');
+            }
+
+            closeCombatModal() {
+                const modal = document.getElementById('combatModal');
+                if (modal) {
+                    modal.classList.remove('active');
+                }
+            }
+
+            updateCombatTargetState() {
+                const targetSelect = document.getElementById('combatTargetSelect');
+                if (!targetSelect) return;
+
+                const selectedStrategy = document.querySelector('input[name="combatStrategy"]:checked')?.value;
+                const isAttack = selectedStrategy === 'attack';
+
+                targetSelect.disabled = !isAttack;
+                targetSelect.style.backgroundColor = isAttack ? '' : '#f3f3f3';
+                targetSelect.style.cursor = isAttack ? '' : 'not-allowed';
+
+                if (!isAttack) {
+                    targetSelect.value = '';
+                }
+            }
+
+            submitCombatAction() {
+                const selectedStrategy = document.querySelector('input[name="combatStrategy"]:checked')?.value;
+                if (!selectedStrategy) {
+                    this.addMessage('Please choose Attack, Defend, or Run Away.', 'error');
+                    return;
+                }
+
+                this.executeCombatAction(selectedStrategy);
+            }
+
+            executeCombatAction(action) {
+                const currentPlayer = this.getCurrentPlayerPopulationEntry();
+                if (!currentPlayer) {
+                    this.addMessage('Player not found', 'error');
+                    return;
+                }
+
+                if (action === 'attack') {
+                    const targetSelect = document.getElementById('combatTargetSelect');
+                    const targetName = targetSelect.value;
+                    
+                    if (!targetName) {
+                        this.addMessage('Please select a target', 'error');
+                        return;
+                    }
+
+                    // Verify target exists and is not the player themselves
+                    const target = this.findPopulationEntryByName(targetName);
+                    if (!target) {
+                        this.addMessage('Target not found', 'error');
+                        return;
+                    }
+
+                    if (target.member.name.toLowerCase() === currentPlayer.member.name.toLowerCase()) {
+                        this.addMessage('You cannot attack yourself.', 'error');
+                        return;
+                    }
+
+                    // Send attack command
+                    this.send({
+                        type: 'command',
+                        command: 'attack',
+                        target: targetName
+                    });
+                } else if (action === 'defend') {
+                    this.send({
+                        type: 'command',
+                        command: 'defend'
+                    });
+                } else if (action === 'run') {
+                    this.send({
+                        type: 'command',
+                        command: 'run'
+                    });
+                }
+
+                this.closeCombatModal();
+            }
             
             handleManageUsersList(data) {
                 const container = document.getElementById('usersListContainer');
@@ -6599,6 +6803,48 @@
             <div class="modal-body" id="orientationModalBody" style="white-space: pre-wrap;"></div>
             <div class="modal-actions">
                 <button class="btn" onclick="window.tribesClient.closeOrientationModal()">Got it</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Combat Modal -->
+    <div class="modal-overlay" id="combatModal">
+        <div class="modal-popup" style="max-width: 600px;">
+            <div class="modal-header">
+                <div class="modal-title">Combat Action</div>
+                <button class="modal-close" onclick="window.tribesClient.closeCombatModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Demand Display -->
+                <div id="combatDemand" style="margin-bottom: 1rem; padding: 0.75rem; background: #f0f7ff; border: 1px solid #4a90e2; border-radius: 4px; font-size: 0.95rem; font-weight: bold; color: #2c5aa0;"></div>
+                
+                <!-- Combat History Messages -->
+                <div id="combatMessagesContainer" style="margin-bottom: 1.5rem; max-height: 200px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; background: #fafafa;"></div>
+                
+                <div style="margin-bottom: 1rem; border: 1px solid #ddd; border-radius: 4px; padding: 0.75rem; background: #fff;">
+                    <div style="font-weight: bold; margin-bottom: 0.75rem;">Choose Your Strategy</div>
+                    <label style="display: block; margin-bottom: 0.6rem; cursor: pointer;">
+                        <input type="radio" name="combatStrategy" id="combatStrategyAttack" value="attack" onchange="window.tribesClient.updateCombatTargetState()">
+                        <span style="margin-left: 0.4rem;"><strong>Attack</strong> - Strike a specific target.</span>
+                    </label>
+                    <label style="display: block; margin-bottom: 0.6rem; cursor: pointer;">
+                        <input type="radio" name="combatStrategy" value="defend" onchange="window.tribesClient.updateCombatTargetState()">
+                        <span style="margin-left: 0.4rem;"><strong>Defend</strong> - Prepare to defend yourself with deadly force.</span>
+                    </label>
+                    <label style="display: block; cursor: pointer;">
+                        <input type="radio" name="combatStrategy" value="run" onchange="window.tribesClient.updateCombatTargetState()">
+                        <span style="margin-left: 0.4rem;"><strong>Run Away</strong> - Attempt to escape from combat.</span>
+                    </label>
+                </div>
+
+                <div style="margin-bottom: 1.5rem;">
+                    <h4 style="margin-bottom: 0.75rem;">Attack Target (only used for Attack)</h4>
+                    <select id="combatTargetSelect" class="form-control" style="width: 100%; padding: 0.5rem; border: 2px solid #ddd; border-radius: 4px; font-size: 0.95rem;">
+                        <option value="">Select target...</option>
+                    </select>
+                </div>
+
+                <button class="btn" style="width: 100%;" onclick="window.tribesClient.submitCombatAction()">Confirm Combat Action</button>
             </div>
         </div>
     </div>
