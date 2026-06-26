@@ -1220,6 +1220,19 @@ describe('Info Request Handling (using actual exports)', () => {
     expect(response.label).toBe('children');
   });
 
+  test('should handle graveyard request', () => {
+    const gameState = {
+      graveyard: { fallen1: { name: 'fallen1', gender: 'male', age: 20 } },
+    };
+
+    wsServer.handleInfoRequest(mockWs, { selection: 'graveyard' }, gameState);
+
+    const response = mockWs.getLastSentMessage();
+    expect(response.type).toBe('infoRequest');
+    expect(response.label).toBe('graveyard');
+    expect(response.content).toHaveProperty('fallen1');
+  });
+
   test('should include demand and violence in status request gameState payload', () => {
     const gameState = {
       name: 'test-tribe',

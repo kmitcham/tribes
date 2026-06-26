@@ -898,6 +898,13 @@ function handleInfoRequest(ws, data, gameState) {
         content: cleanPop,
       };
       break;
+    case 'graveyard':
+      messageData = {
+        type: 'infoRequest',
+        label: 'graveyard',
+        content: removeClunkyKeys(gameState.graveyard),
+      };
+      break;
     case 'children':
       refreshChildGuardians(gameState.children, gameState.population);
       messageData = {
@@ -1126,6 +1133,12 @@ async function refreshTribeGameData(gameState, tribeName) {
     content: removeFatherReferences(refreshChildGuardians(gameState.children, gameState.population)),
   };
 
+  const graveyardData = {
+    type: 'infoRequest',
+    label: 'graveyard',
+    content: removeClunkyKeys(gameState.graveyard),
+  };
+
   const statusData = {
     type: 'infoRequest',
     label: 'status',
@@ -1154,6 +1167,7 @@ async function refreshTribeGameData(gameState, tribeName) {
       try {
         memberWs.send(JSON.stringify(populationData));
         memberWs.send(JSON.stringify(childrenData));
+        memberWs.send(JSON.stringify(graveyardData));
         memberWs.send(JSON.stringify(statusData));
       } catch (error) {
         console.error('Error sending refresh data to tribe member:', error);

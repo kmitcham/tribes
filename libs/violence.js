@@ -64,6 +64,7 @@ function endViolence(gameState, winnerFaction) {
   delete gameState.violence;
   delete gameState.violenceRounds;
   delete gameState.violenceFactions;
+  gameState.saveRequired = true;
   for (const playerName in gameState.population) {
     const player = gameState.population[playerName];
     delete player.strategy;

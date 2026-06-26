@@ -1745,6 +1745,7 @@
                     <div class="tabs">
                         <div class="tab active" data-tab="population">Population</div>
                         <div class="tab" data-tab="children">Children</div>
+                        <div class="tab" data-tab="graveyard" id="graveyardTabButton" style="display: none;">Graveyard</div>
                     </div>
                     
                     <div class="tab-content active" id="populationTab">
@@ -1758,6 +1759,16 @@
                             <thead>
                                 <tr>
                                     <td colspan="100%">Click "Refresh Population" to load children data</td>
+                                </tr>
+                            </thead>
+                        </table>
+                    </div>
+
+                    <div class="tab-content" id="graveyardTab">
+                        <table id="graveyardTable">
+                            <thead>
+                                <tr>
+                                    <td colspan="100%">No graveyard entries yet</td>
                                 </tr>
                             </thead>
                         </table>
@@ -1776,6 +1787,7 @@
                 this.selectedCommand = null;
                 this.currentPopulation = null; // Store current population for dropdowns
                 this.currentChildren = null; // Store current children for child targeting
+                this.currentGraveyard = null; // Store current graveyard entries
                 this.currentRomanceLists = null; // Store current romance lists
                 this.currentStatusData = null; // Store current structured game status
                 this.pendingInfoRequests = {}; // De-dupe rapid repeated info requests
@@ -2396,6 +2408,11 @@
                         this.currentChildren = data.content; // Store for targeting dropdowns
                         this.updateChildrenTable(data.content);
                         this.regenerateModalFormIfDataReady('children');
+                        break;
+                    case 'graveyard':
+                        this.currentGraveyard = data.content;
+                        this.updateGraveyardTable(data.content);
+                        this.updateGraveyardTabVisibility();
                         break;
                     case 'status':
                         this.currentStatusData = data.gameState || null;
@@ -4844,7 +4861,7 @@
                     
                     // Filter for combat-related messages
                     const combatKeywords = ['attack', 'run away', 'escape', 'defend', 'kill', 'dead', 'wounded', 'war'];
-                    const excludedKeywords = ['hunt', 'gather', 'trading', 'romance', 'hunter', 'year'];
+                    const excludedKeywords = ['hunt', 'gather', 'trading', 'romance', 'hunter', 'year', 'chance'];
                     return messages.filter(msg => {
                         if (!msg || !msg.text) return false;
                         const textLower = String(msg.text).toLowerCase();
@@ -4905,8 +4922,10 @@
 
             refreshGameData() {
                 this.currentPopulation = null; // Clear cached population when refreshing
+                this.currentGraveyard = null;
                 this.send({ type: 'infoRequest', selection: 'population' });
                 this.send({ type: 'infoRequest', selection: 'children' });
+                this.send({ type: 'infoRequest', selection: 'graveyard' });
                 this.send({ type: 'infoRequest', selection: 'status' });
             }
 
@@ -5544,6 +5563,117 @@
                     
                     tbody.appendChild(row);
                 });
+                table.appendChild(tbody);
+            }
+
+            updateGraveyardTabVisibility() {
+                const tabButton = document.getElementById('graveyardTabButton');
+                const graveyardTab = document.getElementById('graveyardTab');
+                if (!tabButton || !graveyardTab) {
+                    return;
+                }
+
+                const hasEntries = !!(this.currentGraveyard && Object.keys(this.currentGraveyard).length > 0);
+                tabButton.style.display = hasEntries ? '' : 'none';
+
+                if (!hasEntries && tabButton.classList.contains('active')) {
+                    const fallbackTab = document.querySelector('.tab[data-tab="population"]');
+                    if (fallbackTab) {
+                        fallbackTab.click();
+                    }
+                }
+            }
+
+            updateGraveyardTable(graveyard) {
+                const table = document.getElementById('graveyardTable');
+                table.innerHTML = '';
+
+                if (!graveyard || Object.keys(graveyard).length === 0) {
+                    table.innerHTML = '<tr><td colspan="100%">No graveyard entries yet</td></tr>';
+                    return;
+                }
+
+                const columns = ['Name', 'Age', 'Death Season', 'Profession', 'Death Message'];
+
+                const formatAge = (value) => {
+                    if (value === undefined || value === null || value === '') {
+                        return '';
+                    }
+                    const numeric = Number(value);
+                    if (!Number.isFinite(numeric)) {
+                        return String(value);
+                    }
+                    if (numeric < 0) {
+                        return `unborn:${numeric / 2}`;
+                    }
+                    return String(numeric / 2);
+                };
+
+                const getDeathSeason = (member) => {
+                    if (!member || typeof member !== 'object') return '';
+                    return member.deathSeason ?? member.deathseason ?? member.season ?? '';
+                };
+
+                const getProfession = (member) => {
+                    if (!member || typeof member !== 'object') return '';
+                    return member.profession ?? member.profesion ?? '';
+                };
+
+                const getDeathMessage = (member) => {
+                    if (!member || typeof member !== 'object') return '';
+                    return member.deathMessage ?? member.deathmessage ?? member.message ?? member.cause ?? '';
+                };
+
+                const thead = document.createElement('thead');
+                const headerRow = document.createElement('tr');
+                columns.forEach(col => {
+                    const th = document.createElement('th');
+                    th.textContent = col;
+                    headerRow.appendChild(th);
+                });
+                thead.appendChild(headerRow);
+                table.appendChild(thead);
+
+                const tbody = document.createElement('tbody');
+                Object.entries(graveyard).forEach(([name, data]) => {
+                    const row = document.createElement('tr');
+                    row.className = this.getGenderRowClass(data && data.gender);
+
+                    const nameCell = document.createElement('td');
+                    nameCell.className = `person-name-cell ${this.getGenderClass(data && data.gender)}`;
+
+                    const genderMeta = this.getGenderSymbol(data && data.gender);
+                    const genderIcon = document.createElement('span');
+                    genderIcon.className = `gender-icon ${genderMeta.className}`;
+                    genderIcon.textContent = genderMeta.symbol;
+                    genderIcon.title = genderMeta.label;
+                    nameCell.appendChild(genderIcon);
+
+                    const nameText = document.createElement('span');
+                    nameText.textContent = name;
+                    nameCell.appendChild(nameText);
+                    row.appendChild(nameCell);
+
+                    const values = [
+                        formatAge(data && data.age),
+                        getDeathSeason(data),
+                        getProfession(data),
+                        getDeathMessage(data),
+                    ];
+
+                    values.forEach(value => {
+                        const cell = document.createElement('td');
+                        cell.textContent =
+                            value !== undefined && value !== null && value !== ''
+                                ? String(value)
+                                : '';
+
+                        row.appendChild(cell);
+                    });
+
+                    tbody.appendChild(row);
+                });
+
                 table.appendChild(tbody);
             }
 
@@ -6468,6 +6598,8 @@
                         emptyMsg.textContent = 'No combat actions yet. Choose your action below.';
                         combatMessagesContainer.appendChild(emptyMsg);
                     }
+
+                    combatMessagesContainer.scrollTop = combatMessagesContainer.scrollHeight;
                 }
                 
                 // Show demand if violence is active
