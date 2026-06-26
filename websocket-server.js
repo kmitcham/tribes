@@ -661,6 +661,20 @@ async function handleWebSocketMessage(ws, data) {
   let tribe = data.tribe || 'bug';
   let gameState = await getGameState(tribe);
 
+  // If this socket switches tribes, detach from the previous tribe set first
+  // so it does not continue receiving messages from multiple tribes.
+  if (
+    ws.currentTribe &&
+    ws.currentTribe !== tribe &&
+    tribeConnections.has(ws.currentTribe)
+  ) {
+    const priorTribeConnections = tribeConnections.get(ws.currentTribe);
+    priorTribeConnections.delete(ws);
+    if (priorTribeConnections.size === 0) {
+      tribeConnections.delete(ws.currentTribe);
+    }
+  }
+
   // Normalize to canonical stored casing when a known user logs in with different capitalization.
   if (data.playerName) {
     const canonicalPlayerName = findStoredUserName(data.playerName);
@@ -1222,7 +1236,11 @@ async function sendGameMessages(ws, gameState, data) {
     let deliveredToAnyConnection = false;
     if (recipientConnections && recipientConnections.size > 0) {
       for (const recipientWs of recipientConnections) {
-        if (recipientWs.readyState === 1) {
+        const sameTribeConnection =
+          normalizePlayerName(recipientWs.currentTribe || 'bug') ===
+          normalizePlayerName(tribe || 'bug');
+
+        if (recipientWs.readyState === 1 && sameTribeConnection) {
           try {
             recipientWs.send(
               JSON.stringify({
