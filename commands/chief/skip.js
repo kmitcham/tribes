@@ -1,8 +1,8 @@
 const {
   SlashCommandBuilder,
 } = require('../../libs/command-builders.js');
-const pop = require('../../libs/population');
-const text = require('../../libs/textprocess');
+const pop = require('../../libs/population.js');
+const text = require('../../libs/textprocess.js');
 
 module.exports = {
   data: new SlashCommandBuilder()

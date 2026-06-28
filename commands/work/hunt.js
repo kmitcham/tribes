@@ -34,9 +34,9 @@ function hunt(gameState, sourceName, forceRoll) {
     );
     return;
   }
-  player = pop.memberByName(sourceName, gameState);
+  const player = pop.memberByName(sourceName, gameState);
   // if this is null, the player can NOT work
-  msg = worklib.canWork(gameState, player);
+  const msg = worklib.canWork(gameState, player);
 
   if (msg) {
     text.addMessage(gameState, sourceName, msg);
@@ -63,6 +63,6 @@ function hunt(gameState, sourceName, forceRoll) {
     }
   }
   //message = hunt(actor, player, huntRoll, gameState)
-  message = huntlib.hunt(sourceName, player, huntRoll, gameState);
-  return;
+    const message = huntlib.hunt(sourceName, player, huntRoll, gameState);
+    return message;
 }

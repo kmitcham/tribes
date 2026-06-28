@@ -18,7 +18,7 @@ module.exports = {
   async execute(interaction, gameState, bot) {
     var count = interaction.options.getInteger('number') || 1;
     console.log('number of dice = ' + count);
-    message =
+    const message =
       'the result of rolling ' + count + ' dice was ' + dice.roll(count);
     text.addMessage(gameState, interaction.member.displayName, message);
   },

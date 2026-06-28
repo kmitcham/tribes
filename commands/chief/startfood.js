@@ -2,10 +2,10 @@ const {
   SlashCommandBuilder,
   EmbedBuilder,
 } = require('../../libs/command-builders.js');
-const pop = require('../../libs/population');
-const util = require('../../libs/util');
-const feed = require('../../libs/feed');
-const text = require('../../libs/textprocess');
+const pop = require('../../libs/population.js');
+const util = require('../../libs/util.js');
+const feed = require('../../libs/feed.js');
+const text = require('../../libs/textprocess.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -14,8 +14,9 @@ module.exports = {
   async execute(interaction, gameState, bot) {
     var actorName = interaction.member.displayName;
 
-    response = startFoodFilter(actorName, gameState, bot);
+    const response = startFoodFilter(actorName, gameState, bot);
     gameState.saveRequired = true;
+    return response;
   },
 };
 
@@ -65,7 +66,7 @@ function startFood(gameState, bot) {
   gameState.workRound = false;
   gameState.foodRound = true;
   gameState.reproductionRound = false;
-  population = gameState.population;
+  const population = gameState.population;
   clearWorkFlags(population, gameState);
   pop.decrementSickness(population, gameState, bot);
   text.addMessage(
@@ -73,7 +74,7 @@ function startFood(gameState, bot) {
     'tribe',
     '\n==>Starting the food and trading round.  Use foodcheck to be sure everyone has enough to eat, or they will starve<=='
   );
-  message = util.gameStateMessage(gameState);
+  const message = util.gameStateMessage(gameState);
   var d = new Date();
   var saveTime = d.toISOString();
   saveTime = saveTime.replace(/\//g, '-');
@@ -82,7 +83,7 @@ function startFood(gameState, bot) {
   );
   text.addMessage(gameState, 'tribe', message);
 
-  foodMessage = feed.checkFood(gameState, bot);
+  const foodMessage = feed.checkFood(gameState, bot);
   return foodMessage;
 }
 
@@ -91,7 +92,7 @@ function clearWorkFlags(population, gameState) {
   // if injured and !worked, injured = false
   // worked = false
   for (var targetName in population) {
-    person = pop.memberByName(targetName, gameState);
+    const person = pop.memberByName(targetName, gameState);
     if (!person) {
       console.log('null person for name ' + targetName);
       continue;

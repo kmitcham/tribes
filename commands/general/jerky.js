@@ -17,6 +17,6 @@ module.exports = {
   async execute(interaction, gameState, bot) {
     const amount = interaction.options.getInteger('amount');
     var sourceName = interaction.member.displayName;
-    message = general.makeJerky(sourceName, amount, gameState, bot);
+    return general.makeJerky(sourceName, amount, gameState, bot);
   },
 };

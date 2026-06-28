@@ -32,8 +32,8 @@ module.exports = {
     ),
   async execute(interaction, gameState) {
     var nickName = interaction.nickName; // set by tribesBot in main handling, since it needed the client
-    gender = interaction.options.getString('gender');
-    profession = interaction.options.getString('profession');
+    const gender = interaction.options.getString('gender');
+    let profession = interaction.options.getString('profession');
     if (profession === 'none' || profession === 'later' || profession === 'delay') {
       profession = null;
     }
@@ -42,7 +42,7 @@ module.exports = {
 };
 
 function join(actorName, gameState, gender, profession, handle) {
-  member = pop.memberByName(actorName, gameState);
+  const member = pop.memberByName(actorName, gameState);
   if (member) {
     text.addMessage(
       gameState,

@@ -11,7 +11,7 @@ module.exports = {
   async execute(interaction, gameState) {
     try {
       var displayName = interaction.member.displayName;
-      response = reproLib.pass(gameState, displayName);
+      return reproLib.pass(gameState, displayName);
     } catch (error) {
       // And of course, make sure you catch and log any errors!
       console.error('pass' + error);

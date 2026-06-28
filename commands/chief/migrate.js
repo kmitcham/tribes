@@ -4,7 +4,7 @@ const {
 } = require('../../libs/command-builders.js');
 const migrate = require('../../libs/migrateLib.js');
 const locations = require('../../libs/locations.json');
-const text = require('../../libs/textprocess');
+const text = require('../../libs/textprocess.js');
 const legalLocations = Object.keys(locations);
 
 module.exports = {
@@ -36,7 +36,7 @@ module.exports = {
     var sourceName = interaction.member.displayName;
     var destination = interaction.options.getString('destination');
     var force = interaction.options.getBoolean('go');
-    value = migrate.migrate(sourceName, destination, force, gameState);
+    const value = migrate.migrate(sourceName, destination, force, gameState);
     if (value == 0) {
       text.addMessage(
         gameState,

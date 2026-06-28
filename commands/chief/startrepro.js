@@ -2,7 +2,7 @@ const {
   SlashCommandBuilder,
   EmbedBuilder,
 } = require('../../libs/command-builders.js');
-const repro = require('../../libs/reproduction');
+const repro = require('../../libs/reproduction.js');
 
 module.exports = {
   data: new SlashCommandBuilder()

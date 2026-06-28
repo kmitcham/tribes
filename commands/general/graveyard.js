@@ -2,7 +2,7 @@ const {
   SlashCommandBuilder,
   EmbedBuilder,
 } = require('../../libs/command-builders.js');
-const pop = require('../../libs/population');
+const pop = require('../../libs/population.js');
 
 module.exports = {
   data: new SlashCommandBuilder()

@@ -2,7 +2,7 @@ const {
   SlashCommandBuilder,
   EmbedBuilder,
 } = require('../../libs/command-builders.js');
-const prof = require('../../libs/profession');
+const prof = require('../../libs/profession.js');
 
 module.exports = {
   data: new SlashCommandBuilder()

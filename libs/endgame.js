@@ -1,6 +1,7 @@
 const killlib = require('./kill.js');
 const dice = require('./dice.js');
 const text = require('./textprocess.js');
+const { performance } = require('perf_hooks');
 
 const childSurvivalChance = [
   8,

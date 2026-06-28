@@ -12,8 +12,9 @@ module.exports = {
       'End the game.  Score the remaining children. (Chief only)'
     ),
   async execute(interaction, gameState, bot) {
-    response = endLib.endGame(gameState, bot);
+    const response = endLib.endGame(gameState, bot);
     gameState.saveRequired = true;
     gameState.archiveRequired = true;
+    return response;
   },
 };

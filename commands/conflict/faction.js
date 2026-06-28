@@ -2,9 +2,9 @@ const {
   SlashCommandBuilder,
   EmbedBuilder,
 } = require('../../libs/command-builders.js');
-const violencelib = require('../../libs/violence');
+const violencelib = require('../../libs/violence.js');
 const text = require('../../libs/textprocess.js');
-const pop = require('../../libs/population');
+const pop = require('../../libs/population.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -32,7 +32,7 @@ module.exports = {
 };
 
 function setFaction(gameState, actorName, side) {
-  player = pop.memberByName(actorName, gameState);
+  const player = pop.memberByName(actorName, gameState);
 
   if (side != 'for' && side != 'against' && side != 'neutral') {
     text.addMessage(

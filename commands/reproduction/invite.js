@@ -25,14 +25,15 @@ module.exports = {
       var cleanArray = pop.convertStringToArray(rawList);
       if (true) {
         var processedList = [];
-        for (value of cleanArray) {
+        for (const value of cleanArray) {
           processedList.push(pop.nameFromAtNumber(value, bot));
         }
-        response = reproLib.invite(gameState, displayName, processedList);
+        const response = reproLib.invite(gameState, displayName, processedList);
+        console.log('invite response was ' + response);
       } else {
-        response = reproLib.invite(gameState, displayName, rawList);
+        const response = reproLib.invite(gameState, displayName, rawList);
+        console.log('invite response was ' + response);
       }
-      console.log('invite response was ' + response);
     } catch (error) {
       console.error('invite error ' + error);
     }

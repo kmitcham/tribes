@@ -15,9 +15,9 @@ module.exports = {
 };
 
 function onCommand(interaction, gameState) {
-  children = gameState.children;
+  const children = gameState.children;
   var displayName = interaction.member.displayName;
-  response = guardlib.findLeastGuarded(children, gameState.population);
+  const response = guardlib.findLeastGuarded(children, gameState.population);
   text.addMessage(gameState, displayName, response);
   return;
 }

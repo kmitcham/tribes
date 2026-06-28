@@ -1,11 +1,8 @@
 const {
   SlashCommandBuilder,
-  EmbedBuilder,
 } = require('../../libs/command-builders.js');
 const text = require('../../libs/textprocess.js');
 const pop = require('../../libs/population.js');
-const dice = require('../../libs/dice.js');
-const referees = require('../../libs/referees.json');
 const guardValidation = require('../../libs/guardValidation.js');
 
 module.exports = {

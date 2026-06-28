@@ -3,7 +3,7 @@ const {
   EmbedBuilder,
 } = require('../../libs/command-builders.js');
 const reproLib = require('../../libs/reproduction.js');
-const text = require('../../libs/textprocess');
+const text = require('../../libs/textprocess.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -11,7 +11,7 @@ module.exports = {
     .setDescription('Open your romance panel — set who to invite and how to respond to invitations.'),
   async execute(interaction, gameState, bot) {
     var sourceName = interaction.member.displayName;
-    response = onCommand(sourceName, gameState, bot);
+    return onCommand(sourceName, gameState, bot);
   },
 };
 

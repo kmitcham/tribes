@@ -37,7 +37,7 @@ function feed(interaction, gameState) {
   var sourceName = interaction.member.displayName;
   var amount = interaction.options.getInteger('amount') || 2;
   var rawList = interaction.options.getString('child');
-  player = pop.memberByName(sourceName, gameState);
+  const player = pop.memberByName(sourceName, gameState);
 
   if (amount < 0 && !referees.includes(sourceName)) {
     text.addMessage(
@@ -68,8 +68,8 @@ function feed(interaction, gameState) {
     );
     return;
   }
-  childList = rawList.split(' ');
-  message = feedlib.feed(interaction, player, amount, childList, gameState);
+  const childList = rawList.split(' ');
+  const message = feedlib.feed(interaction, player, amount, childList, gameState);
   console.log('return ' + message);
   gameState.saveRequired = true;
   return;

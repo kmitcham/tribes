@@ -26,7 +26,7 @@ module.exports = {
     ),
   async execute(interaction, gameState) {
     var filterParentUser = interaction.options.getMember('parent');
-    filterParentName = null;
+    let filterParentName = null;
     if (filterParentUser) {
       filterParentName = filterParentUser.displayName;
     }

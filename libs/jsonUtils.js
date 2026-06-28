@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const { Buffer } = require('buffer');
 
 function cloneDefault(defaultValue) {
   if (Array.isArray(defaultValue)) {
@@ -22,7 +23,9 @@ function loadJson(fileName, defaultValue = {}) {
     throw new Error(`Failed to read JSON file ${fileName}: ${err.message}`);
   }
 
-  const jsonText = Buffer.isBuffer(rawData) ? rawData.toString('utf8') : rawData;
+  const jsonText = Buffer.isBuffer(rawData)
+    ? rawData.toString('utf8')
+    : String(rawData);
 
   if (!jsonText || jsonText.trim().length === 0) {
     return cloneDefault(defaultValue);

@@ -233,7 +233,7 @@ function gatherDataFor(locationName, roll) {
     'error looking up resourceData for ' +
       locationName +
       ' ' +
-      type +
+        'gather' +
       ' ' +
       roll
   );

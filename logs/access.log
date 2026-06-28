@@ -2579,3 +2579,165 @@
 {"level":"info","message":"[6/28/2026, 11:45:27 AM] [SECURITY] New user registered: NoPasswordNewUser"}
 {"level":"info","message":"[6/28/2026, 11:45:27 AM] [SESSION] Created session for NoPasswordNewUser from 127.0.0.1"}
 {"level":"info","message":"[6/28/2026, 11:45:27 AM] ./tribe-data/users.json saved!"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] No existing users.json, starting fresh"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] [SESSION] Created session for testPlayer from 192.168.1.1"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] [SESSION] Created session for testPlayer from unknown"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] [SESSION] Created session for testPlayer from unknown"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] [SESSION] Created session for testPlayer from unknown"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] [SESSION] Created session for testPlayer from unknown"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] [SESSION] Created session for testPlayer from unknown"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] [SESSION] Created session for testPlayer from unknown"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] [SESSION] Destroyed session for testPlayer"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] [SESSION] Created session for testPlayer from unknown"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] [SESSION] Destroyed session for testPlayer"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] [SESSION] Created session for testPlayer from unknown"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] [SESSION] Created session for testPlayer from unknown"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] [SESSION] Destroyed session for testPlayer"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] [SESSION] Created session for testPlayer from unknown"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] [SESSION] Created session for testPlayer from unknown"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] [SESSION] Created session for testPlayer from unknown"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] [SESSION] Destroyed all sessions for testPlayer"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] [SESSION] Created session for player1 from unknown"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] [SESSION] Created session for player2 from unknown"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] [SESSION] Destroyed all sessions for player1"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] Failed login attempt for testUser. Count: 1"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] Failed login attempt for testUser. Count: 1"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] Failed login attempt for testUser. Count: 2"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] Failed login attempt for testUser. Count: 3"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] Failed login attempt for testUser. Count: 1"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] Failed login attempt for testUser. Count: 2"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] Failed login attempt for testUser. Count: 3"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] Failed login attempt for testUser. Count: 4"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] Failed login attempt for testUser. Count: 5"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] Failed login attempt for testUser. Count: 1"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] Failed login attempt for testUser. Count: 2"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] [RESET] Started a new game for tribe join-reset-test because /join was requested after game end"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] No existing users.json, starting fresh"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] [SESSION] Created session for testPlayer from 192.168.1.1"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] [SESSION] Created session for testPlayer from unknown"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] [SESSION] Created session for testPlayer from unknown"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] [SESSION] Created session for testPlayer from unknown"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] [SESSION] Created session for testPlayer from unknown"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] [SESSION] Created session for testPlayer from unknown"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] [SESSION] Created session for testPlayer from unknown"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] [SESSION] Destroyed session for testPlayer"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] [SESSION] Created session for testPlayer from unknown"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] [SESSION] Destroyed session for testPlayer"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] [SESSION] Created session for testPlayer from unknown"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] [SESSION] Created session for testPlayer from unknown"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] [SESSION] Destroyed session for testPlayer"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] [SESSION] Created session for testPlayer from unknown"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] [SESSION] Created session for testPlayer from unknown"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] [SESSION] Created session for testPlayer from unknown"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] [SESSION] Destroyed all sessions for testPlayer"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] [SESSION] Created session for player1 from unknown"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] [SESSION] Created session for player2 from unknown"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] [SESSION] Destroyed all sessions for player1"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] Failed login attempt for testUser. Count: 1"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] Failed login attempt for testUser. Count: 1"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] Failed login attempt for testUser. Count: 2"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] Failed login attempt for testUser. Count: 3"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] Failed login attempt for testUser. Count: 1"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] Failed login attempt for testUser. Count: 2"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] Failed login attempt for testUser. Count: 3"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] Failed login attempt for testUser. Count: 4"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] Failed login attempt for testUser. Count: 5"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] Failed login attempt for testUser. Count: 1"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] Failed login attempt for testUser. Count: 2"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] [RESET] Started a new game for tribe join-reset-test because /join was requested after game end"}
+{"level":"info","message":"2026-06-28T19:08:34.721Z start work round  season:NaN"}
+{"level":"info","message":"defaulting law number 2"}
+{"level":"info","message":"Initializing laws"}
+{"level":"info","message":"defaulting law number 1"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] No existing users.json, starting fresh"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] ./tribe-data/users.json saved!"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] [SECURITY] New user registered: NoPasswordNewUser"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] [SESSION] Created session for NoPasswordNewUser from 127.0.0.1"}
+{"level":"info","message":"[6/28/2026, 12:08:34 PM] ./tribe-data/users.json saved!"}
+{"level":"info","message":"[6/28/2026, 12:12:23 PM] No existing users.json, starting fresh"}
+{"level":"info","message":"[6/28/2026, 12:12:23 PM] [SESSION] Created session for testPlayer from 192.168.1.1"}
+{"level":"info","message":"[6/28/2026, 12:12:23 PM] [SESSION] Created session for testPlayer from unknown"}
+{"level":"info","message":"[6/28/2026, 12:12:23 PM] [SESSION] Created session for testPlayer from unknown"}
+{"level":"info","message":"[6/28/2026, 12:12:23 PM] [SESSION] Created session for testPlayer from unknown"}
+{"level":"info","message":"[6/28/2026, 12:12:23 PM] [SESSION] Created session for testPlayer from unknown"}
+{"level":"info","message":"[6/28/2026, 12:12:23 PM] [SESSION] Created session for testPlayer from unknown"}
+{"level":"info","message":"[6/28/2026, 12:12:23 PM] [SESSION] Created session for testPlayer from unknown"}
+{"level":"info","message":"[6/28/2026, 12:12:23 PM] [SESSION] Destroyed session for testPlayer"}
+{"level":"info","message":"[6/28/2026, 12:12:23 PM] [SESSION] Created session for testPlayer from unknown"}
+{"level":"info","message":"[6/28/2026, 12:12:23 PM] [SESSION] Destroyed session for testPlayer"}
+{"level":"info","message":"[6/28/2026, 12:12:23 PM] [SESSION] Created session for testPlayer from unknown"}
+{"level":"info","message":"[6/28/2026, 12:12:23 PM] [SESSION] Created session for testPlayer from unknown"}
+{"level":"info","message":"[6/28/2026, 12:12:23 PM] [SESSION] Destroyed session for testPlayer"}
+{"level":"info","message":"[6/28/2026, 12:12:23 PM] [SESSION] Created session for testPlayer from unknown"}
+{"level":"info","message":"[6/28/2026, 12:12:23 PM] [SESSION] Created session for testPlayer from unknown"}
+{"level":"info","message":"[6/28/2026, 12:12:23 PM] [SESSION] Created session for testPlayer from unknown"}
+{"level":"info","message":"[6/28/2026, 12:12:23 PM] [SESSION] Destroyed all sessions for testPlayer"}
+{"level":"info","message":"[6/28/2026, 12:12:23 PM] [SESSION] Created session for player1 from unknown"}
+{"level":"info","message":"[6/28/2026, 12:12:23 PM] [SESSION] Created session for player2 from unknown"}
+{"level":"info","message":"[6/28/2026, 12:12:23 PM] [SESSION] Destroyed all sessions for player1"}
+{"level":"info","message":"[6/28/2026, 12:12:23 PM] Failed login attempt for testUser. Count: 1"}
+{"level":"info","message":"[6/28/2026, 12:12:23 PM] Failed login attempt for testUser. Count: 1"}
+{"level":"info","message":"[6/28/2026, 12:12:23 PM] Failed login attempt for testUser. Count: 2"}
+{"level":"info","message":"[6/28/2026, 12:12:23 PM] Failed login attempt for testUser. Count: 3"}
+{"level":"info","message":"[6/28/2026, 12:12:23 PM] Failed login attempt for testUser. Count: 1"}
+{"level":"info","message":"[6/28/2026, 12:12:23 PM] Failed login attempt for testUser. Count: 2"}
+{"level":"info","message":"[6/28/2026, 12:12:23 PM] Failed login attempt for testUser. Count: 3"}
+{"level":"info","message":"[6/28/2026, 12:12:23 PM] Failed login attempt for testUser. Count: 4"}
+{"level":"info","message":"[6/28/2026, 12:12:23 PM] Failed login attempt for testUser. Count: 5"}
+{"level":"info","message":"[6/28/2026, 12:12:23 PM] Failed login attempt for testUser. Count: 1"}
+{"level":"info","message":"[6/28/2026, 12:12:23 PM] Failed login attempt for testUser. Count: 2"}
+{"level":"info","message":"[6/28/2026, 12:12:23 PM] [RESET] Started a new game for tribe join-reset-test because /join was requested after game end"}
+{"level":"info","message":"[6/28/2026, 12:12:24 PM] No existing users.json, starting fresh"}
+{"level":"info","message":"[6/28/2026, 12:12:24 PM] [SESSION] Created session for testPlayer from 192.168.1.1"}
+{"level":"info","message":"[6/28/2026, 12:12:24 PM] [SESSION] Created session for testPlayer from unknown"}
+{"level":"info","message":"[6/28/2026, 12:12:24 PM] [SESSION] Created session for testPlayer from unknown"}
+{"level":"info","message":"[6/28/2026, 12:12:24 PM] [SESSION] Created session for testPlayer from unknown"}
+{"level":"info","message":"[6/28/2026, 12:12:24 PM] [SESSION] Created session for testPlayer from unknown"}
+{"level":"info","message":"[6/28/2026, 12:12:24 PM] [SESSION] Created session for testPlayer from unknown"}
+{"level":"info","message":"[6/28/2026, 12:12:24 PM] [SESSION] Created session for testPlayer from unknown"}
+{"level":"info","message":"[6/28/2026, 12:12:24 PM] [SESSION] Destroyed session for testPlayer"}
+{"level":"info","message":"[6/28/2026, 12:12:24 PM] [SESSION] Created session for testPlayer from unknown"}
+{"level":"info","message":"[6/28/2026, 12:12:24 PM] [SESSION] Destroyed session for testPlayer"}
+{"level":"info","message":"[6/28/2026, 12:12:24 PM] [SESSION] Created session for testPlayer from unknown"}
+{"level":"info","message":"[6/28/2026, 12:12:24 PM] [SESSION] Created session for testPlayer from unknown"}
+{"level":"info","message":"[6/28/2026, 12:12:24 PM] [SESSION] Destroyed session for testPlayer"}
+{"level":"info","message":"[6/28/2026, 12:12:24 PM] [SESSION] Created session for testPlayer from unknown"}
+{"level":"info","message":"[6/28/2026, 12:12:24 PM] [SESSION] Created session for testPlayer from unknown"}
+{"level":"info","message":"[6/28/2026, 12:12:24 PM] [SESSION] Created session for testPlayer from unknown"}
+{"level":"info","message":"[6/28/2026, 12:12:24 PM] [SESSION] Destroyed all sessions for testPlayer"}
+{"level":"info","message":"[6/28/2026, 12:12:24 PM] [SESSION] Created session for player1 from unknown"}
+{"level":"info","message":"[6/28/2026, 12:12:24 PM] [SESSION] Created session for player2 from unknown"}
+{"level":"info","message":"[6/28/2026, 12:12:24 PM] [SESSION] Destroyed all sessions for player1"}
+{"level":"info","message":"[6/28/2026, 12:12:24 PM] Failed login attempt for testUser. Count: 1"}
+{"level":"info","message":"[6/28/2026, 12:12:24 PM] Failed login attempt for testUser. Count: 1"}
+{"level":"info","message":"[6/28/2026, 12:12:24 PM] Failed login attempt for testUser. Count: 2"}
+{"level":"info","message":"[6/28/2026, 12:12:24 PM] Failed login attempt for testUser. Count: 3"}
+{"level":"info","message":"[6/28/2026, 12:12:24 PM] Failed login attempt for testUser. Count: 1"}
+{"level":"info","message":"[6/28/2026, 12:12:24 PM] Failed login attempt for testUser. Count: 2"}
+{"level":"info","message":"[6/28/2026, 12:12:24 PM] Failed login attempt for testUser. Count: 3"}
+{"level":"info","message":"[6/28/2026, 12:12:24 PM] Failed login attempt for testUser. Count: 4"}
+{"level":"info","message":"[6/28/2026, 12:12:24 PM] Failed login attempt for testUser. Count: 5"}
+{"level":"info","message":"[6/28/2026, 12:12:24 PM] Failed login attempt for testUser. Count: 1"}
+{"level":"info","message":"[6/28/2026, 12:12:24 PM] Failed login attempt for testUser. Count: 2"}
+{"level":"info","message":"[6/28/2026, 12:12:24 PM] [RESET] Started a new game for tribe join-reset-test because /join was requested after game end"}
+{"level":"info","message":"2026-06-28T19:12:24.147Z start work round  season:NaN"}
+{"level":"info","message":"defaulting law number 2"}
+{"level":"info","message":"Initializing laws"}
+{"level":"info","message":"defaulting law number 1"}
+{"level":"info","message":"[6/28/2026, 12:12:24 PM] No existing users.json, starting fresh"}
+{"level":"info","message":"[6/28/2026, 12:12:24 PM] ./tribe-data/users.json saved!"}
+{"level":"info","message":"[6/28/2026, 12:12:24 PM] [SECURITY] New user registered: NoPasswordNewUser"}
+{"level":"info","message":"[6/28/2026, 12:12:24 PM] [SESSION] Created session for NoPasswordNewUser from 127.0.0.1"}
+{"level":"info","message":"[6/28/2026, 12:12:24 PM] ./tribe-data/users.json saved!"}
+{"level":"info","message":"[6/28/2026, 12:24:49 PM] Client disconnected: unknown"}
+{"level":"info","message":"[6/28/2026, 12:24:49 PM] Client disconnected: unknown"}
+{"level":"info","message":"[6/28/2026, 12:24:49 PM] Client disconnected: unknown"}
+{"level":"info","message":"[6/28/2026, 12:24:49 PM] Client disconnected: unknown"}
+{"level":"info","message":"[6/28/2026, 12:24:50 PM] New client connected from 127.0.0.1"}
+{"level":"info","message":"[6/28/2026, 12:24:50 PM] Received: listCommands  from eggplant tribe elephant"}
+{"level":"info","message":"[6/28/2026, 12:24:50 PM] New client connected from 127.0.0.1"}
+{"level":"info","message":"[6/28/2026, 12:24:50 PM] Received: listCommands  from nopwd tribe bug"}
+{"level":"info","message":"[6/28/2026, 12:24:50 PM] New client connected from 127.0.0.1"}
+{"level":"info","message":"[6/28/2026, 12:24:50 PM] Received: listCommands  from ursa tribe elephant"}
+{"level":"info","message":"[6/28/2026, 12:24:50 PM] New client connected from 127.0.0.1"}
+{"level":"info","message":"[6/28/2026, 12:24:50 PM] Received: listCommands  from Kevin tribe bug"}

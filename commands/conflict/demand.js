@@ -2,9 +2,9 @@ const {
   SlashCommandBuilder,
   EmbedBuilder,
 } = require('../../libs/command-builders.js');
-const pop = require('../../libs/population');
-const violencelib = require('../../libs/violence');
-const text = require('../../libs/textprocess');
+const pop = require('../../libs/population.js');
+const violencelib = require('../../libs/violence.js');
+const text = require('../../libs/textprocess.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -64,7 +64,7 @@ function demand(gameState, actorName, demandText) {
     return;
   }
 
-  response = violencelib.demand(actorName, demandText, gameState);
+  violencelib.demand(actorName, demandText, gameState);
 
   return;
 }

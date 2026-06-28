@@ -10,7 +10,8 @@ module.exports = {
     .setDescription('Start the work round. (Chief only)'),
   async execute(interaction, gameState) {
     var actorName = interaction.member.displayName;
-    response = chief.startWork(actorName, gameState);
+    const response = chief.startWork(actorName, gameState);
     gameState.saveRequired = true;
+    return response;
   },
 };

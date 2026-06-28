@@ -2,7 +2,7 @@ const { SlashCommandBuilder } = require('../../libs/command-builders.js');
 const fs = require('fs');
 const path = require('path');
 const chief = require('../../libs/chief.js');
-const text = require('../../libs/textprocess');
+const text = require('../../libs/textprocess.js');
 
 module.exports = {
   data: new SlashCommandBuilder()

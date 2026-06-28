@@ -2,8 +2,8 @@ const {
   SlashCommandBuilder,
   EmbedBuilder,
 } = require('../../libs/command-builders.js');
-const text = require('../../libs/textprocess');
-const endGame = require('../../libs/endgame');
+const text = require('../../libs/textprocess.js');
+const endGame = require('../../libs/endgame.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -18,7 +18,7 @@ module.exports = {
 };
 
 function scoreChildren(actorName, gameState) {
-  message = endGame.scoreChildrenMessage(gameState);
+  const message = endGame.scoreChildrenMessage(gameState);
   text.addMessage(gameState, actorName, message);
   return;
 }

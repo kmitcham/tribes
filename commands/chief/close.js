@@ -13,6 +13,7 @@ module.exports = {
   async execute(interaction, gameState, bot) {
     var actorName = interaction.member.displayName;
 
-    response = chief.close(actorName, gameState);
+    const response = chief.close(actorName, gameState);
+    return response;
   },
 };
