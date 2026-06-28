@@ -1262,6 +1262,49 @@ describe('Info Request Handling (using actual exports)', () => {
   });
 });
 
+describe('Join After Game End', () => {
+  test('should create a new game when join is requested for an ended game', () => {
+    const tribeName = 'join-reset-test';
+    const endedGameState = {
+      name: tribeName,
+      ended: true,
+      population: {},
+      children: {},
+      messages: {},
+    };
+
+    const fresh = wsServer.prepareGameStateForJoin(
+      'join',
+      { tribe: tribeName },
+      endedGameState
+    );
+
+    expect(fresh).toBeDefined();
+    expect(fresh).not.toBe(endedGameState);
+    expect(fresh.ended).not.toBe(true);
+    expect(fresh.name).toBe(tribeName);
+    expect(wsServer.allGames[tribeName]).toBe(fresh);
+  });
+
+  test('should keep current game when join is requested for a non-ended game', () => {
+    const gameState = {
+      name: 'active-tribe',
+      ended: false,
+      population: {},
+      children: {},
+      messages: {},
+    };
+
+    const same = wsServer.prepareGameStateForJoin(
+      'join',
+      { tribe: 'active-tribe' },
+      gameState
+    );
+
+    expect(same).toBe(gameState);
+  });
+});
+
 module.exports = {
   createMockInteraction,
   handleCommandRequest,

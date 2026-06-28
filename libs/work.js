@@ -68,8 +68,6 @@ function gatherDataFor(locationName, roll) {
     'error looking up resourceData for ' +
       locationName +
       ' ' +
-      type +
-      ' ' +
       roll
   );
 }
@@ -163,7 +161,7 @@ function craft(gameState, sourceName, item, forceRoll) {
   var rollValue = craftRoll;
   console.log('craft type ' + item + ' roll ' + craftRoll);
   player.worked = true;
-  var message = sourceName + ' crafts[' + craftRoll + '] a ' + item;
+  var message = sourceName + ' crafts [roll ' + craftRoll + '] a ' + item;
   if (player.profession != 'crafter') {
     rollValue -= 1;
   }
@@ -174,7 +172,7 @@ function craft(gameState, sourceName, item, forceRoll) {
   } else {
     message =
       sourceName +
-      ' creates something[' +
+      ' creates something [roll ' +
       craftRoll +
       '], but it is not a ' +
       item;
@@ -230,11 +228,12 @@ function train(gameState, sourceName, forceRoll) {
   }
   if (learnRoll >= 10) {
     player.canCraft = true;
-    var message = player.name + ' learns to craft. [' + learnRoll + ']';
+    var message = player.name + ' learns to craft. [roll ' + learnRoll + ']';
   } else {
     var message =
       player.name +
       ' studies crafting technique, but does not understand it yet. [' +
+      'roll ' +
       learnRoll +
       ']';
   }

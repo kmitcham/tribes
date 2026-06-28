@@ -4,8 +4,6 @@ const {
 } = require('../../libs/command-builders.js');
 
 const { banish, banishAdmin } = require('../../libs/banish.js');
-const text = require('../../libs/textprocess');
-const pop = require('../../libs/population');
 
 module.exports = {
   data: new SlashCommandBuilder()

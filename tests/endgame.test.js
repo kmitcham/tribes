@@ -393,8 +393,8 @@ test('run endgame', () => {
         strength: 'weak',
         history: [
           '10: Joined the tribe',
-          '10: ginny crafts[3] a basket',
-          '10.5: ginny crafts[3] a basket',
+          '10: ginny crafts [roll 3] a basket',
+          '10.5: ginny crafts [roll 3] a basket',
           '11: You gave CAP  2 basket',
         ],
         profession: 'crafter',
@@ -923,8 +923,8 @@ test('run scoreChildren simple', () => {
         strength: 'weak',
         history: [
           '10: Joined the tribe',
-          '10: ginny crafts[3] a basket',
-          '10.5: ginny crafts[3] a basket',
+          '10: ginny crafts [roll 3] a basket',
+          '10.5: ginny crafts [roll 3] a basket',
           '11: You gave CAP  2 basket',
         ],
         profession: 'crafter',

@@ -125,6 +125,12 @@
             border-color: rgba(255, 193, 7, 0.48);
         }
 
+        .status-item.current-tribe-indicator {
+            background: rgba(255, 193, 7, 0.26);
+            border-color: rgba(191, 144, 0, 0.55);
+            color: #6b5100;
+        }
+
         .collapsible-header {
             display: flex;
             align-items: center;
@@ -1605,6 +1611,10 @@
         </div>
         <div class="status-item waiting-status-indicator" id="waitingStatus" style="display: none;">
             <span class="status-icon">⏳</span>
+            <span></span>
+        </div>
+        <div class="status-item current-tribe-indicator" id="currentTribeStatus" style="display: none;">
+            <span class="status-icon">🔀</span>
             <span></span>
         </div>
         <div class="status-item connection-status-indicator connecting" id="connectionStatus">
@@ -3639,7 +3649,7 @@
                                     Object.keys(this.currentChildren).forEach(childName => {
                                         const child = this.currentChildren[childName];
                                         const age = child.age || 0;
-                                        if (age <= 23) {
+                                        if (age < 23) {
                                             const opt = document.createElement('option');
                                             opt.value = childName;
                                             opt.textContent = `${childName} (age ${age / 2})`;
@@ -3654,7 +3664,7 @@
                                 Object.keys(this.currentChildren).forEach(childName => {
                                     const child = this.currentChildren[childName];
                                     const age = child.age || 0;
-                                    if (age <= 23) {
+                                    if (age < 23) {
                                         const opt = document.createElement('option');
                                         opt.value = childName;
                                         
@@ -5309,6 +5319,11 @@
                 table.appendChild(thead);
 
                 const tbody = document.createElement('tbody');
+                const guardableChildNames = new Set(
+                    Object.entries(this.currentChildren || {})
+                        .filter(([, child]) => child && typeof child.age === 'number' && child.age >= 0 && child.age < 23)
+                        .map(([childName]) => childName)
+                );
                 
                 Object.entries(population).forEach(([name, data]) => {
                     const person = data || {};
@@ -5387,7 +5402,15 @@
                         labels.push({ text: `Nursing ${this.formatChildNameList(person.nursing)}`, class: 'nursing' });
                     }
                     if (Array.isArray(person.guarding) && person.guarding.length > 0) {
-                        labels.push({ text: `Guarding ${this.formatChildNameList(person.guarding)}`, class: 'guarding' });
+                        const visibleGuarding = person.guarding.filter(childName => {
+                            if (guardableChildNames.size === 0) {
+                                return true;
+                            }
+                            return guardableChildNames.has(childName);
+                        });
+                        if (visibleGuarding.length > 0) {
+                            labels.push({ text: `Guarding ${this.formatChildNameList(visibleGuarding)}`, class: 'guarding' });
+                        }
                     }
                     if (person.faction === 'for') {
                         labels.push({ text: 'For Demand', class: 'faction-for' });
@@ -5500,7 +5523,7 @@
                     const row = document.createElement('tr');
                     row.className = this.getGenderRowClass(data && data.gender);
                     const childAge = typeof data['age'] === 'number' ? data['age'] : 0;
-                    const isYoungAdult = childAge >= 24;
+                    const isYoungAdult = childAge >= 23;
                     
                     const nameCell = document.createElement('td');
                     nameCell.className = `person-name-cell ${this.getGenderClass(data && data.gender)}`;
@@ -6000,6 +6023,36 @@
                 waitingStatus.innerHTML = `<span class="status-icon">${waitingInfo.icon}</span><span>${waitingInfo.text}</span>`;
             }
 
+            updateCurrentTribeStatusChip(gameState) {
+                const currentTribeStatus = document.getElementById('currentTribeStatus');
+                if (!currentTribeStatus) {
+                    return;
+                }
+
+                const tribeCount = Number(gameState && gameState.playerTribeCount);
+                if (!Number.isFinite(tribeCount) || tribeCount <= 1) {
+                    currentTribeStatus.style.display = 'none';
+                    currentTribeStatus.title = '';
+                    return;
+                }
+
+                const tribeSelect = document.getElementById('tribeSelect');
+                const selectedTribe = tribeSelect ? tribeSelect.value : '';
+                const selectedLabel = tribeSelect && tribeSelect.selectedOptions && tribeSelect.selectedOptions[0]
+                    ? tribeSelect.selectedOptions[0].textContent.trim()
+                    : selectedTribe;
+
+                if (!selectedTribe) {
+                    currentTribeStatus.style.display = 'none';
+                    currentTribeStatus.title = '';
+                    return;
+                }
+
+                currentTribeStatus.style.display = 'flex';
+                currentTribeStatus.innerHTML = `<span class="status-icon">🔀</span><span>Tribe: ${selectedLabel || selectedTribe}</span>`;
+                currentTribeStatus.title = `You are currently active in: ${selectedTribe}`;
+            }
+
             updateGameStatusBarWithData(gameState) {
                 const roundStatus = document.getElementById('roundStatus');
                 const seasonStatus = document.getElementById('seasonStatus');
@@ -6123,6 +6176,7 @@
                 renderStatusItem(roundStatus, roundIcon, roundText);
                 renderStatusItem(seasonStatus, seasonIcon, seasonYearText);
                 renderStatusItem(locationStatus, locationIcon, locationTrackText);
+                this.updateCurrentTribeStatusChip(gameState);
 
                 if (conflictStatus) {
                     const isViolence = !!gameState.violence;
@@ -6235,6 +6289,7 @@
                 renderStatusItem(roundStatus, roundIcon, roundText);
                 renderStatusItem(seasonStatus, seasonIcon, seasonYearText);
                 renderStatusItem(locationStatus, locationIcon, locationTrackText);
+                this.updateCurrentTribeStatusChip(this.currentStatusData || {});
                 if (conflictStatus) {
                     if (!this.currentStatusData) {
                         conflictStatus.style.display = 'none';
@@ -6287,6 +6342,7 @@
                 document.getElementById('tribeSelect').onchange = () => {
                     this.currentPopulation = null;
                     this.saveSettings(); // Save the new tribe selection
+                    this.updateCurrentTribeStatusChip(this.currentStatusData || {});
                     
                     // Refresh game data for the new tribe (population, children, status)
                     this.refreshGameData();

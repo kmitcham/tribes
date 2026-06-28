@@ -2,10 +2,8 @@ const {
   SlashCommandBuilder,
   EmbedBuilder,
 } = require('../../libs/command-builders.js');
-const reproLib = require('../../libs/reproduction.js');
 const worklib = require('../../libs/work.js');
 const text = require('../../libs/textprocess.js');
-const pop = require('../../libs/population.js');
 
 module.exports = {
   data: new SlashCommandBuilder()

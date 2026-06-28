@@ -6,9 +6,9 @@ const text = require('./textprocess.js');
 
 // return 0 on success, error messages otherwise
 function migrate(sourceName, destination, force, gameState) {
-  children = gameState.children;
-  population = gameState.population;
-  member = populationLib.memberByName(sourceName, gameState);
+  const children = gameState.children;
+  const population = gameState.population;
+  const member = populationLib.memberByName(sourceName, gameState);
   if (!member) {
     text.addMessage(gameState, sourceName, 'Are you even in a tribe?');
     return 'Not a member';
@@ -80,18 +80,18 @@ function migrate(sourceName, destination, force, gameState) {
     return 'already there';
   }
   // every injured person pays 2 food, or dies.
-  deceasedPeople = [];
+  let deceasedPeople = [];
   // every child under 2 years (4 seasons) needs 2 food, or dies
-  deceasedChildren = [];
+  let deceasedChildren = [];
   // actually do the move if force is set
-  response = 'Finding a route to ' + destination;
+  let response = 'Finding a route to ' + destination;
   if (force) {
     // this code is mostly duplicated, but feed eating is too complex to repeat the iteration
-    for (personName in population) {
-      var person = populationLib.memberByName(personName, gameState);
+    for (const personName in population) {
+      const person = populationLib.memberByName(personName, gameState);
       if (person.isInjured && person.isInjured > 0) {
-        need = 2;
-        eaten = 0;
+        const need = 2;
+        let eaten = 0;
         while (eaten < need) {
           if (person.food > 0) {
             person.food--;
@@ -106,7 +106,7 @@ function migrate(sourceName, destination, force, gameState) {
         }
       }
     }
-    for (childName in children) {
+    for (const childName in children) {
       var child = children[childName];
       // every child under 2 years needs 2 food, or dies
       // child age is in seasons
@@ -141,17 +141,16 @@ function migrate(sourceName, destination, force, gameState) {
     gameState.currentLocationName = destination;
     return 0;
   } else {
-    for (personName in population) {
-      person = populationLib.memberByName(personName, gameState);
+    for (const personName in population) {
+      const person = populationLib.memberByName(personName, gameState);
       if (person.isInjured && person.isInjured > 0) {
-        need = 2;
-        eaten = 0;
+        const need = 2;
         if (person.food + person.grain < 2) {
           deceasedPeople.push(personName);
         }
       }
     }
-    for (childName in children) {
+    for (const childName in children) {
       var child = children[childName];
       // child age is in seasons
       if (child.age < 4) {

@@ -213,13 +213,13 @@ module.exports.getPopulationKey = getPopulationKey;
 function deadOrBanishedByName(name, gameState) {
   var member = null;
   if (gameState.banished) {
-    member = memberByNameFromDictionary(name, gameState.banished);
+    member = memberByNameFromDictionary(name, gameState.banished, gameState);
     if (member) {
       return member;
     }
   }
   if (gameState.graveyard) {
-    member = memberByNameFromDictionary(name, gameState.graveyard);
+    member = memberByNameFromDictionary(name, gameState.graveyard, gameState);
   }
   console.log(name + ' was neither dead nor banished');
   return member;
@@ -227,7 +227,7 @@ function deadOrBanishedByName(name, gameState) {
 module.exports.deadOrBanishedByName = deadOrBanishedByName;
 
 // special handling for graveyard and banish
-function memberByNameFromDictionary(name, dictionary) {
+function memberByNameFromDictionary(name, dictionary, gameState) {
   if (name == null) {
     console.log('attempt to find member for null name ');
     return null;
@@ -282,9 +282,10 @@ function memberByNameFromDictionary(name, dictionary) {
   if (person != null) {
     return person;
   }
+  const tribeName = gameState && gameState.name ? gameState.name : '(unknown)';
   console.log(
     'tribe ' +
-      gameState.name +
+      tribeName +
       ' has no such member in population. tried ' +
       name +
       ' and ' +

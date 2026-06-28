@@ -254,6 +254,37 @@ function hasOpenConnectionInTribe(playerName, tribeName) {
   return false;
 }
 
+function getPlayerConnectedTribes(playerName) {
+  if (!playerName) return [];
+
+  let connections = connectedClients.get(playerName);
+  if (!connections) {
+    const matchedName = Array.from(connectedClients.keys()).find((existing) =>
+      samePlayerName(existing, playerName)
+    );
+    if (matchedName) {
+      connections = connectedClients.get(matchedName);
+    }
+  }
+
+  if (!connections || connections.size === 0) {
+    return [];
+  }
+
+  const tribes = new Set();
+  for (const connection of connections) {
+    if (connection.readyState !== WebSocket.OPEN) {
+      continue;
+    }
+    const tribe = normalizePlayerName(connection.currentTribe || 'bug');
+    if (tribe) {
+      tribes.add(tribe);
+    }
+  }
+
+  return Array.from(tribes).sort((a, b) => a.localeCompare(b));
+}
+
 function queuePendingMessage(playerName, tribeName, payload) {
   if (!playerName || !payload || !payload.type || !payload.message) {
     return;
@@ -902,9 +933,12 @@ function handleLogout(ws, data) {
 function handleInfoRequest(ws, data, gameState) {
   const selection = data.selection;
   let messageData = null;
+  const playerName = data.playerName || ws.currentPlayer || '';
+  const playerTribes = getPlayerConnectedTribes(playerName);
 
   switch (selection) {
     case 'population':
+      guardlib.normalizeGuardAssignments(gameState.population, gameState.children);
       const cleanPop = removeClunkyKeys(gameState.population);
       messageData = {
         type: 'infoRequest',
@@ -949,6 +983,8 @@ function handleInfoRequest(ws, data, gameState) {
           combatRounds: Number.isFinite(gameState.violenceRounds)
             ? gameState.violenceRounds
             : 0,
+          playerTribeCount: playerTribes.length,
+          playerTribes: playerTribes,
         },
       };
       break;
@@ -1037,6 +1073,8 @@ async function handleCommandRequest(ws, data, gameState) {
     return;
   }
 
+  gameState = prepareGameStateForJoin(commandName, data, gameState);
+
   replayPendingMessages(ws, data.playerName, data.tribe || 'bug', data.clientId);
 
   try {
@@ -1090,6 +1128,22 @@ async function handleCommandRequest(ws, data, gameState) {
       })
     );
   }
+}
+
+function prepareGameStateForJoin(commandName, data, gameState) {
+  if (commandName !== 'join' || !gameState || !gameState.ended) {
+    return gameState;
+  }
+
+  const tribeName = data.tribe || gameState.name || 'bug';
+  const freshGameState = savelib.initGame(tribeName);
+  allGames[tribeName] = freshGameState;
+
+  logWithTimestamp(
+    `[RESET] Started a new game for tribe ${tribeName} because /join was requested after game end`
+  );
+
+  return freshGameState;
 }
 
 async function refreshTribeCommandLists(gameState, tribeName) {
@@ -1171,6 +1225,12 @@ async function refreshTribeGameData(gameState, tribeName) {
       combatRounds: Number.isFinite(gameState.violenceRounds)
         ? gameState.violenceRounds
         : 0,
+      playerTribeCount: memberWs.currentPlayer
+        ? getPlayerConnectedTribes(memberWs.currentPlayer).length
+        : 0,
+      playerTribes: memberWs.currentPlayer
+        ? getPlayerConnectedTribes(memberWs.currentPlayer)
+        : [],
     },
   };
 
@@ -2075,6 +2135,7 @@ function removeFatherReferences(children) {
 }
 
 function refreshChildGuardians(children, population) {
+  guardlib.normalizeGuardAssignments(population || {}, children || {});
   for (const [childName, child] of Object.entries(children || {})) {
     if (!child || typeof child.age !== 'number' || child.age < 0 || child.age >= 23) {
       delete child.guardians;
@@ -2246,6 +2307,7 @@ module.exports = {
   handleLogout,
   handleSessionAuthentication,
   handleListCommands,
+  prepareGameStateForJoin,
 
   // Core functions
   createMockInteraction,

@@ -1,6 +1,5 @@
 const killlib = require('./kill.js');
 const dice = require('./dice.js');
-const pop = require('./population.js');
 const text = require('./textprocess.js');
 
 const childSurvivalChance = [

@@ -23,7 +23,11 @@ The following remediation work is complete:
 - Added shared guard-state validation in [libs/guardValidation.js](libs/guardValidation.js) and reused it from [commands/work/guard.js](commands/work/guard.js) and [commands/work/ignore.js](commands/work/ignore.js).
 - Removed unused dependencies (`latest`, `test`, `update`) from [package.json](package.json).
 - Reduced implicit globals in key hotspots: [libs/reproduction.js](libs/reproduction.js), [libs/work.js](libs/work.js), [libs/violence.js](libs/violence.js), [commands/general/scout.js](commands/general/scout.js), [libs/hunt.js](libs/hunt.js), [libs/population.js](libs/population.js), [libs/feed.js](libs/feed.js), [libs/endgame.js](libs/endgame.js), [libs/chief.js](libs/chief.js).
+- Additional implicit-global cleanup completed in [libs/obey.js](libs/obey.js), [libs/textprocess.js](libs/textprocess.js), [libs/dice.js](libs/dice.js), [libs/profession.js](libs/profession.js), and [libs/banish.js](libs/banish.js).
+- Additional implicit-global cleanup completed in [libs/children.js](libs/children.js), [libs/hunt.js](libs/hunt.js), [libs/migrateLib.js](libs/migrateLib.js), [libs/work.js](libs/work.js), [libs/population.js](libs/population.js), and [libs/help.js](libs/help.js).
 - Added safer global restoration in test setup at [tests/setup.js](tests/setup.js).
+- Consolidated shared JSON import/load helpers to [libs/jsonUtils.js](libs/jsonUtils.js) and removed duplicate wrappers from multiple call sites.
+- Adopted [libs/logger.js](libs/logger.js) in active server/runtime paths (including [websocket-server.js](websocket-server.js) and [libs/chief.js](libs/chief.js)).
 
 ---
 
@@ -54,35 +58,37 @@ The following remediation work is complete:
 - **Validation:** `grep` now finds only one `function loadJson(` in code; `tests/save.test.js` passes after refactor.
 - **Follow-up:** Optionally apply the same consolidation pattern to remaining `actuallyWriteToDisk`/`writeJson` wrappers where practical.
 
-#### 3. **Unused Logger Module**
+#### 3. **Resolved: Logger Module Is Now In Use**
 - **Files:** 
-  - [websocket-server.js](websocket-server.js#L14) - imports logger
-  - [libs/logger.js](libs/logger.js) - defines Winston-based logger
-- **Severity:** HIGH
-- **Issue:** 
-  - `logger` module is imported in websocket-server.js but never used
-  - Instead, `logWithTimestamp()` function is defined locally (duplicating logger functionality)
-  - Logger.js exports `errorLog` and `accessLog` which are never used anywhere
-- **Impact:** Dead code, wasted npm dependencies (winston), confused logging strategy
-- **Recommendation:** Either:
-  - Use the existing logger throughout the codebase, OR
-  - Remove the logger.js module and winston dependency if using custom logging
+  - [websocket-server.js](websocket-server.js#L52) - `logWithTimestamp()` now routes through `logger.accessLog`
+  - [websocket-server.js](websocket-server.js#L2162) - save failures routed through `logger.errorLog`
+  - [libs/chief.js](libs/chief.js#L52) - runtime messages routed through `logger.accessLog`
+- **Severity:** RESOLVED
+- **Status:** Completed. The logger module is actively used in runtime paths.
+- **Follow-up:** Continue gradual migration of remaining direct `console.*` calls where operational logging consistency is needed.
 
 #### 4. **Implicit Global Variables from Missing var/let/const**
 - **Files:** Multiple files in [libs/](libs/)
 - **Severity:** HIGH
 - **Status:** Partially remediated in high-traffic modules
 - **Examples:**
-  - [libs/util.js](libs/util.js#L39-L55): `season`, `element`, `elementName`, `count` declared without `var/let/const`
-  - [libs/general.js](libs/general.js#L17): additional declaration cleanup still warranted in utility/control paths
-  - [libs/gather.js](libs/gather.js): `netRoll`, `get_message`, `getFood` assigned without declaration
-  - [libs/util.js](libs/util.js#L39-L55): still contains legacy implicit assignment style
+  - [libs/obey.js](libs/obey.js): fixed undeclared locals (`actingMember`, `targetMember`, `roll`)
+  - [libs/textprocess.js](libs/textprocess.js): fixed undeclared `messages` local in `addMessage`
+  - [libs/dice.js](libs/dice.js): fixed undeclared `nameList` local
+  - [libs/profession.js](libs/profession.js): fixed undeclared `helpMessage` local
+  - [libs/banish.js](libs/banish.js): fixed undeclared loop/temp vars (`targetKey`, `childName`, `child`, `childIndex`, `memberName`, `member`, `targetIndex`)
+  - [libs/children.js](libs/children.js): fixed undeclared locals/loop vars (`population`, `responseMessages`, `childNames`, `childName`, `motherMember`, `fatherMember`)
+  - [libs/hunt.js](libs/hunt.js): fixed undeclared references in scout/gather helpers and removed stale undeclared `type` usage in error logging
+  - [libs/migrateLib.js](libs/migrateLib.js): fixed undeclared state/loop locals (`children`, `population`, `member`, `deceasedPeople`, `deceasedChildren`, `response`, `personName`, `childName`)
+  - [libs/help.js](libs/help.js): fixed undeclared `text` accumulator locals in help builders
+  - [libs/work.js](libs/work.js): removed stale undeclared `type` reference in gather-data error logging
 - **Impact:**
   - Variables leak into global scope, causing bugs (especially in async/parallel scenarios)
   - Variable collisions between functions
   - Makes code unpredictable and harder to debug
   - Variables persist between function calls
 - **Recommendation:** Continue staged declaration cleanup and migrate lint setup to ESLint v9 flat config to enable reliable `no-undef` detection.
+- **Validation note:** A configless `no-undef` sweep of [libs/](libs/) now passes after these remediations.
 
 ---
 
@@ -135,13 +141,14 @@ The following remediation work is complete:
 - **Impact:** Inconsistency makes code harder to maintain, potential for copy-paste errors
 - **Recommendation:** Standardize on always including `.js` extension or never including it
 
-#### 8. **Multiple Instances of Unused Imports**
+#### 8. **Unused Imports: Reduced, Continue Cleanup**
 - **Files:** 
-  - [libs/save.js](libs/save.js#L3): `const WebSocket = require('ws')` - never used
-  - [commands/work/guard.js](commands/work/guard.js): Likely unused imports (not verified)
+  - [libs/save.js](libs/save.js#L7): unused WebSocket import removed (resolved in this file)
+  - [commands/work/guard.js](commands/work/guard.js): possible unused imports (not fully re-audited)
   - [tests/tribes-interface.test.js](tests/tribes-interface.test.js): Multiple unused imports
 - **Severity:** MEDIUM
-- **Impact:** Wasted memory, confusing code, may hide actual dependencies
+- **Status:** Partially resolved
+- **Impact:** Remaining unused imports still add confusion and may hide actual dependencies
 
 #### 9. **Inconsistent Error Handling Patterns**
 - **Severity:** MEDIUM
@@ -267,7 +274,7 @@ The following remediation work is complete:
 |----------|-------|----------|----------|
 | Duplicate `loadJson` functions | Resolved | - | - |
 | Implicit global variables | Reduced, still present | HIGH | 🔴 Critical |
-| Unused logger module | 2 files | HIGH | 🔴 Critical |
+| Unused logger module | Resolved | - | - |
 | Malformed guardCode function | Resolved | - | - |
 | Excessive console.log | 100+ | MEDIUM | 🟡 Important |
 | Inconsistent error handling | 10+ patterns | MEDIUM | 🟡 Important |
@@ -283,7 +290,7 @@ The following remediation work is complete:
 
 ### Phase 1: Critical Fixes (Do First)
 1. **Finish variable declaration cleanup** - continue add const/let where legacy implicit assignment remains
-2. **Choose logging strategy** - use logger.js OR remove it; stop mixing console.log/logWithTimestamp
+2. **Reduce remaining direct console logging** - continue migration to centralized logger where operational logs matter
 
 ### Phase 2: Important Improvements
 5. **Consolidate error handling** - establish consistent try/catch patterns
@@ -293,8 +300,8 @@ The following remediation work is complete:
 
 ### Phase 3: Code Hygiene
 9. **Remove temporary files** - move scripts to proper locations or archive
-10. **Standardize imports** - use consistent .js extension pattern
-11. **Remove unused imports** - clean up dead code
+10. **Maintain import consistency** - keep a consistent `.js` extension pattern in new/edited modules
+11. **Finish unused import cleanup** - re-audit remaining command/test files
 12. **Document naming conventions** - establish and follow camelCase, constant naming, etc.
 13. **Remove debug logs** - clean up console.log statements or make conditional
 
@@ -305,6 +312,10 @@ The following remediation work is complete:
 3. Pruned unused npm dependencies from [package.json](package.json).
 4. Reduced implicit globals in several core modules with focused regression testing.
 5. Consolidated duplicate `loadJson` wrappers to the shared implementation in [libs/jsonUtils.js](libs/jsonUtils.js).
+6. Put [libs/logger.js](libs/logger.js) into active use in server/chief execution paths.
+7. Removed known unused import in [libs/save.js](libs/save.js).
+8. Fixed additional implicit-global declarations in [libs/obey.js](libs/obey.js), [libs/textprocess.js](libs/textprocess.js), [libs/dice.js](libs/dice.js), [libs/profession.js](libs/profession.js), and [libs/banish.js](libs/banish.js).
+9. Extended implicit-global declaration cleanup to [libs/children.js](libs/children.js), [libs/hunt.js](libs/hunt.js), [libs/migrateLib.js](libs/migrateLib.js), [libs/work.js](libs/work.js), [libs/population.js](libs/population.js), and [libs/help.js](libs/help.js), with a passing libs-wide `no-undef` sweep.
 
 ---
 

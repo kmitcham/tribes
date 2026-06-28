@@ -1,5 +1,5 @@
 function playerHelpBasic() {
-  text = "";
+  let text = "";
   text += '###General Commands###\n';
   text +=
     ' babysit <adult child> <target child> a mother can ask her adult child to watch a child\n';
@@ -24,7 +24,7 @@ function playerHelpBasic() {
   return text;
 }
 function playerHelpRounds() {
-  text = '';
+  let text = '';
   text += '###Work Round Commands###\n';
   text +=
     ' guard | ignore <childName> [<more childNames>] take on child care responsibilities for the child[ren]\n';
@@ -47,7 +47,7 @@ function playerHelpRounds() {
   return text;
 }
 function playerHelpConflict() {
-  text = '';
+  let text = '';
   text += '###Conflict Commands###\n';
   text +=
     ' demand <text of your demand>  You want this to happen, and you are willing to kill or die about it\n';
@@ -62,7 +62,7 @@ function playerHelpConflict() {
 }
 
 function chiefHelp() {
-  text = '\n### Chief Commands ###\n';
+  let text = '\n### Chief Commands ###\n';
   text += ' induct|banish <player> add|remove a tribe member\n';
   text +=
     ' open|close  toggle if people can join with "join" or only with "induct" by the chief\n';

@@ -1,6 +1,5 @@
 const general = require('../libs/general.js');
 const jerkyCommand = require('../commands/general/jerky.js');
-const pop = require('../libs/population.js');
 const dice = require('../libs/dice.js');
 const referees = require('../libs/referees.json');
 console.log = jest.fn();
@@ -40,6 +39,7 @@ describe('give function', () => {
   var refname = 'test-ref-9675309';
   test('should allow non-member ref to give negative amount', () => {
     general.give(gameState, refname, 'player2', -1, 'grain');
+    var messages = gameState.messages;
     var expectedMessage = messages['tribe'];
     expect(expectedMessage).toContain('-1 grain');
     expect(gameState.population.player2.grain).toBe(9);

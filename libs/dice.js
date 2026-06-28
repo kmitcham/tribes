@@ -12,7 +12,7 @@ function roll(count) {
 module.exports.roll = roll;
 
 function randomMemberName(population) {
-  nameList = Object.keys(population);
+  const nameList = Object.keys(population);
   var random = Math.trunc(Math.random() * nameList.length);
   return nameList[random];
 }

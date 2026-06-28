@@ -8,8 +8,8 @@ const worklib = require('./work.js');
 // craft, watch, ignore take extra arg: spearhead, basket or childName.
 
 function command(gameState, actorName, targetName, action, extraArg) {
-  actingMember = pop.memberByName(actorName, gameState);
-  targetMember = pop.memberByName(targetName, gameState);
+  const actingMember = pop.memberByName(actorName, gameState);
+  const targetMember = pop.memberByName(targetName, gameState);
 
   pop.history(
     targetMember.name,
@@ -20,11 +20,11 @@ function command(gameState, actorName, targetName, action, extraArg) {
   // targetMember must have an obeyList
   // that obeylist must contain the action
   if (action == 'hunt') {
-    roll = dice.roll(3);
+    const roll = dice.roll(3);
     huntlib.hunt(targetMember.name, targetMember, roll, gameState);
     return;
   } else if (action == 'gather') {
-    roll = dice.roll(3);
+    const roll = dice.roll(3);
     worklib.gather(targetMember.name, targetMember, roll, gameState);
     return;
   } else if (action == 'craft') {

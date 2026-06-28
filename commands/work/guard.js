@@ -2,12 +2,10 @@ const {
   SlashCommandBuilder,
   EmbedBuilder,
 } = require('../../libs/command-builders.js');
-const worklib = require('../../libs/work.js');
 const text = require('../../libs/textprocess.js');
 const pop = require('../../libs/population.js');
 const dice = require('../../libs/dice.js');
 const referees = require('../../libs/referees.json');
-const guardlib = require('../../libs/guardCode.js');
 const guardValidation = require('../../libs/guardValidation.js');
 
 module.exports = {
@@ -129,6 +127,14 @@ function guardChild(actorName, gameState, cName) {
   const child = children[childName];
   if (!child) {
     return 'FAIL Could not find child: ' + childName;
+  } else if (typeof child.age !== 'number' || child.age < 0 || child.age >= 23) {
+    return (
+      'FAIL ' +
+      childName +
+      ' is age ' +
+      (Number(child.age || 0) / 2) +
+      ' and does not need guarding'
+    );
   } else if (person.guarding && person.guarding.indexOf(childName) != -1) {
     console.log(person.guarding);
     return 'FAIL You are already guarding ' + childName;

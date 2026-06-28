@@ -75,7 +75,7 @@ module.exports.gather = (playername, player, rollValue, gameState) => {
   gameState.foodAcquired += getFood + getGrain;
   if (player.basket > 0) {
     var broll = dice.roll(3) + modifier;
-    message += ' basket: [' + broll + ']';
+    message += ' basket: [roll ' + broll + '] ';
     netRoll = broll + modifier;
     console.log('modified basket roll ' + netRoll);
     for (var i = 0; i < gatherData.length; i++) {

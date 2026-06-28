@@ -1,5 +1,4 @@
 const attackCommand = require('../commands/conflict/attack.js');
-const pop = require('../libs/population.js');
 
 describe('attack command', () => {
   function createInteraction(actorName, targetDisplayName) {

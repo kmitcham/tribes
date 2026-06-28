@@ -3,8 +3,6 @@ const {
   EmbedBuilder,
 } = require('../../libs/command-builders.js');
 const reproLib = require('../../libs/reproduction.js');
-const pop = require('../../libs/population.js');
-const text = require('../../libs/textprocess.js');
 
 module.exports = {
   data: new SlashCommandBuilder()

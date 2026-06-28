@@ -3,12 +3,9 @@ const {
   EmbedBuilder,
 } = require('../../libs/command-builders.js');
 
-const guardlib = require('../../libs/guardCode.js');
 const dice = require('../../libs/dice.js');
 const chief = require('../../libs/chief.js');
 const referees = require('../../libs/referees.json');
-const text = require('../../libs/textprocess');
-const pop = require('../../libs/population');
 
 module.exports = {
   data: new SlashCommandBuilder()

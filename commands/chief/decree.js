@@ -2,8 +2,6 @@ const {
   SlashCommandBuilder,
   EmbedBuilder,
 } = require('../../libs/command-builders.js');
-const pop = require('../../libs/population');
-const text = require('../../libs/textprocess');
 const chief = require('../../libs/chief.js');
 
 module.exports = {

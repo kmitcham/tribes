@@ -3,7 +3,6 @@ const {
   EmbedBuilder,
 } = require('../../libs/command-builders.js');
 
-const guardlib = require('../../libs/guardCode.js');
 const text = require('../../libs/textprocess.js');
 const pop = require('../../libs/population.js');
 const guardValidation = require('../../libs/guardValidation.js');

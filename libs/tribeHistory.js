@@ -6,13 +6,20 @@ const SUBJECT_KEYWORDS = {
   gathering: ['gathers'],
   crafting: ['craft', 'crafts'],
   reproduction: ['reproduction', 'mating', 'pregnant', 'birth', 'blessed with a child'],
-  romance: ['invite', 'invitation', 'consent', 'decline', 'share good feelings'],
+  romance: ['invite', 'invites', 'invitation', 'consent', 'decline', 'share good feelings'],
+  'your romance': [
+    'invites you to share good feelings',
+    'shares good feelings with you',
+    'you share good feelings with',
+    'flirts with you',
+    'is impressed by your flirtation',
+  ],
   childcare: ['feed', 'feeds', 'children', 'guard', 'guarding', 'nursing'],
   chance: ['chance'],
   migration: ['migrate', 'migrates', 'migration', 'route to', 'location'],
   combat: ['violence', 'attacks', 'combat', 'faction', 'demand', 'fight'],
-  trade: [' gives ', ' gives', 'trade', 'converts', 'jerky'],
-  laws: ['law', 'decree', 'chief creates a new law'],
+  trade: [' gives ', ' gives', 'trade'],
+  laws: [ 'your chief creates a new law'],
 };
 
 function getHistorySubjectChoices() {
@@ -98,6 +105,32 @@ function matchesSubject(message, subject, playerName) {
     );
   }
 
+  if (subjectLower === 'migration') {
+    if (hasFoodOrStarved) {
+      return false;
+    }
+    return (
+      messageLower.includes('finding a route to') ||
+      messageLower.includes('the tribe migrates to the') ||
+      messageLower.includes('the following people died along the way') ||
+      messageLower.includes('migration hunger')
+    );
+  }
+
+  if (subjectLower === 'childcare') {
+    if (hasFoodOrStarved) {
+      return false;
+    }
+    return (
+      messageLower.includes('feed') ||
+      messageLower.includes('feeds') ||
+      messageLower.includes('children') ||
+      messageLower.includes('guard') ||
+      messageLower.includes('guarding') ||
+      messageLower.includes('nursing')
+    );
+  }
+
   if (subjectLower === 'reproduction') {
     if (hasFoodOrStarved) {
       return false;
@@ -117,10 +150,24 @@ function matchesSubject(message, subject, playerName) {
     }
     return (
       messageLower.includes('invite') ||
+      messageLower.includes('invites') ||
       messageLower.includes('invitation') ||
       messageLower.includes('consent') ||
       messageLower.includes('decline') ||
       messageLower.includes('share good feelings')
+    );
+  }
+
+  if (subjectLower === 'your romance') {
+    if (hasFoodOrStarved) {
+      return false;
+    }
+    return (
+      messageLower.includes('invites you to share good feelings') ||
+      messageLower.includes('shares good feelings with you') ||
+      messageLower.includes('you share good feelings with') ||
+      messageLower.includes('flirts with you') ||
+      messageLower.includes('is impressed by your flirtation')
     );
   }
 
@@ -136,10 +183,16 @@ function matchesSubject(message, subject, playerName) {
       return false;
     }
     return (
-      /\b(give|gives|gave|given)\b/.test(messageLower) ||
-      messageLower.includes('trade') ||
-      messageLower.includes('converts') ||
-      messageLower.includes('jerky')
+      /\b(give|gives|gave|given|trade|trades|traded)\b/.test(
+        messageLower
+      )
+    );
+  }
+
+  if (subjectLower === 'laws') {
+    return (
+      messageLower.includes('the laws are:') ||
+      messageLower.includes('your chief creates a new law')
     );
   }
 
@@ -184,6 +237,7 @@ function showCombinedHistory(playerName, gameState, subject, yearsBack) {
   var tribeHistory = Array.isArray(gameState.tribeHistory)
     ? gameState.tribeHistory
     : [];
+  var subjectLower = String(subject || '').toLowerCase();
 
   var hasSubjectOption = !!subject && String(subject).toLowerCase() !== 'all';
   var hasYearsOption =
@@ -200,8 +254,10 @@ function showCombinedHistory(playerName, gameState, subject, yearsBack) {
   for (const entry of personalHistory) {
     combined.push({ source: 'Your history', message: entry });
   }
-  for (const entry of tribeHistory) {
-    combined.push({ source: 'Tribe history', message: entry });
+  if (subjectLower !== 'your romance') {
+    for (const entry of tribeHistory) {
+      combined.push({ source: 'Tribe history', message: entry });
+    }
   }
 
   var filtered = combined.filter(
@@ -210,7 +266,17 @@ function showCombinedHistory(playerName, gameState, subject, yearsBack) {
       matchesSubject(entry.message, subject, playerName)
   );
 
-  filtered.sort((left, right) => {
+  var deduped = [];
+  var seenMessages = new Set();
+  for (const entry of filtered) {
+    if (seenMessages.has(entry.message)) {
+      continue;
+    }
+    seenMessages.add(entry.message);
+    deduped.push(entry);
+  }
+
+  deduped.sort((left, right) => {
     var leftSeason = parseHistorySeason(left.message);
     var rightSeason = parseHistorySeason(right.message);
     if (leftSeason === null && rightSeason === null) {
@@ -225,7 +291,7 @@ function showCombinedHistory(playerName, gameState, subject, yearsBack) {
     return leftSeason - rightSeason;
   });
 
-  if (filtered.length === 0) {
+  if (deduped.length === 0) {
     text.addMessage(
       gameState,
       playerName,
@@ -234,7 +300,7 @@ function showCombinedHistory(playerName, gameState, subject, yearsBack) {
     return;
   }
 
-  for (const entry of filtered) {
+  for (const entry of deduped) {
     text.addMessage(gameState, playerName, '[' + entry.source + '] ' + entry.message);
   }
 }

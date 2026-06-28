@@ -918,11 +918,13 @@ function makeLove(targetName, inviterName, gameState, force = false) {
     }
   }
   const motherMessage =
-    'You share good feelings with ' + fatherName + ' [' + roll1 + ']';
+    'You share good feelings with ' + fatherName + ' [roll ' + roll1 + ']';
   const fatherMessage =
-    'You share good feelings with ' + motherName + ' [' + roll2 + ']';
-  const inviterMessage = 'You share good feelings with ' + targetName;
-  const targetMessage = inviterName + ' invite you to share good feelings';
+    'You share good feelings with ' + motherName + ' [roll ' + roll2 + ']';
+  const inviterMessage =
+    'You share good feelings with ' + targetName + ' [roll ' + roll1 + ']';
+  const targetMessage =
+    inviterName + ' invites you to share good feelings [roll ' + roll2 + ']';
   pop.history(inviterName, inviterMessage, gameState);
   pop.history(targetName, targetMessage, gameState);
   text.addMessage(gameState, motherKey, motherMessage);

@@ -214,13 +214,35 @@ test('multi-watch checks each guard', () => {
   var population = gameState['population'];
   response = lib.hyenaAttack(children, gameState);
   //console.log('base response '+response)
-  expect(lib.findGuardValueForChild('c1', population, children)).toBeLessThan(
-    3
-  );
+  expect(lib.findGuardValueForChild('c1', population, children)).toBe(3);
   expect(children['c1'].guardians).toBeTruthy();
   expect(Object.keys(children['c1'].guardians).length).toBe(3);
   expect(response.indexOf('p1')).toBeGreaterThan(0);
   if (response.indexOf('slips') > 0) {
     expect(response.indexOf('p2')).toBeGreaterThan(0);
   }
+});
+
+test('normalizes guarding lists by dropping children who no longer need guarding', () => {
+  var population = {
+    EncinoMan: {
+      name: 'EncinoMan',
+      guarding: ['Ayo', 'Baibee'],
+    },
+  };
+  var children = {
+    Ayo: {
+      age: 23,
+      name: 'Ayo',
+    },
+    Baibee: {
+      age: 22,
+      name: 'Baibee',
+    },
+  };
+
+  expect(lib.findGuardValueForChild('Ayo', population, children)).toBe(0);
+  expect(population.EncinoMan.guarding).toEqual(['Baibee']);
+  expect(lib.findGuardValueForChild('Baibee', population, children)).toBe(1);
+  expect(children.Baibee.guardians).toEqual({ EncinoMan: 1 });
 });

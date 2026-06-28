@@ -288,7 +288,9 @@ describe('Work Module Tests', () => {
       expect(text.addMessage).toHaveBeenCalledWith(
         mockGameState,
         'tribe',
-        expect.stringContaining('creates something[1], but it is not a basket')
+        expect.stringContaining(
+          'creates something [roll 1], but it is not a basket'
+        )
       );
     });
   });

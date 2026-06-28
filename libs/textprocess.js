@@ -15,7 +15,7 @@ function addMessage(gameState, address, message) {
     console.log('Message with no address: ' + message);
     return;
   }
-  messages = gameState['messages'];
+  const messages = gameState['messages'];
   if (messages[address]) {
     messages[address] += '\n' + message;
   } else {

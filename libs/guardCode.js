@@ -2,18 +2,70 @@ const locations = require('./locations.json');
 const dice = require('./dice.js');
 const killlib = require('./kill.js');
 
+function isChildGuardEligible(child) {
+  return !!(
+    child &&
+    typeof child.age === 'number' &&
+    child.age >= 0 &&
+    child.age < 23
+  );
+}
+
+function getEligibleGuardTargets(person, children) {
+  if (!person || !Array.isArray(person.guarding)) {
+    return [];
+  }
+
+  var eligibleTargets = [];
+  for (var i = 0; i < person.guarding.length; i++) {
+    var childName = person.guarding[i];
+    var child = children ? children[childName] : null;
+    if (isChildGuardEligible(child) && eligibleTargets.indexOf(childName) === -1) {
+      eligibleTargets.push(childName);
+    }
+  }
+  return eligibleTargets;
+}
+
+module.exports.normalizeGuardAssignments = (population, children) => {
+  for (var personName in population) {
+    var person = population[personName];
+    if (!person || !Array.isArray(person.guarding)) {
+      continue;
+    }
+
+    var eligibleTargets = getEligibleGuardTargets(person, children);
+    if (eligibleTargets.length > 0) {
+      person.guarding = eligibleTargets;
+    } else {
+      delete person.guarding;
+    }
+  }
+};
+
 module.exports.findGuardValueForChild = (childName, population, children) => {
   var guardValue = Number(0);
   var logMessage = 'guard value for :' + childName;
   var child = children[childName];
+
+  module.exports.normalizeGuardAssignments(population, children);
+
+  if (!child || !isChildGuardEligible(child)) {
+    if (child) {
+      child.guardians = {};
+    }
+    return 0;
+  }
+
   child.guardians = {};
   for (var personName in population) {
     var person = population[personName];
-    if (person.guarding && person.guarding.includes(childName)) {
-      var watchValue = 1 / person.guarding.length;
+    var guardTargets = getEligibleGuardTargets(person, children);
+    if (guardTargets.includes(childName)) {
+      var watchValue = 1 / guardTargets.length;
       logMessage += '\t' + person.name + ' adds ' + watchValue;
       guardValue = guardValue + watchValue;
-      child.guardians[person.name] = person.guarding.length;
+      child.guardians[person.name] = guardTargets.length;
     }
   }
   // check for babysitters

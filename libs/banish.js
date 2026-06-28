@@ -14,7 +14,7 @@ function banish(gameState, targetName, reason) {
     }
     gameState.banished[targetName] = [banishTarget, reason];
     // removing the player from the banish list is a pain.
-    targetKey = Object.keys(population).find(
+    const targetKey = Object.keys(population).find(
       (key) => population[key] === banishTarget
     );
     delete population[targetKey];
@@ -23,8 +23,8 @@ function banish(gameState, targetName, reason) {
       'tribe',
       targetName + ' is banished from the tribe'
     );
-    for (childName in gameState.children) {
-      child = gameState.children[childName];
+    for (const childName in gameState.children) {
+      const child = gameState.children[childName];
       console.log(childName + ' is getting checked');
       // remove the unborn children
       if (child.mother == targetName && child.age < 4) {
@@ -35,7 +35,7 @@ function banish(gameState, targetName, reason) {
         banishTarget.guarding &&
         banishTarget.guarding.indexOf(childName) > -1
       ) {
-        childIndex = banishTarget.guarding.indexOf(childName);
+        const childIndex = banishTarget.guarding.indexOf(childName);
         if (childIndex > -1) {
           banishTarget.guarding.splice(childIndex, 1);
         }
@@ -47,13 +47,13 @@ function banish(gameState, targetName, reason) {
       }
     }
     // clean up inviteLists
-    for (memberName in population) {
+    for (const memberName in population) {
       if (memberName == targetName) {
         continue;
       }
-      member = population[memberName];
+      const member = population[memberName];
       if (member.inviteList) {
-        targetIndex = member.inviteList.indexOf(targetName);
+        const targetIndex = member.inviteList.indexOf(targetName);
         if (targetIndex > -1) {
           member.inviteList.splice(targetIndex, 1);
         }

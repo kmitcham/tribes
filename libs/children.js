@@ -18,7 +18,11 @@ function showChildrenPrep(
   } else if (filterParentName) {
     var parentPerson = pop.memberByName(filterParentName, gameState);
     if (!parentPerson) {
-      text.addMessage(gameState, displayName, 'Could not find ' + parentName);
+      text.addMessage(
+        gameState,
+        displayName,
+        'Could not find ' + filterParentName
+      );
     } else {
       if (parentPerson.gender == 'male') {
         response.push(
@@ -41,7 +45,7 @@ function showChildrenPrep(
       ...showChildren(children, gameState, '', gameState.secretMating)
     );
   }
-  for (part of response) {
+  for (const part of response) {
     text.addMessage(gameState, displayName, part);
   }
   return;
@@ -55,10 +59,9 @@ function showChildren(
   filterName = '',
   hideFathers = true
 ) {
-  population = gameState.population;
-  responseMessages = [];
-  childNames = Object.keys(children);
-  mine = 0;
+  const population = gameState.population;
+  const responseMessages = [];
+  const childNames = Object.keys(children);
   var notPrintedNewAdultHeader = true;
   var notStartedMiddleChildren = true;
   var notStartedYoungChildren = true;
@@ -74,7 +77,7 @@ function showChildren(
     }
     return children[a].age - children[b].age;
   });
-  for (childName of sortedChildrenNames) {
+  for (const childName of sortedChildrenNames) {
     var child = children[childName];
     if (filterName) {
       if (filterName == child.mother) {
@@ -124,8 +127,8 @@ function showChildren(
           childMessage += '  not hungry'.padStart(16, ' ');
         }
       }
-      motherMember = pop.memberByName(child.mother, gameState);
-      fatherMember = pop.memberByName(child.father, gameState);
+      const motherMember = pop.memberByName(child.mother, gameState);
+      const fatherMember = pop.memberByName(child.father, gameState);
       childMessage += ' mother:' + motherMember.name;
       if (!hideFathers) {
         childMessage += ' father:' + fatherMember.name;

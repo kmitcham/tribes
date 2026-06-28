@@ -113,6 +113,30 @@ describe('tribeHistory.js', () => {
     );
   });
 
+  test('showCombinedHistory should dedupe identical personal and tribe entries', () => {
+    gameState.seasonCounter = 20;
+    gameState.tribeHistory = ['8: Kevin goes hunting in the marsh'];
+    pop.memberByName.mockReturnValue({
+      name: playerName,
+      history: ['8: Kevin goes hunting in the marsh'],
+    });
+
+    tribeHistory.showCombinedHistory(playerName, gameState, 'all', 5);
+
+    expect(text.addMessage).toHaveBeenNthCalledWith(
+      1,
+      gameState,
+      playerName,
+      'History:all years_back=5'
+    );
+    expect(text.addMessage).toHaveBeenCalledWith(
+      gameState,
+      playerName,
+      '[Your history] 8: Kevin goes hunting in the marsh'
+    );
+    expect(text.addMessage).toHaveBeenCalledTimes(2);
+  });
+
   test('showCombinedHistory should filter by subject keyword', () => {
     gameState.seasonCounter = 20;
     gameState.tribeHistory = ['8: Kevin goes hunting in the marsh'];
@@ -188,6 +212,49 @@ describe('tribeHistory.js', () => {
     );
   });
 
+  test('showCombinedHistory migration filter should ignore reproduction round explanation', () => {
+    gameState.seasonCounter = 20;
+    gameState.tribeHistory = [
+      '9: Migration happens in the reproduction, after chance',
+      '9: Finding a route to marsh',
+      '9: The tribe migrates to the marsh',
+      '9: The following people died along the way: Kevin',
+      '9: migration hunger',
+    ];
+    pop.memberByName.mockReturnValue({
+      name: playerName,
+      history: [],
+    });
+
+    tribeHistory.showCombinedHistory(playerName, gameState, 'migration', 5);
+
+    expect(text.addMessage).toHaveBeenCalledWith(
+      gameState,
+      playerName,
+      '[Tribe history] 9: Finding a route to marsh'
+    );
+    expect(text.addMessage).toHaveBeenCalledWith(
+      gameState,
+      playerName,
+      '[Tribe history] 9: The tribe migrates to the marsh'
+    );
+    expect(text.addMessage).toHaveBeenCalledWith(
+      gameState,
+      playerName,
+      '[Tribe history] 9: The following people died along the way: Kevin'
+    );
+    expect(text.addMessage).toHaveBeenCalledWith(
+      gameState,
+      playerName,
+      '[Tribe history] 9: migration hunger'
+    );
+    expect(text.addMessage).not.toHaveBeenCalledWith(
+      gameState,
+      playerName,
+      '[Tribe history] 9: Migration happens in the reproduction, after chance'
+    );
+  });
+
   test('showCombinedHistory should prepend History:<option> when options are used', () => {
     gameState.seasonCounter = 20;
     gameState.tribeHistory = ['9: Chance 14: Rats!'];
@@ -231,11 +298,67 @@ describe('tribeHistory.js', () => {
     );
   });
 
+  test('showCombinedHistory trade filter should ignore jerky conversion messages', () => {
+    gameState.seasonCounter = 20;
+    gameState.tribeHistory = [
+      '9: player1 converts 6 food into 2 jerky',
+      '9: player1 gives Bob 6 food',
+      '9: player1 trades with Bob',
+    ];
+    pop.memberByName.mockReturnValue({
+      name: playerName,
+      history: [],
+    });
+
+    tribeHistory.showCombinedHistory(playerName, gameState, 'trade', 5);
+
+    expect(text.addMessage).toHaveBeenCalledWith(
+      gameState,
+      playerName,
+      '[Tribe history] 9: player1 gives Bob 6 food'
+    );
+    expect(text.addMessage).toHaveBeenCalledWith(
+      gameState,
+      playerName,
+      '[Tribe history] 9: player1 trades with Bob'
+    );
+    expect(text.addMessage).not.toHaveBeenCalledWith(
+      gameState,
+      playerName,
+      '[Tribe history] 9: player1 converts 6 food into 2 jerky'
+    );
+  });
+
+  test('showCombinedHistory laws filter should show decree messages', () => {
+    gameState.seasonCounter = 20;
+    gameState.tribeHistory = [
+      '9: Your chief creates a new law: No stealing',
+      '9: lawful trade practices were discussed',
+    ];
+    pop.memberByName.mockReturnValue({
+      name: playerName,
+      history: [],
+    });
+
+    tribeHistory.showCombinedHistory(playerName, gameState, 'laws', 5);
+
+    expect(text.addMessage).toHaveBeenCalledWith(
+      gameState,
+      playerName,
+      '[Tribe history] 9: Your chief creates a new law: No stealing'
+    );
+    expect(text.addMessage).not.toHaveBeenCalledWith(
+      gameState,
+      playerName,
+      '[Tribe history] 9: lawful trade practices were discussed'
+    );
+  });
+
   test('showCombinedHistory romance filter should ignore food round recap', () => {
     gameState.seasonCounter = 20;
     gameState.tribeHistory = [
       '9: Food round results: ... After chance, the tribe can decide to move.  No adults starved! No children starved!',
-      '9: ursa invite you to share good feelings',
+      '9: ursa invites you to share good feelings',
     ];
     pop.memberByName.mockReturnValue({
       name: playerName,
@@ -247,7 +370,7 @@ describe('tribeHistory.js', () => {
     expect(text.addMessage).toHaveBeenCalledWith(
       gameState,
       playerName,
-      '[Tribe history] 9: ursa invite you to share good feelings'
+      '[Tribe history] 9: ursa invites you to share good feelings'
     );
     expect(text.addMessage).not.toHaveBeenCalledWith(
       gameState,
@@ -284,8 +407,8 @@ describe('tribeHistory.js', () => {
   test('showCombinedHistory romance filter should ignore messages containing food or starved', () => {
     gameState.seasonCounter = 20;
     gameState.tribeHistory = [
-      '9: ursa invite you to share good feelings',
-      '9: ursa invite you to share good feelings and food',
+      '9: ursa invites you to share good feelings',
+      '9: ursa invites you to share good feelings and food',
       '9: no one starved, but the tribe kept going',
     ];
     pop.memberByName.mockReturnValue({
@@ -298,12 +421,12 @@ describe('tribeHistory.js', () => {
     expect(text.addMessage).toHaveBeenCalledWith(
       gameState,
       playerName,
-      '[Tribe history] 9: ursa invite you to share good feelings'
+      '[Tribe history] 9: ursa invites you to share good feelings'
     );
     expect(text.addMessage).not.toHaveBeenCalledWith(
       gameState,
       playerName,
-      '[Tribe history] 9: ursa invite you to share good feelings and food'
+      '[Tribe history] 9: ursa invites you to share good feelings and food'
     );
     expect(text.addMessage).not.toHaveBeenCalledWith(
       gameState,
@@ -340,6 +463,70 @@ describe('tribeHistory.js', () => {
       gameState,
       playerName,
       '[Tribe history] 9: no adults starved in the food round'
+    );
+  });
+
+  test('showCombinedHistory childcare filter should ignore round recap messages', () => {
+    gameState.seasonCounter = 20;
+    gameState.tribeHistory = [
+      '9: Food round results: ... No adults starved! No children starved!',
+      '9: ursa starts guarding Pebble',
+      '9: Pebble is nursing',
+    ];
+    pop.memberByName.mockReturnValue({
+      name: playerName,
+      history: [],
+    });
+
+    tribeHistory.showCombinedHistory(playerName, gameState, 'childcare', 5);
+
+    expect(text.addMessage).toHaveBeenCalledWith(
+      gameState,
+      playerName,
+      '[Tribe history] 9: ursa starts guarding Pebble'
+    );
+    expect(text.addMessage).toHaveBeenCalledWith(
+      gameState,
+      playerName,
+      '[Tribe history] 9: Pebble is nursing'
+    );
+    expect(text.addMessage).not.toHaveBeenCalledWith(
+      gameState,
+      playerName,
+      '[Tribe history] 9: Food round results: ... No adults starved! No children starved!'
+    );
+  });
+
+  test('showCombinedHistory your romance filter should focus on personal interactions', () => {
+    gameState.seasonCounter = 20;
+    gameState.tribeHistory = [
+      '9: ursa invites you to share good feelings',
+      '9: Reproduction round activities are over.',
+    ];
+    pop.memberByName.mockReturnValue({
+      name: playerName,
+      history: [
+        '9: You share good feelings with ursa [roll 4]',
+        '9: ursa invites you to share good feelings [roll 2]',
+      ],
+    });
+
+    tribeHistory.showCombinedHistory(playerName, gameState, 'your romance', 5);
+
+    expect(text.addMessage).toHaveBeenCalledWith(
+      gameState,
+      playerName,
+      '[Your history] 9: You share good feelings with ursa [roll 4]'
+    );
+    expect(text.addMessage).toHaveBeenCalledWith(
+      gameState,
+      playerName,
+      '[Your history] 9: ursa invites you to share good feelings [roll 2]'
+    );
+    expect(text.addMessage).not.toHaveBeenCalledWith(
+      gameState,
+      playerName,
+      '[Tribe history] 9: ursa invites you to share good feelings'
     );
   });
 

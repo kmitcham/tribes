@@ -175,11 +175,8 @@ function getScoutMessage(otherLocation, gameState) {
 }
 module.exports.getScoutMessage = getScoutMessage;
 
-function scoutNerd(gameTrack) {
-  var gameTrack = 0;
-  if (bits[1]) {
-    gameTrack = Number(bits[1]);
-  }
+function scoutNerd(gameTrack = 0) {
+  gameTrack = Number(gameTrack) || 0;
   const GATHER = 0;
   const GATHER_STRONG = 1;
   const GRAIN = 2;
@@ -196,15 +193,15 @@ function scoutNerd(gameTrack) {
     for (var j = 1; j <= 6; j++) {
       for (var k = 1; k <= 6; k++) {
         let droll = i + j + k;
-        if (droll > huntlib.locationDecay[gameTrack]) {
-          droll = huntlib.locationDecay[gameTrack];
+        if (droll > locationDecay[gameTrack]) {
+          droll = locationDecay[gameTrack];
         }
         for (const locationName in totals) {
           const locationData = locations[locationName];
           const data = gatherDataFor(locationName, droll);
           totals[locationName][GATHER] += data[1];
           totals[locationName][GRAIN] += data[2];
-          totals[locationName][HUNT] += huntlib.huntDataFor(
+          totals[locationName][HUNT] += huntDataFor(
             locationData['hunt'],
             droll
           )[1];
@@ -212,7 +209,7 @@ function scoutNerd(gameTrack) {
           if (droll >= 9) {
             sval = droll + 3;
           }
-          totals[locationName][SPEAR] += huntlib.huntDataFor(
+          totals[locationName][SPEAR] += huntDataFor(
             locationData['hunt'],
             sval
           )[1];
@@ -241,7 +238,6 @@ function scoutNerd(gameTrack) {
       '\t   spear:\t' +
       totals[locationName][SPEAR];
   }
-  msg.author.send(response);
   totals = {
     veldt: [0, 0, 0, 0, 0, 0],
     hills: [0, 0, 0, 0, 0, 0],
@@ -251,15 +247,15 @@ function scoutNerd(gameTrack) {
   const MAX = 6000;
   for (var i = 0; i < MAX; i++) {
     let val = dice.roll(3);
-    if (val > huntlib.locationDecay[gameTrack]) {
-      val = huntlib.locationDecay[gameTrack];
+    if (val > locationDecay[gameTrack]) {
+      val = locationDecay[gameTrack];
     }
     for (const locationName in totals) {
       const locationData = locations[locationName];
       const data = gatherDataFor(locationName, val);
       totals[locationName][GATHER] += data[1];
       totals[locationName][GRAIN] += data[2];
-      totals[locationName][HUNT] += huntlib.huntDataFor(
+      totals[locationName][HUNT] += huntDataFor(
         locationData['hunt'],
         val
       )[1];
@@ -267,7 +263,7 @@ function scoutNerd(gameTrack) {
       if (val >= 9) {
         sval = val + 3;
       }
-      const foo = huntlib.huntDataFor(locationData['hunt'], sval);
+      const foo = huntDataFor(locationData['hunt'], sval);
       totals[locationName][SPEAR] += foo[1];
       const dataStrong = gatherDataFor(locationName, val + 1);
       totals[locationName][GATHER_STRONG] += dataStrong[1];
@@ -292,6 +288,7 @@ function scoutNerd(gameTrack) {
       '\t   spear:' +
       Math.round((10 * totals[locationName][SPEAR]) / MAX);
   }
+  return response;
 }
 module.exports.getScoutNerd = scoutNerd;
 
@@ -313,8 +310,6 @@ function gatherDataFor(locationName, roll) {
   console.log(
     'error looking up resourceData for ' +
       locationName +
-      ' ' +
-      type +
       ' ' +
       roll
   );
