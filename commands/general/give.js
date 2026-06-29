@@ -8,18 +8,6 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('give')
     .setDescription('give items to another player')
-    .addUserOption((option) =>
-      option
-        .setName('target')
-        .setDescription('Which tribe member to give to')
-        .setRequired(true)
-    )
-    .addIntegerOption((option) =>
-      option
-        .setName('amount')
-        .setDescription('amount to give')
-        .setRequired(true)
-    )
     .addStringOption((option) =>
       option
         .setName('item')
@@ -31,9 +19,24 @@ module.exports = {
           { name: 'spearhead', value: 'spearhead' }
         )
         .setRequired(true)
+    )
+    .addIntegerOption((option) =>
+      option
+        .setName('amount')
+        .setDescription('amount to give')
+        .setRequired(true)
+    )
+    .addUserOption((option) =>
+      option
+        .setName('player')
+        .setDescription('Which tribe member to give to')
+        .setRequired(true)
     ),
   async execute(interaction, gameState) {
-    var targetName = interaction.options.getMember('target').displayName;
+    const targetMember =
+      interaction.options.getMember('player') ||
+      interaction.options.getMember('target');
+    var targetName = targetMember ? targetMember.displayName : null;
     var sourceName = interaction.member.displayName;
     var amount = interaction.options.getInteger('amount');
     var item = interaction.options.getString('item');

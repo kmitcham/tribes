@@ -2018,27 +2018,77 @@
                 }
             }
             
-            setupWebSocketHandlers(onCloseCallback) {
-                this.ws.onopen = () => {
+            setupWebSocketHandlers(onCloseCallback, socket = this.ws) {
+                if (!socket) return;
+
+                socket.onopen = () => {
                     logWithTimestamp('WebSocket connected');
                     this.updateConnectionStatus('connected');
                     this.reconnectAttempts = 0;
                     this.requestCommandList();
                 };
                 
-                this.ws.onmessage = (event) => {
+                socket.onmessage = (event) => {
                     this.handleMessage(JSON.parse(event.data));
                 };
                 
-                this.ws.onerror = (error) => {
+                socket.onerror = (error) => {
                     console.error('WebSocket error:', error);
                 };
                 
-                this.ws.onclose = () => {
+                socket.onclose = () => {
                     logWithTimestamp('WebSocket closed');
                     this.updateConnectionStatus('disconnected');
                     if (onCloseCallback) onCloseCallback();
                 };
+            }
+
+            isLocalDevelopmentHost(host) {
+                return (
+                    host === 'localhost' ||
+                    host === '127.0.0.1' ||
+                    host.startsWith('192.168.') ||
+                    host.startsWith('10.') ||
+                    host.startsWith('172.')
+                );
+            }
+
+            connectToCandidates(candidates, timeoutMs, onExhausted, retryDelayMs = 0, index = 0) {
+                if (index >= candidates.length) {
+                    if (onExhausted) onExhausted();
+                    return;
+                }
+
+                const wsUrl = candidates[index];
+                logWithTimestamp(`Trying to connect to ${wsUrl}`);
+
+                const socket = new WebSocket(wsUrl);
+                this.ws = socket;
+
+                this.setupWebSocketHandlers(() => {
+                    setTimeout(() => {
+                        this.connectToCandidates(
+                            candidates,
+                            timeoutMs,
+                            onExhausted,
+                            retryDelayMs,
+                            index + 1
+                        );
+                    }, retryDelayMs);
+                }, socket);
+
+                // If connection does not open in time, close and trigger the next candidate.
+                setTimeout(() => {
+                    if (socket.readyState !== WebSocket.OPEN) {
+                        socket.close();
+                    }
+                }, timeoutMs);
+            }
+
+            failConnectionWithReconnect(message) {
+                console.error(message);
+                this.updateConnectionStatus('disconnected');
+                this.scheduleReconnect();
             }
                 
             connectWithFallback() {
@@ -2050,8 +2100,9 @@
                     
                     // Prioritize current page's host for cloud deployments, fallback to local for development
                     let hosts, port, protocol;
+                    const isCloudDeployment = !this.isLocalDevelopmentHost(currentHost);
                     
-                    if (currentHost !== 'localhost' && currentHost !== '127.0.0.1' && !currentHost.startsWith('192.168.') && !currentHost.startsWith('10.') && !currentHost.startsWith('172.')) {
+                    if (isCloudDeployment) {
                         // Cloud deployment - use the same host and protocol as the page
                         hosts = [currentHost];
                         // For cloud deployments, always try the same port as the page first, then fallback to common ports
@@ -2072,89 +2123,37 @@
                         protocol = 'ws';
                         logWithTimestamp(`Local development detected, trying multiple hosts`);
                     }
-                    
-                    const setupWebSocketHandlers = (successCallback) => {
-                        this.ws.onopen = () => {
-                            logWithTimestamp('WebSocket connected');
-                            this.updateConnectionStatus('connected');
-                            this.reconnectAttempts = 0;
-                            this.requestCommandList();
-                        };
-                        
-                        this.ws.onmessage = (event) => {
-                            this.handleMessage(JSON.parse(event.data));
-                        };
-                        
-                        this.ws.onerror = (error) => {
-                            console.error('WebSocket error:', error);
-                        };
-                        
-                        this.ws.onclose = () => {
-                            logWithTimestamp('WebSocket closed');
-                            this.updateConnectionStatus('disconnected');
-                            if (successCallback) successCallback();
-                        };
+
+                    const hostCandidates = hosts.map((host) => `${protocol}://${host}${port}`);
+
+                    const tryCloudFallbackPorts = () => {
+                        const fallbackPorts = ['', ':8000', ':3000', ':80', ':443'];
+                        const fallbackCandidates = fallbackPorts.map(
+                            (fallbackPort) => `${protocol}://${currentHost}${fallbackPort}`
+                        );
+
+                        this.connectToCandidates(
+                            fallbackCandidates,
+                            3000,
+                            () =>
+                                this.failConnectionWithReconnect(
+                                    'Failed to connect to any host or port combination'
+                                ),
+                            1000
+                        );
                     };
 
-                    const tryHost = (hostIndex = 0) => {
-                        if (hostIndex >= hosts.length) {
-                            // If all hosts failed and we're in cloud deployment, try alternative ports
-                            if (currentHost !== 'localhost' && currentHost !== '127.0.0.1' && !currentHost.startsWith('192.168.') && !currentHost.startsWith('10.') && !currentHost.startsWith('172.')) {
-                                // Cloud deployment fallback - try common ports if original failed
-                                const fallbackPorts = ['', ':8000', ':3000', ':80', ':443'];
-                                let currentFallbackIndex = 0;
-                                
-                                const tryFallbackPort = () => {
-                                    if (currentFallbackIndex >= fallbackPorts.length) {
-                                        console.error('Failed to connect to any host or port combination');
-                                        this.updateConnectionStatus('disconnected');
-                                        this.scheduleReconnect();
-                                        return;
-                                    }
-                                    
-                                    const fallbackPort = fallbackPorts[currentFallbackIndex];
-                                    const wsUrl = `${protocol}://${currentHost}${fallbackPort}`;
-                                    logWithTimestamp(`Trying fallback port: ${wsUrl}`);
-                                    
-                                    this.ws = new WebSocket(wsUrl);
-                                    setupWebSocketHandlers(() => {
-                                        currentFallbackIndex++;
-                                        setTimeout(tryFallbackPort, 1000);
-                                    });
-                                    
-                                    // If connection doesn't open in 3 seconds, try next fallback port
-                                    setTimeout(() => {
-                                        if (this.ws.readyState !== WebSocket.OPEN) {
-                                            this.ws.close();
-                                        }
-                                    }, 3000);
-                                };
-                                
-                                tryFallbackPort();
+                    this.connectToCandidates(
+                        hostCandidates,
+                        2000,
+                        () => {
+                            if (isCloudDeployment) {
+                                tryCloudFallbackPorts();
                             } else {
-                                console.error('Failed to connect to any host');
-                                this.updateConnectionStatus('disconnected');
-                                this.scheduleReconnect();
+                                this.failConnectionWithReconnect('Failed to connect to any host');
                             }
-                            return;
                         }
-                        
-                        const host = hosts[hostIndex];
-                        const wsUrl = `${protocol}://${host}${port}`;
-                        logWithTimestamp(`Trying to connect to ${wsUrl}`);
-                        
-                        this.ws = new WebSocket(wsUrl);
-                        setupWebSocketHandlers(() => tryHost(hostIndex + 1));
-                        
-                        // If connection doesn't open in 2 seconds, try next host
-                        setTimeout(() => {
-                            if (this.ws.readyState !== WebSocket.OPEN) {
-                                this.ws.close();
-                            }
-                        }, 2000);
-                    };
-                    
-                    tryHost();
+                    );
                     
                 } catch (error) {
                     console.error('Error connecting:', error);
@@ -3504,6 +3503,75 @@
                 return reproductionCommands.includes(commandName);
             }
 
+            getOptionsForRender() {
+                if (!this.selectedCommand || !Array.isArray(this.selectedCommand.options)) {
+                    return [];
+                }
+
+                const cmdName = String(this.selectedCommand.name || '').toLowerCase();
+                const options = this.selectedCommand.options.slice();
+
+                if (cmdName !== 'give') {
+                    return options;
+                }
+
+                const giveOrder = {
+                    item: 0,
+                    amount: 1,
+                    player: 2,
+                    target: 2,
+                };
+
+                return options.sort((a, b) => {
+                    const aRank = Object.prototype.hasOwnProperty.call(giveOrder, a.name)
+                        ? giveOrder[a.name]
+                        : 99;
+                    const bRank = Object.prototype.hasOwnProperty.call(giveOrder, b.name)
+                        ? giveOrder[b.name]
+                        : 99;
+                    return aRank - bRank;
+                });
+            }
+
+            bindGiveAutoAmountDefaults(container, preservedValues = {}) {
+                if (!this.selectedCommand || this.selectedCommand.name.toLowerCase() !== 'give') {
+                    return;
+                }
+
+                const itemInput = container.querySelector('#param_item');
+                const amountInput = container.querySelector('#param_amount');
+                if (!itemInput || !amountInput) {
+                    return;
+                }
+
+                const amountDefaultsByItem = {
+                    basket: '1',
+                    spearhead: '1',
+                    food: '4',
+                    grain: '4',
+                };
+
+                const applyAmountDefault = (force = false) => {
+                    const selectedItem = String(itemInput.value || '').toLowerCase();
+                    const defaultAmount = amountDefaultsByItem[selectedItem];
+                    if (!defaultAmount) {
+                        return;
+                    }
+
+                    const currentAmount = String(amountInput.value || '').trim();
+                    if (force || currentAmount === '') {
+                        amountInput.value = defaultAmount;
+                    }
+                };
+
+                // Keep preserved explicit amount values; otherwise prime from the selected item.
+                if (!Object.prototype.hasOwnProperty.call(preservedValues, 'amount')) {
+                    applyAmountDefault(true);
+                }
+
+                itemInput.addEventListener('change', () => applyAmountDefault(true));
+            }
+
             shouldShowFeedMigrationFilter() {
                 const state = this.currentStatusData || {};
                 const roundHint = String(state.round || '').toLowerCase();
@@ -3570,7 +3638,9 @@
                     return;
                 }
                 
-                this.selectedCommand.options.forEach(option => {
+                const optionsToRender = this.getOptionsForRender();
+
+                optionsToRender.forEach(option => {
                     // Skip force options if player is not a referee
                     if (option.name === 'force' && !this.isReferee) {
                         return;
@@ -3963,6 +4033,8 @@
                     
                     container.appendChild(group);
                 });
+
+                this.bindGiveAutoAmountDefaults(container, preservedValues);
             }
 
             createUnifiedGuardInterface(container) {

@@ -1111,7 +1111,7 @@ async function handleCommandRequest(ws, data, gameState) {
       await savelib.archiveTribe(gameState);
       gameState.archiveRequired = false;
       // After archiving an ended game, the main file is cleared. Replace in-memory
-      // state with a fresh game so the next /join can start a new instance.
+      // state with a fresh game so the next join can start a new instance.
       if (gameEnded) {
         allGames[tribeName] = savelib.initGame(tribeName);
       }
@@ -1140,7 +1140,7 @@ function prepareGameStateForJoin(commandName, data, gameState) {
   allGames[tribeName] = freshGameState;
 
   logWithTimestamp(
-    `[RESET] Started a new game for tribe ${tribeName} because /join was requested after game end`
+    `[RESET] Started a new game for tribe ${tribeName} because join was requested after game end`
   );
 
   return freshGameState;
