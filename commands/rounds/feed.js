@@ -1,6 +1,4 @@
-const {
-  SlashCommandBuilder,
-} = require('../../libs/command-builders.js');
+const { SlashCommandBuilder } = require('../../libs/command-builders.js');
 const pop = require('../../libs/population.js');
 const feedlib = require('../../libs/feed.js');
 const text = require('../../libs/textprocess.js');
@@ -69,7 +67,13 @@ function feed(interaction, gameState) {
     return;
   }
   const childList = rawList.split(' ');
-  const message = feedlib.feed(interaction, player, amount, childList, gameState);
+  const message = feedlib.feed(
+    interaction,
+    player,
+    amount,
+    childList,
+    gameState
+  );
   console.log('return ' + message);
   gameState.saveRequired = true;
   return;

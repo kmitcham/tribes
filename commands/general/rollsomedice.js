@@ -1,7 +1,4 @@
-const {
-  SlashCommandBuilder,
-  EmbedBuilder,
-} = require('../../libs/command-builders.js');
+const { SlashCommandBuilder } = require('../../libs/command-builders.js');
 const dice = require('../../libs/dice.js');
 const text = require('../../libs/textprocess.js');
 
@@ -15,7 +12,7 @@ module.exports = {
         .setDescription('number of dice')
         .setRequired(false)
     ),
-  async execute(interaction, gameState, bot) {
+  async execute(interaction, gameState, _bot) {
     var count = interaction.options.getInteger('number') || 1;
     console.log('number of dice = ' + count);
     const message =

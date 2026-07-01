@@ -1,7 +1,5 @@
 const general = require('../libs/general.js');
 const jerkyCommand = require('../commands/general/jerky.js');
-const dice = require('../libs/dice.js');
-const referees = require('../libs/referees.json');
 console.log = jest.fn();
 
 describe('give function', () => {
@@ -173,7 +171,9 @@ describe('makeJerky function', () => {
 
     expect(gameState.population.player1.food).toBe(1);
     expect(gameState.population.player1.grain).toBe(2);
-    expect(gameState.messages.tribe).toContain('player1 converts 6 food into 2 jerky');
+    expect(gameState.messages.tribe).toContain(
+      'player1 converts 6 food into 2 jerky'
+    );
     expect(gameState.messages.tribe).not.toContain('NaN');
     expect(gameState.saveRequired).toBe(true);
   });
@@ -183,7 +183,9 @@ describe('makeJerky function', () => {
 
     expect(gameState.population.player1.food).toBe(7);
     expect(gameState.population.player1.grain).toBe(0);
-    expect(gameState.messages.player1).toContain('Amount of food must be a number.');
+    expect(gameState.messages.player1).toContain(
+      'Amount of food must be a number.'
+    );
   });
 });
 

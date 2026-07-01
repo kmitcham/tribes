@@ -1,6 +1,4 @@
-const {
-  SlashCommandBuilder,
-} = require('../../libs/command-builders.js');
+const { SlashCommandBuilder } = require('../../libs/command-builders.js');
 const text = require('../../libs/textprocess.js');
 const pop = require('../../libs/population.js');
 
@@ -17,17 +15,29 @@ function idle(interaction, gameState) {
   var sourceName = interaction.member.displayName;
   var player = pop.memberByName(sourceName, gameState);
   if (!player) {
-    text.addMessage(gameState, sourceName, 'Only tribe members can idle.  Maybe join');
+    text.addMessage(
+      gameState,
+      sourceName,
+      'Only tribe members can idle.  Maybe join'
+    );
     return;
   }
 
   if (gameState.workRound == false) {
-    text.addMessage(gameState, sourceName, 'Can only idle during the work round');
+    text.addMessage(
+      gameState,
+      sourceName,
+      'Can only idle during the work round'
+    );
     return;
   }
 
   if (player.worked == true) {
-    text.addMessage(gameState, sourceName, 'You cannot idle (again) this round');
+    text.addMessage(
+      gameState,
+      sourceName,
+      'You cannot idle (again) this round'
+    );
     return;
   }
 

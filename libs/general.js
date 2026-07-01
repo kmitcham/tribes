@@ -1,6 +1,5 @@
 const text = require('./textprocess.js');
 const pop = require('./population.js');
-const dice = require('./dice.js');
 const referees = require('./referees.json');
 
 function give(gameState, sourceName, targetName, amount, item) {
@@ -168,7 +167,7 @@ function inventoryMessage(person) {
 }
 module.exports.inventoryMessage = inventoryMessage;
 
-function makeJerky(sourceName, amount, gameState, bot) {
+function makeJerky(sourceName, amount, gameState, _bot) {
   if (!gameState.canJerky) {
     return 'Conditions are not right for making jerky now.';
   }
@@ -182,7 +181,11 @@ function makeJerky(sourceName, amount, gameState, bot) {
   }
   const player = pop.memberByName(sourceName, gameState);
   if (!player) {
-    text.addMessage(gameState, sourceName, 'Only tribe members can make jerky.');
+    text.addMessage(
+      gameState,
+      sourceName,
+      'Only tribe members can make jerky.'
+    );
     return;
   }
   amount = Number(amount);
@@ -210,7 +213,6 @@ function makeJerky(sourceName, amount, gameState, bot) {
 module.exports.makeJerky = makeJerky;
 
 function law(displayName, gameState) {
-  var member = pop.memberByName(displayName, gameState);
   var response = 'There are no laws.';
   if (gameState.ended) {
     text.addMessage(

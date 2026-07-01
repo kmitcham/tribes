@@ -29,7 +29,6 @@ const locationDecay = [
 module.exports.locationDecay = locationDecay;
 
 module.exports.hunt = (playername, player, rollValue, gameState) => {
-  let mods = 0;
   let message = playername + ' goes hunting. [roll ' + rollValue + ']';
   // injury check
   let strMod = 0;
@@ -147,7 +146,7 @@ function getScoutMessage(otherLocation, gameState) {
     return 'Valid locations are: ' + Object.keys(locations);
   }
   response += '\tGather:\n';
-  for (var index in locationData['gather']) {
+  for (const index in locationData['gather']) {
     const entry = locationData['gather'][index];
     response +=
       '\t\t' +
@@ -160,7 +159,7 @@ function getScoutMessage(otherLocation, gameState) {
   }
   response +=
     '\tHunt:  Game Track: ' + gameState.gameTrack[locationName] + '\n';
-  for (var index in locationData['hunt']) {
+  for (const index in locationData['hunt']) {
     const entry = locationData['hunt'][index];
     const capValue = locationDecay[gameState.gameTrack[locationName]];
     //console.log(' index is '+index+" entry is "+entry+' capValue is '+capValue+' trackValue was '+gameState.gameTrack[locationName]  )
@@ -245,7 +244,7 @@ function scoutNerd(gameTrack = 0) {
     forest: [0, 0, 0, 0, 0, 0],
   };
   const MAX = 6000;
-  for (var i = 0; i < MAX; i++) {
+  for (let i = 0; i < MAX; i++) {
     let val = dice.roll(3);
     if (val > locationDecay[gameTrack]) {
       val = locationDecay[gameTrack];
@@ -255,10 +254,7 @@ function scoutNerd(gameTrack = 0) {
       const data = gatherDataFor(locationName, val);
       totals[locationName][GATHER] += data[1];
       totals[locationName][GRAIN] += data[2];
-      totals[locationName][HUNT] += huntDataFor(
-        locationData['hunt'],
-        val
-      )[1];
+      totals[locationName][HUNT] += huntDataFor(locationData['hunt'], val)[1];
       let sval = val;
       if (val >= 9) {
         sval = val + 3;
@@ -307,10 +303,5 @@ function gatherDataFor(locationName, roll) {
       return resourceData[i];
     }
   }
-  console.log(
-    'error looking up resourceData for ' +
-      locationName +
-      ' ' +
-      roll
-  );
+  console.log('error looking up resourceData for ' + locationName + ' ' + roll);
 }

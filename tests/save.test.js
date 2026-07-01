@@ -138,6 +138,29 @@ describe('Save Module', () => {
         recursive: true,
       });
     });
+
+    test('should normalize malformed season and round state from loaded save', () => {
+      const tribeData = {
+        name: 'legacy-tribe',
+        seasonCounter: 'not-a-number',
+        round: 'unexpected-round-name',
+        workRound: false,
+        foodRound: false,
+        reproductionRound: true,
+        population: {},
+        children: {},
+      };
+      fs.existsSync.mockReturnValue(true);
+      fs.readFileSync.mockReturnValue(JSON.stringify(tribeData));
+
+      const result = savelib.loadTribe('legacy-tribe');
+
+      expect(result.seasonCounter).toBe(1);
+      expect(result.round).toBe('reproduction');
+      expect(result.workRound).toBe(false);
+      expect(result.foodRound).toBe(false);
+      expect(result.reproductionRound).toBe(true);
+    });
   });
 
   describe('saveFinalGameState', () => {

@@ -6,7 +6,11 @@ function hasEnvValue(name) {
 }
 
 function setEnvIfMissing(name, value) {
-  if (!hasEnvValue(name) && typeof value === 'string' && value.trim().length > 0) {
+  if (
+    !hasEnvValue(name) &&
+    typeof value === 'string' &&
+    value.trim().length > 0
+  ) {
     process.env[name] = value.trim();
   }
 }
@@ -17,7 +21,7 @@ function runGit(command) {
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'ignore'],
     }).trim();
-  } catch (error) {
+  } catch (_error) {
     return '';
   }
 }
@@ -33,8 +37,14 @@ function hydrateBuildMetadataFromGit() {
   }
 
   setEnvIfMissing('TRIBES_LAST_COMMIT_DATE', runGit('git log -1 --format=%cI'));
-  setEnvIfMissing('TRIBES_LAST_COMMIT_DATE_SHORT', runGit('git log -1 --format=%cs'));
-  setEnvIfMissing('TRIBES_LAST_COMMIT_HASH', runGit('git rev-parse --short HEAD'));
+  setEnvIfMissing(
+    'TRIBES_LAST_COMMIT_DATE_SHORT',
+    runGit('git log -1 --format=%cs')
+  );
+  setEnvIfMissing(
+    'TRIBES_LAST_COMMIT_HASH',
+    runGit('git rev-parse --short HEAD')
+  );
 }
 
 hydrateBuildMetadataFromGit();

@@ -64,12 +64,7 @@ function gatherDataFor(locationName, roll) {
       return resourceData[i];
     }
   }
-  console.log(
-    'error looking up resourceData for ' +
-      locationName +
-      ' ' +
-      roll
-  );
+  console.log('error looking up resourceData for ' + locationName + ' ' + roll);
 }
 module.exports.gatherDataFor = gatherDataFor;
 
@@ -226,11 +221,12 @@ function train(gameState, sourceName, forceRoll) {
       return;
     }
   }
+  let message;
   if (learnRoll >= 10) {
     player.canCraft = true;
-    var message = player.name + ' learns to craft. [roll ' + learnRoll + ']';
+    message = player.name + ' learns to craft. [roll ' + learnRoll + ']';
   } else {
-    var message =
+    message =
       player.name +
       ' studies crafting technique, but does not understand it yet. [' +
       'roll ' +

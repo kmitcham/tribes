@@ -19,9 +19,9 @@ describe('Form Rendering Consolidation - renderCommandForm', () => {
       renderParametersInContainer: jest.fn(),
       addPregnancyWarning: jest.fn(),
       send: jest.fn(),
-      
+
       // The unified form renderer with both isModal paths
-      renderCommandForm: function(container, isModal = false) {
+      renderCommandForm: function (container, isModal = false) {
         if (!this.selectedCommand) {
           if (!isModal) {
             // Non-modal path: would set form.style.display = 'none'
@@ -29,9 +29,14 @@ describe('Form Rendering Consolidation - renderCommandForm', () => {
           return;
         }
         const cmdName = this.selectedCommand.name.toLowerCase();
-        
+
         // Handle special romance commands (unified modal for all, grid form for non-modal)
-        if (isModal && (cmdName === 'romance' || cmdName === 'consent' || cmdName === 'decline')) {
+        if (
+          isModal &&
+          (cmdName === 'romance' ||
+            cmdName === 'consent' ||
+            cmdName === 'decline')
+        ) {
           this.buildUnifiedRomanceModal(container);
           return;
         }
@@ -39,7 +44,7 @@ describe('Form Rendering Consolidation - renderCommandForm', () => {
           this.buildRomanceGridForm(container);
           return;
         }
-        
+
         if (!this.selectedCommand.options) {
           if (!isModal) {
             // Non-modal path: would set form.style.display = 'none'
@@ -51,7 +56,7 @@ describe('Form Rendering Consolidation - renderCommandForm', () => {
         const preservedValues = {};
         if (container.querySelectorAll) {
           const existingInputs = container.querySelectorAll('input, select');
-          existingInputs.forEach(input => {
+          existingInputs.forEach((input) => {
             if (input.id && input.id.startsWith('param_')) {
               const paramName = input.id.replace('param_', '');
               if (input.type === 'checkbox') {
@@ -66,32 +71,37 @@ describe('Form Rendering Consolidation - renderCommandForm', () => {
         }
 
         // Check if this command needs player data and fetch it
-        const needsPlayerData = (isModal ? 
-          (this.selectedCommand.name.toLowerCase() !== 'induct' && 
-           this.selectedCommand.options.some(option => 
-            this.isPlayerTargetingOption(option.name)
-           )) :
-          this.selectedCommand.options.some(option => 
-            this.isPlayerTargetingOption(option.name)
-          )
-        );
-        
+        const needsPlayerData = isModal
+          ? this.selectedCommand.name.toLowerCase() !== 'induct' &&
+            this.selectedCommand.options.some((option) =>
+              this.isPlayerTargetingOption(option.name)
+            )
+          : this.selectedCommand.options.some((option) =>
+              this.isPlayerTargetingOption(option.name)
+            );
+
         // Secrets command also needs population data to pre-populate current value
-        const needsPopulationForSecrets = isModal && this.selectedCommand.name.toLowerCase() === 'secrets';
-        
-        const needsChildrenData = this.selectedCommand.options.some(option => 
+        const needsPopulationForSecrets =
+          isModal && this.selectedCommand.name.toLowerCase() === 'secrets';
+
+        const needsChildrenData = this.selectedCommand.options.some((option) =>
           this.isChildTargetingOption(option.name)
         );
 
-        const needsHistorySubjectData = isModal && this.selectedCommand.options.some(option =>
-          this.isHistorySubjectOption(option)
-        );
-        
-        if ((needsPlayerData || needsPopulationForSecrets) && !this.currentPopulation) {
+        const needsHistorySubjectData =
+          isModal &&
+          this.selectedCommand.options.some((option) =>
+            this.isHistorySubjectOption(option)
+          );
+
+        if (
+          (needsPlayerData || needsPopulationForSecrets) &&
+          !this.currentPopulation
+        ) {
           this.send({ type: 'infoRequest', selection: 'population' });
           return;
         }
-        
+
         if (needsChildrenData && !this.currentChildren) {
           this.send({ type: 'infoRequest', selection: 'children' });
           return;
@@ -101,7 +111,7 @@ describe('Form Rendering Consolidation - renderCommandForm', () => {
           this.send({ type: 'infoRequest', selection: 'population' });
           return;
         }
-        
+
         if (this.selectedCommand.name.toLowerCase() === 'invite') {
           this.addPregnancyWarning(container);
         }
@@ -110,9 +120,9 @@ describe('Form Rendering Consolidation - renderCommandForm', () => {
       },
 
       // The backward-compatible wrapper
-      generateCommandFormInModal: function(container) {
+      generateCommandFormInModal: function (container) {
         this.renderCommandForm(container, true);
-      }
+      },
     };
   });
 
@@ -120,7 +130,7 @@ describe('Form Rendering Consolidation - renderCommandForm', () => {
     test('handles romance command in modal mode', () => {
       mockTribesInterface.selectedCommand = {
         name: 'Romance',
-        options: []
+        options: [],
       };
 
       mockTribesInterface.renderCommandForm({}, true);
@@ -132,7 +142,7 @@ describe('Form Rendering Consolidation - renderCommandForm', () => {
     test('handles consent command in modal mode with unified romance modal', () => {
       mockTribesInterface.selectedCommand = {
         name: 'Consent',
-        options: []
+        options: [],
       };
 
       mockTribesInterface.renderCommandForm({}, true);
@@ -144,7 +154,7 @@ describe('Form Rendering Consolidation - renderCommandForm', () => {
     test('handles decline command in modal mode with unified romance modal', () => {
       mockTribesInterface.selectedCommand = {
         name: 'Decline',
-        options: []
+        options: [],
       };
 
       mockTribesInterface.renderCommandForm({}, true);
@@ -158,19 +168,23 @@ describe('Form Rendering Consolidation - renderCommandForm', () => {
 
       mockTribesInterface.renderCommandForm({}, true);
 
-      expect(mockTribesInterface.buildUnifiedRomanceModal).not.toHaveBeenCalled();
+      expect(
+        mockTribesInterface.buildUnifiedRomanceModal
+      ).not.toHaveBeenCalled();
       expect(mockTribesInterface.send).not.toHaveBeenCalled();
     });
 
     test('handles command without options in modal mode', () => {
       mockTribesInterface.selectedCommand = {
         name: 'TestCommand',
-        options: null
+        options: null,
       };
 
       mockTribesInterface.renderCommandForm({}, true);
 
-      expect(mockTribesInterface.renderParametersInContainer).not.toHaveBeenCalled();
+      expect(
+        mockTribesInterface.renderParametersInContainer
+      ).not.toHaveBeenCalled();
     });
   });
 
@@ -178,38 +192,46 @@ describe('Form Rendering Consolidation - renderCommandForm', () => {
     test('handles consent command in non-modal mode with grid form', () => {
       mockTribesInterface.selectedCommand = {
         name: 'Consent',
-        options: []
+        options: [],
       };
 
       mockTribesInterface.renderCommandForm({}, false);
 
       expect(mockTribesInterface.buildRomanceGridForm).toHaveBeenCalled();
-      expect(mockTribesInterface.buildUnifiedRomanceModal).not.toHaveBeenCalled();
+      expect(
+        mockTribesInterface.buildUnifiedRomanceModal
+      ).not.toHaveBeenCalled();
     });
 
     test('handles decline command in non-modal mode with grid form', () => {
       mockTribesInterface.selectedCommand = {
         name: 'Decline',
-        options: []
+        options: [],
       };
 
       mockTribesInterface.renderCommandForm({}, false);
 
       expect(mockTribesInterface.buildRomanceGridForm).toHaveBeenCalled();
-      expect(mockTribesInterface.buildUnifiedRomanceModal).not.toHaveBeenCalled();
+      expect(
+        mockTribesInterface.buildUnifiedRomanceModal
+      ).not.toHaveBeenCalled();
     });
 
     test('handles romance command in non-modal mode normally', () => {
       mockTribesInterface.selectedCommand = {
         name: 'Romance',
-        options: [{ name: 'someOption', type: 'string' }]
+        options: [{ name: 'someOption', type: 'string' }],
       };
 
       mockTribesInterface.renderCommandForm({}, false);
 
       expect(mockTribesInterface.buildRomanceGridForm).not.toHaveBeenCalled();
-      expect(mockTribesInterface.buildUnifiedRomanceModal).not.toHaveBeenCalled();
-      expect(mockTribesInterface.renderParametersInContainer).toHaveBeenCalled();
+      expect(
+        mockTribesInterface.buildUnifiedRomanceModal
+      ).not.toHaveBeenCalled();
+      expect(
+        mockTribesInterface.renderParametersInContainer
+      ).toHaveBeenCalled();
     });
   });
 
@@ -217,7 +239,7 @@ describe('Form Rendering Consolidation - renderCommandForm', () => {
     test('skips induct command player data check in modal mode only', () => {
       mockTribesInterface.selectedCommand = {
         name: 'Induct',
-        options: [{ name: 'target', type: 'string' }]
+        options: [{ name: 'target', type: 'string' }],
       };
 
       // Modal mode: induct should NOT trigger player data fetch
@@ -230,14 +252,14 @@ describe('Form Rendering Consolidation - renderCommandForm', () => {
       mockTribesInterface.renderCommandForm({}, false);
       expect(mockTribesInterface.send).toHaveBeenCalledWith({
         type: 'infoRequest',
-        selection: 'population'
+        selection: 'population',
       });
     });
 
     test('handles secrets command population data requirement in modal mode only', () => {
       mockTribesInterface.selectedCommand = {
         name: 'Secrets',
-        options: [{ name: 'willtrain', type: 'boolean' }]
+        options: [{ name: 'willtrain', type: 'boolean' }],
       };
       mockTribesInterface.currentPopulation = null;
 
@@ -245,7 +267,7 @@ describe('Form Rendering Consolidation - renderCommandForm', () => {
       mockTribesInterface.renderCommandForm({}, true);
       expect(mockTribesInterface.send).toHaveBeenCalledWith({
         type: 'infoRequest',
-        selection: 'population'
+        selection: 'population',
       });
 
       mockTribesInterface.send.mockClear();
@@ -259,7 +281,7 @@ describe('Form Rendering Consolidation - renderCommandForm', () => {
       mockTribesInterface.isHistorySubjectOption.mockReturnValue(true);
       mockTribesInterface.selectedCommand = {
         name: 'History',
-        options: [{ name: 'subject', type: 'string' }]
+        options: [{ name: 'subject', type: 'string' }],
       };
       mockTribesInterface.currentPopulation = null;
 
@@ -267,7 +289,7 @@ describe('Form Rendering Consolidation - renderCommandForm', () => {
       mockTribesInterface.renderCommandForm({}, true);
       expect(mockTribesInterface.send).toHaveBeenCalledWith({
         type: 'infoRequest',
-        selection: 'population'
+        selection: 'population',
       });
 
       mockTribesInterface.send.mockClear();
@@ -282,7 +304,7 @@ describe('Form Rendering Consolidation - renderCommandForm', () => {
     test('identifies attack target as requiring player data', () => {
       mockTribesInterface.selectedCommand = {
         name: 'Attack',
-        options: [{ name: 'target', type: 'string' }]
+        options: [{ name: 'target', type: 'string' }],
       };
       mockTribesInterface.currentPopulation = null;
 
@@ -290,14 +312,14 @@ describe('Form Rendering Consolidation - renderCommandForm', () => {
 
       expect(mockTribesInterface.send).toHaveBeenCalledWith({
         type: 'infoRequest',
-        selection: 'population'
+        selection: 'population',
       });
     });
 
     test('loads population data for attack in both modal and non-modal modes', () => {
       mockTribesInterface.selectedCommand = {
         name: 'Attack',
-        options: [{ name: 'target', type: 'string' }]
+        options: [{ name: 'target', type: 'string' }],
       };
       mockTribesInterface.currentPopulation = null;
 
@@ -305,7 +327,7 @@ describe('Form Rendering Consolidation - renderCommandForm', () => {
       mockTribesInterface.renderCommandForm({}, true);
       expect(mockTribesInterface.send).toHaveBeenCalledWith({
         type: 'infoRequest',
-        selection: 'population'
+        selection: 'population',
       });
 
       mockTribesInterface.send.mockClear();
@@ -314,7 +336,7 @@ describe('Form Rendering Consolidation - renderCommandForm', () => {
       mockTribesInterface.renderCommandForm({}, false);
       expect(mockTribesInterface.send).toHaveBeenCalledWith({
         type: 'infoRequest',
-        selection: 'population'
+        selection: 'population',
       });
     });
   });
@@ -323,19 +345,21 @@ describe('Form Rendering Consolidation - renderCommandForm', () => {
     test('delegates to renderCommandForm with isModal=true', () => {
       mockTribesInterface.selectedCommand = {
         name: 'Attack',
-        options: [{ name: 'target', type: 'string' }]
+        options: [{ name: 'target', type: 'string' }],
       };
       mockTribesInterface.currentPopulation = { bob: {} };
 
       mockTribesInterface.generateCommandFormInModal({});
 
-      expect(mockTribesInterface.renderParametersInContainer).toHaveBeenCalled();
+      expect(
+        mockTribesInterface.renderParametersInContainer
+      ).toHaveBeenCalled();
     });
 
     test('preserves romance modal behavior through generateCommandFormInModal', () => {
       mockTribesInterface.selectedCommand = {
         name: 'Romance',
-        options: []
+        options: [],
       };
 
       mockTribesInterface.generateCommandFormInModal({});
@@ -348,14 +372,16 @@ describe('Form Rendering Consolidation - renderCommandForm', () => {
     test('calls addPregnancyWarning for invite command', () => {
       mockTribesInterface.selectedCommand = {
         name: 'Invite',
-        options: [{ name: 'invitelist', type: 'string' }]
+        options: [{ name: 'invitelist', type: 'string' }],
       };
       mockTribesInterface.currentPopulation = { alice: {}, bob: {} };
 
       mockTribesInterface.renderCommandForm({}, true);
 
       expect(mockTribesInterface.addPregnancyWarning).toHaveBeenCalled();
-      expect(mockTribesInterface.renderParametersInContainer).toHaveBeenCalled();
+      expect(
+        mockTribesInterface.renderParametersInContainer
+      ).toHaveBeenCalled();
     });
   });
 
@@ -367,33 +393,34 @@ describe('Form Rendering Consolidation - renderCommandForm', () => {
             id: 'param_target',
             type: 'text',
             value: 'bob',
-            checked: false
+            checked: false,
           },
           {
             id: 'param_strategy',
             type: 'checkbox',
-            checked: true
+            checked: true,
           },
           {
             id: 'invite_append_pass',
             type: 'checkbox',
-            checked: true
-          }
-        ])
+            checked: true,
+          },
+        ]),
       };
 
       mockTribesInterface.selectedCommand = {
         name: 'Attack',
-        options: [{ name: 'target', type: 'string' }]
+        options: [{ name: 'target', type: 'string' }],
       };
       mockTribesInterface.currentPopulation = { bob: {} };
 
       mockTribesInterface.renderCommandForm(mockContainer, true);
 
       // Verify renderParametersInContainer was called with preserved values
-      const callArgs = mockTribesInterface.renderParametersInContainer.mock.calls[0];
+      const callArgs =
+        mockTribesInterface.renderParametersInContainer.mock.calls[0];
       const preservedValues = callArgs[1];
-      
+
       expect(preservedValues.target).toBe('bob');
       expect(preservedValues.strategy).toBe(true);
       expect(preservedValues.invite_append_pass).toBe(true);

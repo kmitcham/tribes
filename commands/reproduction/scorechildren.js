@@ -1,7 +1,4 @@
-const {
-  SlashCommandBuilder,
-  EmbedBuilder,
-} = require('../../libs/command-builders.js');
+const { SlashCommandBuilder } = require('../../libs/command-builders.js');
 const text = require('../../libs/textprocess.js');
 const endGame = require('../../libs/endgame.js');
 
@@ -11,7 +8,7 @@ module.exports = {
     .setDescription(
       'Report the number of children for each mother (and father, after game ends)'
     ),
-  async execute(interaction, gameState, bot) {
+  async execute(interaction, gameState, _bot) {
     var actorName = interaction.member.displayName;
     scoreChildren(actorName, gameState);
   },

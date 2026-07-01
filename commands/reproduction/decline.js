@@ -1,7 +1,4 @@
-const {
-  SlashCommandBuilder,
-  EmbedBuilder,
-} = require('../../libs/command-builders.js');
+const { SlashCommandBuilder } = require('../../libs/command-builders.js');
 const reproLib = require('../../libs/reproduction.js');
 const text = require('../../libs/textprocess.js');
 
@@ -38,12 +35,12 @@ module.exports = {
 
       if (!rawList) {
         if (player && player.declineList && player.declineList.length > 0) {
-          var message = 'Current declinelist: ' + player.declineList.join(' ');
+          let message = 'Current declinelist: ' + player.declineList.join(' ');
           console.log(message);
           text.addMessage(gameState, sourceName, message);
           return message;
         } else {
-          var message = 'No current declinelist';
+          let message = 'No current declinelist';
           console.log(message);
           text.addMessage(gameState, sourceName, message);
           return message;

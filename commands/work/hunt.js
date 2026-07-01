@@ -1,6 +1,4 @@
-const {
-  SlashCommandBuilder,
-} = require('../../libs/command-builders.js');
+const { SlashCommandBuilder } = require('../../libs/command-builders.js');
 const worklib = require('../../libs/work.js');
 const text = require('../../libs/textprocess.js');
 const pop = require('../../libs/population.js');
@@ -63,6 +61,6 @@ function hunt(gameState, sourceName, forceRoll) {
     }
   }
   //message = hunt(actor, player, huntRoll, gameState)
-    const message = huntlib.hunt(sourceName, player, huntRoll, gameState);
-    return message;
+  const message = huntlib.hunt(sourceName, player, huntRoll, gameState);
+  return message;
 }

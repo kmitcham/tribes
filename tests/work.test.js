@@ -11,7 +11,6 @@ const pop = require('../libs/population.js');
 const text = require('../libs/textprocess.js');
 const dice = require('../libs/dice.js');
 const gatherlib = require('../libs/gather.js');
-const locations = require('../libs/locations.json');
 const guardCommand = require('../commands/work/guard.js');
 const ignoreCommand = require('../commands/work/ignore.js');
 console.log = jest.fn();

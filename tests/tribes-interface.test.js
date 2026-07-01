@@ -138,7 +138,7 @@ const mockDocument = {
     );
   },
   querySelectorAll: () => [],
-  createElement: (tag) => ({
+  createElement: (_tag) => ({
     className: 'command-item',
     textContent: '',
     innerHTML: '',
@@ -309,7 +309,7 @@ class TribesClient {
       }
 
       this.connectWithFallback();
-    } catch (error) {
+    } catch (_error) {
       this.updateConnectionStatus('disconnected');
       this.scheduleReconnect();
     }
@@ -418,7 +418,7 @@ class TribesClient {
     console.log('Logout response:', data.message);
   }
 
-  handleForceLogout(data) {
+  handleForceLogout(_data) {
     this.clearSession();
     this.isLoggedIn = false;
     this.expandLoginArea();
@@ -496,7 +496,6 @@ class TribesClient {
 // Tests
 describe('Tribes Interface Client', () => {
   let client;
-  let mockLocalStorage;
   let dateNowSpy;
   let randomSpy;
 
@@ -804,7 +803,6 @@ describe('Tribes Interface Client', () => {
     test('should attempt reconnection on failure', (done) => {
       jest.setTimeout(15000); // Increase timeout
 
-      const originalConnect = client.connect;
       let connectCallCount = 0;
 
       client.connect = jest.fn(() => {
@@ -837,7 +835,6 @@ describe('Tribes Interface Client', () => {
 
     test('should stop reconnecting after max attempts', () => {
       client.reconnectAttempts = client.maxReconnectAttempts;
-      const originalConnect = client.connect;
       client.connect = jest.fn();
 
       client.scheduleReconnect();

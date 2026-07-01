@@ -11,6 +11,7 @@
   "scripts": {
     "start": "node scripts/start-with-build-meta.js",
     "test": "jest",
+    "lint": "eslint . --ext .js",
     "clear_jest": "jest --clearCache",
     "test:browser": "jest --runInBand --runTestsByPath tests/browser-integration.test.js --config='{\"testPathIgnorePatterns\":[\"/node_modules/\"]}'",
     "test:browser:give-loading": "jest --runInBand --runTestsByPath tests/browser-integration.test.js --config='{\"testPathIgnorePatterns\":[\"/node_modules/\"]}' -t \"give command exits loading state when population data arrives\""

@@ -120,7 +120,7 @@ class TribesClientE2E {
 // Mock server-side command processing
 function mockServerProcessCommand(clientMessage) {
   return new Promise((resolve) => {
-    const { type, command, parameters } = JSON.parse(clientMessage);
+    const { command, parameters } = JSON.parse(clientMessage);
 
     let response = {
       type: 'commandResponse',

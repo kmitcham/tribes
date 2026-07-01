@@ -10,12 +10,16 @@ describe('auth policy: optional passwords', () => {
 
     // Snapshot and reset users dictionary for isolated tests.
     originalUsers = JSON.parse(JSON.stringify(wsServer.usersDict || {}));
-    Object.keys(wsServer.usersDict).forEach((k) => delete wsServer.usersDict[k]);
+    Object.keys(wsServer.usersDict).forEach(
+      (k) => delete wsServer.usersDict[k]
+    );
   });
 
   afterEach(() => {
     // Restore users dictionary and file writes.
-    Object.keys(wsServer.usersDict).forEach((k) => delete wsServer.usersDict[k]);
+    Object.keys(wsServer.usersDict).forEach(
+      (k) => delete wsServer.usersDict[k]
+    );
     Object.assign(wsServer.usersDict, originalUsers);
 
     writeSpy.mockRestore();

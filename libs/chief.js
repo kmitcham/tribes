@@ -53,7 +53,9 @@ function decree(gameState, actorName, number, lawText) {
   }
   if (!number) {
     number = 1;
-    while (Object.prototype.hasOwnProperty.call(gameState.laws, String(number))) {
+    while (
+      Object.prototype.hasOwnProperty.call(gameState.laws, String(number))
+    ) {
       number += 1;
     }
     logger.accessLog.info('defaulting law number ' + number);
@@ -164,7 +166,6 @@ function doChance(rollValue, gameState) {
   let name;
   let person;
   let amount;
-  let childName;
   let gift;
   let motherName;
   let mother;

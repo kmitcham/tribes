@@ -5,9 +5,6 @@
  * parameter processing and mock interaction creation
  */
 
-const path = require('path');
-const fs = require('fs');
-
 // Import the actual websocket-server module (server won't start when imported)
 const wsServer = require('../websocket-server.js');
 
@@ -43,7 +40,7 @@ const mockCommands = new Map();
 mockCommands.set('romance', {
   data: { name: 'romance' },
   category: 'reproduction',
-  execute: jest.fn(async (interaction, gameState) => {
+  execute: jest.fn(async (_interaction, _gameState) => {
     return 'Showing mating lists...';
   }),
 });
@@ -52,7 +49,7 @@ mockCommands.set('romance', {
 mockCommands.set('craft', {
   data: { name: 'craft' },
   category: 'work',
-  execute: jest.fn(async (interaction, gameState) => {
+  execute: jest.fn(async (interaction, _gameState) => {
     const item = interaction.options.getString('item');
     const force = interaction.options.getInteger('force');
     return `Crafting ${item}${force ? ` with force ${force}` : ''}`;
@@ -63,7 +60,7 @@ mockCommands.set('craft', {
 mockCommands.set('invite', {
   data: { name: 'invite' },
   category: 'reproduction',
-  execute: jest.fn(async (interaction, gameState) => {
+  execute: jest.fn(async (interaction, _gameState) => {
     const inviteList = interaction.options.getString('invitelist');
     return `Inviting: ${inviteList}`;
   }),
@@ -73,14 +70,14 @@ mockCommands.set('invite', {
 mockCommands.set('guard', {
   data: { name: 'guard' },
   category: 'work',
-  execute: jest.fn(async (interaction, gameState) => {
+  execute: jest.fn(async (interaction, _gameState) => {
     const player = interaction.options.getString('player');
     return `Guarding ${player}`;
   }),
 });
 
 // Import or mock the functions we need to test
-function createMockInteraction(data, ws, gameState) {
+function createMockInteraction(data, ws, _gameState) {
   const mockMember = {
     displayName: data.playerName || 'Unknown',
   };
@@ -1032,8 +1029,8 @@ describe('Session Management (using actual exports)', () => {
     });
 
     test('should allow multiple sessions per player', () => {
-      const token1 = wsServer.createSession('testPlayer');
-      const token2 = wsServer.createSession('testPlayer');
+      wsServer.createSession('testPlayer');
+      wsServer.createSession('testPlayer');
 
       expect(wsServer.playerSessions.get('testPlayer').size).toBe(2);
       expect(wsServer.activeSessions.size).toBe(2);

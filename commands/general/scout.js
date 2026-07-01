@@ -1,7 +1,4 @@
-const {
-  SlashCommandBuilder,
-  EmbedBuilder,
-} = require('../../libs/command-builders.js');
+const { SlashCommandBuilder } = require('../../libs/command-builders.js');
 const huntlib = require('../../libs/hunt.js');
 const text = require('../../libs/textprocess.js');
 const dice = require('../../libs/dice.js');
@@ -76,7 +73,11 @@ function onCommand(interaction, gameState) {
   );
 
   if (targetLocation === 'overview') {
-    text.addMessage(gameState, displayName, JSON.stringify(getOverviewData(gameState)));
+    text.addMessage(
+      gameState,
+      displayName,
+      JSON.stringify(getOverviewData(gameState))
+    );
     return;
   }
 
@@ -167,7 +168,7 @@ function getNerdData(gameTrackValue, nerdOption) {
     }
   } else {
     const MAX = 6000;
-    for (var i = 0; i < MAX; i++) {
+    for (let i = 0; i < MAX; i++) {
       let val = dice.roll(3);
       if (val > huntlib.locationDecay[gameTrack]) {
         val = huntlib.locationDecay[gameTrack];
@@ -233,7 +234,7 @@ function gatherDataFor(locationName, roll) {
     'error looking up resourceData for ' +
       locationName +
       ' ' +
-        'gather' +
+      'gather' +
       ' ' +
       roll
   );

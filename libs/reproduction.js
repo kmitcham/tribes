@@ -116,8 +116,10 @@ function showMatingLists(actorName, gameState) {
 
   if (consents.length > 0 || declines.length > 0) {
     response += 'Your romantic responses:\n';
-    if (consents.length > 0) response += '  Consent: ' + consents.join(', ') + '\n';
-    if (declines.length > 0) response += '  Decline: ' + declines.join(', ') + '\n';
+    if (consents.length > 0)
+      response += '  Consent: ' + consents.join(', ') + '\n';
+    if (declines.length > 0)
+      response += '  Decline: ' + declines.join(', ') + '\n';
   } else {
     response += 'Your romantic responses: none\n';
   }
@@ -298,7 +300,6 @@ function invite(gameState, rawActorName, rawList) {
   console.log('message at end of reprolib invite:' + message);
   if (player.inviteList) {
     console.log('after update Invitelist: ' + player.inviteList.join(' '));
-  } else {
   }
   text.addMessage(gameState, player.name, message);
   gameState.saveRequired = true;
@@ -341,11 +342,16 @@ function consentPrep(gameState, sourceName, rawList) {
   }
 
   if (rawList.includes(':')) {
-    for (var i = 0; i < messageArray.length; i++) {
+    for (let i = 0; i < messageArray.length; i++) {
       let entry = messageArray[i].trim();
       if (entry.includes(':')) {
         let parts = entry.split(':');
-        handleRomanceResponse(gameState, sourceName, parts[0].trim(), parts[1].trim().toLowerCase());
+        handleRomanceResponse(
+          gameState,
+          sourceName,
+          parts[0].trim(),
+          parts[1].trim().toLowerCase()
+        );
       } else if (entry) {
         handleRomanceResponse(gameState, sourceName, entry, 'consent');
       }
@@ -353,16 +359,16 @@ function consentPrep(gameState, sourceName, rawList) {
     gameState.saveRequired = true;
     let outCon = [];
     if (member.consentDict) {
-       for (const [n, r] of Object.entries(member.consentDict)) {
-         if (r === 'consent') outCon.push(n);
-       }
+      for (const [n, r] of Object.entries(member.consentDict)) {
+        if (r === 'consent') outCon.push(n);
+      }
     }
     member.consentList = outCon;
     text.addMessage(gameState, sourceName, 'Updated your consent responses');
     return outCon;
   }
 
-  for (var i = 0; i < messageArray.length; i++) {
+  for (let i = 0; i < messageArray.length; i++) {
     messageArray[i] = messageArray[i].trim();
   }
   if (messageArray.length < 1) {
@@ -459,23 +465,28 @@ module.exports.declinePrep = declinePrep;
 
 function decline(actorName, messageArray, gameState) {
   const person = pop.memberByName(actorName, gameState);
-  
+
   // if format uses colon dictionary e.g. "Alice: consent"
-  if (messageArray.some(s => typeof s === 'string' && s.includes(':'))) {
+  if (messageArray.some((s) => typeof s === 'string' && s.includes(':'))) {
     for (var i = 0; i < messageArray.length; i++) {
-        let entry = messageArray[i].trim();
-        if (entry.includes(':')) {
-           let parts = entry.split(':');
-           handleRomanceResponse(gameState, actorName, parts[0].trim(), parts[1].trim().toLowerCase());
-        } else if (entry) {
-           handleRomanceResponse(gameState, actorName, entry, 'decline');
-        }
+      let entry = messageArray[i].trim();
+      if (entry.includes(':')) {
+        let parts = entry.split(':');
+        handleRomanceResponse(
+          gameState,
+          actorName,
+          parts[0].trim(),
+          parts[1].trim().toLowerCase()
+        );
+      } else if (entry) {
+        handleRomanceResponse(gameState, actorName, entry, 'decline');
+      }
     }
     let outDec = [];
     if (person.consentDict) {
-       for (const [n, r] of Object.entries(person.consentDict)) {
-           if (r === 'decline') outDec.push(n);
-       }
+      for (const [n, r] of Object.entries(person.consentDict)) {
+        if (r === 'decline') outDec.push(n);
+      }
     }
     person.declineList = outDec;
     text.addMessage(gameState, actorName, 'Updated your decline responses.');
@@ -509,7 +520,7 @@ function clearReproduction(gameState) {
 }
 module.exports.clearReproduction = clearReproduction;
 
-function sortCommitFirst(a, b) {
+function _sortCommitFirst(a, b) {
   if (a.commit && !b.commit) {
     return 1;
   }
@@ -549,7 +560,6 @@ function globalMatingCheck(gameState) {
     doneMating = [];
     whoNeedsToGiveAnAnswer = [];
     console.log('a sexlist ' + randomOrderForProcessingInvites);
-    let counter = 0;
     for (const invitingMemberKey of randomOrderForProcessingInvites) {
       const invitingMember = pop.memberByName(invitingMemberKey, gameState);
       const inviterDisplayName = invitingMember.name;
@@ -784,7 +794,7 @@ function globalMatingCheck(gameState) {
       );
       if (invitingMember.hiddenPregnant) {
         const fatherName = invitingMember.hiddenPregnant;
-        var child = addChild(invitingMember.name, fatherName, gameState);
+        addChild(invitingMember.name, fatherName, gameState);
         delete invitingMember.hiddenPregnant;
         noPregnancies = false;
         text.addMessage(
@@ -887,7 +897,6 @@ function hasReasontoNotInvite(gameState, invitingMember) {
 }
 
 function makeLove(targetName, inviterName, gameState, force = false) {
-  const population = gameState.population;
   var parent1 = pop.memberByName(targetName, gameState);
   var parent2 = pop.memberByName(inviterName, gameState);
   var mother = parent2;
@@ -938,14 +947,21 @@ function detection(mother, father, reproRoll, gameState) {
   const OBSERVER_THRESHOLD = 17;
   var observerName = dice.randomMemberName(gameState.population);
   var observer = pop.memberByName(observerName, gameState);
-  
+
   if (!observer) return false;
 
   var obsName = (observer.name || observerName).toLowerCase();
   var mName = (mother.name || '').toLowerCase();
   var fName = (father.name || '').toLowerCase();
 
-  if (observer === mother || observer === father || obsName === mName || obsName === fName || observerName.toLowerCase() === mName || observerName.toLowerCase() === fName) {
+  if (
+    observer === mother ||
+    observer === father ||
+    obsName === mName ||
+    obsName === fName ||
+    observerName.toLowerCase() === mName ||
+    observerName.toLowerCase() === fName
+  ) {
     console.log('self observation is discarded');
     return false;
   }
@@ -1312,7 +1328,7 @@ function handleRomanceResponse(
 
   let targetName = targetNameRaw.trim();
   if (actorName === targetName) {
-      return 'You cannot choose yourself.';
+    return 'You cannot choose yourself.';
   }
   actingMember.consentDict[targetName] = responseType;
   return 'Set ' + targetName + ' to ' + responseType;

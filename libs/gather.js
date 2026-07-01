@@ -78,7 +78,7 @@ module.exports.gather = (playername, player, rollValue, gameState) => {
     message += ' basket: [roll ' + broll + '] ';
     netRoll = broll + modifier;
     console.log('modified basket roll ' + netRoll);
-    for (var i = 0; i < gatherData.length; i++) {
+    for (let i = 0; i < gatherData.length; i++) {
       if (netRoll < gatherData[0][0]) {
         get_message =
           gatherData[0][3] + ' (' + (gatherData[0][1] + gatherData[0][2] + ')');

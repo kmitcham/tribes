@@ -1,7 +1,6 @@
 const killlib = require('./kill.js');
 const dice = require('./dice.js');
 const text = require('./textprocess.js');
-const { performance } = require('perf_hooks');
 
 const childSurvivalChance = [
   8,
@@ -58,7 +57,7 @@ function scoreTribe(gameState) {
 }
 
 module.exports.endGame = endGame;
-function endGame(gameState, bot) {
+function endGame(gameState, _bot) {
   let adultCount = 0;
   let newAdultCount = 0;
   let population = gameState.population;
@@ -138,17 +137,15 @@ function endGame(gameState, bot) {
     '📉 Losses: ' + deadAdults + ' dead, ' + banishCount + ' banished.'
   );
   responseLines.push(
-    '🧑‍🤝‍🧑 Surviving adults: ' +
-      adultCount +
-      ' (' +
-      newAdultCount +
-      ' new adults)'
+    '🧑‍🤝‍🧑 Surviving adults: ' + adultCount + ' (' + newAdultCount + ' new adults)'
   );
   responseLines.push(
-    '🍖 Food acquired: ' + (gameState.foodAcquired == null ? 0 : gameState.foodAcquired)
+    '🍖 Food acquired: ' +
+      (gameState.foodAcquired == null ? 0 : gameState.foodAcquired)
   );
   responseLines.push(
-    '🪰 Food spoiled: at least ' + (gameState.spoiled == null ? 0 : gameState.spoiled)
+    '🪰 Food spoiled: at least ' +
+      (gameState.spoiled == null ? 0 : gameState.spoiled)
   );
   responseLines.push('🏕️ Tribe result: ' + scoreTribe(gameState));
 
@@ -162,7 +159,7 @@ function endGame(gameState, bot) {
 }
 
 module.exports.scoreMessage = scoreMessage;
-function scoreMessage(gameState, bot) {
+function scoreMessage(gameState, _bot) {
   const tribeResult = scoreTribe(gameState);
   const messageText =
     '### ---> Score for the tribe: ' +
@@ -197,7 +194,12 @@ function genderIcon(genderCode) {
 }
 
 function isChildRecord(record) {
-  return !!record && typeof record === 'object' && 'age' in record && !('profession' in record);
+  return (
+    !!record &&
+    typeof record === 'object' &&
+    'age' in record &&
+    !('profession' in record)
+  );
 }
 
 function isAdultRecord(record) {
@@ -231,11 +233,19 @@ function findInDictionaryByName(name, dictionary) {
 function determineAdultStatus(name, gameState) {
   const inPopulation = findInDictionaryByName(name, gameState.population);
   if (inPopulation) {
-    return { status: 'living', record: inPopulation.record, key: inPopulation.key };
+    return {
+      status: 'living',
+      record: inPopulation.record,
+      key: inPopulation.key,
+    };
   }
   const inBanished = findInDictionaryByName(name, gameState.banished);
   if (inBanished) {
-    return { status: 'banished', record: inBanished.record, key: inBanished.key };
+    return {
+      status: 'banished',
+      record: inBanished.record,
+      key: inBanished.key,
+    };
   }
   const inGraveyard = findInDictionaryByName(name, gameState.graveyard);
   if (inGraveyard) {
@@ -348,7 +358,11 @@ function buildChildOutcomeRows(gameState) {
       return;
     }
     const key = String(name).toLowerCase();
-    rowsByLowerName[key] = Object.assign({}, rowsByLowerName[key] || {}, rowData);
+    rowsByLowerName[key] = Object.assign(
+      {},
+      rowsByLowerName[key] || {},
+      rowData
+    );
   }
 
   for (const childKey in children) {
@@ -458,124 +472,4 @@ function countDeadAdults(gameState) {
     }
   }
   return deadAdults;
-}
-
-/*
-in startWork:
-   remove
-*/
-
-function setReminder(gameState, bot) {
-  // remove existing reminderTimer, if any
-  if (gameState.reminderId) {
-    clearTimeout(gameState.reminderId);
-    gameState.reminderId = null;
-  }
-  if (!gameState.maxSeasons || !gameState.endTimestamp) {
-    console.log('Can not setReminder with maxSeasons and endTime');
-    return;
-  }
-  let turnsRemaining = 20;
-  // get turnsRemaining
-  if (gameState.maxSeasons < gameState.seasonCounter) {
-    turnsRemaining = gameState.maxSeasons - gameState.seasonCounter;
-  } else {
-    console.log('Failed to get maxSeasons ');
-  }
-  // get timeRemaining
-  const nowStamp = performance.now();
-  // set duration = timeRemaining/turnsRemaing in minutes
-  let targetDuration;
-  if (gameState.endTimestamp > nowStamp) {
-    const timeRemainingMillis = gameState.endTimestamp - nowStamp;
-    targetDuration = timeRemainingMillis / turnsRemaining;
-  } else {
-    const timeRemainingMillis = gameState.endTimestamp - nowStamp;
-    targetDuration = gameState.endTimestamp - gameState.startStamp;
-    targetDuration = timeRemainingMillis / gameState.maxSeasons;
-    console.log('Defaulting time remaining since they went over');
-  }
-  let delayMillis = targetDuration / turnsRemaining;
-  if (delayMillis < 2 * 60 * 1000) {
-    console.log('min interval for reminder is 2 minutes');
-    delayMillis = 2 * 60 * 1000;
-  }
-  const message =
-    'You have taken more than expected for this round. This puts the tribe at risk of running long.';
-  // set message = "You have taken more than "+duration+" minutes for this round.  This puts you at risk for taking longer than intended."
-  gameState.reminderId = setTimeout(
-    playReminder,
-    delayMillis,
-    message,
-    gameState,
-    bot
-  );
-  console.log(
-    'setting a reminder for ' + delayMillis / 60000 + ' minutes from now'
-  );
-}
-
-function playReminder(message, gameState, bot) {
-  text.addMessage(gameState, 'tribe', message);
-  setReminder(gameState, bot);
-}
-
-function dumpHistory(gameState) {
-  // for each player, alive, dead or banished:
-  // message their full history to them
-}
-
-module.exports.setEndTime = (gameState, bot, args) => {
-  // parse the args to a timestamp
-  // set the endTime
-  // announce the gameEnd time
-  // trigger a reminder, if possible?
-};
-
-module.exports.setMaxSeasons = (gameState, bot, args) => {
-  // parse the args to a timestamp
-  // set the reminder
-  // announce the maxSeason
-  // trigger a reminder, if possible
-};
-
-module.exports.run = async (bot, message, args, data) => {
-  if (args instanceof Array && args.length != 1) {
-    if (message) {
-      message.reply(module.exports.help.usage);
-    }
-  } else {
-    const delay = args;
-    if (message) {
-      message.reply('Setting delay to ' + delay);
-    }
-    var oldValue = 0;
-    var currentdate = new Date();
-    var datetime =
-      currentdate.getDate() +
-      '/' +
-      (currentdate.getMonth() + 1) +
-      '/' +
-      currentdate.getFullYear() +
-      ' @ ' +
-      currentdate.getHours() +
-      ':' +
-      currentdate.getMinutes() +
-      ':' +
-      currentdate.getSeconds();
-    message.reply('It is now ' + datetime + ' epoch ' + currentdate.getTime());
-    const delaytime = new Date(currentdate.getTime() + 1000 * delay);
-    setTimeout(myFunc, delay * 1000, message, data);
-    data['delay'] = delaytime;
-  }
-  return data;
-};
-function myFunc(message, data) {
-  if (message) {
-    if (data['delay']) {
-      message.reply('The delay was still set:' + data['delay']);
-    } else {
-      message.reply('The delay was cleared');
-    }
-  }
 }

@@ -20,7 +20,10 @@ function getEligibleGuardTargets(person, children) {
   for (var i = 0; i < person.guarding.length; i++) {
     var childName = person.guarding[i];
     var child = children ? children[childName] : null;
-    if (isChildGuardEligible(child) && eligibleTargets.indexOf(childName) === -1) {
+    if (
+      isChildGuardEligible(child) &&
+      eligibleTargets.indexOf(childName) === -1
+    ) {
       eligibleTargets.push(childName);
     }
   }
@@ -45,7 +48,6 @@ module.exports.normalizeGuardAssignments = (population, children) => {
 
 module.exports.findGuardValueForChild = (childName, population, children) => {
   var guardValue = Number(0);
-  var logMessage = 'guard value for :' + childName;
   var child = children[childName];
 
   module.exports.normalizeGuardAssignments(population, children);
@@ -63,7 +65,6 @@ module.exports.findGuardValueForChild = (childName, population, children) => {
     var guardTargets = getEligibleGuardTargets(person, children);
     if (guardTargets.includes(childName)) {
       var watchValue = 1 / guardTargets.length;
-      logMessage += '\t' + person.name + ' adds ' + watchValue;
       guardValue = guardValue + watchValue;
       child.guardians[person.name] = guardTargets.length;
     }
@@ -73,7 +74,6 @@ module.exports.findGuardValueForChild = (childName, population, children) => {
     var babysitter = children[name];
     if (babysitter.age >= 23 && babysitter.babysitting == childName) {
       guardValue = guardValue + 1;
-      logMessage += '\t ' + name + ' adds ' + 1;
       child.guardians[name] = 1;
     }
   }
@@ -160,13 +160,14 @@ module.exports.hyenaAttack = (children, gameState) => {
     return 'No children, no predator problem ';
   }
   // get the least guarded message
-  var leastGuardedMessageArray = findLeastGuarded(children, population).split(' ');
+  var leastGuardedMessageArray = findLeastGuarded(children, population).split(
+    ' '
+  );
   //  this is stupid and hacky; take the name from the start of the message, and the value from the last bit
   var leastGuardedName = leastGuardedMessageArray[0];
   if (leastGuardedName === 'No') {
     return 'All the children are safely unborn, so predators are not a worry.';
   }
-  var lowGuardValue = Number(leastGuardedMessageArray[7]);
   var response = 'A ' + predator + ' attacks ' + leastGuardedName; // exclamation point breaks simple string splitting elsewhere
   var child = children[leastGuardedName];
   if (!child) {

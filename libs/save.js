@@ -60,11 +60,40 @@ function removeChildNameFields(children) {
   }
 }
 
+function normalizeLoadedGameState(gameState) {
+  if (!gameState || typeof gameState !== 'object') {
+    return;
+  }
+
+  const parsedSeasonCounter = Number(gameState.seasonCounter);
+  if (!Number.isFinite(parsedSeasonCounter) || parsedSeasonCounter < 1) {
+    gameState.seasonCounter = 1;
+  } else {
+    gameState.seasonCounter = Math.floor(parsedSeasonCounter);
+  }
+
+  const validRounds = new Set(['work', 'food', 'reproduction']);
+  if (!validRounds.has(gameState.round)) {
+    if (gameState.foodRound === true) {
+      gameState.round = 'food';
+    } else if (gameState.reproductionRound === true) {
+      gameState.round = 'reproduction';
+    } else {
+      gameState.round = 'work';
+    }
+  }
+
+  gameState.workRound = gameState.round === 'work';
+  gameState.foodRound = gameState.round === 'food';
+  gameState.reproductionRound = gameState.round === 'reproduction';
+}
+
 function loadTribe(tribeName) {
   const fileName = './tribe-data/' + tribeName + '/' + tribeName + '.json';
   if (fs.existsSync(fileName)) {
     try {
       const gameState = loadJson(fileName);
+      normalizeLoadedGameState(gameState);
       removeChildNameFields(gameState.children);
       populationLib.normalizePopulationResources(gameState);
       return gameState;

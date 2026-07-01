@@ -57,7 +57,6 @@ test('Faction Check', () => {
       },
     },
   };
-  var message = 'all tests pass';
   factions = violencelib.getGameFactions(gameState);
   var factionNames = Object.keys(factions);
   expect(factionNames.length).toBe(4);
@@ -499,8 +498,18 @@ test('conflict-end announces no winner when both factions escaped', () => {
       violence: 'food sharing',
       messages: [],
       population: {
-        conEscaped: { name: 'conEscaped', faction: 'against', strategy: 'run', escaped: true },
-        proEscaped: { name: 'proEscaped', faction: 'for', strategy: 'run', escaped: true },
+        conEscaped: {
+          name: 'conEscaped',
+          faction: 'against',
+          strategy: 'run',
+          escaped: true,
+        },
+        proEscaped: {
+          name: 'proEscaped',
+          faction: 'for',
+          strategy: 'run',
+          escaped: true,
+        },
       },
     };
 
@@ -627,7 +636,6 @@ test('Faction Voting -> closely balanced For slightly ahead', () => {
   expect(result).toBe(message);
   expect(gameState.violence).toEqual('some demand');
 });
-
 
 test('Faction Voting -> closely balanced Against slightly ahead', () => {
   var gameState = {

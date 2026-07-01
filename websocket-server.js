@@ -25,9 +25,7 @@ function getLastCommitInfo() {
     lastCommitDate,
     lastCommitDateShort: process.env.TRIBES_LAST_COMMIT_DATE_SHORT || null,
     lastCommitHash:
-      process.env.TRIBES_LAST_COMMIT_HASH ||
-      process.env.SOURCE_COMMIT ||
-      null,
+      process.env.TRIBES_LAST_COMMIT_HASH || process.env.SOURCE_COMMIT || null,
   };
 }
 
@@ -43,7 +41,7 @@ function logWithTimestamp(message, ...args) {
       }
       try {
         return JSON.stringify(arg);
-      } catch (err) {
+      } catch (_err) {
         return String(arg);
       }
     })
@@ -69,7 +67,6 @@ let loginAttempts = new Map(); // Map of identifier -> { count, lastAttempt, loc
 let activeSessions = new Map(); // token -> { playerName, createdAt, lastActivity, ipAddress }
 let playerSessions = new Map(); // playerName -> Set of tokens
 const SESSION_TIMEOUT = 24 * 60 * 60 * 1000; // 24 hours
-const SESSION_CLEANUP_INTERVAL = 5 * 60 * 1000; // Clean up every 5 minutes
 
 // Load users data
 try {
@@ -80,7 +77,7 @@ try {
   }
 
   usersDict = loadJson('./tribe-data/users.json');
-} catch (error) {
+} catch (_error) {
   logWithTimestamp('No existing users.json, starting fresh');
   usersDict = {};
 }
@@ -181,15 +178,6 @@ function cleanupExpiredSessions() {
   }
 }
 
-// Start session cleanup timer only when not in test mode
-let sessionCleanupTimer = null;
-if (process.env.NODE_ENV !== 'test') {
-  sessionCleanupTimer = setInterval(
-    cleanupExpiredSessions,
-    SESSION_CLEANUP_INTERVAL
-  );
-}
-
 function getClientIP(ws, req) {
   return (
     req?.socket?.remoteAddress ||
@@ -217,7 +205,10 @@ function findStoredUserName(name) {
 }
 
 function samePlayerName(a, b) {
-  return normalizePlayerName(a).toLowerCase() === normalizePlayerName(b).toLowerCase();
+  return (
+    normalizePlayerName(a).toLowerCase() ===
+    normalizePlayerName(b).toLowerCase()
+  );
 }
 
 function pendingMessageKey(playerName, tribeName) {
@@ -298,8 +289,7 @@ function queuePendingMessage(playerName, tribeName, payload) {
     timestamp: Date.now(),
   });
 
-  const overflowCount =
-    queue.length - MAX_PENDING_MESSAGES_PER_PLAYER_TRIBE;
+  const overflowCount = queue.length - MAX_PENDING_MESSAGES_PER_PLAYER_TRIBE;
   if (overflowCount > 0) {
     queue.splice(0, overflowCount);
     logWithTimestamp(
@@ -583,7 +573,7 @@ function startServer() {
       const networkInterfaces = os.networkInterfaces();
       let localIP = null;
 
-      for (const [name, addresses] of Object.entries(networkInterfaces)) {
+      for (const [_name, addresses] of Object.entries(networkInterfaces)) {
         for (const address of addresses) {
           if (
             address.family === 'IPv4' &&
@@ -618,8 +608,9 @@ function startServer() {
       logWithTimestamp(`New client connected from ${clientIP}`);
 
       ws.on('message', async (message) => {
+        let data;
         try {
-          const data = JSON.parse(message.toString());
+          data = JSON.parse(message.toString());
           logWithTimestamp(
             'Received:',
             data.type,
@@ -938,7 +929,10 @@ function handleInfoRequest(ws, data, gameState) {
 
   switch (selection) {
     case 'population':
-      guardlib.normalizeGuardAssignments(gameState.population, gameState.children);
+      guardlib.normalizeGuardAssignments(
+        gameState.population,
+        gameState.children
+      );
       const cleanPop = removeClunkyKeys(gameState.population);
       messageData = {
         type: 'infoRequest',
@@ -1075,7 +1069,12 @@ async function handleCommandRequest(ws, data, gameState) {
 
   gameState = prepareGameStateForJoin(commandName, data, gameState);
 
-  replayPendingMessages(ws, data.playerName, data.tribe || 'bug', data.clientId);
+  replayPendingMessages(
+    ws,
+    data.playerName,
+    data.tribe || 'bug',
+    data.clientId
+  );
 
   try {
     // Create mock interaction object
@@ -1198,7 +1197,9 @@ async function refreshTribeGameData(gameState, tribeName) {
   const childrenData = {
     type: 'infoRequest',
     label: 'children',
-    content: removeFatherReferences(refreshChildGuardians(gameState.children, gameState.population)),
+    content: removeFatherReferences(
+      refreshChildGuardians(gameState.children, gameState.population)
+    ),
   };
 
   const graveyardData = {
@@ -1207,38 +1208,38 @@ async function refreshTribeGameData(gameState, tribeName) {
     content: removeClunkyKeys(gameState.graveyard),
   };
 
-  const statusData = {
-    type: 'infoRequest',
-    label: 'status',
-    content: util.gameStateMessage(gameState),
-    gameState: {
-      round: gameState.round || 'work',
-      workRound: gameState.workRound,
-      foodRound: gameState.foodRound,
-      reproductionRound: gameState.reproductionRound,
-      matingComplete: gameState.matingComplete === true,
-      seasonCounter: gameState.seasonCounter,
-      currentLocationName: gameState.currentLocationName,
-      year: Math.floor(gameState.seasonCounter / 2),
-      demand: gameState.demand,
-      violence: gameState.violence,
-      combatRounds: Number.isFinite(gameState.violenceRounds)
-        ? gameState.violenceRounds
-        : 0,
-      playerTribeCount: memberWs.currentPlayer
-        ? getPlayerConnectedTribes(memberWs.currentPlayer).length
-        : 0,
-      playerTribes: memberWs.currentPlayer
-        ? getPlayerConnectedTribes(memberWs.currentPlayer)
-        : [],
-    },
-  };
-
   // Send to all tribe members
   for (const memberWs of tribeMembers) {
     if (memberWs.readyState === 1) {
       // WebSocket.OPEN
       try {
+        const statusData = {
+          type: 'infoRequest',
+          label: 'status',
+          content: util.gameStateMessage(gameState),
+          gameState: {
+            round: gameState.round || 'work',
+            workRound: gameState.workRound,
+            foodRound: gameState.foodRound,
+            reproductionRound: gameState.reproductionRound,
+            matingComplete: gameState.matingComplete === true,
+            seasonCounter: gameState.seasonCounter,
+            currentLocationName: gameState.currentLocationName,
+            year: Math.floor(gameState.seasonCounter / 2),
+            demand: gameState.demand,
+            violence: gameState.violence,
+            combatRounds: Number.isFinite(gameState.violenceRounds)
+              ? gameState.violenceRounds
+              : 0,
+            playerTribeCount: memberWs.currentPlayer
+              ? getPlayerConnectedTribes(memberWs.currentPlayer).length
+              : 0,
+            playerTribes: memberWs.currentPlayer
+              ? getPlayerConnectedTribes(memberWs.currentPlayer)
+              : [],
+          },
+        };
+
         memberWs.send(JSON.stringify(populationData));
         memberWs.send(JSON.stringify(childrenData));
         memberWs.send(JSON.stringify(graveyardData));
@@ -1422,7 +1423,6 @@ function handleListCommands(ws, data, gameState) {
     const pop = require('./libs/population.js');
     const player = pop.memberByName(playerName, gameState);
     isChief = player && player.chief;
-
   }
 
   // Check if the current player is a referee
@@ -1432,12 +1432,9 @@ function handleListCommands(ws, data, gameState) {
     a.localeCompare(b)
   );
 
-  let chiefCommandsFiltered = 0;
-  let forceOptionsFiltered = 0;
   for (const [name, command] of sortedCommands) {
     // Filter out chief commands if the player is not chief
     if (command.category === 'chief' && !isChief) {
-      chiefCommandsFiltered++;
       continue;
     }
 
@@ -1448,13 +1445,9 @@ function handleListCommands(ws, data, gameState) {
 
     // Filter out force options if the player is not a referee
     if (!isRef) {
-      const originalLength = commandOptions.length;
       commandOptions = commandOptions.filter(
         (option) => option.name !== 'force'
       );
-      if (commandOptions.length < originalLength) {
-        forceOptionsFiltered++;
-      }
     }
 
     commandList[name] = {
@@ -1948,7 +1941,7 @@ async function validateUser(userData) {
       recordFailedAttempt(identifier);
       return false;
     }
-  } catch (error) {
+  } catch (_error) {
     recordFailedAttempt(identifier);
     return false;
   }
@@ -2137,12 +2130,21 @@ function removeFatherReferences(children) {
 function refreshChildGuardians(children, population) {
   guardlib.normalizeGuardAssignments(population || {}, children || {});
   for (const [childName, child] of Object.entries(children || {})) {
-    if (!child || typeof child.age !== 'number' || child.age < 0 || child.age >= 23) {
+    if (
+      !child ||
+      typeof child.age !== 'number' ||
+      child.age < 0 ||
+      child.age >= 23
+    ) {
       delete child.guardians;
       continue;
     }
 
-    guardlib.findGuardValueForChild(childName, population || {}, children || {});
+    guardlib.findGuardValueForChild(
+      childName,
+      population || {},
+      children || {}
+    );
   }
 
   return children;
@@ -2275,7 +2277,9 @@ if (isMainModule && !isTesting) {
   loadCommands();
   startServer();
   logWithTimestamp('Tribes WebSocket Server starting...');
-  logWithTimestamp(`Available commands: ${Array.from(commands.keys()).join(', ')}`);
+  logWithTimestamp(
+    `Available commands: ${Array.from(commands.keys()).join(', ')}`
+  );
 }
 
 // Export functions for testing

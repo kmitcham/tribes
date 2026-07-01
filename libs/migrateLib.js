@@ -122,12 +122,12 @@ function migrate(sourceName, destination, force, gameState) {
       response += '\nThe following people died along the way:';
       // clean up the dead
       var perishedCount = deceasedPeople.length;
-      for (var i = 0; i < perishedCount; i++) {
+      for (let i = 0; i < perishedCount; i++) {
         killlib.kill(deceasedPeople[i], 'migration hunger', gameState);
         response += ' ' + deceasedPeople[i];
       }
       perishedCount = deceasedChildren.length;
-      for (var i = 0; i < perishedCount; i++) {
+      for (let i = 0; i < perishedCount; i++) {
         killlib.kill(deceasedChildren[i], 'migration hunger', gameState);
         response += ' ' + deceasedChildren[i];
       }
@@ -144,14 +144,13 @@ function migrate(sourceName, destination, force, gameState) {
     for (const personName in population) {
       const person = populationLib.memberByName(personName, gameState);
       if (person.isInjured && person.isInjured > 0) {
-        const need = 2;
         if (person.food + person.grain < 2) {
           deceasedPeople.push(personName);
         }
       }
     }
     for (const childName in children) {
-      var child = children[childName];
+      const child = children[childName];
       // child age is in seasons
       if (child.age < 4) {
         if (child.food < 2) {

@@ -74,8 +74,6 @@ test('banish person', () => {
   expect(notRemoved.mother).toBe('p2');
 });
 
-var banishlib = require('../libs/banish.js');
-
 test('banish person with weird name', () => {
   var banishName = 'p the Second';
   var gameState = {

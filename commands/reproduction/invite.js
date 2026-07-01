@@ -1,7 +1,4 @@
-const {
-  SlashCommandBuilder,
-  EmbedBuilder,
-} = require('../../libs/command-builders.js');
+const { SlashCommandBuilder } = require('../../libs/command-builders.js');
 const reproLib = require('../../libs/reproduction.js');
 const pop = require('../../libs/population.js');
 
@@ -23,17 +20,12 @@ module.exports = {
       var displayName = interaction.member.displayName;
       var rawList = interaction.options.getString('invitelist');
       var cleanArray = pop.convertStringToArray(rawList);
-      if (true) {
-        var processedList = [];
-        for (const value of cleanArray) {
-          processedList.push(pop.nameFromAtNumber(value, bot));
-        }
-        const response = reproLib.invite(gameState, displayName, processedList);
-        console.log('invite response was ' + response);
-      } else {
-        const response = reproLib.invite(gameState, displayName, rawList);
-        console.log('invite response was ' + response);
+      var processedList = [];
+      for (const value of cleanArray) {
+        processedList.push(pop.nameFromAtNumber(value, bot));
       }
+      const response = reproLib.invite(gameState, displayName, processedList);
+      console.log('invite response was ' + response);
     } catch (error) {
       console.error('invite error ' + error);
     }

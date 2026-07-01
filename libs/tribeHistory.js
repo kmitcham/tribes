@@ -5,8 +5,21 @@ const SUBJECT_KEYWORDS = {
   hunting: ['hunt', 'hunting', 'goes hunting'],
   gathering: ['gathers'],
   crafting: ['craft', 'crafts'],
-  reproduction: ['reproduction', 'mating', 'pregnant', 'birth', 'blessed with a child'],
-  romance: ['invite', 'invites', 'invitation', 'consent', 'decline', 'share good feelings'],
+  reproduction: [
+    'reproduction',
+    'mating',
+    'pregnant',
+    'birth',
+    'blessed with a child',
+  ],
+  romance: [
+    'invite',
+    'invites',
+    'invitation',
+    'consent',
+    'decline',
+    'share good feelings',
+  ],
   'your romance': [
     'invites you to share good feelings',
     'shares good feelings with you',
@@ -19,7 +32,7 @@ const SUBJECT_KEYWORDS = {
   migration: ['migrate', 'migrates', 'migration', 'route to', 'location'],
   combat: ['violence', 'attacks', 'combat', 'faction', 'demand', 'fight'],
   trade: [' gives ', ' gives', 'trade'],
-  laws: [ 'your chief creates a new law'],
+  laws: ['your chief creates a new law'],
 };
 
 function getHistorySubjectChoices() {
@@ -81,8 +94,9 @@ function matchesSubject(message, subject, playerName) {
     messageLower.includes('start work round');
 
   const hasFoodOrStarved =
-    messageLower.includes('food') || messageLower.includes('starved')
-    || messageLower.includes('round');
+    messageLower.includes('food') ||
+    messageLower.includes('starved') ||
+    messageLower.includes('round');
 
   if (isStartOfYearMessage) {
     return false;
@@ -100,9 +114,7 @@ function matchesSubject(message, subject, playerName) {
 
   if (subjectLower === 'chance') {
     // Match explicit chance-stage entries, not incidental references like "After chance"
-    return (
-      /\bchance\s+[0-9]+\s*:/.test(messageLower)
-    );
+    return /\bchance\s+[0-9]+\s*:/.test(messageLower);
   }
 
   if (subjectLower === 'migration') {
@@ -182,11 +194,7 @@ function matchesSubject(message, subject, playerName) {
     if (messageLower.includes('gives birth')) {
       return false;
     }
-    return (
-      /\b(give|gives|gave|given|trade|trades|traded)\b/.test(
-        messageLower
-      )
-    );
+    return /\b(give|gives|gave|given|trade|trades|traded)\b/.test(messageLower);
   }
 
   if (subjectLower === 'laws') {
@@ -301,7 +309,11 @@ function showCombinedHistory(playerName, gameState, subject, yearsBack) {
   }
 
   for (const entry of deduped) {
-    text.addMessage(gameState, playerName, '[' + entry.source + '] ' + entry.message);
+    text.addMessage(
+      gameState,
+      playerName,
+      '[' + entry.source + '] ' + entry.message
+    );
   }
 }
 

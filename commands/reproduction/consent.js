@@ -1,7 +1,4 @@
-const {
-  SlashCommandBuilder,
-  EmbedBuilder,
-} = require('../../libs/command-builders.js');
+const { SlashCommandBuilder } = require('../../libs/command-builders.js');
 const reproLib = require('../../libs/reproduction.js');
 
 module.exports = {
@@ -17,7 +14,7 @@ module.exports = {
           'List of names and whether you consent status (e.g., "Alice: consent, Sally: decline")'
         )
     ),
-  async execute(interaction, gameState, bot) {
+  async execute(interaction, gameState, _bot) {
     try {
       var sourceName = interaction.member.displayName;
       var rawList = interaction.options.getString('consentlist');

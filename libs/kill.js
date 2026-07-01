@@ -21,8 +21,7 @@ function kill(name, message, gameState) {
   if (!message || message == '') {
     message = 'unknown causes';
   }
-  if ('graveyard' in gameState) {
-  } else {
+  if (!('graveyard' in gameState)) {
     gameState.graveyard = {};
   }
   const isMotherDied = message === 'mother-died';
@@ -90,7 +89,11 @@ function kill(name, message, gameState) {
   if (!gameState._suppressImmediateDeathMessages) {
     textLib.addMessage(gameState, 'tribe', displayName + ' ' + deathSummary);
   }
-  populationLib.history(displayName, displayName + ' ' + deathSummary, gameState);
+  populationLib.history(
+    displayName,
+    displayName + ' ' + deathSummary,
+    gameState
+  );
   return;
 }
 module.exports.kill = kill;
@@ -107,7 +110,11 @@ function removeNameFromArray(list, targetName) {
   }
 }
 
-function removeNameFromAllRelationshipLists(targetName, population, isChild = false) {
+function removeNameFromAllRelationshipLists(
+  targetName,
+  population,
+  isChild = false
+) {
   if (!population) {
     return;
   }

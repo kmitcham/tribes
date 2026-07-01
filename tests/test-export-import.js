@@ -8,13 +8,6 @@ const SERVER_URL = 'ws://localhost:8000';
 const TEST_REFEREE = 'kevinmitcham'; // This user is already in referees.json
 const TEST_TRIBE = 'bug';
 
-// Test data
-const testMessage = {
-  playerName: TEST_REFEREE,
-  password: '', // Use empty password for test user
-  tribe: TEST_TRIBE,
-};
-
 console.log('=== Tribes Export/Import Test ===');
 console.log(`Connecting to ${SERVER_URL}...`);
 

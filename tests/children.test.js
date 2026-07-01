@@ -34,7 +34,7 @@ test('Display new adults also', () => {
       gender: 'male',
     },
   };
-  var gameState = {
+  gameState = {
     population: {
       m1: { name: 'm1' },
       m2: { name: 'm2' },

@@ -27,7 +27,9 @@ describe('Helper coverage tests', () => {
       Dee: { mother: 'Alice', father: 'Bob', age: 12 },
     };
 
-    expect(children.countChildrenOfParentUnderAge(childMap, 'Alice', 10)).toBe(2);
+    expect(children.countChildrenOfParentUnderAge(childMap, 'Alice', 10)).toBe(
+      2
+    );
     expect(children.countChildrenOfParentUnderAge(childMap, 'Bob', 5)).toBe(2);
   });
 

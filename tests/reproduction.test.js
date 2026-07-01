@@ -1,5 +1,4 @@
 var reproLib = require('../libs/reproduction.js');
-const allNames = require('../libs/names.json');
 console.log = jest.fn();
 
 test('excludes people', () => {
@@ -87,7 +86,7 @@ test('pregnant mates', () => {
   var p2 = { name: 'p2', gender: 'male' };
   var response = reproLib.matingObjections(p1, p2);
   expect(response).toBe('');
-  var response = reproLib.matingObjections(p2, p1);
+  response = reproLib.matingObjections(p2, p1);
   expect(response).toBe('');
 });
 test('Mating objections happy path', () => {
@@ -596,7 +595,6 @@ test('make a consent list with !none', () => {
   expect(!hasList);
 });
 
-
 test('consent and decline collisions by name', () => {
   var gameState = {
     reproductionRound: true,
@@ -651,7 +649,9 @@ test('reciprocal invite does not count as consent', () => {
   expect(gameState.messages['p1']).toContain('p2 has invited you to mate');
   expect(gameState.messages['p2']).toContain('p1 considers your invitation.');
   expect(gameState.messages['p1']).not.toContain('You share good feelings');
-  expect(gameState.messages['p2']).not.toContain('is impressed by your flirtation');
+  expect(gameState.messages['p2']).not.toContain(
+    'is impressed by your flirtation'
+  );
 });
 
 test('mating with spaces in names', () => {

@@ -1,7 +1,4 @@
-const {
-  SlashCommandBuilder,
-  EmbedBuilder,
-} = require('../../libs/command-builders.js');
+const { SlashCommandBuilder } = require('../../libs/command-builders.js');
 
 const text = require('../../libs/textprocess.js');
 const pop = require('../../libs/population.js');
@@ -54,8 +51,19 @@ module.exports = {
   },
 };
 
-function ignoreChildren(gameState, actorName, cName, cName2, cName3, cName4, cName5) {
-  const validation = guardValidation.validateGuardingChange(actorName, gameState);
+function ignoreChildren(
+  gameState,
+  actorName,
+  cName,
+  cName2,
+  cName3,
+  cName4,
+  cName5
+) {
+  const validation = guardValidation.validateGuardingChange(
+    actorName,
+    gameState
+  );
   if (validation.error) {
     text.addMessage(gameState, actorName, validation.error);
     return;

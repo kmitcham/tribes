@@ -1,11 +1,11 @@
 function playerHelpBasic() {
-  let text = "";
+  let text = '';
   text += '###General Commands###\n';
   text +=
     ' babysit <adult child> <target child> a mother can ask her adult child to watch a child\n';
   text +=
     ' children [parent name] shows the ages and food of children, optionally filtered to descendants of specified parent\n';
-  text += ' give <player> <amt> <food|grain|spearhead|basket> <player>\n';
+  text += ' give <food|grain|spearhead|basket> <amt> <player>\n';
   text += ' graveyard list of all deceased members and children\n';
   text +=
     ' inventory <target>  show inventory and character info. No arg means show inventory for entire tribe\n';
@@ -41,8 +41,10 @@ function playerHelpRounds() {
     ' foodcheck examine the food situation for every adult and living child; triggers reproduction round if everyone has enough food\n';
   text += ' feed <amt> <childName | mothername | !all >  [<more childNames>]\n';
   text += '-=Reproduction Commands=-\n';
-  text += ' romance  Open your romance panel. Set who to invite (in priority order) and how to respond to invitations from others. One Save sends both your invite list and your consent/decline choices together.\n';
-  text += '\tUse the "Give up if everyone declines" option in the romance panel when you want to skip reproduction after all invitees decline.\n';
+  text +=
+    ' romance  Open your romance panel. Set who to invite (in priority order) and how to respond to invitations from others. One Save sends both your invite list and your consent/decline choices together.\n';
+  text +=
+    '\tUse the "Give up if everyone declines" option in the romance panel when you want to skip reproduction after all invitees decline.\n';
   text += ' scorechildren  count number of children by parent';
   return text;
 }

@@ -1,17 +1,6 @@
 const { kill } = require('../libs/kill'); // Replace with your actual module name
 console.log = jest.fn();
 
-// Helper function to clear nursing/pregnant references
-function clearNursingPregnant(childName, population) {
-  // This function is not exported in your code, so we need to mock its behavior
-  // We'll assume it removes child references from nursing mothers
-  Object.values(population).forEach((person) => {
-    if (person.nursing && person.nursing.includes(childName)) {
-      person.nursing = person.nursing.filter((name) => name !== childName);
-    }
-  });
-}
-
 describe('kill function', () => {
   let consoleSpy;
 
@@ -142,8 +131,6 @@ describe('kill function', () => {
     // Setup
     const name = 'sarah';
     const message = 'disease';
-    const targetKey = 'sarah';
-
     const person = {
       name: 'sarah',
       age: 28,

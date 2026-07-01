@@ -1,7 +1,6 @@
 // feed.test.js
 const {
   feed,
-  checkFood,
   consumeFood,
   consumeFoodChildren,
   birth,
@@ -38,8 +37,8 @@ describe('feed function', () => {
   test('feed filtered by parent', () => {
     var dummyMessage = {
       author: {
-        message: function (message) {},
-        send: function (message) {},
+        message: function (_message) {},
+        send: function (_message) {},
       },
     };
     var gameState = {
@@ -410,7 +409,7 @@ describe('feed function', () => {
     feed('', player, 2, ['child1', 'child2', 'child3'], gameState);
 
     const response = gameState.messages['tribe'];
-    
+
     // Verify each child is mentioned exactly once in a feed line
     const child1Matches = (response.match(/feeds 2 to Child1/g) || []).length;
     const child2Matches = (response.match(/feeds 2 to Child2/g) || []).length;
@@ -440,7 +439,7 @@ describe('feed function', () => {
     feed('', player, 2, ['!all'], gameState);
 
     const response = gameState.messages['tribe'];
-    
+
     // With exponential accumulation, message would contain:
     // Hungry1 (1x), then Hungry1+Hungry2 (2x), then Hungry1+Hungry2+Hungry3 (3x)
     // So Hungry1 would appear 6 times total
@@ -477,10 +476,12 @@ describe('feed function', () => {
     expect(response).toMatch(/feeds 2 to Child2/);
 
     // Confirm feed lines are not repeated
-    const child1FeedLineCount =
-      (response.match(/TestPlayer feeds 2 to Child1\./g) || []).length;
-    const child2FeedLineCount =
-      (response.match(/TestPlayer feeds 2 to Child2\./g) || []).length;
+    const child1FeedLineCount = (
+      response.match(/TestPlayer feeds 2 to Child1\./g) || []
+    ).length;
+    const child2FeedLineCount = (
+      response.match(/TestPlayer feeds 2 to Child2\./g) || []
+    ).length;
     expect(child1FeedLineCount).toBe(1);
     expect(child2FeedLineCount).toBe(1);
 
@@ -500,8 +501,6 @@ describe('feed function', () => {
 });
 
 // Import necessary dependencies
-const assert = require('assert');
-
 // Mock dependencies
 const mockDice = {
   roll: jest.fn(),
@@ -834,11 +833,11 @@ describe('consumeFood death summary integration', () => {
     expect(response).not.toContain('No children starved!');
 
     // Ensure summary does not repeat the same victim/cause lines.
-    const momStarveCount =
-      (response.match(/Adults starved: Mom\./g) || []).length;
-    const noMilkLineCount =
-      (response.match(/Children died from no-milk: Baby1, Baby2\./g) || [])
-        .length;
+    const momStarveCount = (response.match(/Adults starved: Mom\./g) || [])
+      .length;
+    const noMilkLineCount = (
+      response.match(/Children died from no-milk: Baby1, Baby2\./g) || []
+    ).length;
     expect(momStarveCount).toBe(1);
     expect(noMilkLineCount).toBe(1);
 

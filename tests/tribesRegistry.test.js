@@ -1,5 +1,4 @@
 const fs = require('fs');
-const path = require('path');
 const tribesRegistry = require('../libs/tribesRegistry.js');
 
 jest.mock('fs');
@@ -56,7 +55,7 @@ describe('tribesRegistry.js', () => {
       .mockImplementation(() => {});
     fs.readdirSync.mockReturnValue([]);
 
-    const tribes = tribesRegistry.getTribes();
+    tribesRegistry.getTribes();
     expect(consoleSpy).toHaveBeenCalledWith(
       expect.stringContaining('Error reading tribes registry'),
       expect.any(Object)

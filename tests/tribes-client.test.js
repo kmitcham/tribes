@@ -72,7 +72,7 @@ const mockDocument = {
       }
     );
   },
-  createElement: (tag) => ({
+  createElement: (_tag) => ({
     className: '',
     textContent: '',
     appendChild: jest.fn(),

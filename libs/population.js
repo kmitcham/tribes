@@ -140,12 +140,9 @@ function memberByName(name, gameState) {
           break;
         }
         if (
-          possiblePerson['handle']['username'] ===
-            name.toLowerCase() ||
-          possiblePerson['handle']['displayName'] ===
-            name.toLowerCase() ||
-          possiblePerson['handle']['globalName'] ===
-            name.toLowerCase() ||
+          possiblePerson['handle']['username'] === name.toLowerCase() ||
+          possiblePerson['handle']['displayName'] === name.toLowerCase() ||
+          possiblePerson['handle']['globalName'] === name.toLowerCase() ||
           possiblePerson['handle']['nickname'] === name.toLowerCase()
         ) {
           person = possiblePerson;
@@ -352,7 +349,7 @@ module.exports.history = history;
 function showHistory(playerName, gameState) {
   var player = memberByName(playerName, gameState);
   if (!player) {
-    var player = deadOrBanishedByName(playerName, gameState);
+    player = deadOrBanishedByName(playerName, gameState);
     console.log('getting history for banished player');
     if (player) {
       text.addMessage(
@@ -403,7 +400,6 @@ function addToPopulation(gameState, sourceName, gender, profession, handle) {
     text.addMessage(gameState, sourceName, target + ' is already in the tribe');
     return;
   }
-  const genders = ['male', 'female'];
   if (gender.startsWith('m')) {
     gender = 'male';
   }

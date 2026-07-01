@@ -1,7 +1,4 @@
-const {
-  SlashCommandBuilder,
-  EmbedBuilder,
-} = require('../../libs/command-builders.js');
+const { SlashCommandBuilder } = require('../../libs/command-builders.js');
 const tribeHistory = require('../../libs/tribeHistory.js');
 
 function getYearsBackChoices(gameState) {
@@ -41,7 +38,9 @@ function getHistoryCommandOptions(gameState) {
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('history')
-    .setDescription('Search your history + tribe history by required subject and years back')
+    .setDescription(
+      'Search your history + tribe history by required subject and years back'
+    )
     .addStringOption((option) =>
       option
         .setName('subject')

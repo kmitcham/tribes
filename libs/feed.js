@@ -169,7 +169,7 @@ function feed(unused, player, amount, inputChildList, gameState) {
 module.exports.feed = feed;
 
 // Side effect: if everyone has enough food, and it is foodRound, start reproduction round.
-function checkFood(gameState, bot) {
+function checkFood(gameState, _bot) {
   var message = '';
   const hungryAdults = [];
   const happyAdults = [];
@@ -382,7 +382,10 @@ function consumeFoodChildren(gameState) {
     killlib.kill(perishedChildren[i], 'starvation', gameState);
     console.log('removing child corpse ' + corpse);
   }
-  if (perishedChildren.length == 0 && !gameState._suppressImmediateDeathMessages) {
+  if (
+    perishedChildren.length == 0 &&
+    !gameState._suppressImmediateDeathMessages
+  ) {
     response += 'No children starved!';
   }
   return response;
@@ -395,7 +398,8 @@ function birth(gameState, childName, child, motherMember, birthRoll) {
     birthRoll = motherMember;
     motherMember = child;
     child = childName;
-    childName = motherMember && motherMember.isPregnant ? motherMember.isPregnant : '';
+    childName =
+      motherMember && motherMember.isPregnant ? motherMember.isPregnant : '';
   }
   response +=
     '\t' +

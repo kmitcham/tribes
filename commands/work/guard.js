@@ -1,6 +1,4 @@
-const {
-  SlashCommandBuilder,
-} = require('../../libs/command-builders.js');
+const { SlashCommandBuilder } = require('../../libs/command-builders.js');
 const text = require('../../libs/textprocess.js');
 const pop = require('../../libs/population.js');
 const guardValidation = require('../../libs/guardValidation.js');
@@ -61,7 +59,10 @@ function onCommand(interaction, gameState) {
   var c5Name = interaction.options.getString('child5');
   var c6Name = interaction.options.getString('child6');
 
-  const validation = guardValidation.validateGuardingChange(actorName, gameState);
+  const validation = guardValidation.validateGuardingChange(
+    actorName,
+    gameState
+  );
   if (validation.error) {
     text.addMessage(gameState, actorName, validation.error);
     return;
@@ -124,12 +125,16 @@ function guardChild(actorName, gameState, cName) {
   const child = children[childName];
   if (!child) {
     return 'FAIL Could not find child: ' + childName;
-  } else if (typeof child.age !== 'number' || child.age < 0 || child.age >= 23) {
+  } else if (
+    typeof child.age !== 'number' ||
+    child.age < 0 ||
+    child.age >= 23
+  ) {
     return (
       'FAIL ' +
       childName +
       ' is age ' +
-      (Number(child.age || 0) / 2) +
+      Number(child.age || 0) / 2 +
       ' and does not need guarding'
     );
   } else if (person.guarding && person.guarding.indexOf(childName) != -1) {

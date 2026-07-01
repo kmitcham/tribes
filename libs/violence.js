@@ -54,9 +54,15 @@ function endViolence(gameState, winnerFaction) {
   const topic = gameState.violence;
   let winMessage;
   if (winnerFaction === 'for') {
-    winMessage = 'The FOR faction wins the conflict over "' + topic + '". The demand will be carried out.';
+    winMessage =
+      'The FOR faction wins the conflict over "' +
+      topic +
+      '". The demand will be carried out.';
   } else if (winnerFaction === 'against') {
-    winMessage = 'The AGAINST faction wins the conflict over "' + topic + '". The demand has been denied.';
+    winMessage =
+      'The AGAINST faction wins the conflict over "' +
+      topic +
+      '". The demand has been denied.';
   } else {
     winMessage = 'The conflict over "' + topic + '" ends with no clear winner.';
   }
@@ -82,7 +88,9 @@ function moreFactionViolenceRequired(gameState) {
   const population = gameState['population'];
   const violenceFactions = gameState.violenceFactions || {};
   if (!gameState.violenceFactions) {
-    console.warn('moreFactionViolenceRequired: violenceFactions missing during active violence');
+    console.warn(
+      'moreFactionViolenceRequired: violenceFactions missing during active violence'
+    );
   }
   // dead people are in the graveyard
   for (const playerName in population) {
@@ -381,11 +389,16 @@ function addViolenceDeathMessage(gameState, defenderName, attackerName) {
   if (!defenderName || !attackerName) {
     return;
   }
-  const demandText = gameState && gameState.violence ? gameState.violence : 'the active demand';
+  const demandText =
+    gameState && gameState.violence ? gameState.violence : 'the active demand';
   text.addMessage(
     gameState,
     defenderName,
-    'You were killed by ' + attackerName + ' in violence over "' + demandText + '".'
+    'You were killed by ' +
+      attackerName +
+      ' in violence over "' +
+      demandText +
+      '".'
   );
 }
 
@@ -444,8 +457,7 @@ const resolveSingleAttack = (attacker, defender, roll, gameState) => {
     '+' +
     bonus +
     ']  ';
-  if ('hits' in defender) {
-  } else {
+  if (!('hits' in defender)) {
     if (defender.isInjured) {
       defender.hits = Number(1);
     } else {
@@ -530,14 +542,17 @@ const resolveViolence = (gameState) => {
   if (attackers.length == 0) {
     response =
       'The violence has ended.  Nobody is still willing to attack anyone about ' +
-      gameState.violence + '.';
+      gameState.violence +
+      '.';
     text.addMessage(gameState, 'tribe', response);
     // Determine winner by surviving (non-escaped) faction members
     let forSurvivors = 0;
     let againstSurvivors = 0;
     const violenceFactions = gameState.violenceFactions || {};
     if (!gameState.violenceFactions) {
-      console.warn('resolveViolence: violenceFactions missing during active violence');
+      console.warn(
+        'resolveViolence: violenceFactions missing during active violence'
+      );
     }
     for (const pName in population) {
       const p = population[pName];
@@ -549,7 +564,8 @@ const resolveViolence = (gameState) => {
     }
     let winnerFaction = 'none';
     if (forSurvivors > 0 && againstSurvivors === 0) winnerFaction = 'for';
-    else if (againstSurvivors > 0 && forSurvivors === 0) winnerFaction = 'against';
+    else if (againstSurvivors > 0 && forSurvivors === 0)
+      winnerFaction = 'against';
     endViolence(gameState, winnerFaction);
     return response;
   }

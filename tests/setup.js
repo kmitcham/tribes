@@ -146,13 +146,13 @@ global.window = {
 // If the test explicitly needs real timers (like Puppeteer integration tests),
 // we allow it, otherwise mock them.
 if (!process.env.JEST_USE_REAL_TIMERS) {
-  global.setTimeout = jest.fn((fn, delay) => {
+  global.setTimeout = jest.fn((fn, _delay) => {
     // Execute immediately in tests
     fn();
     return 1;
   });
 
-  global.setInterval = jest.fn((fn, delay) => {
+  global.setInterval = jest.fn((_fn, _delay) => {
     // Don't execute in tests
     return 1;
   });
