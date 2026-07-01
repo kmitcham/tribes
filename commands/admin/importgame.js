@@ -12,7 +12,7 @@ module.exports = {
         .setRequired(true)
     ),
 
-  async execute(interaction, gameState, allGames) {
+  async execute(interaction, _gameState, _allGames) {
     // This command is handled by the websocket interface
     // This file is for Discord compatibility only
     await interaction.reply({

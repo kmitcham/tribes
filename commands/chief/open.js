@@ -1,6 +1,4 @@
-const {
-  SlashCommandBuilder,
-} = require('../../libs/command-builders.js');
+const { SlashCommandBuilder } = require('../../libs/command-builders.js');
 const pop = require('../../libs/population.js');
 const text = require('../../libs/textprocess.js');
 
@@ -8,7 +6,7 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('open')
     .setDescription('Set the tribe so that anyone can join. (Chief only'),
-  async execute(interaction, gameState, bot) {
+  async execute(interaction, gameState, _bot) {
     var actorName = interaction.member.displayName;
     close(actorName, gameState);
   },
@@ -17,11 +15,7 @@ module.exports = {
 function close(actorName, gameState) {
   var player = pop.memberByName(actorName, gameState);
   if (!player || !player.chief) {
-    text.addMessage(
-      gameState,
-      actorName,
-      'open requires chief privileges'
-    );
+    text.addMessage(gameState, actorName, 'open requires chief privileges');
     return;
   }
   if (gameState.ended) {

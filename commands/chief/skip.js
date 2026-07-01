@@ -1,6 +1,4 @@
-const {
-  SlashCommandBuilder,
-} = require('../../libs/command-builders.js');
+const { SlashCommandBuilder } = require('../../libs/command-builders.js');
 const pop = require('../../libs/population.js');
 const text = require('../../libs/textprocess.js');
 
@@ -17,7 +15,7 @@ module.exports = {
         .setRequired(true)
     ),
 
-  async execute(interaction, gameState, bot) {
+  async execute(interaction, gameState, _bot) {
     var actorName = interaction.member.displayName;
     var targetObject = interaction.options.getMember('target');
     var targetName = targetObject.displayName;
@@ -29,11 +27,7 @@ module.exports = {
 function skip(gameState, actorName, targetName) {
   var actor = pop.memberByName(actorName, gameState);
   if (!actor || !actor.chief) {
-    text.addMessage(
-      gameState,
-      actorName,
-      'skip requires chief privileges'
-    );
+    text.addMessage(gameState, actorName, 'skip requires chief privileges');
     return;
   }
   var target = pop.memberByName(targetName, gameState);

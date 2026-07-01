@@ -1,9 +1,6 @@
-const {
-  SlashCommandBuilder,
-  EmbedBuilder,
-} = require('../../libs/command-builders.js');
+const { SlashCommandBuilder } = require('../../libs/command-builders.js');
 
-const { banish, banishAdmin } = require('../../libs/banish.js');
+const { banishAdmin } = require('../../libs/banish.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -21,7 +18,7 @@ module.exports = {
         .setDescription('note about why the person is to be banished')
         .setRequired(false)
     ),
-  async execute(interaction, gameState, bot) {
+  async execute(interaction, gameState, _bot) {
     const targetObject = interaction.options.getMember('target');
     var targetName = targetObject.displayName;
     var sourceName = interaction.member.displayName;

@@ -1,11 +1,7 @@
-const {
-  SlashCommandBuilder,
-  EmbedBuilder,
-} = require('../../libs/command-builders.js');
+const { SlashCommandBuilder } = require('../../libs/command-builders.js');
 
 const dice = require('../../libs/dice.js');
 const chief = require('../../libs/chief.js');
-const referees = require('../../libs/referees.json');
 
 module.exports = {
   data: new SlashCommandBuilder()

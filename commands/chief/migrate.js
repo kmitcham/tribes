@@ -1,7 +1,4 @@
-const {
-  SlashCommandBuilder,
-  EmbedBuilder,
-} = require('../../libs/command-builders.js');
+const { SlashCommandBuilder } = require('../../libs/command-builders.js');
 const migrate = require('../../libs/migrateLib.js');
 const locations = require('../../libs/locations.json');
 const text = require('../../libs/textprocess.js');
@@ -32,7 +29,7 @@ module.exports = {
           'Check this box to actually migrate; otherwise, just evaluate the consequences of migration.'
         )
     ),
-  async execute(interaction, gameState, bot) {
+  async execute(interaction, gameState, _bot) {
     var sourceName = interaction.member.displayName;
     var destination = interaction.options.getString('destination');
     var force = interaction.options.getBoolean('go');

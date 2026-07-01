@@ -1,7 +1,4 @@
-const {
-  SlashCommandBuilder,
-  EmbedBuilder,
-} = require('../../libs/command-builders.js');
+const { SlashCommandBuilder } = require('../../libs/command-builders.js');
 const pop = require('../../libs/population.js');
 const text = require('../../libs/textprocess.js');
 const violence = require('../../libs/violence.js');
@@ -19,7 +16,7 @@ module.exports = {
         .setRequired(true)
     ),
 
-  async execute(interaction, gameState, bot) {
+  async execute(interaction, gameState, _bot) {
     var actorName = interaction.member.displayName;
     var targetObject = interaction.options.getMember('target');
     var targetName = targetObject.displayName;
@@ -45,11 +42,7 @@ function attack(gameState, actorName, targetName) {
     String(player.name || '').toLowerCase() ===
       String(targetPlayer.name || '').toLowerCase()
   ) {
-    text.addMessage(
-      gameState,
-      actorName,
-      'You cannot attack yourself.'
-    );
+    text.addMessage(gameState, actorName, 'You cannot attack yourself.');
     return;
   }
   if (targetPlayer.escaped) {

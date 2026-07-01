@@ -1,6 +1,4 @@
-const {
-  SlashCommandBuilder,
-} = require('../../libs/command-builders.js');
+const { SlashCommandBuilder } = require('../../libs/command-builders.js');
 const pop = require('../../libs/population.js');
 const text = require('../../libs/textprocess.js');
 
@@ -21,7 +19,9 @@ module.exports = {
     .addStringOption((option) =>
       option
         .setName('profession')
-        .setDescription('one of (hunter, gatherer, crafter) or specialize later')
+        .setDescription(
+          'one of (hunter, gatherer, crafter) or specialize later'
+        )
         .addChoices(
           { name: 'specialize later', value: 'none' },
           { name: 'hunter', value: 'hunter' },
@@ -34,7 +34,11 @@ module.exports = {
     var nickName = interaction.nickName; // set by tribesBot in main handling, since it needed the client
     const gender = interaction.options.getString('gender');
     let profession = interaction.options.getString('profession');
-    if (profession === 'none' || profession === 'later' || profession === 'delay') {
+    if (
+      profession === 'none' ||
+      profession === 'later' ||
+      profession === 'delay'
+    ) {
       profession = null;
     }
     join(nickName, gameState, gender, profession, interaction.user);

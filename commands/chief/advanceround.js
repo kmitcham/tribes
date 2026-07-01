@@ -16,7 +16,11 @@ module.exports = {
     var actor = pop.memberByName(actorName, gameState);
 
     if (!actor || !actor.chief) {
-      text.addMessage(gameState, actorName, 'advanceround requires chief privileges');
+      text.addMessage(
+        gameState,
+        actorName,
+        'advanceround requires chief privileges'
+      );
       return;
     }
 

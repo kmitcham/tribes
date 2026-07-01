@@ -1,7 +1,4 @@
-const {
-  SlashCommandBuilder,
-  EmbedBuilder,
-} = require('../../libs/command-builders.js');
+const { SlashCommandBuilder } = require('../../libs/command-builders.js');
 const pop = require('../../libs/population.js');
 const violencelib = require('../../libs/violence.js');
 const text = require('../../libs/textprocess.js');
@@ -16,7 +13,7 @@ module.exports = {
         .setDescription('Write the demand as the arguement')
         .setRequired(false)
     ),
-  async execute(interaction, gameState, bot) {
+  async execute(interaction, gameState, _bot) {
     var actorName = interaction.member.displayName;
     var demandText = interaction.options.getString('demand');
 

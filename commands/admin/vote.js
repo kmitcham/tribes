@@ -1,7 +1,4 @@
-const {
-  SlashCommandBuilder,
-  EmbedBuilder,
-} = require('../../libs/command-builders.js');
+const { SlashCommandBuilder } = require('../../libs/command-builders.js');
 const pop = require('../../libs/population.js');
 
 module.exports = {
@@ -14,7 +11,7 @@ module.exports = {
         .setDescription('Which tribe member to vote for')
         .setRequired(true)
     ),
-  async execute(interaction, gameState, bot) {
+  async execute(interaction, gameState, _bot) {
     var actorName = interaction.member.displayName;
     var candidateName = interaction.options.getMember('candidate').displayName;
     pop.vote(gameState, actorName, candidateName);

@@ -1,7 +1,4 @@
-const {
-  SlashCommandBuilder,
-  EmbedBuilder,
-} = require('../../libs/command-builders.js');
+const { SlashCommandBuilder } = require('../../libs/command-builders.js');
 const chief = require('../../libs/chief.js');
 
 module.exports = {
@@ -22,7 +19,7 @@ module.exports = {
         )
         .setRequired(false)
     ),
-  async execute(interaction, gameState, bot) {
+  async execute(interaction, gameState, _bot) {
     var actorName = interaction.member.displayName;
     var lawText = interaction.options.getString('law');
     var number = interaction.options.getInteger('number');

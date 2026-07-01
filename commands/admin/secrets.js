@@ -1,7 +1,4 @@
-const {
-  SlashCommandBuilder,
-  EmbedBuilder,
-} = require('../../libs/command-builders.js');
+const { SlashCommandBuilder } = require('../../libs/command-builders.js');
 
 const worklib = require('../../libs/work.js');
 
@@ -17,7 +14,7 @@ module.exports = {
         .setDescription('You will train others')
         .setRequired(true)
     ),
-  async execute(interaction, gameState, bot) {
+  async execute(interaction, gameState, _bot) {
     var actorName = interaction.member.displayName;
     var willTrain = interaction.options.getBoolean('willtrain');
     worklib.setSecrets(gameState, actorName, willTrain);
