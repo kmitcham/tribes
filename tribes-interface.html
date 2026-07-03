@@ -1268,7 +1268,7 @@
             display: none;
             justify-content: center;
             align-items: center;
-            z-index: 1000;
+            z-index: 2000;
         }
 
         .modal-overlay.active {
@@ -1789,6 +1789,60 @@
     </div>
 
     <script>
+        window.TribesStorage = {
+            getItem(key) {
+                try {
+                    return localStorage.getItem(key);
+                } catch (_error) {
+                    return null;
+                }
+            },
+
+            setItem(key, value) {
+                try {
+                    localStorage.setItem(key, value);
+                    return true;
+                } catch (_error) {
+                    return false;
+                }
+            },
+
+            removeItem(key) {
+                try {
+                    localStorage.removeItem(key);
+                    return true;
+                } catch (_error) {
+                    return false;
+                }
+            },
+
+            getSession() {
+                return {
+                    token: this.getItem('tribesSessionToken'),
+                    playerName: this.getItem('tribesPlayerName')
+                };
+            },
+
+            setSession(token, playerName) {
+                const tokenSaved = this.setItem('tribesSessionToken', token);
+                const playerSaved = this.setItem('tribesPlayerName', playerName);
+                return tokenSaved && playerSaved;
+            },
+
+            clearSession() {
+                this.removeItem('tribesSessionToken');
+                this.removeItem('tribesPlayerName');
+            },
+
+            getMessageHistoryKey(tribe, player) {
+                return `tribesMessages_${tribe || 'default'}_${player || 'anonymous'}`;
+            },
+
+            getStartStampKey(tribe) {
+                return `tribesStartStamp_${tribe || 'default'}`;
+            }
+        };
+
         class TribesClient {
             constructor() {
                 this.ws = null;
@@ -1821,14 +1875,14 @@
             storeSession(token, playerName) {
                 this.currentSessionToken = token;
                 this.currentPlayerName = playerName;
-                localStorage.setItem('tribesSessionToken', token);
-                localStorage.setItem('tribesPlayerName', playerName);
+                window.TribesStorage.setSession(token, playerName);
                 console.log('Session stored:', playerName);
             }
             
             restoreSession() {
-                const token = localStorage.getItem('tribesSessionToken');
-                const playerName = localStorage.getItem('tribesPlayerName');
+                const session = window.TribesStorage.getSession();
+                const token = session.token;
+                const playerName = session.playerName;
                 
                 if (token && playerName) {
                     this.currentSessionToken = token;
@@ -1849,8 +1903,7 @@
             clearSession() {
                 this.currentSessionToken = null;
                 this.currentPlayerName = null;
-                localStorage.removeItem('tribesSessionToken');
-                localStorage.removeItem('tribesPlayerName');
+                window.TribesStorage.clearSession();
             }
             
             authenticateWithSession() {
@@ -4822,7 +4875,7 @@
             getMessageHistoryKey() {
                 const tribe = document.getElementById('tribeSelect').value || 'default';
                 const player = document.getElementById('playerName').value || 'anonymous';
-                return `tribesMessages_${tribe}_${player}`;
+                return window.TribesStorage.getMessageHistoryKey(tribe, player);
             }
 
             storeMessage(messageData) {
@@ -4831,7 +4884,7 @@
                     let messages = [];
                     
                     try {
-                        const existingData = localStorage.getItem(key);
+                        const existingData = window.TribesStorage.getItem(key);
                         if (existingData) {
                             messages = JSON.parse(existingData);
                             if (!Array.isArray(messages)) messages = [];
@@ -4854,11 +4907,11 @@
                         messages = messages.slice(-200);
                     }
                     
-                    localStorage.setItem(key, JSON.stringify(messages));
+                    window.TribesStorage.setItem(key, JSON.stringify(messages));
                 } catch (error) {
                     console.warn('Failed to store message history:', error);
                     try {
-                        localStorage.setItem(this.getMessageHistoryKey(), '[]');
+                        window.TribesStorage.setItem(this.getMessageHistoryKey(), '[]');
                     } catch (clearError) {
                         console.warn('Failed to clear corrupted message history:', clearError);
                     }
@@ -4868,7 +4921,7 @@
             loadMessageHistory() {
                 try {
                     const key = this.getMessageHistoryKey();
-                    const messagesJson = localStorage.getItem(key);
+                    const messagesJson = window.TribesStorage.getItem(key);
                     
                     if (!messagesJson) return;
                     
@@ -4878,7 +4931,7 @@
                         if (!Array.isArray(messages)) return;
                     } catch (parseError) {
                         console.warn('Corrupted message history found, clearing it:', parseError.message);
-                        localStorage.setItem(key, '[]');
+                        window.TribesStorage.setItem(key, '[]');
                         return;
                     }
                     
@@ -4918,7 +4971,7 @@
 
             clearMessageHistory() {
                 const key = this.getMessageHistoryKey();
-                localStorage.removeItem(key);
+                window.TribesStorage.removeItem(key);
                 
                 const container = document.getElementById('messagesContainer');
                 container.innerHTML = '';
@@ -4929,7 +4982,7 @@
             getCombatMessages() {
                 try {
                     const key = this.getMessageHistoryKey();
-                    const messagesJson = localStorage.getItem(key);
+                    const messagesJson = window.TribesStorage.getItem(key);
                     
                     if (!messagesJson) return [];
                     
@@ -6143,12 +6196,12 @@
 
                 if (gameState.startStamp) {
                     const tribe = document.getElementById('tribeSelect').value || 'default';
-                    const startStampKey = `tribesStartStamp_${tribe}`;
-                    const savedStamp = localStorage.getItem(startStampKey);
+                    const startStampKey = window.TribesStorage.getStartStampKey(tribe);
+                    const savedStamp = window.TribesStorage.getItem(startStampKey);
                     if (savedStamp && savedStamp !== gameState.startStamp) {
                         this.clearMessageHistory();
                     }
-                    localStorage.setItem(startStampKey, gameState.startStamp);
+                    window.TribesStorage.setItem(startStampKey, gameState.startStamp);
                 }
 
                 if (!roundStatus || !seasonStatus || !locationStatus) return;

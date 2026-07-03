@@ -12,6 +12,25 @@ const help = require('./libs/help.js');
 const guardlib = require('./libs/guardCode.js');
 const jsonUtils = require('./libs/jsonUtils.js');
 const logger = require('./libs/logger.js');
+const {
+  createMockInteraction: createMockInteractionImpl,
+} = require('./src/server/interaction-factory.js');
+const gameStateStore = require('./src/server/game-state-store.js');
+const connectionStore = require('./src/server/connection-store.js');
+const sessionStore = require('./src/server/session-store.js');
+const pendingMessageStore = require('./src/server/pending-message-store.js');
+const authRateLimitStore = require('./src/server/auth-rate-limit-store.js');
+const userAuthService = require('./src/server/user-auth-service.js');
+const messageDeliveryService = require('./src/server/message-delivery-service.js');
+const adminRefereeService = require('./src/server/admin-referee-service.js');
+const requestRateLimiter = require('./src/server/request-rate-limiter.js');
+const playerRequestHandlers = require('./src/server/player-request-handlers.js');
+const gameDataShapers = require('./src/server/game-data-shapers.js');
+const tribeRefreshService = require('./src/server/tribe-refresh-service.js');
+const requestFlowService = require('./src/server/request-flow-service.js');
+const sessionRequestService = require('./src/server/session-request-service.js');
+const commandFlowService = require('./src/server/command-flow-service.js');
+const websocketMessageRouterService = require('./src/server/websocket-message-router-service.js');
 const PORT = process.env.PORT || 8000;
 const referees = require('./libs/referees.json');
 
@@ -51,22 +70,19 @@ function logWithTimestamp(message, ...args) {
 }
 
 let wss;
-let allGames = {};
 let usersDict = {};
 
 // Track connected clients and their player names
-let connectedClients = new Map(); // Map of playerName -> Set of WebSocket connections
-let tribeConnections = new Map(); // Map of tribeName -> Set of WebSocket connections
-let pendingMessages = new Map(); // Map of playerName::tribeName -> Array<{ type, message, timestamp }>
-const MAX_PENDING_MESSAGES_PER_PLAYER_TRIBE = 200;
+const connectedClients = connectionStore.getConnectedClients(); // Map of playerName -> Set of WebSocket connections
+const tribeConnections = connectionStore.getTribeConnections(); // Map of tribeName -> Set of WebSocket connections
 
 // Rate limiting for authentication attempts
-let loginAttempts = new Map(); // Map of identifier -> { count, lastAttempt, lockoutUntil }
+const loginAttempts = authRateLimitStore.getLoginAttempts(); // Map of identifier -> { count, lastAttempt, lockoutUntil }
 
 // Session management
-let activeSessions = new Map(); // token -> { playerName, createdAt, lastActivity, ipAddress }
-let playerSessions = new Map(); // playerName -> Set of tokens
-const SESSION_TIMEOUT = 24 * 60 * 60 * 1000; // 24 hours
+const activeSessions = sessionStore.getActiveSessions(); // token -> { playerName, createdAt, lastActivity, ipAddress }
+const playerSessions = sessionStore.getPlayerSessions(); // playerName -> Set of tokens
+const { SESSION_TIMEOUT } = sessionStore;
 
 // Load users data
 try {
@@ -87,95 +103,32 @@ const commands = new Map();
 
 // Session management functions
 function generateSessionToken() {
-  return crypto.randomBytes(32).toString('hex');
+  return sessionStore.generateSessionToken(crypto);
 }
 
 function createSession(playerName, ipAddress = 'unknown') {
-  const token = generateSessionToken();
-  const session = {
+  return sessionStore.createSession(
     playerName,
-    createdAt: Date.now(),
-    lastActivity: Date.now(),
     ipAddress,
-  };
-
-  activeSessions.set(token, session);
-
-  if (!playerSessions.has(playerName)) {
-    playerSessions.set(playerName, new Set());
-  }
-  playerSessions.get(playerName).add(token);
-
-  logWithTimestamp(
-    `[SESSION] Created session for ${playerName} from ${ipAddress}`
+    crypto,
+    logWithTimestamp
   );
-  return token;
 }
 
 function validateSession(token) {
-  const session = activeSessions.get(token);
-  if (!session) {
-    return null;
-  }
-
-  // Check if session has expired
-  if (Date.now() - session.lastActivity > SESSION_TIMEOUT) {
-    destroySession(token);
-    return null;
-  }
-
-  // Update last activity
-  session.lastActivity = Date.now();
-  return session;
+  return sessionStore.validateSession(token, logWithTimestamp);
 }
 
 function destroySession(token) {
-  const session = activeSessions.get(token);
-  if (session) {
-    const playerName = session.playerName;
-    activeSessions.delete(token);
-
-    if (playerSessions.has(playerName)) {
-      playerSessions.get(playerName).delete(token);
-      if (playerSessions.get(playerName).size === 0) {
-        playerSessions.delete(playerName);
-      }
-    }
-
-    logWithTimestamp(`[SESSION] Destroyed session for ${playerName}`);
-  }
+  sessionStore.destroySession(token, logWithTimestamp);
 }
 
 function destroyAllPlayerSessions(playerName) {
-  const playerTokens = playerSessions.get(playerName);
-  if (playerTokens) {
-    for (const token of playerTokens) {
-      activeSessions.delete(token);
-    }
-    playerSessions.delete(playerName);
-    logWithTimestamp(`[SESSION] Destroyed all sessions for ${playerName}`);
-  }
+  sessionStore.destroyAllPlayerSessions(playerName, logWithTimestamp);
 }
 
 function cleanupExpiredSessions() {
-  const now = Date.now();
-  const expiredTokens = [];
-
-  for (const [token, session] of activeSessions) {
-    if (now - session.lastActivity > SESSION_TIMEOUT) {
-      expiredTokens.push(token);
-    }
-  }
-
-  for (const token of expiredTokens) {
-    destroySession(token);
-  }
-
-  if (expiredTokens.length > 0) {
-    logWithTimestamp(
-      `[SESSION] Cleaned up ${expiredTokens.length} expired sessions`
-    );
-  }
+  sessionStore.cleanupExpiredSessions(logWithTimestamp);
 }
 
 function getClientIP(ws, req) {
@@ -211,125 +164,44 @@ function samePlayerName(a, b) {
   );
 }
 
-function pendingMessageKey(playerName, tribeName) {
-  return `${normalizePlayerName(playerName)}::${normalizePlayerName(tribeName || 'bug')}`;
-}
-
 function hasOpenConnectionInTribe(playerName, tribeName) {
-  if (!playerName) return false;
-
-  let connections = connectedClients.get(playerName);
-  if (!connections) {
-    const matchedName = Array.from(connectedClients.keys()).find((existing) =>
-      samePlayerName(existing, playerName)
-    );
-    if (matchedName) {
-      connections = connectedClients.get(matchedName);
-    }
-  }
-
-  if (!connections || connections.size === 0) {
-    return false;
-  }
-
-  for (const connection of connections) {
-    if (
-      connection.readyState === WebSocket.OPEN &&
-      normalizePlayerName(connection.currentTribe) ===
-        normalizePlayerName(tribeName || 'bug')
-    ) {
-      return true;
-    }
-  }
-
-  return false;
+  return connectionStore.hasOpenConnectionInTribe(
+    playerName,
+    tribeName,
+    normalizePlayerName,
+    samePlayerName,
+    WebSocket.OPEN
+  );
 }
 
 function getPlayerConnectedTribes(playerName) {
-  if (!playerName) return [];
-
-  let connections = connectedClients.get(playerName);
-  if (!connections) {
-    const matchedName = Array.from(connectedClients.keys()).find((existing) =>
-      samePlayerName(existing, playerName)
-    );
-    if (matchedName) {
-      connections = connectedClients.get(matchedName);
-    }
-  }
-
-  if (!connections || connections.size === 0) {
-    return [];
-  }
-
-  const tribes = new Set();
-  for (const connection of connections) {
-    if (connection.readyState !== WebSocket.OPEN) {
-      continue;
-    }
-    const tribe = normalizePlayerName(connection.currentTribe || 'bug');
-    if (tribe) {
-      tribes.add(tribe);
-    }
-  }
-
-  return Array.from(tribes).sort((a, b) => a.localeCompare(b));
+  return connectionStore.getPlayerConnectedTribes(
+    playerName,
+    normalizePlayerName,
+    samePlayerName,
+    WebSocket.OPEN
+  );
 }
 
 function queuePendingMessage(playerName, tribeName, payload) {
-  if (!playerName || !payload || !payload.type || !payload.message) {
-    return;
-  }
-
-  const key = pendingMessageKey(playerName, tribeName);
-  const queue = pendingMessages.get(key) || [];
-  queue.push({
-    type: payload.type,
-    message: payload.message,
-    timestamp: Date.now(),
-  });
-
-  const overflowCount = queue.length - MAX_PENDING_MESSAGES_PER_PLAYER_TRIBE;
-  if (overflowCount > 0) {
-    queue.splice(0, overflowCount);
-    logWithTimestamp(
-      '[ERROR] Dropped pending messages due to per-player tribe queue limit',
-      `player=${normalizePlayerName(playerName)}`,
-      `tribe=${normalizePlayerName(tribeName || 'bug')}`,
-      `dropped=${overflowCount}`,
-      `limit=${MAX_PENDING_MESSAGES_PER_PLAYER_TRIBE}`
-    );
-  }
-
-  pendingMessages.set(key, queue);
+  pendingMessageStore.queuePendingMessage(
+    playerName,
+    tribeName,
+    payload,
+    normalizePlayerName,
+    logWithTimestamp
+  );
 }
 
 function replayPendingMessages(ws, playerName, tribeName, clientId) {
-  if (!ws || ws.readyState !== WebSocket.OPEN || !playerName) {
-    return;
-  }
-
-  const key = pendingMessageKey(playerName, tribeName);
-  const queue = pendingMessages.get(key);
-  if (!queue || queue.length === 0) {
-    return;
-  }
-
-  for (const pending of queue) {
-    ws.send(
-      JSON.stringify({
-        type: pending.type,
-        message: pending.message,
-        replay: true,
-        replayedAt: Date.now(),
-        clientId,
-      })
-    );
-  }
-
-  pendingMessages.delete(key);
-  logWithTimestamp(
-    `[REPLAY] Delivered ${queue.length} queued messages to ${playerName} for tribe ${tribeName || 'bug'}`
+  pendingMessageStore.replayPendingMessages(
+    ws,
+    playerName,
+    tribeName,
+    clientId,
+    normalizePlayerName,
+    logWithTimestamp,
+    WebSocket.OPEN
   );
 }
 
@@ -371,101 +243,7 @@ function loadCommands() {
 
 // Create mock interaction object for websocket compatibility
 function createMockInteraction(data, ws, gameState) {
-  const mockMember = {
-    displayName: data.playerName || 'Unknown',
-  };
-
-  const mockUser = {
-    send: (message) => {
-      ws.send(
-        JSON.stringify({
-          type: 'privateMessage',
-          message: message,
-          clientId: data.clientId,
-        })
-      );
-    },
-    displayName: data.playerName || 'Unknown',
-  };
-
-  const mockOptions = {
-    // Handle different parameter types
-    getString: (name) => {
-      const value = data.parameters && data.parameters[name];
-      if (Array.isArray(value)) {
-        // For empty arrays, return null to indicate no data provided
-        if (value.length === 0) {
-          return null;
-        }
-        return value.join(','); // Convert arrays to comma-separated strings for compatibility
-      }
-      return value;
-    },
-    getInteger: (name) => data.parameters && parseInt(data.parameters[name]),
-    getBoolean: (name) => {
-      const value = data.parameters && data.parameters[name];
-      if (typeof value === 'boolean') return value;
-      if (typeof value === 'string') {
-        return value.toLowerCase() === 'true' || value === '1';
-      }
-      return false;
-    },
-    getUser: (name) => {
-      const paramValue = data.parameters && data.parameters[name];
-      if (!paramValue) return null;
-
-      // Create a mock user object with the parameter value as display name
-      return {
-        displayName: paramValue,
-        id: `user_${paramValue}`,
-        send: (message) => {
-          // Mock send function - could log or handle differently if needed
-          logWithTimestamp(`[MOCK] Message to ${paramValue}: ${message}`);
-        },
-      };
-    },
-    getMember: (name) => {
-      const paramValue = data.parameters && data.parameters[name];
-      if (!paramValue) return null;
-
-      // Create a mock member object with the parameter value as display name
-      return {
-        displayName: paramValue,
-        id: `member_${paramValue}`,
-        user: {
-          displayName: paramValue,
-          id: `user_${paramValue}`,
-        },
-      };
-    },
-  };
-
-  return {
-    member: mockMember,
-    user: mockUser,
-    options: mockOptions,
-    reply: (response) => {
-      let content = response.content || response;
-      if (response.embeds && response.embeds.length > 0) {
-        content = response.embeds[0].description || content;
-      }
-
-      ws.send(
-        JSON.stringify({
-          type: 'commandResponse',
-          command: data.command,
-          success: true,
-          message: content,
-          clientId: data.clientId,
-        })
-      );
-    },
-    isRepliable: () => true,
-    replied: false,
-    channelId: `${gameState.name}_channel`,
-    commandName: data.command,
-    nickName: data.playerName || 'Unknown',
-  };
+  return createMockInteractionImpl(data, ws, gameState, logWithTimestamp);
 }
 
 function startServer() {
@@ -610,6 +388,31 @@ function startServer() {
       ws.on('message', async (message) => {
         let data;
         try {
+          // Store client IP for session management and request-rate limiting.
+          if (!ws.clientIP) {
+            ws.clientIP = clientIP;
+          }
+
+          const rateLimitResult = requestRateLimiter.checkRequestRateLimit(
+            ws.clientIP
+          );
+          if (!rateLimitResult.allowed) {
+            logWithTimestamp(
+              '[RATE_LIMIT] Dropped websocket message due to request limit',
+              `ip=${ws.clientIP}`,
+              `retryAfterMs=${rateLimitResult.retryAfterMs}`
+            );
+            ws.send(
+              JSON.stringify({
+                type: 'error',
+                message: 'Rate limit exceeded. Please slow down.',
+                code: 'RATE_LIMITED',
+                retryAfterMs: rateLimitResult.retryAfterMs,
+              })
+            );
+            return;
+          }
+
           data = JSON.parse(message.toString());
           logWithTimestamp(
             'Received:',
@@ -618,11 +421,6 @@ function startServer() {
             `from ${data.playerName || ws.playerName || 'unknown'}`,
             `tribe ${data.tribe || 'bug'}`
           );
-
-          // Store client IP for session management
-          if (!ws.clientIP) {
-            ws.clientIP = clientIP;
-          }
 
           await handleWebSocketMessage(ws, data);
         } catch (error) {
@@ -640,36 +438,13 @@ function startServer() {
       ws.on('error', (error) => {
         logWithTimestamp('WebSocket error:', error.message);
         // Cleanup connections on error
-        if (ws.currentTribe && tribeConnections.has(ws.currentTribe)) {
-          tribeConnections.get(ws.currentTribe).delete(ws);
-          if (tribeConnections.get(ws.currentTribe).size === 0) {
-            tribeConnections.delete(ws.currentTribe);
-          }
-        }
-        if (ws.currentPlayer && connectedClients.has(ws.currentPlayer)) {
-          connectedClients.get(ws.currentPlayer).delete(ws);
-          if (connectedClients.get(ws.currentPlayer).size === 0) {
-            connectedClients.delete(ws.currentPlayer);
-          }
-        }
+        connectionStore.cleanupSocketConnections(ws);
       });
 
       ws.on('close', () => {
         logWithTimestamp(`Client disconnected: ${ws.playerName || 'unknown'}`);
-        // Remove from tribe connections
-        if (ws.currentTribe && tribeConnections.has(ws.currentTribe)) {
-          tribeConnections.get(ws.currentTribe).delete(ws);
-          if (tribeConnections.get(ws.currentTribe).size === 0) {
-            tribeConnections.delete(ws.currentTribe);
-          }
-        }
-        // Remove from player connections
-        if (ws.currentPlayer && connectedClients.has(ws.currentPlayer)) {
-          connectedClients.get(ws.currentPlayer).delete(ws);
-          if (connectedClients.get(ws.currentPlayer).size === 0) {
-            connectedClients.delete(ws.currentPlayer);
-          }
-        }
+        connectionStore.cleanupSocketConnections(ws);
+        requestRateLimiter.cleanupRateLimitWindows();
         // Note: We don't destroy sessions on disconnect - they persist for reconnection
       });
     });
@@ -680,1474 +455,252 @@ function startServer() {
 }
 
 async function handleWebSocketMessage(ws, data) {
-  let tribe = data.tribe || 'bug';
-  let gameState = await getGameState(tribe);
-
-  // If this socket switches tribes, detach from the previous tribe set first
-  // so it does not continue receiving messages from multiple tribes.
-  if (
-    ws.currentTribe &&
-    ws.currentTribe !== tribe &&
-    tribeConnections.has(ws.currentTribe)
-  ) {
-    const priorTribeConnections = tribeConnections.get(ws.currentTribe);
-    priorTribeConnections.delete(ws);
-    if (priorTribeConnections.size === 0) {
-      tribeConnections.delete(ws.currentTribe);
-    }
-  }
-
-  // Normalize to canonical stored casing when a known user logs in with different capitalization.
-  if (data.playerName) {
-    const canonicalPlayerName = findStoredUserName(data.playerName);
-    if (canonicalPlayerName) {
-      data.playerName = canonicalPlayerName;
-    }
-  }
-
-  // Track this client's tribe connection
-  if (!tribeConnections.has(tribe)) {
-    tribeConnections.set(tribe, new Set());
-  }
-  tribeConnections.get(tribe).add(ws);
-  ws.currentTribe = tribe; // Store tribe on the websocket for cleanup
-
-  // Track this client's player name if provided
-  if (data.playerName) {
-    // If this socket was previously associated with a different player key,
-    // remove it first to avoid private-message cross-delivery.
-    if (
-      ws.currentPlayer &&
-      ws.currentPlayer !== data.playerName &&
-      connectedClients.has(ws.currentPlayer)
-    ) {
-      connectedClients.get(ws.currentPlayer).delete(ws);
-      if (connectedClients.get(ws.currentPlayer).size === 0) {
-        connectedClients.delete(ws.currentPlayer);
-      }
-    }
-
-    if (!connectedClients.has(data.playerName)) {
-      connectedClients.set(data.playerName, new Set());
-    }
-    connectedClients.get(data.playerName).add(ws);
-    ws.currentPlayer = data.playerName; // Store player name on websocket for cleanup
-  }
-  switch (data.type) {
-    case 'authenticateSession':
-      handleSessionAuthentication(ws, data);
-      break;
-
-    case 'manageTribe':
-      handleManageTribe(ws, data);
-      break;
-
-    case 'manageUsers':
-      await handleManageUsers(ws, data);
-      break;
-
-    case 'logout':
-      handleLogout(ws, data);
-      break;
-
-    case 'infoRequest':
-      handleInfoRequest(ws, data, gameState);
-      break;
-
-    case 'registerRequest':
-      await handleRegisterRequest(ws, data, gameState);
-      break;
-
-    case 'command':
-      await handleCommandRequest(ws, data, gameState);
-      break;
-
-    case 'romanceRequest':
-      await handleRomanceRequest(ws, data, gameState);
-      break;
-
-    case 'listCommands':
-      handleListCommands(ws, data, gameState);
-      break;
-
-    case 'helpRequest':
-      handleHelpRequest(ws, data);
-      break;
-
-    case 'exportGame':
-      await handleExportGame(ws, data);
-      break;
-
-    case 'importGame':
-      await handleImportGame(ws, data, gameState);
-      break;
-
-    default:
-      logWithTimestamp(
-        '[WARN] Unknown request type',
-        data.type,
-        `from ${data.playerName || ws.playerName || 'unknown'}`,
-        `tribe ${data.tribe || ws.currentTribe || 'unknown'}`,
-        `clientId ${data.clientId || 'none'}`
-      );
-
-      ws.send(
-        JSON.stringify({
-          type: 'error',
-          message: 'Unknown request type: ' + data.type,
-          clientId: data.clientId,
-        })
-      );
-  }
+  await websocketMessageRouterService.handleWebSocketMessage(ws, data, {
+    getGameState,
+    findStoredUserName,
+    connectionStore,
+    logWithTimestamp,
+    handlers: WEBSOCKET_MESSAGE_HANDLERS,
+  });
 }
 
+const WEBSOCKET_MESSAGE_HANDLERS = {
+  authenticateSession: async ({ ws, data }) =>
+    handleSessionAuthentication(ws, data),
+  manageTribe: async ({ ws, data }) => handleManageTribe(ws, data),
+  manageUsers: async ({ ws, data }) => handleManageUsers(ws, data),
+  logout: async ({ ws, data }) => handleLogout(ws, data),
+  infoRequest: async ({ ws, data, gameState }) =>
+    handleInfoRequest(ws, data, gameState),
+  registerRequest: async ({ ws, data, gameState }) =>
+    handleRegisterRequest(ws, data, gameState),
+  command: async ({ ws, data, gameState }) =>
+    handleCommandRequest(ws, data, gameState),
+  romanceRequest: async ({ ws, data, gameState }) =>
+    handleRomanceRequest(ws, data, gameState),
+  listCommands: async ({ ws, data, gameState }) =>
+    handleListCommands(ws, data, gameState),
+  helpRequest: async ({ ws, data }) => handleHelpRequest(ws, data),
+  exportGame: async ({ ws, data }) => handleExportGame(ws, data),
+  importGame: async ({ ws, data, gameState }) =>
+    handleImportGame(ws, data, gameState),
+};
+
 async function getGameState(tribeName) {
-  if (allGames[tribeName]) {
-    return allGames[tribeName];
-  }
-
-  let gameState = savelib.loadTribe(tribeName);
-  if (!gameState) {
-    gameState = savelib.initGame(tribeName);
-  }
-
-  allGames[tribeName] = gameState;
-  return gameState;
+  return gameStateStore.getGameState(tribeName, savelib);
 }
 
 function handleSessionAuthentication(ws, data) {
-  const { token } = data;
-
-  if (!token) {
-    ws.send(
-      JSON.stringify({
-        type: 'sessionAuthResponse',
-        success: false,
-        message: 'Session token required',
-        clientId: data.clientId,
-      })
-    );
-    return;
-  }
-
-  const session = validateSession(token);
-  if (!session) {
-    ws.send(
-      JSON.stringify({
-        type: 'sessionAuthResponse',
-        success: false,
-        message: 'Invalid or expired session token',
-        clientId: data.clientId,
-      })
-    );
-    return;
-  }
-
-  // Associate this WebSocket with the session
-  ws.sessionToken = token;
-  ws.playerName = session.playerName;
-  ws.currentPlayer = session.playerName;
-
-  // Track this client's player connections
-  if (!connectedClients.has(session.playerName)) {
-    connectedClients.set(session.playerName, new Set());
-  }
-  connectedClients.get(session.playerName).add(ws);
-
-  logWithTimestamp(
-    `[SESSION] ${session.playerName} authenticated with existing session`
-  );
-
-  ws.send(
-    JSON.stringify({
-      type: 'sessionAuthResponse',
-      success: true,
-      playerName: session.playerName,
-      message: 'Session authenticated successfully',
-      clientId: data.clientId,
-    })
-  );
-
-  replayPendingMessages(
-    ws,
-    session.playerName,
-    ws.currentTribe || data.tribe || 'bug',
-    data.clientId
-  );
+  sessionRequestService.handleSessionAuthentication(ws, data, {
+    validateSession,
+    trackPlayerConnection: connectionStore.trackPlayerConnection,
+    logWithTimestamp,
+    replayPendingMessages,
+  });
 }
 
 function handleLogout(ws, data) {
-  const { logoutAll = false } = data;
-
-  if (ws.sessionToken) {
-    if (logoutAll && ws.playerName) {
-      // Destroy all sessions for this player
-      destroyAllPlayerSessions(ws.playerName);
-
-      // Disconnect all WebSockets for this player
-      const playerConnections = connectedClients.get(ws.playerName);
-      if (playerConnections) {
-        for (const connection of playerConnections) {
-          if (connection !== ws) {
-            connection.send(
-              JSON.stringify({
-                type: 'forceLogout',
-                message: 'Logged out from another device',
-              })
-            );
-            connection.close();
-          }
-        }
-      }
-    } else {
-      // Destroy only this session
-      destroySession(ws.sessionToken);
-    }
-
-    ws.sessionToken = null;
-    ws.playerName = null;
-    ws.currentPlayer = null;
-  }
-
-  ws.send(
-    JSON.stringify({
-      type: 'logoutResponse',
-      success: true,
-      message: logoutAll
-        ? 'Logged out from all devices'
-        : 'Logged out successfully',
-      clientId: data.clientId,
-    })
-  );
+  sessionRequestService.handleLogout(ws, data, {
+    destroySession,
+    destroyAllPlayerSessions,
+    connectedClients,
+  });
 }
 
 function handleInfoRequest(ws, data, gameState) {
-  const selection = data.selection;
-  let messageData = null;
-  const playerName = data.playerName || ws.currentPlayer || '';
-  const playerTribes = getPlayerConnectedTribes(playerName);
-
-  switch (selection) {
-    case 'population':
-      guardlib.normalizeGuardAssignments(
-        gameState.population,
-        gameState.children
-      );
-      const cleanPop = removeClunkyKeys(gameState.population);
-      messageData = {
-        type: 'infoRequest',
-        label: 'population',
-        content: cleanPop,
-      };
-      break;
-    case 'graveyard':
-      messageData = {
-        type: 'infoRequest',
-        label: 'graveyard',
-        content: removeClunkyKeys(gameState.graveyard),
-      };
-      break;
-    case 'children':
-      refreshChildGuardians(gameState.children, gameState.population);
-      messageData = {
-        type: 'infoRequest',
-        label: 'children',
-        content: removeFatherReferences(gameState.children),
-      };
-      break;
-
-    case 'status':
-      const statusMessage = util.gameStateMessage(gameState);
-      messageData = {
-        type: 'infoRequest',
-        label: 'status',
-        content: statusMessage,
-        gameState: {
-          round: gameState.round || 'work',
-          workRound: gameState.workRound,
-          foodRound: gameState.foodRound,
-          reproductionRound: gameState.reproductionRound,
-          matingComplete: gameState.matingComplete === true,
-          seasonCounter: gameState.seasonCounter,
-          currentLocationName: gameState.currentLocationName,
-          year: Math.floor(gameState.seasonCounter / 2),
-          startStamp: gameState.startStamp,
-          demand: gameState.demand,
-          violence: gameState.violence,
-          combatRounds: Number.isFinite(gameState.violenceRounds)
-            ? gameState.violenceRounds
-            : 0,
-          playerTribeCount: playerTribes.length,
-          playerTribes: playerTribes,
-        },
-      };
-      break;
-
-    case 'romance':
-      const playerName = data.playerName;
-      const userData = gameState.population && gameState.population[playerName];
-
-      let conList = [];
-      let decList = [];
-      if (userData?.consentDict) {
-        for (const [n, r] of Object.entries(userData.consentDict)) {
-          if (r === 'consent') conList.push(n);
-          if (r === 'decline') decList.push(n);
-        }
-      } else {
-        conList = userData?.consentList || [];
-        decList = userData?.declineList || [];
-      }
-
-      let romanceLists = {
-        inviteList: userData?.inviteList || [],
-        consentList: conList,
-        declineList: decList,
-        consentDict: userData?.consentDict || {},
-      };
-      messageData = {
-        type: 'infoRequest',
-        label: 'romance',
-        content: romanceLists,
-      };
-      break;
-
-    default:
-      messageData = {
-        type: 'infoRequest',
-        label: 'error',
-        content: 'Invalid infoRequest: ' + selection,
-      };
-  }
-
-  ws.send(JSON.stringify(messageData));
+  playerRequestHandlers.handleInfoRequest(ws, data, gameState, {
+    util,
+    guardlib,
+    getPlayerConnectedTribes,
+    removeClunkyKeys,
+    removeFatherReferences,
+    refreshChildGuardians,
+  });
 }
 
 async function handleCommandRequest(ws, data, gameState) {
-  const commandName = data.command;
-  const command = commands.get(commandName);
-
-  if (!command) {
-    ws.send(
-      JSON.stringify({
-        type: 'commandResponse',
-        command: commandName,
-        success: false,
-        message: `Command '${commandName}' not found`,
-        clientId: data.clientId,
-      })
-    );
-    return;
-  }
-
-  // Validate user if required
-  try {
-    if (!(await validateUser(data))) {
-      ws.send(
-        JSON.stringify({
-          type: 'commandResponse',
-          command: commandName,
-          success: false,
-          message: 'Invalid user credentials',
-          clientId: data.clientId,
-        })
-      );
-      return;
-    }
-  } catch (error) {
-    ws.send(
-      JSON.stringify({
-        type: 'commandResponse',
-        command: commandName,
-        success: false,
-        message: error.message,
-        clientId: data.clientId,
-      })
-    );
-    return;
-  }
-
-  gameState = prepareGameStateForJoin(commandName, data, gameState);
-
-  replayPendingMessages(
-    ws,
-    data.playerName,
-    data.tribe || 'bug',
-    data.clientId
-  );
-
-  try {
-    // Create mock interaction object
-    const interaction = createMockInteraction(data, ws, gameState);
-
-    // Clear messages before command execution
-    gameState.messages = {};
-
-    // Execute the command
-    await command.execute(interaction, gameState, null);
-
-    // Send any game messages
-    await sendGameMessages(ws, gameState, data);
-
-    // Save game state if needed
-    if (gameState.saveRequired) {
-      savelib.saveTribe(gameState);
-      gameState.saveRequired = false;
-
-      // Refresh game data for all tribe members after state changes
-      await refreshTribeGameData(gameState, data.tribe || 'bug');
-
-      // Check if commands need refreshing (e.g., after chief change)
-      if (gameState.commandsNeedRefresh) {
-        await refreshTribeCommandLists(gameState, data.tribe || 'bug');
-        delete gameState.commandsNeedRefresh;
-      }
-    }
-
-    if (gameState.archiveRequired) {
-      const tribeName = gameState.name;
-      const gameEnded = gameState.ended;
-      await savelib.archiveTribe(gameState);
-      gameState.archiveRequired = false;
-      // After archiving an ended game, the main file is cleared. Replace in-memory
-      // state with a fresh game so the next join can start a new instance.
-      if (gameEnded) {
-        allGames[tribeName] = savelib.initGame(tribeName);
-      }
-    }
-  } catch (error) {
-    console.error(`Error executing command ${commandName}:`, error);
-    ws.send(
-      JSON.stringify({
-        type: 'commandResponse',
-        command: commandName,
-        success: false,
-        message: 'Command execution failed: ' + error.message,
-        clientId: data.clientId,
-      })
-    );
-  }
+  await commandFlowService.handleCommandRequest(ws, data, gameState, {
+    commands,
+    validateUser,
+    prepareGameStateForJoin,
+    replayPendingMessages,
+    createMockInteraction,
+    sendGameMessages,
+    savelib,
+    refreshTribeGameData,
+    refreshTribeCommandLists,
+    gameStateStore,
+  });
 }
 
 function prepareGameStateForJoin(commandName, data, gameState) {
-  if (commandName !== 'join' || !gameState || !gameState.ended) {
-    return gameState;
-  }
-
-  const tribeName = data.tribe || gameState.name || 'bug';
-  const freshGameState = savelib.initGame(tribeName);
-  allGames[tribeName] = freshGameState;
-
-  logWithTimestamp(
-    `[RESET] Started a new game for tribe ${tribeName} because join was requested after game end`
+  return gameStateStore.prepareGameStateForJoin(
+    commandName,
+    data,
+    gameState,
+    savelib,
+    logWithTimestamp
   );
-
-  return freshGameState;
 }
 
 async function refreshTribeCommandLists(gameState, tribeName) {
-  const tribeMembers = tribeConnections.get(tribeName);
-  if (!tribeMembers || tribeMembers.size === 0) {
-    return; // No one online to refresh
-  }
-
-  logWithTimestamp(
-    `Refreshing command lists for ${tribeMembers.size} members of ${tribeName} tribe`
-  );
-
-  // Send updated command lists to all tribe members
-  for (const memberWs of tribeMembers) {
-    if (memberWs.readyState === WebSocket.OPEN && memberWs.currentPlayer) {
-      try {
-        // Create a mock data object for handleListCommands
-        const mockData = {
-          playerName: memberWs.currentPlayer,
-          clientId: memberWs.clientId || 'refresh',
-        };
-
-        // Call handleListCommands to generate and send the updated command list
-        handleListCommands(memberWs, mockData, gameState);
-      } catch (error) {
-        console.error(
-          `Error refreshing commands for ${memberWs.currentPlayer}:`,
-          error
-        );
-      }
-    }
-  }
+  await tribeRefreshService.refreshTribeCommandLists(gameState, tribeName, {
+    tribeConnections,
+    logWithTimestamp,
+    openState: WebSocket.OPEN,
+    handleListCommands,
+  });
 }
 
 async function refreshTribeGameData(gameState, tribeName) {
-  const tribeMembers = tribeConnections.get(tribeName);
-  if (!tribeMembers || tribeMembers.size === 0) {
-    return; // No one online to refresh
-  }
-
-  logWithTimestamp(
-    `Refreshing game data for ${tribeMembers.size} members of ${tribeName} tribe`
-  );
-
-  // Prepare data packages
-  const populationData = {
-    type: 'infoRequest',
-    label: 'population',
-    content: removeClunkyKeys(gameState.population),
-  };
-
-  const childrenData = {
-    type: 'infoRequest',
-    label: 'children',
-    content: removeFatherReferences(
-      refreshChildGuardians(gameState.children, gameState.population)
-    ),
-  };
-
-  const graveyardData = {
-    type: 'infoRequest',
-    label: 'graveyard',
-    content: removeClunkyKeys(gameState.graveyard),
-  };
-
-  // Send to all tribe members
-  for (const memberWs of tribeMembers) {
-    if (memberWs.readyState === 1) {
-      // WebSocket.OPEN
-      try {
-        const statusData = {
-          type: 'infoRequest',
-          label: 'status',
-          content: util.gameStateMessage(gameState),
-          gameState: {
-            round: gameState.round || 'work',
-            workRound: gameState.workRound,
-            foodRound: gameState.foodRound,
-            reproductionRound: gameState.reproductionRound,
-            matingComplete: gameState.matingComplete === true,
-            seasonCounter: gameState.seasonCounter,
-            currentLocationName: gameState.currentLocationName,
-            year: Math.floor(gameState.seasonCounter / 2),
-            demand: gameState.demand,
-            violence: gameState.violence,
-            combatRounds: Number.isFinite(gameState.violenceRounds)
-              ? gameState.violenceRounds
-              : 0,
-            playerTribeCount: memberWs.currentPlayer
-              ? getPlayerConnectedTribes(memberWs.currentPlayer).length
-              : 0,
-            playerTribes: memberWs.currentPlayer
-              ? getPlayerConnectedTribes(memberWs.currentPlayer)
-              : [],
-          },
-        };
-
-        memberWs.send(JSON.stringify(populationData));
-        memberWs.send(JSON.stringify(childrenData));
-        memberWs.send(JSON.stringify(graveyardData));
-        memberWs.send(JSON.stringify(statusData));
-      } catch (error) {
-        console.error('Error sending refresh data to tribe member:', error);
-      }
-    }
-  }
+  await tribeRefreshService.refreshTribeGameData(gameState, tribeName, {
+    tribeConnections,
+    logWithTimestamp,
+    removeClunkyKeys,
+    removeFatherReferences,
+    refreshChildGuardians,
+    util,
+    getPlayerConnectedTribes,
+    openState: WebSocket.OPEN,
+  });
 }
 
 async function sendGameMessages(ws, gameState, data) {
-  if (!gameState.messages) return;
-
-  const tribe = data.tribe || 'bug';
-  const tribeMessageContent = gameState.messages.tribe;
-  if (tribeMessageContent) {
-    delete gameState.messages.tribe;
-  }
-
-  // Send private messages (resolve by playerName and by population key so we don't miss due to name/key mismatch)
-  const playerName = data.playerName;
-  const playerPopulationKey =
-    pop.getPopulationKey && pop.getPopulationKey(playerName, gameState);
-  const playerMessage =
-    gameState.messages[playerName] ||
-    (playerPopulationKey && gameState.messages[playerPopulationKey]);
-  if (playerMessage) {
-    ws.send(
-      JSON.stringify({
-        type: 'privateMessage',
-        message: playerMessage,
-        clientId: data.clientId,
-      })
-    );
-    delete gameState.messages[playerName];
-    if (playerPopulationKey) delete gameState.messages[playerPopulationKey];
-  }
-
-  // Send messages to other connected players (resolve recipient so population key vs member.name both work)
-  for (const [recipient, message] of Object.entries(gameState.messages)) {
-    let recipientConnections = connectedClients.get(recipient);
-    if (!recipientConnections || recipientConnections.size === 0) {
-      const populationKey =
-        pop.getPopulationKey && pop.getPopulationKey(recipient, gameState);
-      if (populationKey)
-        recipientConnections = connectedClients.get(populationKey);
-    }
-    if (!recipientConnections || recipientConnections.size === 0) {
-      const member = pop.memberByName(recipient, gameState);
-      if (member && member.name !== recipient) {
-        recipientConnections = connectedClients.get(member.name);
-      }
-    }
-    let deliveredToAnyConnection = false;
-    if (recipientConnections && recipientConnections.size > 0) {
-      for (const recipientWs of recipientConnections) {
-        const sameTribeConnection =
-          normalizePlayerName(recipientWs.currentTribe || 'bug') ===
-          normalizePlayerName(tribe || 'bug');
-
-        if (recipientWs.readyState === 1 && sameTribeConnection) {
-          try {
-            recipientWs.send(
-              JSON.stringify({
-                type: 'privateMessage',
-                message: message,
-                clientId: data.clientId,
-              })
-            );
-            deliveredToAnyConnection = true;
-          } catch (error) {
-            console.error(`Error sending message to ${recipient}:`, error);
-          }
-        }
-      }
-    } else {
-      logWithTimestamp(`Message for offline player ${recipient}: ${message}`);
-    }
-
-    if (!deliveredToAnyConnection) {
-      queuePendingMessage(recipient, tribe, {
-        type: 'privateMessage',
-        message,
-      });
-    }
-  }
-
-  // Send tribe-wide messages to ALL players in this tribe after private messages
-  if (tribeMessageContent) {
-    const tribeMembers = tribeConnections.get(tribe);
-    if (tribeMembers && tribeMembers.size > 0) {
-      const tribeMessage = {
-        type: 'tribeMessage',
-        message: tribeMessageContent,
-        clientId: data.clientId,
-      };
-
-      // Send to all connected players in this tribe
-      for (const tribeWs of tribeMembers) {
-        if (tribeWs.readyState === 1) {
-          // WebSocket.OPEN
-          try {
-            tribeWs.send(JSON.stringify(tribeMessage));
-          } catch (error) {
-            console.error('Error sending tribe message:', error);
-          }
-        }
-      }
-    }
-
-    // Replay path: if a player is offline for this tribe, queue tribe-wide messages.
-    if (gameState.population) {
-      for (const tribePlayer of Object.keys(gameState.population)) {
-        if (!hasOpenConnectionInTribe(tribePlayer, tribe)) {
-          queuePendingMessage(tribePlayer, tribe, {
-            type: 'tribeMessage',
-            message: tribeMessageContent,
-          });
-        }
-      }
-    }
-  }
-
-  // Clear remaining messages
-  gameState.messages = {};
+  await messageDeliveryService.sendGameMessages(ws, gameState, data, {
+    connectedClients,
+    tribeConnections,
+    pop,
+    normalizePlayerName,
+    hasOpenConnectionInTribe,
+    queuePendingMessage,
+    logWithTimestamp,
+    openState: WebSocket.OPEN,
+  });
 }
 function handleHelpRequest(ws, data) {
-  const helpType = data.helpType || 'basic';
-  let helpContent = '';
-
-  switch (helpType) {
-    case 'basic':
-      helpContent = help.playerHelpBasic();
-      break;
-    case 'rounds':
-      helpContent = help.playerHelpRounds();
-      break;
-    case 'conflict':
-      helpContent = help.playerHelpConflict();
-      break;
-    case 'chief':
-      helpContent = help.chiefHelp();
-      break;
-    case 'overview':
-      helpContent = `Welcome to the Tribes Game!
-
-Each player takes the role of a member of a Stone Age tribe trying to survive and multiply in the world. Tribe members can be hunters, gatherers, or crafters. They can travel among the veldt, marsh, hills and forest environments. They can try to reproduce, to guard children from dangers, and to keep everyone fed.
-
-The four physical resources in the game are food, grain, baskets, and spearheads. Food and grain are consumed to prevent starvation; grain is harder to obtain, but is not vulnerable to destruction from bad luck. Baskets double the effectiveness of gathering. Spearheads give a substantial bonus to hunting.
-
-Adult tribe members need to consume 4 food or grain each season to avoid starvation. Children, including those not yet born, need to be given 2 food or grain each season until they reach 12 years old. Mothers with two or more children under 2 years old need 6 food or grain each season.
-
-Children are produced when a tribe member invites a tribe member of the opposite gender to mate, the invitee consents, and there is a successful dice roll. A player can invite multiple people until one of them consents. They can receive consent to only one invitation per season. Consenting to a mating does not change how many invitations a player can make that season.
-
-All tribes commands begin with clicking them in the interface or typing them manually. To see a list of commands, with some explanations of what they do, you can check the Commands panel on the left.
-
-Players can use this interface to send commands to the bot and receive messages about actions they can take.`;
-      break;
-    default:
-      helpContent = help.playerHelpBasic();
-      break;
-  }
-
-  ws.send(
-    JSON.stringify({
-      type: 'helpContent',
-      helpType: helpType,
-      content: helpContent,
-    })
-  );
+  playerRequestHandlers.handleHelpRequest(ws, data, { help });
 }
 function handleListCommands(ws, data, gameState) {
-  const commandList = {};
-  const playerName = data.playerName;
-
-  // Check if the current player is chief
-  let isChief = false;
-
-  if (playerName && gameState && gameState.population) {
-    const pop = require('./libs/population.js');
-    const player = pop.memberByName(playerName, gameState);
-    isChief = player && player.chief;
-  }
-
-  // Check if the current player is a referee
-  const isRef = playerName && referees.includes(playerName);
-  // Sort commands alphabetically by name
-  const sortedCommands = Array.from(commands.entries()).sort(([a], [b]) =>
-    a.localeCompare(b)
-  );
-
-  for (const [name, command] of sortedCommands) {
-    // Filter out chief commands if the player is not chief
-    if (command.category === 'chief' && !isChief) {
-      continue;
-    }
-
-    let commandOptions =
-      typeof command.getOptions === 'function'
-        ? command.getOptions(gameState)
-        : command.data.options || [];
-
-    // Filter out force options if the player is not a referee
-    if (!isRef) {
-      commandOptions = commandOptions.filter(
-        (option) => option.name !== 'force'
-      );
-    }
-
-    commandList[name] = {
-      name: name,
-      description: command.data.description,
-      category: command.category,
-      options: commandOptions,
-    };
-  }
-
-  ws.send(
-    JSON.stringify({
-      type: 'commandList',
-      commands: commandList,
-      isReferee: isRef,
-      isChief: isChief,
-      tribes: tribesRegistry.getTribes(),
-      clientId: data.clientId,
-    })
-  );
+  playerRequestHandlers.handleListCommands(ws, data, gameState, {
+    commands,
+    pop,
+    referees,
+    tribesRegistry,
+  });
 }
 
 async function handleRegisterRequest(ws, data, gameState) {
-  try {
-    // Add client IP for session creation
-    data.clientIP = ws.clientIP;
-
-    const result = await registerUser(data);
-
-    // If registration/login successful, associate WebSocket with session
-    if (result.label === 'success' && result.sessionToken) {
-      data.playerName = result.playerName;
-      ws.sessionToken = result.sessionToken;
-      ws.playerName = result.playerName;
-      ws.currentPlayer = result.playerName;
-
-      // Track this client's player connections
-      if (!connectedClients.has(result.playerName)) {
-        connectedClients.set(result.playerName, new Set());
-      }
-      connectedClients.get(result.playerName).add(ws);
-    }
-
-    ws.send(JSON.stringify(result));
-
-    // Send any secret/private data after successful registration
-    if (result.label === 'success') {
-      replayPendingMessages(
-        ws,
-        result.playerName,
-        ws.currentTribe || data.tribe || 'bug',
-        data.clientId
-      );
-      sendSecrets(ws, data, gameState);
-    }
-  } catch (error) {
-    console.error('Failed to register user:', error);
-    ws.send(
-      JSON.stringify({
-        type: 'registration',
-        label: 'error',
-        content: 'Registration failed: ' + error.message,
-      })
-    );
-  }
+  await requestFlowService.handleRegisterRequest(ws, data, gameState, {
+    registerUser,
+    connectedClients,
+    replayPendingMessages,
+    sendSecrets,
+  });
 }
 
 async function handleRomanceRequest(ws, data, gameState) {
-  try {
-    if (await validateUser(data)) {
-      const romanceUpdate = processRomance(data, gameState);
-      gameState.saveRequired = true;
-      ws.send(JSON.stringify(romanceUpdate));
-    } else {
-      ws.send(
-        JSON.stringify({
-          type: 'error',
-          message: 'Invalid user credentials for romance request',
-          clientId: data.clientId,
-        })
-      );
-    }
-  } catch (error) {
-    ws.send(
-      JSON.stringify({
-        type: 'error',
-        message: error.message,
-        clientId: data.clientId,
-      })
-    );
-  }
+  await requestFlowService.handleRomanceRequest(ws, data, gameState, {
+    validateUser,
+    processRomance,
+  });
 }
 
 function sendSecrets(ws, data, gameState) {
-  const romanceUpdate = processRomance(data, gameState);
-  ws.send(JSON.stringify(romanceUpdate));
+  playerRequestHandlers.sendSecrets(ws, data, gameState, {
+    processRomance,
+  });
 }
 
 function processRomance(data, gameState) {
-  const name = data.playerName || data.name;
-  const inviteList = data.inviteList;
-  const consentDict = data.consentDict; // Client sends dictionary directly
-
-  // Legacy support for incoming lists
-  const declineList = data.declineList;
-  const consentList = data.consentList;
-
-  const userData = gameState.population[name];
-  if (userData) {
-    if (inviteList) {
-      userData.inviteList = inviteList;
-    }
-
-    if (!userData.consentDict) userData.consentDict = {};
-
-    if (consentDict) {
-      userData.consentDict = consentDict;
-    } else if (consentList || declineList) {
-      if (consentList) {
-        for (const n of consentList) userData.consentDict[n] = 'consent';
-      }
-      if (declineList) {
-        for (const n of declineList) userData.consentDict[n] = 'decline';
-      }
-    }
-
-    // Cleanup old arrays just in case, relying purely on dict
-    delete userData.consentList;
-    delete userData.declineList;
-
-    let outCon = [];
-    let outDec = [];
-    if (userData.consentDict) {
-      for (const [n, r] of Object.entries(userData.consentDict)) {
-        if (r === 'consent') outCon.push(n);
-        if (r === 'decline') outDec.push(n);
-      }
-    }
-
-    return {
-      type: 'infoRequest',
-      label: 'romance',
-      content: {
-        inviteList: userData.inviteList || [],
-        consentList: outCon,
-        declineList: outDec,
-        consentDict: userData.consentDict || {},
-      },
-    };
-  } else {
-    return {
-      type: 'error',
-      label: 'romance',
-      content: 'No such user in tribe',
-    };
-  }
+  return playerRequestHandlers.processRomance(data, gameState);
 }
 
 async function handleExportGame(ws, data) {
-  try {
-    // Validate user authentication
-    if (!(await validateUser(data))) {
-      ws.send(
-        JSON.stringify({
-          type: 'exportGameResponse',
-          success: false,
-          message: 'Authentication failed',
-          clientId: data.clientId,
-        })
-      );
-      return;
-    }
-
-    // Check if user is a referee
-    const isRef = data.playerName && referees.includes(data.playerName);
-    if (!isRef) {
-      ws.send(
-        JSON.stringify({
-          type: 'exportGameResponse',
-          success: false,
-          message: 'Access denied: Referee privileges required',
-          clientId: data.clientId,
-        })
-      );
-      logWithTimestamp(
-        `[SECURITY] Non-referee ${data.playerName} attempted to export game data`
-      );
-      return;
-    }
-
-    const tribeName = data.tribeName || data.tribe;
-    if (!tribeName) {
-      ws.send(
-        JSON.stringify({
-          type: 'exportGameResponse',
-          success: false,
-          message: 'Tribe name is required',
-          clientId: data.clientId,
-        })
-      );
-      return;
-    }
-
-    // Get the complete game state
-    const gameState = await getGameState(tribeName);
-    if (!gameState) {
-      ws.send(
-        JSON.stringify({
-          type: 'exportGameResponse',
-          success: false,
-          message: `No game data found for tribe: ${tribeName}`,
-          clientId: data.clientId,
-        })
-      );
-      return;
-    }
-
-    // Create export data with metadata
-    const exportData = {
-      metadata: {
-        tribeName: tribeName,
-        exportedBy: data.playerName,
-        exportedAt: new Date().toISOString(),
-        exportVersion: '1.0',
-        serverVersion: process.env.npm_package_version || 'dev',
-      },
-      gameData: gameState,
-    };
-
-    logWithTimestamp(
-      `[REFEREE] ${data.playerName} exported game data for tribe: ${tribeName}`
-    );
-
-    ws.send(
-      JSON.stringify({
-        type: 'exportGameResponse',
-        success: true,
-        tribeName: tribeName,
-        exportData: exportData,
-        filename: `${tribeName}-export-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.json`,
-        clientId: data.clientId,
-      })
-    );
-  } catch (error) {
-    console.error('Error exporting game data:', error);
-    ws.send(
-      JSON.stringify({
-        type: 'exportGameResponse',
-        success: false,
-        message: 'Export failed: ' + error.message,
-        clientId: data.clientId,
-      })
-    );
-  }
+  await adminRefereeService.handleExportGame(ws, data, {
+    validateUser,
+    referees,
+    getGameState,
+    logWithTimestamp,
+    serverVersion: process.env.npm_package_version || 'dev',
+  });
 }
 
 async function handleImportGame(ws, data, currentGameState) {
-  try {
-    // Validate user authentication
-    if (!(await validateUser(data))) {
-      ws.send(
-        JSON.stringify({
-          type: 'importGameResponse',
-          success: false,
-          message: 'Authentication failed',
-          clientId: data.clientId,
-        })
-      );
-      return;
-    }
-
-    // Check if user is a referee
-    const isRef = data.playerName && referees.includes(data.playerName);
-    if (!isRef) {
-      ws.send(
-        JSON.stringify({
-          type: 'importGameResponse',
-          success: false,
-          message: 'Access denied: Referee privileges required',
-          clientId: data.clientId,
-        })
-      );
-      logWithTimestamp(
-        `[SECURITY] Non-referee ${data.playerName} attempted to import game data`
-      );
-      return;
-    }
-
-    const tribeName = data.tribeName || data.tribe;
-    const importData = data.importData;
-
-    if (!tribeName) {
-      ws.send(
-        JSON.stringify({
-          type: 'importGameResponse',
-          success: false,
-          message: 'Tribe name is required',
-          clientId: data.clientId,
-        })
-      );
-      return;
-    }
-
-    if (!importData) {
-      ws.send(
-        JSON.stringify({
-          type: 'importGameResponse',
-          success: false,
-          message: 'Import data is required',
-          clientId: data.clientId,
-        })
-      );
-      return;
-    }
-
-    // Validate import data structure
-    let gameDataToImport;
-    if (importData.gameData) {
-      // New format with metadata
-      gameDataToImport = importData.gameData;
-      logWithTimestamp(
-        `[REFEREE] Importing with metadata - exported by: ${importData.metadata?.exportedBy}, exported at: ${importData.metadata?.exportedAt}`
-      );
-    } else if (importData.name || importData.population) {
-      // Legacy direct game state format
-      gameDataToImport = importData;
-      logWithTimestamp(`[REFEREE] Importing legacy format game data`);
-    } else {
-      ws.send(
-        JSON.stringify({
-          type: 'importGameResponse',
-          success: false,
-          message: 'Invalid import data format',
-          clientId: data.clientId,
-        })
-      );
-      return;
-    }
-
-    // Validate essential game data properties
-    if (
-      !gameDataToImport.population ||
-      typeof gameDataToImport.population !== 'object'
-    ) {
-      ws.send(
-        JSON.stringify({
-          type: 'importGameResponse',
-          success: false,
-          message: 'Invalid game data: missing or invalid population data',
-          clientId: data.clientId,
-        })
-      );
-      return;
-    }
-
-    // Create backup before import
-    const backupData = {
-      metadata: {
-        tribeName: tribeName,
-        backedUpBy: data.playerName,
-        backedUpAt: new Date().toISOString(),
-        reason: 'Pre-import backup',
-      },
-      gameData: currentGameState,
-    };
-
-    // Ensure archive directory exists
-    const archiveDir = path.join(__dirname, 'archive', tribeName);
-    if (!fs.existsSync(archiveDir)) {
-      fs.mkdirSync(archiveDir, { recursive: true });
-    }
-
-    // Save backup
-    const backupFilename = `${tribeName}-pre-import-backup-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.json`;
-    const backupPath = path.join(archiveDir, backupFilename);
-    actuallyWriteToDisk(backupPath, backupData);
-
-    // Set the tribe name in the imported data
-    gameDataToImport.name = tribeName;
-
-    // Update in-memory game state
-    allGames[tribeName] = gameDataToImport;
-
-    // Save to disk
-    savelib.saveTribe(gameDataToImport);
-
-    logWithTimestamp(
-      `[REFEREE] ${data.playerName} successfully imported game data for tribe: ${tribeName}`
-    );
-    logWithTimestamp(`[REFEREE] Backup saved as: ${backupFilename}`);
-
-    ws.send(
-      JSON.stringify({
-        type: 'importGameResponse',
-        success: true,
-        tribeName: tribeName,
-        message: `Game data imported successfully. Backup saved as: ${backupFilename}`,
-        backupFilename: backupFilename,
-        clientId: data.clientId,
-      })
-    );
-
-    // Refresh game data for all connected clients of this tribe
-    await refreshTribeGameData(gameDataToImport, tribeName);
-    await refreshTribeCommandLists(gameDataToImport, tribeName);
-  } catch (error) {
-    console.error('Error importing game data:', error);
-    ws.send(
-      JSON.stringify({
-        type: 'importGameResponse',
-        success: false,
-        message: 'Import failed: ' + error.message,
-        clientId: data.clientId,
-      })
-    );
-  }
+  await adminRefereeService.handleImportGame(ws, data, currentGameState, {
+    validateUser,
+    referees,
+    logWithTimestamp,
+    path,
+    fs,
+    baseDir: __dirname,
+    writeJson: actuallyWriteToDisk,
+    gameStateStore,
+    savelib,
+    refreshTribeGameData,
+    refreshTribeCommandLists,
+  });
 }
 
 async function validateUser(userData) {
-  const inputName = normalizePlayerName(userData.playerName);
-  const storedName = findStoredUserName(inputName);
-
-  // Check if user has a valid session token
-  if (userData.sessionToken) {
-    const session = validateSession(userData.sessionToken);
-    if (session && samePlayerName(session.playerName, inputName)) {
-      // Update last connected time for session authentication
-      const sessionStoredName = findStoredUserName(session.playerName);
-      const user = sessionStoredName ? usersDict[sessionStoredName] : null;
-      if (user) {
-        user.lastConnected = new Date().toISOString();
-        actuallyWriteToDisk('./tribe-data/users.json', usersDict);
-      }
-      userData.playerName = session.playerName;
-      return true;
-    }
-    // If session is invalid, fall through to password authentication
-  }
-
-  if (!inputName || inputName.length === 0) {
-    return false;
-  }
-
-  // Check rate limiting
-  const identifier = inputName.toLowerCase();
-  const attemptData = loginAttempts.get(identifier) || {
-    count: 0,
-    lastAttempt: 0,
-    lockoutUntil: 0,
-  };
-
-  if (Date.now() < attemptData.lockoutUntil) {
-    throw new Error(`Account locked. Try again later.`);
-  }
-
-  if (!storedName) {
-    return false; // User doesn't exist
-  }
-
-  userData.playerName = storedName;
-  const user = usersDict[storedName];
-  if (!user) {
-    return false; // User doesn't exist
-  }
-
-  // AUTH POLICY (intentional): name-only accounts are valid.
-  // Do not require a password when the stored account has an empty password.
-  // This preserves long-standing gameplay behavior for legacy tribes.
-  if (!user.password || user.password === '') {
-    user.lastConnected = new Date().toISOString();
-    actuallyWriteToDisk('./tribe-data/users.json', usersDict);
-    clearFailedAttempts(identifier);
-    return true;
-  }
-
-  // If user has password set, require password authentication
-  if (!userData.password) {
-    recordFailedAttempt(identifier);
-    return false;
-  }
-
-  try {
-    const isValid = await verifyPassword(userData.password, user.password);
-    if (isValid) {
-      clearFailedAttempts(identifier);
-      // Update last connected time for successful authentication
-      user.lastConnected = new Date().toISOString();
-      actuallyWriteToDisk('./tribe-data/users.json', usersDict);
-      return true;
-    } else {
-      recordFailedAttempt(identifier);
-      return false;
-    }
-  } catch (_error) {
-    recordFailedAttempt(identifier);
-    return false;
-  }
+  return userAuthService.validateUser(userData, {
+    normalizePlayerName,
+    findStoredUserName,
+    validateSession,
+    samePlayerName,
+    usersDict,
+    writeUsers: () => actuallyWriteToDisk('./tribe-data/users.json', usersDict),
+    clearFailedAttempts,
+    recordFailedAttempt,
+    verifyPasswordFn: verifyPassword,
+    loginAttempts,
+  });
 }
 
 async function registerUser(userData) {
-  const name = normalizePlayerName(userData.playerName || userData.name);
-  const email = userData.email;
-  let password = userData.password;
-  const clientIP = userData.clientIP || 'unknown';
-
-  if (!name || name.length === 0) {
-    throw new Error('Player name is required');
-  }
-
-  const storedName = findStoredUserName(name);
-
-  if (storedName) {
-    // User exists - this is a login attempt
-    const user = usersDict[storedName];
-
-    // AUTH POLICY (intentional): existing no-password users may login with name alone.
-    // If a password is provided, treat this as an upgrade and set it.
-    if (!user.password || user.password === '') {
-      if (password && password.trim() !== '') {
-        validatePassword(password);
-        user.password = await hashPassword(password);
-      }
-      user.lastConnected = new Date().toISOString();
-      actuallyWriteToDisk('./tribe-data/users.json', usersDict);
-
-      const token = createSession(storedName, clientIP);
-      return {
-        type: 'registration',
-        label: 'success',
-        content: 'success',
-        sessionToken: token,
-        playerName: storedName,
-      };
-    }
-
-    // If existing user has password, require authentication
-    if (!password) {
-      throw new Error('Password required for existing player');
-    }
-
-    if (!(await verifyPassword(password, user.password))) {
-      throw new Error('Invalid password for existing player');
-    }
-
-    // Update last connected time for successful authentication
-    user.lastConnected = new Date().toISOString();
-    actuallyWriteToDisk('./tribe-data/users.json', usersDict);
-
-    const token = createSession(storedName, clientIP);
-    return {
-      type: 'registration',
-      label: 'success',
-      content: 'success',
-      sessionToken: token,
-      playerName: storedName,
-    };
-  } else {
-    // New user registration
-    if (!password || password.trim() === '') {
-      // AUTH POLICY (intentional): new user registration can be name-only.
-      // Keep empty password as a first-class supported state.
-      password = '';
-    } else {
-      // Validate password strength and hash when provided
-      validatePassword(password);
-      password = await hashPassword(password);
-    }
-
-    usersDict[name] = {
-      name: name,
-      email: email || '',
-      password: password,
-      registeredAt: new Date().toISOString(),
-      lastConnected: new Date().toISOString(),
-    };
-
-    // Ensure tribe-data directory exists before saving
-    if (!fs.existsSync('./tribe-data')) {
-      fs.mkdirSync('./tribe-data', { recursive: true });
-    }
-
-    actuallyWriteToDisk('./tribe-data/users.json', usersDict);
-    logWithTimestamp(`[SECURITY] New user registered: ${name}`);
-
-    const token = createSession(name, clientIP);
-    return {
-      type: 'registration',
-      label: 'success',
-      content: 'success',
-      sessionToken: token,
-      playerName: name,
-    };
-  }
+  return userAuthService.registerUser(userData, {
+    normalizePlayerName,
+    findStoredUserName,
+    usersDict,
+    validatePassword,
+    hashPasswordFn: hashPassword,
+    verifyPasswordFn: verifyPassword,
+    writeUsers: () => actuallyWriteToDisk('./tribe-data/users.json', usersDict),
+    createSession,
+    fs,
+    logWithTimestamp,
+  });
 }
 
 async function hashPassword(password) {
-  const saltRounds = 12; // Increased from 3 to 12 for better security
-  return await bcrypt.hash(password, saltRounds);
+  return userAuthService.hashPassword(password, bcrypt);
 }
 
 async function verifyPassword(input, hash) {
-  return await bcrypt.compare(input, hash);
+  return userAuthService.verifyPassword(input, hash, bcrypt);
 }
 
 function validatePassword(password) {
-  if (!password || typeof password !== 'string') {
-    throw new Error('Password is required');
-  }
-
-  return true;
+  return authRateLimitStore.validatePassword(password);
 }
 
 function recordFailedAttempt(identifier) {
-  const attemptData = loginAttempts.get(identifier) || {
-    count: 0,
-    lastAttempt: 0,
-    lockoutUntil: 0,
-  };
-  attemptData.count++;
-  attemptData.lastAttempt = Date.now();
-
-  // Lockout after 5 failed attempts for 15 minutes
-  if (attemptData.count >= 5) {
-    attemptData.lockoutUntil = Date.now() + 15 * 60 * 1000; // 15 minutes
-  }
-
-  loginAttempts.set(identifier, attemptData);
-  logWithTimestamp(
-    `Failed login attempt for ${identifier}. Count: ${attemptData.count}`
-  );
+  authRateLimitStore.recordFailedAttempt(identifier, logWithTimestamp);
 }
 
 function clearFailedAttempts(identifier) {
-  loginAttempts.delete(identifier);
+  authRateLimitStore.clearFailedAttempts(identifier);
 }
 
 function removeClunkyKeys(population) {
-  const cleanedPop = {};
-  const clunkyKeys = [
-    'handle',
-    'history',
-    'inviteIndex',
-    'inviteList',
-    'consentList',
-    'declineList',
-    'consentDict',
-    'responseDict',
-    'father',
-    'hiddenPregnant',
-  ];
-
-  for (const [name, personData] of Object.entries(population || {})) {
-    const cleaned = {};
-    for (const [key, value] of Object.entries(personData)) {
-      if (clunkyKeys.indexOf(key) === -1) {
-        cleaned[key] = value;
-      }
-    }
-    cleanedPop[name] = cleaned;
-  }
-  return cleanedPop;
+  return gameDataShapers.removeClunkyKeys(population);
 }
 
 function removeFatherReferences(children) {
-  const cleanedChildren = {};
-  const excludeKeys = ['father', 'fatherName', 'name'];
-
-  for (const [name, childData] of Object.entries(children || {})) {
-    const cleaned = {};
-    for (const [key, value] of Object.entries(childData)) {
-      if (excludeKeys.indexOf(key) === -1) {
-        cleaned[key] = value;
-      }
-    }
-    cleanedChildren[name] = cleaned;
-  }
-  return cleanedChildren;
+  return gameDataShapers.removeFatherReferences(children);
 }
 
 function refreshChildGuardians(children, population) {
-  guardlib.normalizeGuardAssignments(population || {}, children || {});
-  for (const [childName, child] of Object.entries(children || {})) {
-    if (
-      !child ||
-      typeof child.age !== 'number' ||
-      child.age < 0 ||
-      child.age >= 23
-    ) {
-      delete child.guardians;
-      continue;
-    }
-
-    guardlib.findGuardValueForChild(
-      childName,
-      population || {},
-      children || {}
-    );
-  }
-
-  return children;
+  return gameDataShapers.refreshChildGuardians(children, population);
 }
 
 function arrayMatch(array1, array2) {
@@ -2169,104 +722,21 @@ function actuallyWriteToDisk(fileName, jsonData) {
 }
 
 function handleManageTribe(ws, data) {
-  const isRef = data.playerName && referees.includes(data.playerName);
-  if (!isRef) {
-    ws.send(
-      JSON.stringify({ type: 'error', message: 'You are not a referee.' })
-    );
-    return;
-  }
-
-  if (data.action === 'create') {
-    tribesRegistry.createTribe(data.tribeName);
-    broadcastTribeUpdate();
-    ws.send(
-      JSON.stringify({
-        type: 'commandResponse',
-        success: true,
-        command: 'Manage Tribe',
-        message: `Created tribe ${data.tribeName}`,
-      })
-    );
-  } else if (data.action === 'setVisibility') {
-    tribesRegistry.setTribeHidden(data.tribeName, data.hidden);
-    broadcastTribeUpdate();
-    ws.send(
-      JSON.stringify({
-        type: 'commandResponse',
-        success: true,
-        command: 'Manage Tribe',
-        message: `${data.hidden ? 'Hidden' : 'Revealed'} tribe ${data.tribeName}`,
-      })
-    );
-  }
+  adminRefereeService.handleManageTribe(ws, data, {
+    referees,
+    tribesRegistry,
+    connectedClients,
+    openState: WebSocket.OPEN,
+  });
 }
 
 async function handleManageUsers(ws, data) {
-  const isRef = data.playerName && referees.includes(data.playerName);
-  if (!isRef) {
-    ws.send(
-      JSON.stringify({ type: 'error', message: 'You are not a referee.' })
-    );
-    return;
-  }
-
-  if (data.action === 'list') {
-    const userList = Object.keys(usersDict).map((name) => {
-      const user = usersDict[name];
-      return {
-        name: name,
-        email: user && user.email ? user.email : 'N/A',
-      };
-    });
-    ws.send(JSON.stringify({ type: 'manageUsersList', users: userList }));
-  } else if (data.action === 'delete') {
-    if (usersDict[data.targetUser]) {
-      delete usersDict[data.targetUser];
-      actuallyWriteToDisk('./tribe-data/users.json', usersDict);
-      ws.send(
-        JSON.stringify({
-          type: 'commandResponse',
-          success: true,
-          command: 'Manage Users',
-          message: `Deleted user ${data.targetUser}`,
-        })
-      );
-      handleManageUsers(ws, { action: 'list', playerName: data.playerName });
-    }
-  } else if (data.action === 'resetPassword') {
-    if (usersDict[data.targetUser]) {
-      const newPassword = data.newPassword || '';
-      let hash = '';
-      if (newPassword !== '') {
-        hash = await hashPassword(newPassword);
-      }
-      usersDict[data.targetUser].password = hash;
-      actuallyWriteToDisk('./tribe-data/users.json', usersDict);
-      ws.send(
-        JSON.stringify({
-          type: 'commandResponse',
-          success: true,
-          command: 'Manage Users',
-          message: `Reset password for user ${data.targetUser}`,
-        })
-      );
-    }
-  }
-}
-
-function broadcastTribeUpdate() {
-  const tribesList = tribesRegistry.getTribes();
-  const updateMsg = JSON.stringify({
-    type: 'commandList',
-    tribes: tribesList,
+  await adminRefereeService.handleManageUsers(ws, data, {
+    referees,
+    usersDict,
+    writeUsers: () => actuallyWriteToDisk('./tribe-data/users.json', usersDict),
+    hashPasswordFn: hashPassword,
   });
-
-  for (const clientWs of connectedClients) {
-    if (clientWs.readyState === WebSocket.OPEN) {
-      clientWs.send(updateMsg);
-    }
-  }
 }
 
 // Initialize only when run directly (not when imported as a module or testing)
@@ -2332,6 +802,9 @@ module.exports = {
   get loginAttempts() {
     return loginAttempts;
   },
+  get requestRateLimitWindows() {
+    return requestRateLimiter.getRequestWindows();
+  },
   get connectedClients() {
     return connectedClients;
   },
@@ -2339,7 +812,7 @@ module.exports = {
     return tribeConnections;
   },
   get allGames() {
-    return allGames;
+    return gameStateStore.getAllGames();
   },
   get usersDict() {
     return usersDict;

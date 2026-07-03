@@ -272,8 +272,12 @@ function invite(gameState, rawActorName, rawList) {
       return;
     }
   }
-  var inviteNamesAsArray = pop.convertStringToArray(rawList);
-  // TODO: make sure to split out items starting with !
+  var inviteNamesAsArray = pop
+    .convertStringToArray(rawList)
+    .map((value) =>
+      typeof value === 'string' ? value.trim() : String(value || '').trim()
+    )
+    .filter((value) => value.length > 0);
   console.log(
     player.name +
       ' raw invitelist:' +

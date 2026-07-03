@@ -348,7 +348,10 @@ function doChance(rollValue, gameState) {
       name = pop.randomMemberName(population);
       person = population[name];
       person.isInjured = 4;
-      // TODO clear the guarding array of the injured person
+      if (person.guarding && person.guarding.length > 0) {
+        message += ' They can no longer guard ' + person.guarding + '.';
+        delete person.guarding;
+      }
       message += person.name + ' injured – miss next turn.';
       break;
     case 5:

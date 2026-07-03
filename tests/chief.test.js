@@ -161,10 +161,14 @@ test('should handle fire (roll 7)', () => {
 });
 
 test('should handle injury (roll 6)', () => {
+  gameState.population.Alice.guarding = ['Child1', 'Child2'];
   const result = chiefLib.doChance(6, gameState);
   assert(result.includes('injured – miss next turn'));
-  const personName = result.split(' ')[2];
-  assert.strictEqual(gameState.population[personName].isInjured, 4);
+  const injuredNames = Object.keys(gameState.population).filter(
+    (name) => gameState.population[name].isInjured === 4
+  );
+  assert.strictEqual(injuredNames.length, 1);
+  assert.strictEqual(gameState.population[injuredNames[0]].guarding, undefined);
   assert.strictEqual(gameState.needChanceRoll, false);
   assert.strictEqual(gameState.saveRequired, true);
 });

@@ -550,4 +550,35 @@ describe('tribeHistory.js', () => {
       '[Tribe history] 10: ==>Starting the work round. Guard (or ignore) your children, then craft, gather, hunt, idle or train.<=='
     );
   });
+
+  test('showCombinedHistory crafting filter should include failed crafting attempts', () => {
+    gameState.seasonCounter = 20;
+    gameState.tribeHistory = [
+      '9: Alex creates something [roll 1], but it is not a basket',
+      '9.5: Alex crafts [roll 3] a basket',
+      '10: Alex goes hunting in the marsh',
+    ];
+    pop.memberByName.mockReturnValue({
+      name: playerName,
+      history: [],
+    });
+
+    tribeHistory.showCombinedHistory(playerName, gameState, 'crafting', 5);
+
+    expect(text.addMessage).toHaveBeenCalledWith(
+      gameState,
+      playerName,
+      '[Tribe history] 9: Alex creates something [roll 1], but it is not a basket'
+    );
+    expect(text.addMessage).toHaveBeenCalledWith(
+      gameState,
+      playerName,
+      '[Tribe history] 9.5: Alex crafts [roll 3] a basket'
+    );
+    expect(text.addMessage).not.toHaveBeenCalledWith(
+      gameState,
+      playerName,
+      '[Tribe history] 10: Alex goes hunting in the marsh'
+    );
+  });
 });

@@ -559,22 +559,28 @@ function graveyard(displayName, gameState) {
     response += ' is empty';
   } else {
     for (var name in gameState.graveyard) {
-      // TODO flesh this out
       const person = gameState.graveyard[name];
-      const displayName = person.name || name;
-      response += '\n ' + displayName + ' died of ' + person.deathMessage;
+      const entryName = person.name || name;
+      const deathMessage = person.deathMessage || 'unknown cause';
+      response += '\n ' + entryName + ' died of ' + deathMessage;
       if (person.mother) {
         response += ' parents:' + person.mother;
         if (gameState.secretMating && !gameState.ended) {
           response += '-???';
         } else {
-          response += '-' + person.father;
+          response += '-' + (person.father || 'unknown');
         }
-        response += ' age:' + person.age / 2;
+        if (typeof person.age === 'number') {
+          response += ' age:' + person.age / 2;
+        }
       } else {
-        response += ' profession:' + person.profession;
+        if (person.profession) {
+          response += ' profession:' + person.profession;
+        }
       }
-      response += ' gender:' + person.gender;
+      if (person.gender) {
+        response += ' gender:' + person.gender;
+      }
     }
   }
   text.addMessage(gameState, displayName, response);

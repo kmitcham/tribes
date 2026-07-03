@@ -85,15 +85,17 @@ function startFood(gameState, bot) {
 }
 
 function clearWorkFlags(population, gameState) {
-  // for every person
-  // if injured and !worked, injured = false
-  // worked = false
+  // Clear transient per-round status before entering food round.
+  // Preserve 'recovery' when rest-dependent recovery applies.
   for (var targetName in population) {
     const person = pop.memberByName(targetName, gameState);
     if (!person) {
       console.log('null person for name ' + targetName);
       continue;
     }
+
+    delete person.activity;
+
     if (person.isInjured && person.isInjured > 0 && person.worked == false) {
       // did not work means rested
       person.activity = 'recovery';

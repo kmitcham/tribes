@@ -4,7 +4,7 @@ const pop = require('./population.js');
 const SUBJECT_KEYWORDS = {
   hunting: ['hunt', 'hunting', 'goes hunting'],
   gathering: ['gathers'],
-  crafting: ['craft', 'crafts'],
+  crafting: ['craft', 'crafts', 'creates something'],
   reproduction: [
     'reproduction',
     'mating',
