@@ -3104,10 +3104,10 @@
                 this.addPregnancyWarning(container);
                 
                 const currentPlayerName = document.getElementById('playerName').value.trim();
-                const currentPlayer = this.currentPopulation[currentPlayerName];
-                const gender = currentPlayer ? currentPlayer.gender : null;
-                const oppositeGenderTargets = Object.values(this.currentPopulation)
-                    .filter(p => p.name !== currentPlayerName && p.gender !== gender);
+                const oppositeGenderTargets = this
+                    .getValidTargetsForReproduction(currentPlayerName)
+                    .map((name) => this.currentPopulation[name])
+                    .filter(Boolean);
 
                 let consentDict = (this.currentRomanceLists && this.currentRomanceLists.consentDict) || {};
 
@@ -3184,10 +3184,10 @@
 
                 // Gather targets
                 const currentPlayerName = document.getElementById('playerName').value.trim();
-                const currentPlayer = this.currentPopulation[currentPlayerName];
-                const gender = currentPlayer ? currentPlayer.gender : null;
-                const allTargets = Object.values(this.currentPopulation)
-                    .filter(p => p.name !== currentPlayerName && p.gender !== gender);
+                const allTargets = this
+                    .getValidTargetsForReproduction(currentPlayerName)
+                    .map((name) => this.currentPopulation[name])
+                    .filter(Boolean);
 
                 if (allTargets.length === 0) {
                     const empty = document.createElement('p');
@@ -3667,13 +3667,12 @@
                 const currentPlayerGender = (currentPlayer.gender || '').toString().toLowerCase();
                 const oppositeGender = currentPlayerGender === 'male' ? 'female' : 'male';
                 
-                // All tribe members of the opposite sex (exclude self). Use case-insensitive gender; include if gender missing so no one is dropped.
+                // All tribe members of the opposite sex (exclude self). Use case-insensitive gender.
                 return Object.keys(this.currentPopulation).filter(playerName => {
                     if (playerName === currentPlayerName) return false;
                     const player = this.currentPopulation[playerName];
                     if (!player) return false;
                     const g = (player.gender || '').toString().toLowerCase();
-                    if (!g) return true; // unknown gender: include so we don't drop tribe members
                     return g === oppositeGender;
                 });
             }
@@ -4807,7 +4806,7 @@
                 this.addMessage('Please select a command from the sidebar to open the command modal', 'info');
             }
 
-            addMessage(text, type = 'info', typeLabel = null, isRestored = false) {
+            addMessage(text, type = 'info', typeLabel = null, isRestored = false, insertAtTop = true) {
                 const container = document.getElementById('messagesContainer');
                 const message = document.createElement('div');
                 message.className = `message ${type}`;
@@ -4853,8 +4852,12 @@
                     message.innerText = `[${timestamp}] ${text}`;
                 }
                 
-                container.appendChild(message);
-                container.scrollTop = container.scrollHeight;
+                if (insertAtTop) {
+                    container.insertBefore(message, container.firstChild);
+                    container.scrollTop = 0;
+                } else {
+                    container.appendChild(message);
+                }
                 
                 // Store message in history (don't store restored messages to avoid duplication)
                 if (!isRestored) {
@@ -4868,7 +4871,7 @@
                 
                 // Limit to 50 messages in display
                 while (container.children.length > 50) {
-                    container.removeChild(container.firstChild);
+                    container.removeChild(container.lastChild);
                 }
             }
 
@@ -4948,21 +4951,17 @@
                     
                     if (recentMessages.length > 0) {
                         const container = document.getElementById('messagesContainer');
+                        const recentNewestFirst = [...recentMessages].sort((a, b) => b.timestamp - a.timestamp);
+
+                        recentNewestFirst.forEach(msg => {
+                            this.addMessage(msg.text, msg.type, msg.typeLabel, true, false);
+                        });
+
                         const separator = document.createElement('div');
                         separator.className = 'message info';
                         separator.style.cssText = 'text-align: center; font-style: italic; opacity: 0.7; border-top: 1px dashed #ccc; padding-top: 0.5rem;';
                         separator.innerText = `--- Previous messages (${recentMessages.length}) ---`;
                         container.appendChild(separator);
-                        
-                        recentMessages.forEach(msg => {
-                            this.addMessage(msg.text, msg.type, msg.typeLabel, true);
-                        });
-                        
-                        const endSeparator = document.createElement('div');
-                        endSeparator.className = 'message info';
-                        endSeparator.style.cssText = 'text-align: center; font-style: italic; opacity: 0.7; border-bottom: 1px dashed #ccc; padding-bottom: 0.5rem;';
-                        endSeparator.innerText = '--- Live messages ---';
-                        container.appendChild(endSeparator);
                     }
                 } catch (error) {
                     console.warn('Failed to load message history:', error);
