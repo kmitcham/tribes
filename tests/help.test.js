@@ -34,6 +34,14 @@ describe('Help Module', () => {
       expect(result).toContain('give');
     });
 
+    test('should describe give command in UI field order', () => {
+      const result = help.playerHelpBasic();
+      expect(result).toContain(
+        'give <item> <amount> <player> transfer food, grain, basket, or spearhead to a tribe member'
+      );
+      expect(result).toContain('UI order: item -> amount -> player');
+    });
+
     test('should include inventory command', () => {
       const result = help.playerHelpBasic();
       expect(result).toContain('inventory');

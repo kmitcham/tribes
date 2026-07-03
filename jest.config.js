@@ -18,11 +18,8 @@ module.exports = {
     '**/?(*.)+(spec|test).js',
   ],
 
-  // Exclude tests that require a running browser and external fixtures
-  testPathIgnorePatterns: [
-    '/node_modules/',
-    'tests/browser-integration.test.js',
-  ],
+  // Exclude only dependency directories by default
+  testPathIgnorePatterns: ['/node_modules/'],
 
   // Coverage configuration
   collectCoverage: true,
