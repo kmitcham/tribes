@@ -16,6 +16,23 @@ function createMockInteraction(data, ws, gameState, logWithTimestamp) {
     displayName: data.playerName || 'Unknown',
   };
 
+  const parseIntegerOption = (name) => {
+    if (
+      !data.parameters ||
+      !Object.prototype.hasOwnProperty.call(data.parameters, name)
+    ) {
+      return null;
+    }
+
+    const rawValue = data.parameters[name];
+    if (rawValue === null || rawValue === undefined || rawValue === '') {
+      return null;
+    }
+
+    const parsed = Number.parseInt(rawValue, 10);
+    return Number.isFinite(parsed) ? parsed : null;
+  };
+
   const mockOptions = {
     getString: (name) => {
       const value = data.parameters && data.parameters[name];
@@ -27,7 +44,7 @@ function createMockInteraction(data, ws, gameState, logWithTimestamp) {
       }
       return value;
     },
-    getInteger: (name) => data.parameters && parseInt(data.parameters[name]),
+    getInteger: parseIntegerOption,
     getBoolean: (name) => {
       const value = data.parameters && data.parameters[name];
       if (typeof value === 'boolean') return value;

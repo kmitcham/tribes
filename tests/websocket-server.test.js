@@ -108,7 +108,20 @@ function createMockInteraction(data, ws, _gameState) {
       }
       return value;
     },
-    getInteger: (name) => data.parameters && parseInt(data.parameters[name]),
+    getInteger: (name) => {
+      if (
+        !data.parameters ||
+        !Object.prototype.hasOwnProperty.call(data.parameters, name)
+      ) {
+        return null;
+      }
+      const rawValue = data.parameters[name];
+      if (rawValue === null || rawValue === undefined || rawValue === '') {
+        return null;
+      }
+      const parsed = Number.parseInt(rawValue, 10);
+      return Number.isFinite(parsed) ? parsed : null;
+    },
     getBoolean: (name) => {
       const value = data.parameters && data.parameters[name];
       if (typeof value === 'boolean') return value;
@@ -301,7 +314,7 @@ describe('WebSocket Server Command Processing', () => {
 
       expect(interaction.options.getString('item')).toBe('spearhead');
       expect(interaction.options.getInteger('force')).toBe(5);
-      expect(interaction.options.getInteger('nonexistent')).toBeNaN();
+      expect(interaction.options.getInteger('nonexistent')).toBeNull();
     });
 
     test('should process boolean parameters correctly', () => {

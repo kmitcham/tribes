@@ -1,847 +1,394 @@
-/**
- * Unit Tests for Tribes Interface HTML Client
- *
- * Tests the client-side interface functionality including connection handling,
- * session management, UI state management, and WebSocket fallback logic.
- */
+const fs = require('fs');
+const path = require('path');
+const vm = require('vm');
 
-// Mock DOM environment without jsdom
-const mockElements = {
-  connectionStatus: {
-    className: '',
-    textContent: '',
-    classList: {
-      classes: [],
-      add: jest.fn(function (className) {
-        if (!this.classes.includes(className)) {
-          this.classes.push(className);
-        }
-      }),
-      remove: jest.fn(function (className) {
-        this.classes = this.classes.filter((c) => c !== className);
-      }),
-      contains: jest.fn(function (className) {
-        return this.classes.includes(className);
-      }),
+function createClassList() {
+  const classes = new Set();
+  return {
+    add: (...names) => names.forEach((name) => classes.add(name)),
+    remove: (...names) => names.forEach((name) => classes.delete(name)),
+    toggle: (name, force) => {
+      if (force === true) {
+        classes.add(name);
+        return true;
+      }
+      if (force === false) {
+        classes.delete(name);
+        return false;
+      }
+      if (classes.has(name)) {
+        classes.delete(name);
+        return false;
+      }
+      classes.add(name);
+      return true;
     },
-  },
-  tribeSelect: { value: 'bug' },
-  playerName: { value: '' },
-  playerPassword: { value: '' },
-  commandList: {
+    contains: (name) => classes.has(name),
+    toString: () => Array.from(classes).join(' '),
+  };
+}
+
+function createElement(tagName = 'div') {
+  const element = {
+    tagName: String(tagName).toUpperCase(),
+    id: '',
+    value: '',
+    type: 'text',
+    className: '',
+    style: {},
+    dataset: {},
+    children: [],
+    parentNode: null,
+    scrollTop: 0,
+    scrollHeight: 0,
+    onclick: null,
+    onchange: null,
+    oninput: null,
+    textContent: '',
+    innerText: '',
     _innerHTML: '',
-    get innerHTML() {
-      return this._innerHTML;
+    classList: createClassList(),
+    appendChild(child) {
+      child.parentNode = this;
+      this.children.push(child);
+      this.scrollHeight = this.children.length;
+      return child;
+    },
+    insertBefore(child, refChild) {
+      child.parentNode = this;
+      if (!refChild) {
+        this.children.push(child);
+      } else {
+        const idx = this.children.indexOf(refChild);
+        if (idx === -1) {
+          this.children.push(child);
+        } else {
+          this.children.splice(idx, 0, child);
+        }
+      }
+      this.scrollHeight = this.children.length;
+      return child;
+    },
+    removeChild(child) {
+      const idx = this.children.indexOf(child);
+      if (idx >= 0) {
+        this.children.splice(idx, 1);
+      }
+      this.scrollHeight = this.children.length;
+      return child;
+    },
+    addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
+    querySelectorAll(selector) {
+      if (selector === '.command-item') {
+        return this.children.filter(
+          (child) =>
+            child.className === 'command-item' ||
+            (child.classList && child.classList.contains('command-item'))
+        );
+      }
+      return [];
+    },
+    querySelector() {
+      return null;
     },
     set innerHTML(value) {
       this._innerHTML = value;
       if (value === '') {
-        this.children = []; // Clear children when innerHTML is cleared
+        this.children = [];
       }
     },
-    children: [],
-    appendChild: jest.fn(function (element) {
-      this.children.push(element);
-    }),
-    querySelectorAll: jest.fn(function (selector) {
-      if (selector === '.command-item') {
-        return this.children.filter(
-          (child) => child.className && child.className.includes('command-item')
-        );
-      }
-      return [];
-    }),
-  },
-  messagesContainer: { appendChild: jest.fn() },
-  '.commands-section': {
-    classList: {
-      classes: [],
-      add: jest.fn(function (className) {
-        if (!this.classes.includes(className)) {
-          this.classes.push(className);
-        }
-      }),
-      remove: jest.fn(function (className) {
-        this.classes = this.classes.filter((c) => c !== className);
-      }),
-      contains: jest.fn(function (className) {
-        return this.classes.includes(className);
-      }),
+    get innerHTML() {
+      return this._innerHTML;
     },
-  },
-  '.user-info': {
-    classList: {
-      classes: [],
-      add: jest.fn(function (className) {
-        if (!this.classes.includes(className)) {
-          this.classes.push(className);
-        }
-      }),
-      remove: jest.fn(function (className) {
-        this.classes = this.classes.filter((c) => c !== className);
-      }),
-      contains: jest.fn(function (className) {
-        return this.classes.includes(className);
-      }),
+    get firstChild() {
+      return this.children[0] || null;
     },
-  },
-};
+    get lastChild() {
+      return this.children[this.children.length - 1] || null;
+    },
+  };
+  return element;
+}
 
-const mockDocument = {
-  getElementById: (id) => {
-    return (
-      mockElements[id] || {
-        value: '',
-        className: '',
-        textContent: '',
-        innerHTML: '',
-        children: [],
-        appendChild: jest.fn(function (element) {
-          this.children.push(element);
-        }),
-        classList: {
-          classes: [],
-          add: jest.fn(function (className) {
-            if (!this.classes.includes(className)) {
-              this.classes.push(className);
-            }
-          }),
-          remove: jest.fn(function (className) {
-            this.classes = this.classes.filter((c) => c !== className);
-          }),
-          contains: jest.fn(function (className) {
-            return this.classes.includes(className);
-          }),
-        },
-        querySelectorAll: jest.fn(() => []),
-      }
-    );
-  },
-  querySelector: (selector) => {
-    return (
-      mockElements[selector] || {
-        classList: {
-          classes: [],
-          add: jest.fn(function (className) {
-            if (!this.classes.includes(className)) {
-              this.classes.push(className);
-            }
-          }),
-          remove: jest.fn(function (className) {
-            this.classes = this.classes.filter((c) => c !== className);
-          }),
-          contains: jest.fn(function (className) {
-            return this.classes.includes(className);
-          }),
-        },
-      }
-    );
-  },
-  querySelectorAll: () => [],
-  createElement: (_tag) => ({
-    className: 'command-item',
-    textContent: '',
-    innerHTML: '',
-    appendChild: jest.fn(),
-    dataset: {},
-    classList: {
-      classes: ['command-item'],
-      add: jest.fn(function (className) {
-        if (!this.classes.includes(className)) {
-          this.classes.push(className);
-        }
-      }),
-      remove: jest.fn(function (className) {
-        this.classes = this.classes.filter((c) => c !== className);
-      }),
-      contains: jest.fn(function (className) {
-        return this.classes.includes(className);
-      }),
-    },
-  }),
-};
+function createMockEnvironment() {
+  const elements = {
+    tribeSelect: createElement('select'),
+    playerName: createElement('input'),
+    playerPassword: createElement('input'),
+    connectionStatus: createElement('div'),
+    commandList: createElement('div'),
+    messagesContainer: createElement('div'),
+    tribeRemembered: createElement('span'),
+    nameRemembered: createElement('span'),
+    statusText: createElement('div'),
+  };
 
-const mockWindow = {
-  location: {
-    hostname: 'localhost',
-    port: '8000',
-    protocol: 'http:',
-  },
-  localStorage: {
-    storage: {},
-    getItem: jest.fn((key) => mockWindow.localStorage.storage[key] || null),
+  elements.tribeSelect.value = 'bug';
+  elements.playerName.value = 'TestPlayer';
+  elements.playerPassword.value = 'TestPass';
+
+  const commandsSection = createElement('section');
+  const userInfo = createElement('section');
+
+  const documentMock = {
+    cookie: '',
+    getElementById: (id) => {
+      if (!elements[id]) {
+        elements[id] = createElement('div');
+        elements[id].id = id;
+      }
+      return elements[id];
+    },
+    querySelector: (selector) => {
+      if (selector === '.commands-section') return commandsSection;
+      if (selector === '.user-info') return userInfo;
+      if (selector === 'meta[name="interface-version"]') {
+        return { content: 'test-version' };
+      }
+      return null;
+    },
+    querySelectorAll: () => [],
+    createElement: (tag) => createElement(tag),
+    addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
+    body: createElement('body'),
+  };
+
+  const storage = {};
+  const localStorageMock = {
+    getItem: jest.fn((key) => (key in storage ? storage[key] : null)),
     setItem: jest.fn((key, value) => {
-      mockWindow.localStorage.storage[key] = value;
+      storage[key] = String(value);
     }),
     removeItem: jest.fn((key) => {
-      delete mockWindow.localStorage.storage[key];
+      delete storage[key];
     }),
     clear: jest.fn(() => {
-      mockWindow.localStorage.storage = {};
+      Object.keys(storage).forEach((key) => delete storage[key]);
     }),
-  },
-  TRIBES_WS_CONFIG: null,
-};
+  };
 
-global.document = mockDocument;
-global.window = mockWindow;
-global.localStorage = mockWindow.localStorage;
-
-// Create our own MockWebSocket for interface testing
-class InterfaceMockWebSocket {
-  constructor(url) {
-    this.url = url;
-    this.readyState = InterfaceMockWebSocket.CONNECTING;
-    this.sentMessages = [];
-    this.addEventListener = jest.fn();
-
-    // Simulate async connection
-    setTimeout(() => {
+  class InterfaceMockWebSocket {
+    constructor(url) {
+      this.url = url;
       this.readyState = InterfaceMockWebSocket.OPEN;
-      if (this.onopen) this.onopen();
-    }, 10);
-  }
+      this.sentMessages = [];
+      this.onopen = null;
+      this.onclose = null;
+      this.onmessage = null;
+      this.onerror = null;
+    }
 
-  send(data) {
-    if (this.readyState === InterfaceMockWebSocket.OPEN) {
+    send(data) {
       this.sentMessages.push(data);
     }
-  }
 
-  close() {
-    this.readyState = InterfaceMockWebSocket.CLOSED;
-    if (this.onclose) this.onclose();
-  }
+    close() {
+      this.readyState = InterfaceMockWebSocket.CLOSED;
+      if (this.onclose) this.onclose();
+    }
 
-  simulateMessage(data) {
-    if (this.onmessage) {
-      this.onmessage({ data: JSON.stringify(data) });
+    getLastSentMessage() {
+      return this.sentMessages.length > 0
+        ? JSON.parse(this.sentMessages[this.sentMessages.length - 1])
+        : null;
     }
   }
 
-  getLastSentMessage() {
-    return this.sentMessages.length > 0
-      ? JSON.parse(this.sentMessages[this.sentMessages.length - 1])
-      : null;
-  }
+  InterfaceMockWebSocket.CONNECTING = 0;
+  InterfaceMockWebSocket.OPEN = 1;
+  InterfaceMockWebSocket.CLOSING = 2;
+  InterfaceMockWebSocket.CLOSED = 3;
+
+  const windowMock = {
+    location: {
+      hostname: 'localhost',
+      port: '8000',
+      protocol: 'http:',
+    },
+    localStorage: localStorageMock,
+    TRIBES_WS_CONFIG: null,
+    addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
+    matchMedia: jest.fn(() => ({ matches: false, addListener: jest.fn() })),
+    navigator: { userAgent: 'jest' },
+  };
+
+  return {
+    elements,
+    documentMock,
+    localStorageMock,
+    windowMock,
+    InterfaceMockWebSocket,
+  };
 }
 
-InterfaceMockWebSocket.CONNECTING = 0;
-InterfaceMockWebSocket.OPEN = 1;
-InterfaceMockWebSocket.CLOSING = 2;
-InterfaceMockWebSocket.CLOSED = 3;
-
-// Replace the global WebSocket with our interface version
-global.WebSocket = InterfaceMockWebSocket;
-
-// Mock console
-global.logWithTimestamp = jest.fn();
-
-// TribesClient class extracted from HTML (simplified for testing)
-class TribesClient {
-  constructor() {
-    this.ws = null;
-    this.clientId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    this.commands = {};
-    this.selectedCommand = null;
-    this.currentPopulation = null;
-    this.currentChildren = null;
-    this.currentRomanceLists = null;
-    this.reconnectAttempts = 0;
-    this.maxReconnectAttempts = 5;
-    this.reconnectInterval = 1000; // Reduced for testing
-    this.refreshTimer = null;
-    this.currentVersion =
-      document.querySelector('meta[name="interface-version"]')?.content ||
-      'unknown';
-    this.lastRefreshTime = 0;
-    this.isLoggedIn = false;
-    this.currentSessionToken = null;
-    this.currentPlayerName = null;
+function loadRealTribesClient(env) {
+  const htmlPath = path.resolve(__dirname, '..', 'tribes-interface.html');
+  const html = fs.readFileSync(htmlPath, 'utf8');
+  const scriptMatch = html.match(/<script>([\s\S]*?)<\/script>/);
+  if (!scriptMatch) {
+    throw new Error('Unable to find script block in tribes-interface.html');
   }
 
-  // Session management
-  storeSession(token, playerName) {
-    this.currentSessionToken = token;
-    this.currentPlayerName = playerName;
-    localStorage.setItem('tribesSessionToken', token);
-    localStorage.setItem('tribesPlayerName', playerName);
+  const rewritten = scriptMatch[1].replace(
+    'class TribesClient {',
+    'globalThis.TribesClient = class TribesClient {'
+  );
+
+  const sandbox = {
+    window: env.windowMock,
+    document: env.documentMock,
+    localStorage: env.localStorageMock,
+    WebSocket: env.InterfaceMockWebSocket,
+    logWithTimestamp: jest.fn(),
+    navigator: env.windowMock.navigator,
+    console,
+    setTimeout: () => 1,
+    setInterval: () => 1,
+    clearTimeout: () => {},
+    clearInterval: () => {},
+    Date,
+    Math,
+    JSON,
+    Object,
+    Array,
+    Number,
+    String,
+    Boolean,
+    RegExp,
+    parseInt,
+    parseFloat,
+    isNaN,
+  };
+  sandbox.globalThis = sandbox;
+
+  vm.createContext(sandbox);
+  vm.runInContext(rewritten, sandbox, {
+    filename: 'tribes-interface.html',
+  });
+
+  if (typeof sandbox.TribesClient !== 'function') {
+    throw new Error('TribesClient class was not loaded from tribes-interface.html');
   }
 
-  restoreSession() {
-    const token = localStorage.getItem('tribesSessionToken');
-    const playerName = localStorage.getItem('tribesPlayerName');
-
-    if (token && playerName) {
-      this.currentSessionToken = token;
-      this.currentPlayerName = playerName;
-      return true;
-    }
-    return false;
-  }
-
-  clearSession() {
-    this.currentSessionToken = null;
-    this.currentPlayerName = null;
-    localStorage.removeItem('tribesSessionToken');
-    localStorage.removeItem('tribesPlayerName');
-  }
-
-  // Connection handling
-  connect() {
-    try {
-      this.updateConnectionStatus('connecting');
-
-      // Check for server config
-      const serverConfig = window.TRIBES_WS_CONFIG;
-      if (serverConfig) {
-        const wsProtocol = serverConfig.protocol === 'https' ? 'wss' : 'ws';
-        const wsHost = serverConfig.host.split(':')[0];
-        const wsPort =
-          serverConfig.port !== '80' && serverConfig.port !== '443'
-            ? `:${serverConfig.port}`
-            : '';
-        const wsUrl = `${wsProtocol}://${wsHost}${wsPort}`;
-
-        this.ws = new WebSocket(wsUrl);
-        this.setupWebSocketHandlers(() => this.connectWithFallback());
-        return;
-      }
-
-      this.connectWithFallback();
-    } catch (_error) {
-      this.updateConnectionStatus('disconnected');
-      this.scheduleReconnect();
-    }
-  }
-
-  connectWithFallback() {
-    const currentHost = window.location.hostname;
-    const currentPort = window.location.port;
-    const isSecure = window.location.protocol === 'https:';
-
-    let hosts, port, protocol;
-
-    if (currentHost === 'localhost' || currentHost === '127.0.0.1') {
-      hosts = [currentHost, 'localhost', '127.0.0.1'];
-      port = ':8000';
-      protocol = 'ws';
-    } else {
-      hosts = [currentHost];
-      port = currentPort ? `:${currentPort}` : '';
-      protocol = isSecure ? 'wss' : 'ws';
-    }
-
-    const wsUrl = `${protocol}://${hosts[0]}${port}`;
-    this.ws = new WebSocket(wsUrl);
-    this.setupWebSocketHandlers();
-  }
-
-  setupWebSocketHandlers(onCloseCallback) {
-    this.ws.onopen = () => {
-      this.updateConnectionStatus('connected');
-      this.reconnectAttempts = 0;
-    };
-
-    this.ws.onmessage = (event) => {
-      this.handleMessage(JSON.parse(event.data));
-    };
-
-    this.ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
-    };
-
-    this.ws.onclose = () => {
-      this.updateConnectionStatus('disconnected');
-      if (onCloseCallback) onCloseCallback();
-    };
-  }
-
-  scheduleReconnect() {
-    if (this.reconnectAttempts < this.maxReconnectAttempts) {
-      this.reconnectAttempts++;
-      setTimeout(() => this.connect(), this.reconnectInterval);
-    }
-  }
-
-  // Message handling
-  handleMessage(data) {
-    switch (data.type) {
-      case 'sessionAuthResponse':
-        this.handleSessionAuthResponse(data);
-        break;
-      case 'commandList':
-        this.handleCommandList(data.commands);
-        break;
-      case 'registration':
-        this.handleRegistrationResponse(data);
-        break;
-      case 'logoutResponse':
-        this.handleLogoutResponse(data);
-        break;
-      case 'forceLogout':
-        this.handleForceLogout(data);
-        break;
-      default:
-        console.log('Unknown message type:', data.type);
-    }
-  }
-
-  handleSessionAuthResponse(data) {
-    if (data.success) {
-      this.isLoggedIn = true;
-      this.currentPlayerName = data.playerName;
-      this.showCommandsSection();
-    } else {
-      this.clearSession();
-      this.expandLoginArea();
-    }
-  }
-
-  handleCommandList(commands) {
-    this.commands = commands;
-    this.updateCommandList();
-  }
-
-  handleRegistrationResponse(data) {
-    if (data.label === 'success') {
-      if (data.sessionToken && data.playerName) {
-        this.storeSession(data.sessionToken, data.playerName);
-      }
-      this.isLoggedIn = true;
-      this.showCommandsSection();
-    }
-  }
-
-  handleLogoutResponse(data) {
-    // Handle logout confirmation
-    console.log('Logout response:', data.message);
-  }
-
-  handleForceLogout(_data) {
-    this.clearSession();
-    this.isLoggedIn = false;
-    this.expandLoginArea();
-    this.hideCommandsSection();
-  }
-
-  // UI state management
-  updateConnectionStatus(status) {
-    const statusEl = document.getElementById('connectionStatus');
-    statusEl.className = `connection-status ${status}`;
-
-    switch (status) {
-      case 'connected':
-        statusEl.textContent = '✅ Connected to Tribes Server';
-        break;
-      case 'connecting':
-        statusEl.textContent = '🔄 Connecting...';
-        break;
-      case 'disconnected':
-        statusEl.textContent = '❌ Disconnected from Server';
-        break;
-    }
-  }
-
-  showCommandsSection() {
-    const commandsSection = document.querySelector('.commands-section');
-    commandsSection.classList.remove('hidden');
-  }
-
-  hideCommandsSection() {
-    const commandsSection = document.querySelector('.commands-section');
-    commandsSection.classList.add('hidden');
-  }
-
-  minimizeLoginArea() {
-    const userInfo = document.querySelector('.user-info');
-    userInfo.classList.add('minimized');
-  }
-
-  expandLoginArea() {
-    const userInfo = document.querySelector('.user-info');
-    userInfo.classList.remove('minimized');
-  }
-
-  // Command list management
-  updateCommandList() {
-    const container = document.getElementById('commandList');
-    container.innerHTML = '';
-
-    Object.entries(this.commands).forEach(([name, command]) => {
-      const item = document.createElement('div');
-      item.className = 'command-item';
-      item.dataset.command = name;
-      item.innerHTML = `
-                <div class="command-name">${name}</div>
-                <div class="command-desc">${command.description}</div>
-            `;
-      container.appendChild(item);
-    });
-  }
-
-  // WebSocket communication
-  send(data) {
-    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      data.clientId = this.clientId;
-      data.tribe = document.getElementById('tribeSelect').value;
-      data.playerName = document.getElementById('playerName').value;
-      data.password = document.getElementById('playerPassword').value;
-
-      this.ws.send(JSON.stringify(data));
-    }
-  }
+  return { TribesClient: sandbox.TribesClient, sandbox };
 }
 
-// Tests
-describe('Tribes Interface Client', () => {
+describe('Tribes Interface Client (real class)', () => {
+  let env;
+  let TribesClient;
+  let sandbox;
   let client;
-  let dateNowSpy;
-  let randomSpy;
 
   beforeEach(() => {
-    dateNowSpy = jest.spyOn(Date, 'now').mockReturnValue(1700000000000);
-    randomSpy = jest.spyOn(Math, 'random').mockReturnValue(0.123456789);
+    env = createMockEnvironment();
+    ({ TribesClient, sandbox } = loadRealTribesClient(env));
 
-    // Clear DOM
-    mockElements.playerName.value = '';
-    mockElements.playerPassword.value = '';
-    mockElements.tribeSelect.value = 'bug';
-    mockElements.connectionStatus.textContent = '';
-    mockElements.connectionStatus.className = '';
-    mockElements.commandList.innerHTML = ''; // This will trigger the setter to clear children
-
-    // Reset all classList states
-    Object.values(mockElements).forEach((element) => {
-      if (element.classList && element.classList.classes) {
-        element.classList.classes = [];
-      }
-    });
-
-    // Clear localStorage
-    localStorage.clear();
+    const connectSpy = jest
+      .spyOn(TribesClient.prototype, 'connect')
+      .mockImplementation(function () {
+        this.ws = new env.InterfaceMockWebSocket('ws://localhost:8000');
+      });
 
     client = new TribesClient();
-
-    // Clear mocks
-    jest.clearAllMocks();
+    connectSpy.mockRestore();
   });
 
-  afterEach(() => {
-    if (dateNowSpy) {
-      dateNowSpy.mockRestore();
-    }
-    if (randomSpy) {
-      randomSpy.mockRestore();
-    }
+  test('stores and restores session through TribesStorage', () => {
+    client.storeSession('test-token-123', 'StoredPlayer');
+
+    expect(client.currentSessionToken).toBe('test-token-123');
+    expect(client.currentPlayerName).toBe('StoredPlayer');
+
+    client.currentSessionToken = null;
+    client.currentPlayerName = null;
+
+    const restored = client.restoreSession();
+    expect(restored).toBe(true);
+    expect(client.currentSessionToken).toBe('test-token-123');
+    expect(client.currentPlayerName).toBe('StoredPlayer');
+    expect(env.elements.playerName.value).toBe('StoredPlayer');
   });
 
-  describe('Session Management', () => {
-    test('should store session token and player name', () => {
-      client.storeSession('test-token-123', 'TestPlayer');
+  test('updates connection status text and classes', () => {
+    const statusEl = env.elements.connectionStatus;
 
-      expect(client.currentSessionToken).toBe('test-token-123');
-      expect(client.currentPlayerName).toBe('TestPlayer');
-      expect(localStorage.getItem('tribesSessionToken')).toBe('test-token-123');
-      expect(localStorage.getItem('tribesPlayerName')).toBe('TestPlayer');
-    });
+    client.updateConnectionStatus('connecting');
+    expect(statusEl.innerHTML).toContain('Connecting...');
+    expect(statusEl.className).toBe(
+      'status-item connection-status-indicator connecting'
+    );
 
-    test('should restore session from localStorage', () => {
-      localStorage.setItem('tribesSessionToken', 'stored-token-456');
-      localStorage.setItem('tribesPlayerName', 'StoredPlayer');
+    client.updateConnectionStatus('connected');
+    expect(statusEl.innerHTML).toContain('Connected to server');
+    expect(statusEl.className).toBe(
+      'status-item connection-status-indicator connected'
+    );
 
-      const restored = client.restoreSession();
-
-      expect(restored).toBe(true);
-      expect(client.currentSessionToken).toBe('stored-token-456');
-      expect(client.currentPlayerName).toBe('StoredPlayer');
-    });
-
-    test('should return false when no session to restore', () => {
-      const restored = client.restoreSession();
-
-      expect(restored).toBe(false);
-      expect(client.currentSessionToken).toBeNull();
-      expect(client.currentPlayerName).toBeNull();
-    });
-
-    test('should clear session data', () => {
-      client.storeSession('token-to-clear', 'PlayerToClear');
-      client.clearSession();
-
-      expect(client.currentSessionToken).toBeNull();
-      expect(client.currentPlayerName).toBeNull();
-      expect(localStorage.getItem('tribesSessionToken')).toBeNull();
-      expect(localStorage.getItem('tribesPlayerName')).toBeNull();
-    });
+    client.updateConnectionStatus('disconnected');
+    expect(statusEl.innerHTML).toContain('Disconnected from server');
+    expect(statusEl.className).toBe(
+      'status-item connection-status-indicator disconnected'
+    );
   });
 
-  describe('Connection Management', () => {
-    test('should update connection status correctly', () => {
-      const statusEl = document.getElementById('connectionStatus');
+  test('send injects client and player metadata into websocket payload', () => {
+    client.ws = new env.InterfaceMockWebSocket('ws://localhost:8000');
+    client.ws.readyState = env.InterfaceMockWebSocket.OPEN;
 
-      client.updateConnectionStatus('connecting');
-      expect(statusEl.textContent).toBe('🔄 Connecting...');
-      expect(statusEl.className).toBe('connection-status connecting');
+    client.send({ type: 'command', command: 'hunt' });
 
-      client.updateConnectionStatus('connected');
-      expect(statusEl.textContent).toBe('✅ Connected to Tribes Server');
-      expect(statusEl.className).toBe('connection-status connected');
-
-      client.updateConnectionStatus('disconnected');
-      expect(statusEl.textContent).toBe('❌ Disconnected from Server');
-      expect(statusEl.className).toBe('connection-status disconnected');
-    });
-
-    test('should use server configuration when available', () => {
-      window.TRIBES_WS_CONFIG = {
-        host: 'example.com:3000',
-        port: '3000',
-        protocol: 'https',
-      };
-
-      client.connect();
-
-      expect(client.ws).toBeDefined();
-      expect(client.ws.url).toBe('wss://example.com:3000');
-
-      // Clean up
-      window.TRIBES_WS_CONFIG = null;
-    });
-
-    test('should fallback to local development setup', () => {
-      // Simulate localhost environment
-      Object.defineProperty(window.location, 'hostname', {
-        writable: true,
-        value: 'localhost',
-      });
-
-      client.connect();
-
-      expect(client.ws).toBeDefined();
-      expect(client.ws.url).toBe('ws://localhost:8000');
+    const sent = client.ws.getLastSentMessage();
+    expect(sent).toMatchObject({
+      type: 'command',
+      command: 'hunt',
+      clientId: client.clientId,
+      tribe: 'bug',
+      playerName: 'TestPlayer',
+      password: 'TestPass',
     });
   });
 
-  describe('Message Handling', () => {
-    beforeEach(() => {
-      client.connect();
-    });
+  test('romance targets only include opposite-gender players and exclude self', () => {
+    client.currentPopulation = {
+      Alice: { name: 'Alice', gender: 'female' },
+      Bob: { name: 'Bob', gender: 'male' },
+      Carol: { name: 'Carol', gender: 'female' },
+      Dan: { name: 'Dan', gender: 'male' },
+    };
 
-    test('should handle session authentication response - success', () => {
-      const authData = {
-        type: 'sessionAuthResponse',
-        success: true,
-        playerName: 'AuthedPlayer',
-      };
+    const targetsForAlice = client.getValidTargetsForReproduction('Alice');
+    expect(targetsForAlice).toEqual(['Bob', 'Dan']);
 
-      client.handleMessage(authData);
-
-      expect(client.isLoggedIn).toBe(true);
-      expect(client.currentPlayerName).toBe('AuthedPlayer');
-    });
-
-    test('should handle session authentication response - failure', () => {
-      client.storeSession('invalid-token', 'TestPlayer');
-
-      const authData = {
-        type: 'sessionAuthResponse',
-        success: false,
-      };
-
-      client.handleMessage(authData);
-
-      expect(client.isLoggedIn).toBe(false);
-      expect(client.currentSessionToken).toBeNull();
-    });
-
-    test('should handle command list message', () => {
-      const commandData = {
-        type: 'commandList',
-        commands: {
-          join: { description: 'Join the tribe' },
-          hunt: { description: 'Hunt for food' },
-        },
-      };
-
-      client.handleMessage(commandData);
-
-      expect(client.commands).toEqual(commandData.commands);
-    });
-
-    test('should handle registration response - success', () => {
-      const regData = {
-        type: 'registration',
-        label: 'success',
-        content: 'Registration successful',
-        sessionToken: 'new-token-789',
-        playerName: 'NewPlayer',
-      };
-
-      client.handleMessage(regData);
-
-      expect(client.isLoggedIn).toBe(true);
-      expect(client.currentSessionToken).toBe('new-token-789');
-      expect(client.currentPlayerName).toBe('NewPlayer');
-    });
-
-    test('should handle force logout message', () => {
-      client.storeSession('token-to-logout', 'PlayerToLogout');
-      client.isLoggedIn = true;
-
-      const logoutData = {
-        type: 'forceLogout',
-        message: 'Logged out from another device',
-      };
-
-      client.handleMessage(logoutData);
-
-      expect(client.isLoggedIn).toBe(false);
-      expect(client.currentSessionToken).toBeNull();
-      expect(client.currentPlayerName).toBeNull();
-    });
+    const targetsForBob = client.getValidTargetsForReproduction('Bob');
+    expect(targetsForBob).toEqual(['Alice', 'Carol']);
   });
 
-  describe('UI State Management', () => {
-    test('should show and hide commands section', () => {
-      const commandsSection = document.querySelector('.commands-section');
+  test('addMessage prepends newest message to top of container', () => {
+    const container = env.elements.messagesContainer;
 
-      client.showCommandsSection();
-      expect(commandsSection.classList.contains('hidden')).toBe(false);
+    client.addMessage('older message', 'info');
+    client.addMessage('newer message', 'info');
 
-      client.hideCommandsSection();
-      expect(commandsSection.classList.contains('hidden')).toBe(true);
-    });
-
-    test('should minimize and expand login area', () => {
-      const userInfo = document.querySelector('.user-info');
-
-      client.minimizeLoginArea();
-      expect(userInfo.classList.contains('minimized')).toBe(true);
-
-      client.expandLoginArea();
-      expect(userInfo.classList.contains('minimized')).toBe(false);
-    });
+    expect(container.children.length).toBe(2);
+    expect(container.children[0].innerText).toContain('newer message');
+    expect(container.children[1].innerText).toContain('older message');
   });
 
-  describe('Command List Management', () => {
-    test('should update command list in DOM', () => {
-      const testCommands = {
-        join: { description: 'Join the tribe' },
-        hunt: { description: 'Hunt for food' },
-        craft: { description: 'Craft items' },
-      };
+  test('command list rendering uses production updateCommandList implementation', () => {
+    client.commands = {
+      join: { description: 'Join the tribe' },
+      hunt: { description: 'Hunt for food' },
+    };
 
-      client.commands = testCommands;
-      client.updateCommandList();
+    client.updateCommandList();
 
-      const container = document.getElementById('commandList');
-      const commandItems = container.querySelectorAll('.command-item');
-
-      expect(commandItems.length).toBe(3);
-      expect(commandItems[0].dataset.command).toBe('join');
-      expect(commandItems[1].dataset.command).toBe('hunt');
-      expect(commandItems[2].dataset.command).toBe('craft');
-    });
-
-    test('should clear command list when empty', () => {
-      // First add some commands
-      client.commands = { test: { description: 'Test command' } };
-      client.updateCommandList();
-
-      // Then clear them
-      client.commands = {};
-      client.updateCommandList();
-
-      const container = document.getElementById('commandList');
-      expect(container.children.length).toBe(0);
-    });
-  });
-
-  describe('WebSocket Communication', () => {
-    beforeEach(() => {
-      document.getElementById('playerName').value = 'TestPlayer';
-      document.getElementById('playerPassword').value = 'TestPass';
-      document.getElementById('tribeSelect').value = 'bear';
-
-      client.connect();
-    });
-
-    test('should send message with correct structure', () => {
-      client.ws.readyState = WebSocket.OPEN;
-
-      const testData = {
-        type: 'command',
-        command: 'hunt',
-      };
-
-      client.send(testData);
-
-      const sentMessage = client.ws.getLastSentMessage();
-      expect(sentMessage).toMatchObject({
-        type: 'command',
-        command: 'hunt',
-        clientId: client.clientId,
-        tribe: 'bear',
-        playerName: 'TestPlayer',
-        password: 'TestPass',
-      });
-    });
-
-    test('should not send message when not connected', () => {
-      client.ws.close();
-
-      const testData = { type: 'test' };
-      client.send(testData);
-
-      // Should not add any new messages after the close
-      expect(client.ws.sentMessages.length).toBe(0);
-    });
-  });
-
-  describe('Reconnection Logic', () => {
-    test('should attempt reconnection on failure', (done) => {
-      jest.setTimeout(15000); // Increase timeout
-
-      let connectCallCount = 0;
-
-      client.connect = jest.fn(() => {
-        connectCallCount++;
-        if (connectCallCount === 1) {
-          // First attempt fails
-          client.updateConnectionStatus('disconnected');
-          // Simulate immediate reconnection attempt
-          setTimeout(() => {
-            if (connectCallCount === 1) {
-              client.scheduleReconnect();
-            }
-          }, 50);
-        } else if (connectCallCount === 2) {
-          // Second attempt succeeds
-          client.updateConnectionStatus('connected');
-          expect(connectCallCount).toBe(2);
-          expect(client.reconnectAttempts).toBe(1);
-          done();
-        }
-      });
-
-      // Set shorter intervals for testing
-      client.reconnectInterval = 100;
-      client.maxReconnectAttempts = 5;
-
-      // Start the connection attempt
-      client.connect();
-    });
-
-    test('should stop reconnecting after max attempts', () => {
-      client.reconnectAttempts = client.maxReconnectAttempts;
-      client.connect = jest.fn();
-
-      client.scheduleReconnect();
-
-      setTimeout(() => {
-        expect(client.connect).not.toHaveBeenCalled();
-      }, client.reconnectInterval + 100);
-    });
+    const items = env.elements.commandList.querySelectorAll('.command-item');
+    expect(items.length).toBe(2);
+    const names = items.map((item) => item.dataset.command);
+    expect(names).toContain('join');
+    expect(names).toContain('hunt');
   });
 });
