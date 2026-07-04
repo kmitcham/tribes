@@ -3677,6 +3677,85 @@
                 });
             }
 
+            getAvailablePlayerTargets(optionName = '') {
+                const currentPlayerName = document.getElementById('playerName').value;
+                const selectedCommandName = this.selectedCommand.name.toLowerCase();
+                const isAttackTargetOption =
+                    selectedCommandName === 'attack' &&
+                    optionName.toLowerCase() === 'target';
+
+                let availablePlayers = Object.keys(this.currentPopulation || {});
+
+                if (this.isReproductionCommand(this.selectedCommand.name)) {
+                    availablePlayers = this.getValidTargetsForReproduction(currentPlayerName);
+                }
+
+                if (isAttackTargetOption) {
+                    availablePlayers = availablePlayers.filter(
+                        (playerName) => playerName !== currentPlayerName
+                    );
+                }
+
+                return { availablePlayers, isAttackTargetOption };
+            }
+
+            createPlayerOptionElement(playerName, {
+                showReproductionGender = false,
+                isAttackTargetOption = false,
+            } = {}) {
+                const opt = document.createElement('option');
+                opt.value = playerName;
+
+                if (showReproductionGender) {
+                    const gender = this.currentPopulation[playerName].gender;
+                    const genderIcon = gender === 'male' ? '♂' : '♀';
+                    opt.textContent = `${playerName} ${genderIcon}`;
+                    return opt;
+                }
+
+                if (isAttackTargetOption) {
+                    const factionName =
+                        (this.currentPopulation[playerName].faction || 'undeclared')
+                            .toString()
+                            .toLowerCase();
+                    const factionColorByName = {
+                        for: '#1e8e3e',
+                        against: '#c62828',
+                        neutral: '#546e7a',
+                        undeclared: '#616161',
+                    };
+                    const factionLabelByName = {
+                        for: 'FOR',
+                        against: 'AGAINST',
+                        neutral: 'NEUTRAL',
+                        undeclared: 'UNDECLARED',
+                    };
+                    const factionColor =
+                        factionColorByName[factionName] || factionColorByName.undeclared;
+                    const factionLabel =
+                        factionLabelByName[factionName] || factionLabelByName.undeclared;
+                    opt.textContent = `${playerName} (${factionLabel})`;
+                    opt.style.color = factionColor;
+                    opt.style.fontWeight = '600';
+                    return opt;
+                }
+
+                opt.textContent = playerName;
+                return opt;
+            }
+
+            getOrderDisplayName(playerName) {
+                if (
+                    this.isReproductionCommand(this.selectedCommand.name) &&
+                    this.currentPopulation[playerName]
+                ) {
+                    const gender = this.currentPopulation[playerName].gender;
+                    const genderIcon = gender === 'male' ? '♂' : '♀';
+                    return `${playerName} ${genderIcon}`;
+                }
+                return playerName;
+            }
+
             renderParametersInContainer(container, preservedValues = {}) {
                 // Special case for guard and ignore commands - create unified custom interface even without server options
                 const cmdName = this.selectedCommand.name.toLowerCase();
@@ -3812,6 +3891,11 @@
                                 opt.textContent = 'All hungry children';
                                 input.appendChild(opt);
 
+                                const underTwoOpt = document.createElement('option');
+                                underTwoOpt.value = '!under2';
+                                underTwoOpt.textContent = 'Hungry children under age 2 (migration)';
+                                input.appendChild(underTwoOpt);
+
                                 // Also add parent names for feeding all children of a parent
                                 if (this.currentPopulation && this.currentChildren) {
                                     const parentsWithChildren = new Set();
@@ -3845,59 +3929,14 @@
                         input.innerHTML = '<option value="">Select a player...</option>';
                         
                         if (this.currentPopulation) {
-                            const currentPlayerName = document.getElementById('playerName').value;
-                            let availablePlayers = Object.keys(this.currentPopulation);
-                            const isAttackTargetOption =
-                                this.selectedCommand.name.toLowerCase() === 'attack' &&
-                                option.name.toLowerCase() === 'target';
-                            
-                            // Filter for reproduction commands to only show opposite gender
-                            if (this.isReproductionCommand(this.selectedCommand.name)) {
-                                availablePlayers = this.getValidTargetsForReproduction(currentPlayerName);
-                            }
-                            if (isAttackTargetOption) {
-                                availablePlayers = availablePlayers.filter(
-                                    (playerName) => playerName !== currentPlayerName
-                                );
-                            }
+                            const { availablePlayers, isAttackTargetOption } =
+                                this.getAvailablePlayerTargets(option.name);
                             
                             availablePlayers.forEach(playerName => {
-                                const opt = document.createElement('option');
-                                opt.value = playerName;
-                                
-                                // Add gender indicator for reproduction commands
-                                if (this.isReproductionCommand(this.selectedCommand.name)) {
-                                    const gender = this.currentPopulation[playerName].gender;
-                                    const genderIcon = gender === 'male' ? '♂' : '♀';
-                                    opt.textContent = `${playerName} ${genderIcon}`;
-                                } else if (isAttackTargetOption) {
-                                    const factionName =
-                                        (this.currentPopulation[playerName].faction || 'undeclared')
-                                            .toString()
-                                            .toLowerCase();
-                                    const factionColorByName = {
-                                        for: '#1e8e3e',
-                                        against: '#c62828',
-                                        neutral: '#546e7a',
-                                        undeclared: '#616161',
-                                    };
-                                    const factionLabelByName = {
-                                        for: 'FOR',
-                                        against: 'AGAINST',
-                                        neutral: 'NEUTRAL',
-                                        undeclared: 'UNDECLARED',
-                                    };
-                                    const factionColor =
-                                        factionColorByName[factionName] || factionColorByName.undeclared;
-                                    const factionLabel =
-                                        factionLabelByName[factionName] || factionLabelByName.undeclared;
-                                    opt.textContent = `${playerName} (${factionLabel})`;
-                                    opt.style.color = factionColor;
-                                    opt.style.fontWeight = '600';
-                                } else {
-                                    opt.textContent = playerName;
-                                }
-                                
+                                const opt = this.createPlayerOptionElement(playerName, {
+                                    showReproductionGender: this.isReproductionCommand(this.selectedCommand.name),
+                                    isAttackTargetOption,
+                                });
                                 input.appendChild(opt);
                             });
 
@@ -4429,7 +4468,7 @@
                 container.appendChild(hiddenInput);
                 
                 // Parse preserved value to initialize the display
-                const existingList = preservedValue ? preservedValue.split(',') : [];
+                const existingList = this.parseOrderingListValue(preservedValue);
                 
                 // Ordered list display
                 const orderList = document.createElement('div');
@@ -4454,35 +4493,23 @@
                 }
                 
                 if (this.currentPopulation) {
-                    const currentPlayerName = document.getElementById('playerName').value;
-                    let availablePlayers = Object.keys(this.currentPopulation);
-                    
-                    // Filter for reproduction commands to only show opposite gender
-                    if (this.isReproductionCommand(this.selectedCommand.name)) {
-                        availablePlayers = this.getValidTargetsForReproduction(currentPlayerName);
-                        
-                        if (availablePlayers.length === 0) {
-                            const noTargetsOption = document.createElement('option');
-                            noTargetsOption.value = '';
-                            noTargetsOption.textContent = 'No valid targets (opposite gender only)';
-                            noTargetsOption.disabled = true;
-                            playerSelect.appendChild(noTargetsOption);
-                        }
+                    const { availablePlayers } = this.getAvailablePlayerTargets('');
+
+                    if (
+                        this.isReproductionCommand(this.selectedCommand.name) &&
+                        availablePlayers.length === 0
+                    ) {
+                        const noTargetsOption = document.createElement('option');
+                        noTargetsOption.value = '';
+                        noTargetsOption.textContent = 'No valid targets (opposite gender only)';
+                        noTargetsOption.disabled = true;
+                        playerSelect.appendChild(noTargetsOption);
                     }
                     
                     availablePlayers.forEach(playerName => {
-                        const opt = document.createElement('option');
-                        opt.value = playerName;
-                        
-                        // Add gender indicator for reproduction commands
-                        if (this.isReproductionCommand(this.selectedCommand.name)) {
-                            const gender = this.currentPopulation[playerName].gender;
-                            const genderIcon = gender === 'male' ? '♂' : '♀';
-                            opt.textContent = `${playerName} ${genderIcon}`;
-                        } else {
-                            opt.textContent = playerName;
-                        }
-                        
+                        const opt = this.createPlayerOptionElement(playerName, {
+                            showReproductionGender: this.isReproductionCommand(this.selectedCommand.name),
+                        });
                         playerSelect.appendChild(opt);
                     });
                 }
@@ -4519,12 +4546,23 @@
                 
                 // Initialize display with existing values after everything is built
                 if (existingList.length > 0) {
-                    this.updateOrderDisplayWithElement(orderList, existingList, paramName);
+                    this.renderOrderDisplay(orderList, paramName, existingList);
                 } else {
-                    orderList.innerHTML = '<div style="color: #6c757d; text-align: center; padding: 1rem;">No players added yet</div>';
+                    this.renderOrderingEmptyState(orderList);
                 }
                 
                 return container;
+            }
+
+            parseOrderingListValue(value) {
+                if (value === null || value === undefined || value === '') {
+                    return [];
+                }
+
+                return String(value)
+                    .split(',')
+                    .map((item) => item.trim())
+                    .filter((item) => item.length > 0);
             }
 
             addPlayerToOrder(paramName, playerName) {
@@ -4565,10 +4603,7 @@
                 }
                 
                 // Get current list
-                let currentList = [];
-                if (hiddenInput.value) {
-                    currentList = hiddenInput.value.split(',');
-                }
+                let currentList = this.parseOrderingListValue(hiddenInput.value);
                 
                 console.log('Current list before adding:', currentList);
                 
@@ -4592,72 +4627,25 @@
 
             updateOrderDisplay(paramName, orderedList) {
                 const orderList = document.getElementById(`order-list-${paramName}`);
-                
-                if (orderedList.length === 0) {
-                    orderList.innerHTML = '<div style="color: #6c757d; text-align: center; padding: 1rem;">No players added yet</div>';
-                    return;
-                }
-                
-                orderList.innerHTML = '';
-                
-                orderedList.forEach((playerName, index) => {
-                    const item = document.createElement('div');
-                    item.className = 'order-item';
-                    
-                    const number = document.createElement('div');
-                    number.className = 'order-number';
-                    number.textContent = index + 1;
-                    
-                    const name = document.createElement('div');
-                    name.className = 'order-name';
-                    
-                    // Add gender indicator for reproduction commands
-                    if (this.isReproductionCommand(this.selectedCommand.name) && this.currentPopulation[playerName]) {
-                        const gender = this.currentPopulation[playerName].gender;
-                        const genderIcon = gender === 'male' ? '♂' : '♀';
-                        name.textContent = `${playerName} ${genderIcon}`;
-                    } else {
-                        name.textContent = playerName;
-                    }
-                    
-                    const controls = document.createElement('div');
-                    controls.className = 'order-controls';
-                    
-                    if (index > 0) {
-                        const upBtn = document.createElement('button');
-                        upBtn.type = 'button';
-                        upBtn.className = 'order-btn up';
-                        upBtn.textContent = '↑';
-                        upBtn.onclick = () => this.movePlayerInOrder(paramName, index, -1);
-                        controls.appendChild(upBtn);
-                    }
-                    
-                    if (index < orderedList.length - 1) {
-                        const downBtn = document.createElement('button');
-                        downBtn.type = 'button';
-                        downBtn.className = 'order-btn down';
-                        downBtn.textContent = '↓';
-                        downBtn.onclick = () => this.movePlayerInOrder(paramName, index, 1);
-                        controls.appendChild(downBtn);
-                    }
-                    
-                    const removeBtn = document.createElement('button');
-                    removeBtn.type = 'button';
-                    removeBtn.className = 'order-btn remove';
-                    removeBtn.textContent = '×';
-                    removeBtn.onclick = () => this.removePlayerFromOrder(paramName, index);
-                    controls.appendChild(removeBtn);
-                    
-                    item.appendChild(number);
-                    item.appendChild(name);
-                    item.appendChild(controls);
-                    orderList.appendChild(item);
-                });
+                this.renderOrderDisplay(orderList, paramName, orderedList);
             }
 
-            updateOrderDisplayWithElement(orderListElement, orderedList, paramName) {
+            renderOrderingEmptyState(orderListElement) {
+                orderListElement.innerHTML = '<div style="color: #6c757d; text-align: center; padding: 1rem;">No players added yet</div>';
+            }
+
+            createOrderControlButton(buttonClass, label, onClick) {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = `order-btn ${buttonClass}`;
+                button.textContent = label;
+                button.onclick = onClick;
+                return button;
+            }
+
+            renderOrderDisplay(orderListElement, paramName, orderedList) {
                 if (orderedList.length === 0) {
-                    orderListElement.innerHTML = '<div style="color: #6c757d; text-align: center; padding: 1rem;">No players added yet</div>';
+                    this.renderOrderingEmptyState(orderListElement);
                     return;
                 }
                 
@@ -4673,43 +4661,32 @@
                     
                     const name = document.createElement('div');
                     name.className = 'order-name';
-                    
-                    // Add gender indicator for reproduction commands
-                    if (this.isReproductionCommand(this.selectedCommand.name) && this.currentPopulation[playerName]) {
-                        const gender = this.currentPopulation[playerName].gender;
-                        const genderIcon = gender === 'male' ? '♂' : '♀';
-                        name.textContent = `${playerName} ${genderIcon}`;
-                    } else {
-                        name.textContent = playerName;
-                    }
+                    name.textContent = this.getOrderDisplayName(playerName);
                     
                     const controls = document.createElement('div');
                     controls.className = 'order-controls';
                     
                     if (index > 0) {
-                        const upBtn = document.createElement('button');
-                        upBtn.type = 'button';
-                        upBtn.className = 'order-btn up';
-                        upBtn.textContent = '↑';
-                        upBtn.onclick = () => this.movePlayerInOrder(paramName, index, -1);
-                        controls.appendChild(upBtn);
+                        controls.appendChild(
+                            this.createOrderControlButton('up', '↑', () =>
+                                this.movePlayerInOrder(paramName, index, -1)
+                            )
+                        );
                     }
                     
                     if (index < orderedList.length - 1) {
-                        const downBtn = document.createElement('button');
-                        downBtn.type = 'button';
-                        downBtn.className = 'order-btn down';
-                        downBtn.textContent = '↓';
-                        downBtn.onclick = () => this.movePlayerInOrder(paramName, index, 1);
-                        controls.appendChild(downBtn);
+                        controls.appendChild(
+                            this.createOrderControlButton('down', '↓', () =>
+                                this.movePlayerInOrder(paramName, index, 1)
+                            )
+                        );
                     }
                     
-                    const removeBtn = document.createElement('button');
-                    removeBtn.type = 'button';
-                    removeBtn.className = 'order-btn remove';
-                    removeBtn.textContent = '×';
-                    removeBtn.onclick = () => this.removePlayerFromOrder(paramName, index);
-                    controls.appendChild(removeBtn);
+                    controls.appendChild(
+                        this.createOrderControlButton('remove', '×', () =>
+                            this.removePlayerFromOrder(paramName, index)
+                        )
+                    );
                     
                     item.appendChild(number);
                     item.appendChild(name);
@@ -4720,7 +4697,7 @@
 
             movePlayerInOrder(paramName, fromIndex, direction) {
                 const hiddenInput = document.getElementById(`param_${paramName}`);
-                const currentList = hiddenInput.value.split(',');
+                const currentList = this.parseOrderingListValue(hiddenInput.value);
                 const toIndex = fromIndex + direction;
                 
                 if (toIndex < 0 || toIndex >= currentList.length) return;
@@ -4734,7 +4711,7 @@
 
             removePlayerFromOrder(paramName, index) {
                 const hiddenInput = document.getElementById(`param_${paramName}`);
-                const currentList = hiddenInput.value.split(',');
+                const currentList = this.parseOrderingListValue(hiddenInput.value);
                 
                 currentList.splice(index, 1);
                 hiddenInput.value = currentList.join(',');
@@ -4860,7 +4837,7 @@
                 }
                 
                 // Store message in history (don't store restored messages to avoid duplication)
-                if (!isRestored) {
+                if (!isRestored && this.shouldPersistMessage(text)) {
                     this.storeMessage({
                         text: text,
                         type: type,
@@ -4873,6 +4850,23 @@
                 while (container.children.length > 50) {
                     container.removeChild(container.lastChild);
                 }
+            }
+
+            shouldPersistMessage(text) {
+                if (typeof text !== 'string') {
+                    return true;
+                }
+
+                const trimmedText = text.trim();
+                if (trimmedText.startsWith('Welcome back,')) {
+                    return false;
+                }
+
+                if (trimmedText === 'Previous settings restored 🏛️') {
+                    return false;
+                }
+
+                return true;
             }
 
             getMessageHistoryKey() {
@@ -4946,7 +4940,8 @@
                         typeof msg.timestamp === 'number' && 
                         currentTime - msg.timestamp < maxAge &&
                         typeof msg.text === 'string' &&
-                        msg.text.trim().length > 0
+                        msg.text.trim().length > 0 &&
+                        this.shouldPersistMessage(msg.text)
                     );
                     
                     if (recentMessages.length > 0) {
@@ -6177,21 +6172,46 @@
                 currentTribeStatus.title = `You are currently active in: ${selectedTribe}`;
             }
 
+            renderStatusItemChip(el, icon, text) {
+                if (!el) {
+                    return;
+                }
+
+                const content = String(text ?? '');
+                const shouldHide = content.includes('?') || content.toLowerCase().includes('unknown');
+                el.style.display = shouldHide ? 'none' : 'flex';
+                if (!shouldHide) {
+                    el.innerHTML = `<span class="status-icon">${icon}</span><span>${content}</span>`;
+                }
+            }
+
+            updateConflictStatusChip(gameState) {
+                const conflictStatus = document.getElementById('conflictStatus');
+                if (!conflictStatus) {
+                    return;
+                }
+
+                const data = gameState || {};
+                const isViolence = !!data.violence;
+                const hasDemand = !!(data.demand || data.violence);
+
+                if (!hasDemand) {
+                    conflictStatus.style.display = 'none';
+                } else if (isViolence) {
+                    conflictStatus.style.display = 'flex';
+                    conflictStatus.innerHTML = '<span class="status-icon">⚔️</span><span>Violence Active</span>';
+                } else {
+                    conflictStatus.style.display = 'flex';
+                    conflictStatus.innerHTML = '<span class="status-icon">⚖️</span><span>Demand Active</span>';
+                }
+            }
+
             updateGameStatusBarWithData(gameState) {
                 const roundStatus = document.getElementById('roundStatus');
                 const seasonStatus = document.getElementById('seasonStatus');
                 const locationStatus = document.getElementById('locationStatus');
                 const conflictStatus = document.getElementById('conflictStatus');
                 const statusTextElement = document.getElementById('statusText');
-
-                const renderStatusItem = (el, icon, text) => {
-                    const content = String(text ?? '');
-                    const shouldHide = content.includes('?') || content.toLowerCase().includes('unknown');
-                    el.style.display = shouldHide ? 'none' : 'flex';
-                    if (!shouldHide) {
-                        el.innerHTML = `<span class="status-icon">${icon}</span><span>${content}</span>`;
-                    }
-                };
 
                 if (gameState.startStamp) {
                     const tribe = document.getElementById('tribeSelect').value || 'default';
@@ -6297,24 +6317,11 @@
                 const locationTrackText = `${locationText}: Track ${gameTrackValue}`;
 
                 // Update the status bar elements
-                renderStatusItem(roundStatus, roundIcon, roundText);
-                renderStatusItem(seasonStatus, seasonIcon, seasonYearText);
-                renderStatusItem(locationStatus, locationIcon, locationTrackText);
+                this.renderStatusItemChip(roundStatus, roundIcon, roundText);
+                this.renderStatusItemChip(seasonStatus, seasonIcon, seasonYearText);
+                this.renderStatusItemChip(locationStatus, locationIcon, locationTrackText);
                 this.updateCurrentTribeStatusChip(gameState);
-
-                if (conflictStatus) {
-                    const isViolence = !!gameState.violence;
-                    const hasDemand = !!(gameState.demand || gameState.violence);
-                    if (!hasDemand) {
-                        conflictStatus.style.display = 'none';
-                    } else if (isViolence) {
-                        conflictStatus.style.display = 'flex';
-                        conflictStatus.innerHTML = '<span class="status-icon">⚔️</span><span>Violence Active</span>';
-                    } else {
-                        conflictStatus.style.display = 'flex';
-                        conflictStatus.innerHTML = '<span class="status-icon">⚖️</span><span>Demand Active</span>';
-                    }
-                }
+                this.updateConflictStatusChip(gameState);
                 this.updateWaitingStatusChip();
             }
 
@@ -6324,15 +6331,6 @@
                 const seasonStatus = document.getElementById('seasonStatus');
                 const locationStatus = document.getElementById('locationStatus');
                 const conflictStatus = document.getElementById('conflictStatus');
-
-                const renderStatusItem = (el, icon, text) => {
-                    const content = String(text ?? '');
-                    const shouldHide = content.includes('?') || content.toLowerCase().includes('unknown');
-                    el.style.display = shouldHide ? 'none' : 'flex';
-                    if (!shouldHide) {
-                        el.innerHTML = `<span class="status-icon">${icon}</span><span>${content}</span>`;
-                    }
-                };
 
                 if (!roundStatus || !seasonStatus || !locationStatus) return;
 
@@ -6410,27 +6408,11 @@
                 this.currentStatusData.gameTrack = gameTrackMatch ? Number(gameTrackMatch[1]) : null;
 
                 // Update the status bar elements
-                renderStatusItem(roundStatus, roundIcon, roundText);
-                renderStatusItem(seasonStatus, seasonIcon, seasonYearText);
-                renderStatusItem(locationStatus, locationIcon, locationTrackText);
+                this.renderStatusItemChip(roundStatus, roundIcon, roundText);
+                this.renderStatusItemChip(seasonStatus, seasonIcon, seasonYearText);
+                this.renderStatusItemChip(locationStatus, locationIcon, locationTrackText);
                 this.updateCurrentTribeStatusChip(this.currentStatusData || {});
-                if (conflictStatus) {
-                    if (!this.currentStatusData) {
-                        conflictStatus.style.display = 'none';
-                    } else {
-                        const isViolence = !!this.currentStatusData.violence;
-                        const hasDemand = !!(this.currentStatusData.demand || this.currentStatusData.violence);
-                        if (!hasDemand) {
-                            conflictStatus.style.display = 'none';
-                        } else if (isViolence) {
-                            conflictStatus.style.display = 'flex';
-                            conflictStatus.innerHTML = '<span class="status-icon">⚔️</span><span>Violence Active</span>';
-                        } else {
-                            conflictStatus.style.display = 'flex';
-                            conflictStatus.innerHTML = '<span class="status-icon">⚖️</span><span>Demand Active</span>';
-                        }
-                    }
-                }
+                this.updateConflictStatusChip(this.currentStatusData || {});
                 this.updateWaitingStatusChip();
             }
 

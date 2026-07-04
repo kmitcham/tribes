@@ -556,3 +556,76 @@ describe('vote function', () => {
     expect(gameState.population.player1.vote).toBe('player2');
   });
 });
+
+describe('phase-aware injury recovery', () => {
+  test('decrements injury on phase end and recovers after end of next same phase', () => {
+    const gameState = {
+      workRound: true,
+      foodRound: false,
+      reproductionRound: false,
+      messages: {},
+      population: {
+        Alice: {
+          name: 'Alice',
+        },
+      },
+    };
+    const person = gameState.population.Alice;
+
+    pop.applyInjury(person, gameState);
+    expect(person.isInjured).toBe(2);
+    expect(person.injuryPhase).toBe('work');
+
+    gameState.workRound = false;
+    gameState.foodRound = true;
+    pop.decrementSickness(gameState.population, gameState, 'work');
+    expect(person.isInjured).toBe(1);
+
+    gameState.foodRound = false;
+    gameState.reproductionRound = true;
+    pop.decrementSickness(gameState.population, gameState, 'food');
+    expect(person.isInjured).toBe(1);
+
+    gameState.reproductionRound = false;
+    gameState.workRound = true;
+    pop.decrementSickness(gameState.population, gameState, 'reproduction');
+    expect(person.isInjured).toBe(1);
+
+    gameState.workRound = false;
+    gameState.foodRound = true;
+    pop.decrementSickness(gameState.population, gameState, 'work');
+    expect(person.isInjured).toBeUndefined();
+    expect(person.injuryPhase).toBeUndefined();
+    expect(gameState.messages.Alice).toContain(
+      'You have recovered from your injury.'
+    );
+
+    gameState.foodRound = false;
+    gameState.reproductionRound = true;
+    pop.decrementSickness(gameState.population, gameState, 'food');
+    expect(person.isInjured).toBeUndefined();
+  });
+
+  test('legacy injury without injuryPhase continues to decrement every phase', () => {
+    const gameState = {
+      workRound: true,
+      foodRound: false,
+      reproductionRound: false,
+      messages: {},
+      population: {
+        Legacy: {
+          name: 'Legacy',
+          isInjured: 2,
+        },
+      },
+    };
+
+    pop.decrementSickness(gameState.population, gameState);
+    expect(gameState.population.Legacy.isInjured).toBe(1);
+
+    gameState.workRound = false;
+    gameState.foodRound = true;
+    pop.decrementSickness(gameState.population, gameState);
+    expect(gameState.population.Legacy.isInjured).toBeUndefined();
+  });
+});

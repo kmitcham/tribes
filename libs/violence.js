@@ -471,11 +471,11 @@ const resolveSingleAttack = (attacker, defender, roll, gameState) => {
     return response + 'A miss!\n';
   }
   if (defender.hits == 1) {
-    defender.isInjured = 4;
+    pop.applyInjury(defender, gameState);
     response += defender.name + ' is injured!';
   }
   if (defender.hits == 2) {
-    defender.isInjured = 4;
+    pop.applyInjury(defender, gameState);
     if (defender.strength == 'weak') {
       const creditedAttacker =
         (gameState &&

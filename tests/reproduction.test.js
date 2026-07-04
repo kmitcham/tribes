@@ -409,6 +409,35 @@ test('trigger end of mating', () => {
   expect(response).toBe('this many people are done mating: 4');
 });
 
+test('single-sex tribes complete reproduction immediately', () => {
+  var gameState = {
+    name: 'unitTest-tribe',
+    population: {
+      p1: {
+        name: 'p1',
+        gender: 'female',
+        inviteList: ['p2'],
+      },
+      p2: {
+        name: 'p2',
+        gender: 'female',
+        inviteList: ['p1'],
+      },
+    },
+    children: {},
+    reproductionRound: true,
+  };
+
+  response = reproLib.globalMatingCheck(gameState, {});
+
+  expect(gameState.doneMating).toBeTruthy();
+  expect(gameState.matingComplete).toBeTruthy();
+  expect(gameState.messages['tribe']).toContain(
+    '---> Reproductive activites are complete for the season <---'
+  );
+  expect(response).toBe('this many people are done mating: 2');
+});
+
 test('sorting check', () => {});
 
 test('unique names', () => {

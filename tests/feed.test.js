@@ -294,6 +294,54 @@ describe('feed function', () => {
     //expect(response).toBe("no children need food")
   });
 
+  test('feed !under2 feeds only hungry children under age two', () => {
+    var gameState = {
+      population: {
+        p1: {
+          name: 'p1',
+          gender: 'male',
+          activity: 'gather',
+          food: 50,
+          grain: 10,
+        },
+      },
+      children: {
+        BabyHungry: {
+          mother: 'p2',
+          father: 'p1',
+          age: 3,
+          food: 0,
+          gender: 'female',
+          name: 'BabyHungry',
+        },
+        BabyFed: {
+          mother: 'p2',
+          father: 'p1',
+          age: 2,
+          food: 2,
+          gender: 'male',
+          name: 'BabyFed',
+        },
+        OlderHungry: {
+          mother: 'p2',
+          father: 'p1',
+          age: 4,
+          food: 0,
+          gender: 'female',
+          name: 'OlderHungry',
+        },
+      },
+    };
+
+    feed(null, gameState.population.p1, 2, ['!under2'], gameState);
+    response = gameState.messages['tribe'];
+
+    expect(response).toContain('p1 feeds all hungry children under age two.');
+    expect(response).toContain('p1 feeds 2 to BabyHungry');
+    expect(response).not.toContain('p1 feeds 2 to BabyFed');
+    expect(response).not.toContain('p1 feeds 2 to OlderHungry');
+  });
+
   test('feed !allwith overfeeding', () => {
     var gameState = {
       population: {

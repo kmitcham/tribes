@@ -29,6 +29,7 @@ function createClassList() {
 }
 
 function createElement(tagName = 'div') {
+  const attributes = {};
   const element = {
     tagName: String(tagName).toUpperCase(),
     id: '',
@@ -48,6 +49,14 @@ function createElement(tagName = 'div') {
     innerText: '',
     _innerHTML: '',
     classList: createClassList(),
+    setAttribute(name, value) {
+      attributes[String(name)] = String(value);
+    },
+    getAttribute(name) {
+      return Object.prototype.hasOwnProperty.call(attributes, String(name))
+        ? attributes[String(name)]
+        : null;
+    },
     appendChild(child) {
       child.parentNode = this;
       this.children.push(child);
@@ -390,5 +399,57 @@ describe('Tribes Interface Client (real class)', () => {
     const names = items.map((item) => item.dataset.command);
     expect(names).toContain('join');
     expect(names).toContain('hunt');
+  });
+
+  test('feed child dropdown includes all feed special options and mother shortcuts', () => {
+    client.selectedCommand = {
+      name: 'feed',
+      description: 'Feed children',
+      options: [
+        { name: 'child', required: true, type: 'string' },
+        { name: 'amount', required: false, type: 'number' },
+      ],
+    };
+
+    client.currentPopulation = {
+      TestPlayer: { name: 'TestPlayer', gender: 'male' },
+      momA: { name: 'momA', gender: 'female' },
+      momB: { name: 'momB', gender: 'female' },
+    };
+
+    client.currentChildren = {
+      KidA: { name: 'KidA', age: 2, food: 1, mother: 'momA' },
+      KidB: { name: 'KidB', age: 3, food: 2, mother: 'momB' },
+      AdultKid: { name: 'AdultKid', age: 24, food: 0, mother: 'momA' },
+    };
+
+    const container = createElement('div');
+    client.renderParametersInContainer(container);
+
+    expect(container.children.length).toBeGreaterThan(0);
+    const childGroup = container.children[0];
+    const childSelect = childGroup.children.find(
+      (el) => el.tagName === 'SELECT'
+    );
+    expect(childSelect).toBeTruthy();
+
+    const optionValues = childSelect.children.map((opt) => opt.value);
+    const optionTexts = childSelect.children.map((opt) => opt.textContent);
+
+    // Regular child options
+    expect(optionValues).toContain('KidA');
+    expect(optionValues).toContain('KidB');
+    expect(optionValues).not.toContain('AdultKid');
+
+    // Feed special options
+    expect(optionValues).toContain('!all');
+    expect(optionTexts).toContain('All hungry children');
+    expect(optionValues).toContain('!under2');
+    expect(optionTexts).toContain('Hungry children under age 2 (migration)');
+
+    // Parent shortcut section/options
+    expect(optionTexts).toContain('--- Mothers (feed all their children) ---');
+    expect(optionValues).toContain('momA');
+    expect(optionValues).toContain('momB');
   });
 });

@@ -165,7 +165,7 @@ test('should handle injury (roll 6)', () => {
   const result = chiefLib.doChance(6, gameState);
   assert(result.includes('injured – miss next turn'));
   const injuredNames = Object.keys(gameState.population).filter(
-    (name) => gameState.population[name].isInjured === 4
+    (name) => gameState.population[name].isInjured === 2
   );
   assert.strictEqual(injuredNames.length, 1);
   assert.strictEqual(gameState.population[injuredNames[0]].guarding, undefined);

@@ -40,7 +40,8 @@ function playerHelpRounds() {
   text += '-=Food Round Commands=-\n';
   text +=
     ' foodcheck examine the food situation for every adult and living child; triggers reproduction round if everyone has enough food\n';
-  text += ' feed <amt> <childName | mothername | !all >  [<more childNames>]\n';
+  text +=
+    ' feed <amt> <childName | mothername | !all | !under2 >  [<more childNames>]\n';
   text += '-=Reproduction Commands=-\n';
   text +=
     ' romance  Open your romance panel. Set who to invite (in priority order) and how to respond to invitations from others. One Save sends both your invite list and your consent/decline choices together.\n';
@@ -96,17 +97,5 @@ module.exports.playerHelpRounds = playerHelpRounds;
 module.exports.playerHelpConflict = playerHelpConflict;
 module.exports.chiefHelp = chiefHelp;
 
-/*
-Each player takes the role of a member of a Stone Age tribe trying to survive and multiply in the world. Tribe members can be hunters, gatherers, or crafters. They can travel among the veldt, marsh, hills and forest environments. They can try to reproduce, to guard children from dangers, and to keep everyone fed.
-
-The four physical resources in the game are food, grain, baskets, and spearheads. Food and grain are consumed to prevent starvation; grain is harder to obtain, but is not vulnerable to destruction from bad luck. Baskets double the effectiveness of gathering. Spearheads give a substantial bonus to hunting.
-
-dult tribe members need to consume 4 food or grain each season to avoid starvation. Children, including those not yet born, need to be given 2 food or grain each season until they reach 12 years old. Mothers with two or more children under 2 years old need 6 food or grain each season.
-
-Children are produced when a tribe member invites a tribe member of the opposite gender to mate, the invitee consents, and there is a successful dice roll. A player can invite multiple people until one of them consents. They can receive consent to only one invitation per season. Consenting to a mating does not change how many invitations a player can make that season.
-
-All tribes commands begin with a !, eg, "!inventory" is the command to see the tribe's possessions.  To see a list of commands, with some explanations of what they do, you can type "!help" in your tribe channel.  The bot will send you messages about actions you can take.
-
-Players use a split screen, with one window for the private messages from the bot, and one window for the shared conversation with the bot and the other players in the tribe channel (<tribename>-tribe).
-
-*/
+// Keep long-form gameplay documentation in README or dedicated docs so this
+// module only reflects the current help text and command surface.

@@ -156,6 +156,20 @@ function canStillInviteCount(gameState) {
 }
 module.exports.canStillInviteCount = canStillInviteCount;
 
+function hasBothLivingSexes(population) {
+  const livingSexes = new Set();
+  for (const personName in population) {
+    const person = population[personName];
+    if (person && person.gender) {
+      livingSexes.add(person.gender);
+      if (livingSexes.size > 1) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 function handleReproductionList(actorName, arrayOfNames, listName, gameState) {
   console.log(
     'Building ' + listName + ' for ' + actorName + ' args ' + arrayOfNames
@@ -540,11 +554,12 @@ function globalMatingCheck(gameState) {
   if (!gameState.reproductionRound) {
     return 'It is not the mating round';
   }
-  var inviteCheck = canStillInvite(gameState);
+  const population = gameState.population;
+  const canStillMate = hasBothLivingSexes(population);
+  var inviteCheck = canStillMate ? canStillInvite(gameState) : '';
   var allDone = true;
-  var actionableInvites = inviteCheck.length > 0;
-  var population = gameState.population;
-  var doneMating = [];
+  var actionableInvites = canStillMate && inviteCheck.length > 0;
+  var doneMating = canStillMate ? [] : Object.keys(population);
   var whoNeedsToGiveAnAnswer = [];
   while (actionableInvites) {
     infinite_loop_count += 1;
@@ -765,8 +780,8 @@ function globalMatingCheck(gameState) {
       );
     }
   }
-  inviteCheck = canStillInvite(gameState);
-  const inviteCount = canStillInviteCount(gameState);
+  inviteCheck = canStillMate ? canStillInvite(gameState) : '';
+  const inviteCount = canStillMate ? canStillInviteCount(gameState) : 0;
   console.log('After mating checks, inviteCheck is: ' + inviteCheck);
   if (inviteCount > 0) {
     text.addMessage(
@@ -1287,7 +1302,7 @@ function startReproduction(gameState) {
 
   gameState.doneMating = false;
   globalMatingCheck(gameState);
-  pop.decrementSickness(gameState.population, gameState);
+  pop.decrementSickness(gameState.population, gameState, 'food');
   gameState.saveRequired = true;
   gameState.archiveRequired = true;
 

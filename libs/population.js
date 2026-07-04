@@ -291,7 +291,11 @@ function memberByNameFromDictionary(name, dictionary, gameState) {
   return null;
 }
 
-function decrementSickness(population, gameState) {
+function decrementSickness(population, gameState, phaseEnded) {
+  const injuryTickPhase =
+    typeof phaseEnded === 'string' && phaseEnded.length > 0
+      ? phaseEnded
+      : getCurrentPhase(gameState);
   for (const personName in population) {
     const person = population[personName];
     if (person.isSick !== undefined && person.isSick !== null) {
@@ -310,12 +314,16 @@ function decrementSickness(population, gameState) {
       }
     }
     if (person.isInjured !== undefined && person.isInjured !== null) {
-      if (person.isInjured > 0) {
+      if (
+        person.isInjured > 0 &&
+        shouldDecrementInjuryInPhase(person, injuryTickPhase)
+      ) {
         person.isInjured = person.isInjured - 1;
         console.log(person.name + ' decrement injury  ' + person.isInjured);
       }
       if (person.isInjured < 1) {
         delete person.isInjured;
+        delete person.injuryPhase;
         text.addMessage(
           gameState,
           person.name,
@@ -327,6 +335,46 @@ function decrementSickness(population, gameState) {
   }
 }
 module.exports.decrementSickness = decrementSickness;
+
+function getCurrentPhase(gameState) {
+  if (!gameState || typeof gameState !== 'object') {
+    return 'work';
+  }
+  if (gameState.workRound === true) {
+    return 'work';
+  }
+  if (gameState.foodRound === true) {
+    return 'food';
+  }
+  if (gameState.reproductionRound === true) {
+    return 'reproduction';
+  }
+  if (gameState.round === 'work' || gameState.round === 'food') {
+    return gameState.round;
+  }
+  if (gameState.round === 'reproduction' || gameState.round === 'chance') {
+    return 'reproduction';
+  }
+  return 'work';
+}
+module.exports.getCurrentPhase = getCurrentPhase;
+
+function shouldDecrementInjuryInPhase(person, currentPhase) {
+  if (!person || !person.injuryPhase) {
+    // Legacy injury state: keep historical behavior of decrementing every phase.
+    return true;
+  }
+  return person.injuryPhase === currentPhase;
+}
+
+function applyInjury(person, gameState, durationByPhase = 2) {
+  if (!person || typeof person !== 'object') {
+    return;
+  }
+  person.isInjured = Number(durationByPhase);
+  person.injuryPhase = getCurrentPhase(gameState);
+}
+module.exports.applyInjury = applyInjury;
 
 function history(playerName, message, gameState) {
   const player = memberByName(playerName, gameState);

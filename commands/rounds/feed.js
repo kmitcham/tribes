@@ -14,7 +14,7 @@ module.exports = {
       option
         .setName('child')
         .setDescription(
-          'name of child to feed, or parent name to feed all their children, or !all for all hungry children'
+          'name of child to feed, parent name to feed all their children, !all for all hungry children, or !under2 for hungry children under age two'
         )
         .setRequired(true)
     )

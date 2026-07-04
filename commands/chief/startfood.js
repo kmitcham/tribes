@@ -65,7 +65,7 @@ function startFood(gameState, bot) {
   gameState.reproductionRound = false;
   const population = gameState.population;
   clearWorkFlags(population, gameState);
-  pop.decrementSickness(population, gameState, bot);
+  pop.decrementSickness(population, gameState, 'work');
   text.addMessage(
     gameState,
     'tribe',
@@ -99,12 +99,10 @@ function clearWorkFlags(population, gameState) {
     if (person.isInjured && person.isInjured > 0 && person.worked == false) {
       // did not work means rested
       person.activity = 'recovery';
-      pop.history(person.name, 'recovered from injury', gameState);
     }
     if (person.isSick && person.isSick > 0 && person.worked == false) {
       // did not work means rested
       person.activity = 'recovery';
-      pop.history(person.name, 'recovered from illness', gameState);
     }
     person.worked = false;
   }

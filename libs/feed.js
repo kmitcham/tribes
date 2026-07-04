@@ -63,6 +63,27 @@ function feed(unused, player, amount, inputChildList, gameState) {
         }
         continue;
       }
+      if (cName.toLowerCase() == '!under2') {
+        showErrors = false;
+        const underTwoNote =
+          player.name + ' feeds all hungry children under age two.';
+        if (!specialNotes.includes(underTwoNote)) {
+          specialNotes.push(underTwoNote);
+        }
+        for (var underTwoChildName in children) {
+          var underTwoChild = children[underTwoChildName];
+          if (
+            underTwoChild &&
+            !(underTwoChild.newAdult && underTwoChild.newAdult == true) &&
+            Number(underTwoChild.age || 0) < 4 &&
+            Number(underTwoChild.food || 0) < 2
+          ) {
+            inputChildList.push(underTwoChildName);
+            console.log('adding to inputChildList:' + underTwoChildName);
+          }
+        }
+        continue;
+      }
       // this seems to be feeding based on mother?
       const motherName = resolveMotherNameFromChildren(cName, children);
       if (motherName) {

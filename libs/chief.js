@@ -347,7 +347,7 @@ function doChance(rollValue, gameState) {
     case 6:
       name = pop.randomMemberName(population);
       person = population[name];
-      person.isInjured = 4;
+      pop.applyInjury(person, gameState);
       if (person.guarding && person.guarding.length > 0) {
         message += ' They can no longer guard ' + person.guarding + '.';
         delete person.guarding;
@@ -382,7 +382,7 @@ function doChance(rollValue, gameState) {
       name = pop.randomMemberName(population);
       person = population[name];
       message += person.name + ' gets a severe injury: miss next turn and ';
-      person.isInjured = 4;
+      pop.applyInjury(person, gameState);
       if (person.hasOwnProperty('strength') && person.strength == 'strong') {
         delete person.strength;
         message += ' is reduced to average strength.';
@@ -462,7 +462,7 @@ function startWork(actorName, gameState) {
       delete person.payTwoOrDie;
     }
   }
-  pop.decrementSickness(gameState.population, gameState);
+  pop.decrementSickness(gameState.population, gameState, 'reproduction');
   gameState.workRound = true;
   gameState.foodRound = false;
   gameState.reproductionRound = false;
