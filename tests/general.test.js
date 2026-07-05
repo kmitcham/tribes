@@ -127,7 +127,7 @@ describe('give function', () => {
     general.give(gameState, 'player1', 'player2', 1, 'spearhead');
     var messages = gameState.messages;
     var expectedMessage = messages['tribe'];
-    expect(expectedMessage).toContain('player1 gives player2 1 spearhead');
+    expect(expectedMessage).toContain('Player1 gives Player2 1 spearhead');
   });
 
   test('should fail if amount is negative and source is not a referee', () => {
@@ -141,7 +141,7 @@ describe('give function', () => {
     general.give(gameState, 'player1', 'player2', 2, 'grain');
     var messages = gameState.messages;
     var expectedMessage = messages['tribe'];
-    expect(expectedMessage).toContain('player1 gives player2 2 grain');
+    expect(expectedMessage).toContain('Player1 gives Player2 2 grain');
     expect(gameState.population.player1.grain).toBe(8);
     expect(gameState.population.player2.grain).toBe(12);
     expect(gameState.saveRequired).toBe(true);

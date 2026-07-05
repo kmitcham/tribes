@@ -336,59 +336,116 @@ function intersect(a, b) {
   });
 }
 
+function migrateToConsentDict(person) {
+  if (!person) return null;
+  if (!person.consentDict || typeof person.consentDict !== 'object') {
+    person.consentDict = {};
+  }
+  return person.consentDict;
+}
+
+function getRomanceTargetsByResponse(person, responseType) {
+  const consentDict = migrateToConsentDict(person);
+  return Object.entries(consentDict)
+    .filter(([, value]) => value === responseType)
+    .map(([name]) => name);
+}
+
+function clearRomanceTargetsByResponse(person, responseType) {
+  const consentDict = migrateToConsentDict(person);
+  for (const [name, value] of Object.entries(consentDict)) {
+    if (value === responseType) {
+      delete consentDict[name];
+    }
+  }
+}
+
+function parseRomanceInput(rawList) {
+  if (!rawList) {
+    return [];
+  }
+
+  const rawString = String(rawList);
+  const entries = rawString.includes(',')
+    ? rawString.split(',')
+    : rawString.split(' ');
+
+  return entries
+    .map((entry) => entry.trim())
+    .filter((entry) => entry.length > 0);
+}
+
+function applyRomanceResponseUpdates(
+  gameState,
+  actorName,
+  entries,
+  defaultResponseType
+) {
+  const member = pop.memberByName(actorName, gameState);
+  if (!member) {
+    console.log(actorName + ' not found in tribe for ' + defaultResponseType);
+    text.addMessage(gameState, actorName, 'You are not in the tribe');
+    return [];
+  }
+
+  if (entries.includes('!none')) {
+    clearRomanceTargetsByResponse(member, defaultResponseType);
+    gameState.saveRequired = true;
+    return [];
+  }
+
+  const hasExplicitStatuses = entries.some(
+    (entry) => typeof entry === 'string' && entry.includes(':')
+  );
+
+  if (!hasExplicitStatuses) {
+    clearRomanceTargetsByResponse(member, defaultResponseType);
+  }
+
+  for (const entry of entries) {
+    if (!entry) {
+      continue;
+    }
+
+    if (entry.includes(':')) {
+      const parts = entry.split(':');
+      handleRomanceResponse(
+        gameState,
+        actorName,
+        parts[0].trim(),
+        parts[1].trim().toLowerCase()
+      );
+    } else {
+      handleRomanceResponse(gameState, actorName, entry, defaultResponseType);
+    }
+  }
+
+  gameState.saveRequired = true;
+  return getRomanceTargetsByResponse(member, defaultResponseType);
+}
+
 function consentPrep(gameState, sourceName, rawList) {
   var member = pop.memberByName(sourceName, gameState);
 
   if (!rawList) {
     console.log('no rawList for consent');
-    if (member.hasOwnProperty('consentList') && member.consentList.length > 0) {
+    const currentConsentTargets = getRomanceTargetsByResponse(
+      member,
+      'consent'
+    );
+    if (currentConsentTargets.length > 0) {
       text.addMessage(
         gameState,
         sourceName,
-        'Current consentList: ' + member.consentList.join(' ')
+        'Current consentList: ' + currentConsentTargets.join(' ')
       );
-      return 'Current consentList: ' + member.consentList.join(' ');
+      return 'Current consentList: ' + currentConsentTargets.join(' ');
     } else {
       text.addMessage(gameState, sourceName, 'No current consentList.');
       return 'No current consentList.';
     }
   }
-  let messageArray = rawList.split(' ');
-  if (rawList.includes(',')) {
-    messageArray = rawList.split(',');
-    console.log('splitting consent on commas');
-  }
-
-  if (rawList.includes(':')) {
-    for (let i = 0; i < messageArray.length; i++) {
-      let entry = messageArray[i].trim();
-      if (entry.includes(':')) {
-        let parts = entry.split(':');
-        handleRomanceResponse(
-          gameState,
-          sourceName,
-          parts[0].trim(),
-          parts[1].trim().toLowerCase()
-        );
-      } else if (entry) {
-        handleRomanceResponse(gameState, sourceName, entry, 'consent');
-      }
-    }
-    gameState.saveRequired = true;
-    let outCon = [];
-    if (member.consentDict) {
-      for (const [n, r] of Object.entries(member.consentDict)) {
-        if (r === 'consent') outCon.push(n);
-      }
-    }
-    member.consentList = outCon;
-    text.addMessage(gameState, sourceName, 'Updated your consent responses');
-    return outCon;
-  }
-
-  for (let i = 0; i < messageArray.length; i++) {
-    messageArray[i] = messageArray[i].trim();
-  }
+  const messageArray = parseRomanceInput(rawList);
   if (messageArray.length < 1) {
     text.addMessage(
       gameState,
@@ -399,7 +456,7 @@ function consentPrep(gameState, sourceName, rawList) {
   }
   console.log('updating consentlist: ' + messageArray);
   consent(sourceName, messageArray, gameState);
-  return member.consentList;
+  return getRomanceTargetsByResponse(member, 'consent');
 }
 module.exports.consentPrep = consentPrep;
 
@@ -410,7 +467,9 @@ function consent(actorName, arrayOfNames, gameState) {
     text.addMessage(gameState, actorName, 'You are not in the tribe');
     return;
   }
-  var intersectList = intersect(member.consentList, member.declineList);
+  const priorConsentList = getRomanceTargetsByResponse(member, 'consent');
+  const priorDeclineList = getRomanceTargetsByResponse(member, 'decline');
+  var intersectList = intersect(priorConsentList, priorDeclineList);
   if (intersectList && intersectList.length > 0) {
     text.addMessage(
       gameState,
@@ -418,28 +477,18 @@ function consent(actorName, arrayOfNames, gameState) {
       'Your consent and decline lists have overlaps.  Decline has priority.'
     );
   }
-  const handleMessage = handleReproductionList(
+  const updatedConsentTargets = applyRomanceResponseUpdates(
+    gameState,
     actorName,
     arrayOfNames,
-    'consentList',
-    gameState
+    'consent'
   );
-  text.addMessage(gameState, member.name, handleMessage);
-  if ('consentList' in member) {
-    if (member.consentList.length > 0) {
-      text.addMessage(
-        gameState,
-        actorName,
-        'Updated consentlist to ' + member.consentList
-      );
-    } else {
-      text.addMessage(
-        gameState,
-        actorName,
-        'You will not consent to mating with anyone.'
-      );
-      delete member['consentList'];
-    }
+  if (updatedConsentTargets.length > 0) {
+    text.addMessage(
+      gameState,
+      actorName,
+      'Updated consentlist to ' + updatedConsentTargets
+    );
   } else {
     text.addMessage(
       gameState,
@@ -447,7 +496,6 @@ function consent(actorName, arrayOfNames, gameState) {
       'You will not consent to mating with anyone.'
     );
   }
-  gameState.saveRequired = true;
   return globalMatingCheck(gameState);
 }
 module.exports.consent = consent;
@@ -458,22 +506,20 @@ function declinePrep(interaction, gameState) {
 
   var player = pop.memberByName(sourceName, gameState);
   if (!rawList) {
-    if (player.declineList && player.declineList.length > 0) {
+    const currentDeclineTargets = getRomanceTargetsByResponse(player, 'decline');
+    if (currentDeclineTargets.length > 0) {
       text.addMessage(
         gameState,
         sourceName,
-        'Current declinelist: ' + player.declinelist.join(' ')
+        'Current declinelist: ' + currentDeclineTargets.join(' ')
       );
-      return 'Current declinelist: ' + player.declinelist.join(' ');
+      return 'Current declinelist: ' + currentDeclineTargets.join(' ');
     } else {
       text.addMessage(gameState, sourceName, 'No current declinelist');
       return 'No current declinelist';
     }
   }
-  let listAsArray = rawList.split(' ');
-  if (rawList.includes(',')) {
-    listAsArray = rawList.split(',');
-  }
+  const listAsArray = parseRomanceInput(rawList);
   console.log('applying decline list to mating for ' + sourceName);
   const response = decline(sourceName, listAsArray, gameState);
   console.log('decline response:' + response);
@@ -483,47 +529,26 @@ module.exports.declinePrep = declinePrep;
 
 function decline(actorName, messageArray, gameState) {
   const person = pop.memberByName(actorName, gameState);
-
-  // if format uses colon dictionary e.g. "Alice: consent"
-  if (messageArray.some((s) => typeof s === 'string' && s.includes(':'))) {
-    for (var i = 0; i < messageArray.length; i++) {
-      let entry = messageArray[i].trim();
-      if (entry.includes(':')) {
-        let parts = entry.split(':');
-        handleRomanceResponse(
-          gameState,
-          actorName,
-          parts[0].trim(),
-          parts[1].trim().toLowerCase()
-        );
-      } else if (entry) {
-        handleRomanceResponse(gameState, actorName, entry, 'decline');
-      }
-    }
-    let outDec = [];
-    if (person.consentDict) {
-      for (const [n, r] of Object.entries(person.consentDict)) {
-        if (r === 'decline') outDec.push(n);
-      }
-    }
-    person.declineList = outDec;
-    text.addMessage(gameState, actorName, 'Updated your decline responses.');
-  } else if (messageArray.includes('!none')) {
-    person.declineList = [];
-    text.addMessage(gameState, actorName, 'Emptying your declineList');
-  } else {
-    handleReproductionList(actorName, messageArray, 'declineList', gameState);
-    const intersectList = intersect(person.consentList, person.declineList);
-    if (intersectList && intersectList.length > 0) {
-      text.addMessage(
-        gameState,
-        actorName,
-        'Your consent and decline lists have overlaps.  Decline has priority.'
-      );
-    }
-    text.addMessage(gameState, actorName, 'Decline updated.');
+  const updatedDeclineTargets = applyRomanceResponseUpdates(
+    gameState,
+    actorName,
+    messageArray,
+    'decline'
+  );
+  const consentTargets = getRomanceTargetsByResponse(person, 'consent');
+  const intersectList = intersect(consentTargets, updatedDeclineTargets);
+  if (intersectList && intersectList.length > 0) {
+    text.addMessage(
+      gameState,
+      actorName,
+      'Your consent and decline lists have overlaps.  Decline has priority.'
+    );
   }
-  gameState.saveRequired = true;
+  if (updatedDeclineTargets.length > 0) {
+    text.addMessage(gameState, actorName, 'Updated your decline responses.');
+  } else {
+    text.addMessage(gameState, actorName, 'Emptying your declineList');
+  }
   return globalMatingCheck(gameState);
 }
 module.exports.decline = decline;
@@ -837,7 +862,9 @@ function globalMatingCheck(gameState) {
         'No one has become pregnant this season.'
       );
     }
-    text.addMessage(gameState, 'tribe', 'Time for chance.');
+    if (gameState.needChanceRoll !== false) {
+      text.addMessage(gameState, 'tribe', 'Time for chance.');
+    }
     gameState.doneMating = true;
     gameState.matingComplete = true;
     gameState.saveRequired = true;
@@ -1307,26 +1334,6 @@ function startReproduction(gameState) {
   gameState.archiveRequired = true;
 
   return;
-}
-
-function migrateToConsentDict(person) {
-  if (!person) return;
-  if (!person.consentDict) person.consentDict = {};
-
-  if (person.consentList && Array.isArray(person.consentList)) {
-    for (let target of person.consentList) {
-      if (target !== '!none' && target !== '!pass' && target !== '!all') {
-        person.consentDict[target] = 'consent';
-      } else if (target === '!all') {
-        person.consentDict['!all'] = 'consent';
-      }
-    }
-  }
-  if (person.declineList && Array.isArray(person.declineList)) {
-    for (let target of person.declineList) {
-      person.consentDict[target] = 'decline';
-    }
-  }
 }
 
 function handleRomanceResponse(

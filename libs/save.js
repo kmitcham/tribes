@@ -156,13 +156,13 @@ async function saveGameState(gameState, tribeName) {
   }
   console.log('saved file :' + saveFileName + ' at ' + saveTime);
 }
-async function saveTribe(gameState) {
+function saveTribe(gameState) {
   const tribeName = gameState.name;
   saveGameState(gameState, tribeName);
 }
 module.exports.saveTribe = saveTribe;
 
-async function archiveTribe(gameState) {
+function archiveTribe(gameState) {
   const d = new Date();
   let saveTime = d.toISOString();
   saveTime = saveTime.replace(/\//g, '-');
@@ -170,8 +170,8 @@ async function archiveTribe(gameState) {
 
   // If game has ended, create final archive and clear main game file
   if (gameState.ended) {
-    await saveFinalGameState(gameState);
-    await clearMainGameFile(gameState.name);
+    saveFinalGameState(gameState);
+    clearMainGameFile(gameState.name);
     return;
   }
 
@@ -182,12 +182,12 @@ async function archiveTribe(gameState) {
   actuallyWriteToDisk(saveFileName, gameState);
 
   // Manage snapshots - keep only 3 most recent
-  await manageSnapshots(gameState.name);
+  manageSnapshots(gameState.name);
 }
 module.exports.archiveTribe = archiveTribe;
 
 // Save final game state with date-based filename
-async function saveFinalGameState(gameState) {
+function saveFinalGameState(gameState) {
   const d = new Date();
   const dateStr = d.toISOString().split('T')[0]; // YYYY-MM-DD format
   const finalFileName = `./tribe-data/${gameState.name}/${gameState.name}-final-${dateStr}.json`;
@@ -202,7 +202,7 @@ async function saveFinalGameState(gameState) {
 module.exports.saveFinalGameState = saveFinalGameState;
 
 // Clear the main game file so tribe is ready for a new game
-async function clearMainGameFile(tribeName) {
+function clearMainGameFile(tribeName) {
   const mainGameFile = `./tribe-data/${tribeName}/${tribeName}.json`;
 
   if (fs.existsSync(mainGameFile)) {
@@ -213,7 +213,7 @@ async function clearMainGameFile(tribeName) {
 module.exports.clearMainGameFile = clearMainGameFile;
 
 // Manage snapshots to keep only 3 most recent
-async function manageSnapshots(tribeName) {
+function manageSnapshots(tribeName) {
   const tribeDir = `./tribe-data/${tribeName}`;
 
   if (!fs.existsSync(tribeDir)) {

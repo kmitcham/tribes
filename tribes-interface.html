@@ -349,12 +349,15 @@
 
         .command-search {
             margin-bottom: 1rem;
-            display: flex;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto auto;
             gap: 0.5rem;
+            align-items: center;
         }
 
         .command-search-input {
-            flex: 1;
+            width: 100%;
+            min-width: 0;
             padding: 0.5rem;
             border: 2px solid #ddd;
             border-radius: 4px;
@@ -374,6 +377,10 @@
             border-radius: 4px;
             cursor: pointer;
             font-weight: 600;
+            white-space: nowrap;
+            flex-shrink: 0;
+            min-height: 44px;
+            min-width: 56px;
         }
 
         .search-go-btn:hover {
@@ -396,6 +403,9 @@
             cursor: pointer;
             font-weight: 700;
             line-height: 1;
+            white-space: nowrap;
+            flex-shrink: 0;
+            min-height: 44px;
         }
 
         .search-clear-btn:hover {
@@ -439,6 +449,7 @@
 
         .command-search-container {
             position: relative;
+            min-width: 0;
         }
 
         .command-list {
@@ -6206,30 +6217,11 @@
                 }
             }
 
-            updateGameStatusBarWithData(gameState) {
-                const roundStatus = document.getElementById('roundStatus');
-                const seasonStatus = document.getElementById('seasonStatus');
-                const locationStatus = document.getElementById('locationStatus');
-                const conflictStatus = document.getElementById('conflictStatus');
-                const statusTextElement = document.getElementById('statusText');
-
-                if (gameState.startStamp) {
-                    const tribe = document.getElementById('tribeSelect').value || 'default';
-                    const startStampKey = window.TribesStorage.getStartStampKey(tribe);
-                    const savedStamp = window.TribesStorage.getItem(startStampKey);
-                    if (savedStamp && savedStamp !== gameState.startStamp) {
-                        this.clearMessageHistory();
-                    }
-                    window.TribesStorage.setItem(startStampKey, gameState.startStamp);
-                }
-
-                if (!roundStatus || !seasonStatus || !locationStatus) return;
-
-                // Round type detection using structured data
+            getRoundStatusFromGameState(gameState, statusText = '') {
                 let roundIcon = '⚙️';
                 let roundText = 'Work Round';
                 const roundHint = String(gameState.round || '').toLowerCase();
-                const statusHint = String(statusTextElement ? statusTextElement.textContent : '').toLowerCase();
+                const statusHint = String(statusText || '').toLowerCase();
                 const isMigrateChancePhase = gameState.reproductionRound === true && gameState.matingComplete === true;
                 const isPostReproductionStep =
                     (gameState.reproductionRound === true || roundHint.includes('repro')) &&
@@ -6239,8 +6231,7 @@
                         statusHint.includes('awaiting chance') ||
                         statusHint.includes('awaiting migration')
                     );
-                
-                // Prioritize explicit boolean flags over text heuristics
+
                 if (gameState.workRound === true) {
                     roundIcon = '⚙️';
                     roundText = 'Work Round';
@@ -6259,7 +6250,6 @@
                         roundText = 'Reproduction Round';
                     }
                 } else if (gameState.round) {
-                    // Fallback to round string if boolean flags not set
                     if (roundHint.includes('food')) {
                         roundIcon = '🍖';
                         roundText = 'Food Round';
@@ -6269,19 +6259,69 @@
                     }
                 }
 
-                // Season detection using structured data  
+                return { roundIcon, roundText };
+            }
+
+            getRoundStatusFromText(status) {
+                let roundIcon = '⚙️';
+                let roundText = 'Unknown Round';
+                const statusLower = String(status || '').toLowerCase();
+                const isPostReproductionStep = statusLower.includes('awaiting chance') || statusLower.includes('awaiting migration');
+
+                if (statusLower.includes('work')) {
+                    roundIcon = '⚙️';
+                    roundText = 'Work Round';
+                } else if (statusLower.includes('food')) {
+                    roundIcon = '🍖';
+                    roundText = 'Food Round';
+                } else if (statusLower.includes('reproduction') || statusLower.includes('romance')) {
+                    if (isPostReproductionStep) {
+                        roundIcon = '🧭';
+                        roundText = 'Migrate/Chance';
+                    } else {
+                        roundIcon = '💕';
+                        roundText = 'Reproduction Round';
+                    }
+                } else if (isPostReproductionStep) {
+                    roundIcon = '🧭';
+                    roundText = 'Migrate/Chance';
+                }
+
+                return { roundIcon, roundText };
+            }
+
+            getSeasonStatusFromGameState(gameState) {
                 let seasonIcon = '☀️';
                 let seasonText = 'Warm Season';
-                
+
                 if (gameState.seasonCounter && gameState.seasonCounter % 2 === 0) {
                     seasonIcon = '❄️';
                     seasonText = 'Cold Season';
                 }
 
-                // Location detection using structured data
+                return { seasonIcon, seasonText };
+            }
+
+            getSeasonStatusFromText(status) {
+                let seasonIcon = '☀️';
+                let seasonText = 'Warm Season';
+                const statusLower = String(status || '').toLowerCase();
+
+                if (statusLower.includes('winter') || statusLower.includes('cold')) {
+                    seasonIcon = '❄️';
+                    seasonText = 'Cold Season';
+                } else if (statusLower.includes('summer') || statusLower.includes('warm')) {
+                    seasonIcon = '☀️';
+                    seasonText = 'Warm Season';
+                }
+
+                return { seasonIcon, seasonText };
+            }
+
+            getLocationStatusFromGameState(gameState) {
                 let locationIcon = '🌍';
                 let locationText = 'Unknown Location';
-                
+
                 if (gameState.currentLocationName) {
                     const location = gameState.currentLocationName.toLowerCase();
                     if (location === 'veldt') {
@@ -6307,74 +6347,14 @@
                     }
                 }
 
-                const yearValue = Number.isFinite(gameState.year)
-                    ? gameState.year
-                    : (Number.isFinite(gameState.seasonCounter) ? Math.floor(gameState.seasonCounter / 2) : '?');
-                const seasonYearText = yearValue === '?' ? seasonText : `${seasonText} • Year ${yearValue}`;
-
-                const currentTrack = this.currentStatusData && this.currentStatusData.gameTrack;
-                const gameTrackValue = Number.isFinite(currentTrack) ? currentTrack : '?';
-                const locationTrackText = `${locationText}: Track ${gameTrackValue}`;
-
-                // Update the status bar elements
-                this.renderStatusItemChip(roundStatus, roundIcon, roundText);
-                this.renderStatusItemChip(seasonStatus, seasonIcon, seasonYearText);
-                this.renderStatusItemChip(locationStatus, locationIcon, locationTrackText);
-                this.updateCurrentTribeStatusChip(gameState);
-                this.updateConflictStatusChip(gameState);
-                this.updateWaitingStatusChip();
+                return { locationIcon, locationText };
             }
 
-            updateGameStatusBar(status) {
-                // Round type detection and icons
-                const roundStatus = document.getElementById('roundStatus');
-                const seasonStatus = document.getElementById('seasonStatus');
-                const locationStatus = document.getElementById('locationStatus');
-                const conflictStatus = document.getElementById('conflictStatus');
-
-                if (!roundStatus || !seasonStatus || !locationStatus) return;
-
-                let roundIcon = '⚙️';
-                let roundText = 'Unknown Round';
-                const statusLower = status.toLowerCase();
-                const isPostReproductionStep = statusLower.includes('awaiting chance') || statusLower.includes('awaiting migration');
-                
-                // Prioritize explicit round type over transition states
-                if (statusLower.includes('work')) {
-                    roundIcon = '⚙️';
-                    roundText = 'Work Round';
-                } else if (statusLower.includes('food')) {
-                    roundIcon = '🍖';
-                    roundText = 'Food Round';
-                } else if (statusLower.includes('reproduction') || statusLower.includes('romance')) {
-                    if (isPostReproductionStep) {
-                        roundIcon = '🧭';
-                        roundText = 'Migrate/Chance';
-                    } else {
-                        roundIcon = '💕';
-                        roundText = 'Reproduction Round';
-                    }
-                } else if (isPostReproductionStep) {
-                    roundIcon = '🧭';
-                    roundText = 'Migrate/Chance';
-                }
-
-                // Season detection
-                let seasonIcon = '☀️';
-                let seasonText = 'Warm Season';
-                
-                if (statusLower.includes('winter') || statusLower.includes('cold')) {
-                    seasonIcon = '❄️';
-                    seasonText = 'Cold Season';
-                } else if (statusLower.includes('summer') || statusLower.includes('warm')) {
-                    seasonIcon = '☀️';
-                    seasonText = 'Warm Season';
-                }
-
-                // Location detection (common Tribes game locations)
+            getLocationStatusFromText(status) {
                 let locationIcon = '🌍';
                 let locationText = 'Unknown Location';
-                
+                const statusLower = String(status || '').toLowerCase();
+
                 if (statusLower.includes('veldt')) {
                     locationIcon = '🌾';
                     locationText = 'Veldt';
@@ -6395,25 +6375,133 @@
                     locationText = 'Desert';
                 }
 
-                const yearMatch = status.match(/Year\s+([0-9]+(?:\.[0-9]+)?)/i);
-                const gameTrackMatch = status.match(/game\s+track\s+is\s+at\s+([0-9]+)/i);
-                const yearValue = yearMatch ? yearMatch[1] : '?';
-                const gameTrackValue = gameTrackMatch ? gameTrackMatch[1] : '?';
-                const seasonYearText = yearValue === '?' ? seasonText : `${seasonText} • Year ${yearValue}`;
-                const locationTrackText = `${locationText}: Track ${gameTrackValue}`;
+                return { locationIcon, locationText };
+            }
+
+            getYearValueFromGameState(gameState) {
+                if (Number.isFinite(gameState.year)) {
+                    return gameState.year;
+                }
+
+                if (Number.isFinite(gameState.seasonCounter)) {
+                    return Math.floor(gameState.seasonCounter / 2);
+                }
+
+                return '?';
+            }
+
+            getStatusMetricsFromText(status) {
+                const yearMatch = String(status || '').match(/Year\s+([0-9]+(?:\.[0-9]+)?)/i);
+                const gameTrackMatch = String(status || '').match(/game\s+track\s+is\s+at\s+([0-9]+)/i);
+
+                return {
+                    yearValue: yearMatch ? yearMatch[1] : '?',
+                    gameTrackValue: gameTrackMatch ? gameTrackMatch[1] : '?',
+                    gameTrackNumber: gameTrackMatch ? Number(gameTrackMatch[1]) : null
+                };
+            }
+
+            buildSeasonYearText(seasonText, yearValue) {
+                return yearValue === '?' ? seasonText : `${seasonText} • Year ${yearValue}`;
+            }
+
+            buildLocationTrackText(locationText, gameTrackValue) {
+                return `${locationText}: Track ${gameTrackValue}`;
+            }
+
+            syncStartStampAndMessageHistory(gameState) {
+                if (!gameState || !gameState.startStamp) {
+                    return;
+                }
+
+                const tribeSelect = document.getElementById('tribeSelect');
+                const tribe = tribeSelect ? (tribeSelect.value || 'default') : 'default';
+                const startStampKey = window.TribesStorage.getStartStampKey(tribe);
+                const savedStamp = window.TribesStorage.getItem(startStampKey);
+
+                if (savedStamp && savedStamp !== gameState.startStamp) {
+                    this.clearMessageHistory();
+                }
+
+                window.TribesStorage.setItem(startStampKey, gameState.startStamp);
+            }
+
+            applyGameStatusChips(statusElements, statusDisplay, gameState) {
+                const { roundStatus, seasonStatus, locationStatus } = statusElements;
+                const {
+                    roundIcon,
+                    roundText,
+                    seasonIcon,
+                    seasonYearText,
+                    locationIcon,
+                    locationTrackText
+                } = statusDisplay;
+
+                this.renderStatusItemChip(roundStatus, roundIcon, roundText);
+                this.renderStatusItemChip(seasonStatus, seasonIcon, seasonYearText);
+                this.renderStatusItemChip(locationStatus, locationIcon, locationTrackText);
+                this.updateCurrentTribeStatusChip(gameState);
+                this.updateConflictStatusChip(gameState);
+                this.updateWaitingStatusChip();
+            }
+
+            updateGameStatusBarWithData(gameState) {
+                const roundStatus = document.getElementById('roundStatus');
+                const seasonStatus = document.getElementById('seasonStatus');
+                const locationStatus = document.getElementById('locationStatus');
+                const statusTextElement = document.getElementById('statusText');
+
+                this.syncStartStampAndMessageHistory(gameState);
+
+                if (!roundStatus || !seasonStatus || !locationStatus) return;
+
+                const { roundIcon, roundText } = this.getRoundStatusFromGameState(
+                    gameState,
+                    statusTextElement ? statusTextElement.textContent : ''
+                );
+                const { seasonIcon, seasonText } = this.getSeasonStatusFromGameState(gameState);
+                const { locationIcon, locationText } = this.getLocationStatusFromGameState(gameState);
+
+                const yearValue = this.getYearValueFromGameState(gameState);
+                const seasonYearText = this.buildSeasonYearText(seasonText, yearValue);
+
+                const currentTrack = this.currentStatusData && this.currentStatusData.gameTrack;
+                const gameTrackValue = Number.isFinite(currentTrack) ? currentTrack : '?';
+                const locationTrackText = this.buildLocationTrackText(locationText, gameTrackValue);
+
+                this.applyGameStatusChips(
+                    { roundStatus, seasonStatus, locationStatus },
+                    { roundIcon, roundText, seasonIcon, seasonYearText, locationIcon, locationTrackText },
+                    gameState
+                );
+            }
+
+            updateGameStatusBar(status) {
+                // Round type detection and icons
+                const roundStatus = document.getElementById('roundStatus');
+                const seasonStatus = document.getElementById('seasonStatus');
+                const locationStatus = document.getElementById('locationStatus');
+
+                if (!roundStatus || !seasonStatus || !locationStatus) return;
+
+                const { roundIcon, roundText } = this.getRoundStatusFromText(status);
+                const { seasonIcon, seasonText } = this.getSeasonStatusFromText(status);
+                const { locationIcon, locationText } = this.getLocationStatusFromText(status);
+
+                const { yearValue, gameTrackValue, gameTrackNumber } = this.getStatusMetricsFromText(status);
+                const seasonYearText = this.buildSeasonYearText(seasonText, yearValue);
+                const locationTrackText = this.buildLocationTrackText(locationText, gameTrackValue);
 
                 if (!this.currentStatusData) {
                     this.currentStatusData = {};
                 }
-                this.currentStatusData.gameTrack = gameTrackMatch ? Number(gameTrackMatch[1]) : null;
+                this.currentStatusData.gameTrack = gameTrackNumber;
 
-                // Update the status bar elements
-                this.renderStatusItemChip(roundStatus, roundIcon, roundText);
-                this.renderStatusItemChip(seasonStatus, seasonIcon, seasonYearText);
-                this.renderStatusItemChip(locationStatus, locationIcon, locationTrackText);
-                this.updateCurrentTribeStatusChip(this.currentStatusData || {});
-                this.updateConflictStatusChip(this.currentStatusData || {});
-                this.updateWaitingStatusChip();
+                this.applyGameStatusChips(
+                    { roundStatus, seasonStatus, locationStatus },
+                    { roundIcon, roundText, seasonIcon, seasonYearText, locationIcon, locationTrackText },
+                    this.currentStatusData || {}
+                );
             }
 
             initializeEventListeners() {

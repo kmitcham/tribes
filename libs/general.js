@@ -4,6 +4,8 @@ const referees = require('./referees.json');
 
 function give(gameState, sourceName, targetName, amount, item) {
   let response = '';
+  const sourceDisplayName = text.capitalizeFirstLetter(sourceName || '');
+  const targetDisplayName = text.capitalizeFirstLetter(targetName || '');
   if (gameState.ended) {
     text.addMessage(
       gameState,
@@ -38,7 +40,7 @@ function give(gameState, sourceName, targetName, amount, item) {
   var sourcePerson = {};
   targetPerson = pop.memberByName(targetName, gameState);
   if (!targetPerson) {
-    response = 'Target ' + targetName + ' not found in tribe';
+    response = 'Target ' + targetDisplayName + ' not found in tribe';
     text.addMessage(gameState, sourceName, response);
     return;
   }
@@ -57,7 +59,14 @@ function give(gameState, sourceName, targetName, amount, item) {
     return;
   }
   gameState.saveRequired = true;
-  response = sourceName + ' gives ' + targetName + ' ' + amount + ' ' + item;
+  response =
+    sourceDisplayName +
+    ' gives ' +
+    targetDisplayName +
+    ' ' +
+    amount +
+    ' ' +
+    item;
   text.addMessage(gameState, 'tribe', response);
   // ref might not be in tribe, but console error thrown by history is OK
   pop.history(sourceName, response, gameState);

@@ -386,7 +386,7 @@ test('trigger end of mating', () => {
       p2: {
         name: 'p2',
         gender: 'male',
-        consentList: ['p1'],
+        consentDict: { p1: 'consent' },
         cannotInvite: true,
       },
       p3: {
@@ -436,6 +436,38 @@ test('single-sex tribes complete reproduction immediately', () => {
     '---> Reproductive activites are complete for the season <---'
   );
   expect(response).toBe('this many people are done mating: 2');
+});
+
+test('romance update after chance is complete does not re-prompt chance', () => {
+  var gameState = {
+    name: 'unitTest-tribe',
+    population: {
+      p1: {
+        name: 'p1',
+        gender: 'female',
+        inviteList: ['p2', '!pass'],
+      },
+      p2: {
+        name: 'p2',
+        gender: 'male',
+        consentDict: { p1: 'consent' },
+        cannotInvite: true,
+      },
+      p3: {
+        name: 'p3',
+        gender: 'male',
+        cannotInvite: true,
+      },
+    },
+    children: {},
+    reproductionRound: true,
+    needChanceRoll: false,
+  };
+
+  // Simulate a romance-list update after chance already resolved.
+  reproLib.consent('p2', ['p1'], gameState);
+
+  expect(gameState.messages['tribe'] || '').not.toContain('Time for chance.');
 });
 
 test('sorting check', () => {});
@@ -488,25 +520,24 @@ test('matingList tests', () => {
         name: 'p1',
         gender: 'female',
         inviteList: ['p2', '!pass'],
-        consentList: ['p2'],
-        declineList: [],
+        consentDict: { p2: 'consent' },
       },
       p2: {
         name: 'p2',
         gender: 'male',
-        consentList: ['p1'],
+        consentDict: { p1: 'consent' },
         cannotInvite: true,
       },
       p3: {
         name: 'p3',
         gender: 'male',
-        consentList: ['p1'],
+        consentDict: { p1: 'consent' },
         cannotInvite: true,
       },
       p4: {
         name: 'p4',
         gender: 'male',
-        declineList: [],
+        consentDict: {},
         cannotInvite: true,
       },
     },
@@ -569,12 +600,12 @@ test('make a consent list with !none', () => {
       p1: {
         name: 'p1',
         gender: 'female',
-        consentList: ['p2'],
+        consentDict: { p2: 'consent' },
       },
       p2: {
         name: 'p2',
         gender: 'male',
-        consentList: ['!all'],
+        consentDict: { '!all': 'consent' },
       },
       p3: {
         name: 'p3',
@@ -590,8 +621,7 @@ test('make a consent list with !none', () => {
   inputList = '!none';
   response = reproLib.consentPrep(gameState, 'p1', inputList);
   member = gameState['population']['p1'];
-  hasList = 'consentList' in member;
-  expect(!hasList);
+  expect(member.consentDict.p2).toBeUndefined();
 });
 test('make a consent list with !none', () => {
   var gameState = {
@@ -599,12 +629,12 @@ test('make a consent list with !none', () => {
       p1: {
         name: 'p1',
         gender: 'female',
-        consentList: ['p2'],
+        consentDict: { p2: 'consent' },
       },
       p2: {
         name: 'p2',
         gender: 'male',
-        consentList: ['!all'],
+        consentDict: { '!all': 'consent' },
       },
       p3: {
         name: 'p3',
@@ -620,8 +650,7 @@ test('make a consent list with !none', () => {
   inputList = '!none';
   response = reproLib.consentPrep(gameState, 'p1', inputList);
   member = gameState['population']['p1'];
-  hasList = 'consentList' in member;
-  expect(!hasList);
+  expect(member.consentDict.p2).toBeUndefined();
 });
 
 test('consent and decline collisions by name', () => {
@@ -633,8 +662,7 @@ test('consent and decline collisions by name', () => {
         gender: 'female',
         cannotInvite: true,
         inviteList: ['!pass'],
-        consentList: ['p2'],
-        declineList: ['p2'],
+        consentDict: { p2: 'decline' },
       },
       p2: {
         name: 'p2',
@@ -691,13 +719,13 @@ test('mating with spaces in names', () => {
         name: 'p1',
         gender: 'female',
         inviteList: ['p2'],
-        consentList: ['!all'],
+        consentDict: { '!all': 'consent' },
       },
       p2: {
         name: 'p2',
         gender: 'male',
         inviteList: ['p1', 'p4'],
-        consentList: ['p1'],
+        consentDict: { p1: 'consent' },
       },
       p3: {
         name: 'p3',
@@ -708,7 +736,7 @@ test('mating with spaces in names', () => {
         name: 'p4',
         gender: 'female',
         inviteList: ['!pass'],
-        consentList: ['p2'],
+        consentDict: { p2: 'consent' },
       },
     },
     children: {},
@@ -818,13 +846,13 @@ test('handle mating with lists and decline', () => {
       p2: {
         name: 'p2',
         gender: 'male',
-        declineList: ['p1'],
+        consentDict: { p1: 'decline' },
         cannotInvite: true,
       },
       p3: {
         name: 'p3',
         gender: 'male',
-        consentList: ['p1'],
+        consentDict: { p1: 'consent' },
         cannotInvite: true,
       },
       p4: {
@@ -1552,7 +1580,7 @@ test('Infinite loop issue', () => {
   expect(playerRMessage).toContain('pregnant');
 });
 
-test('migrateToConsentDict works correctly backwards compat', () => {
+test('migrateToConsentDict initializes consentDict without list migration', () => {
   var person = {
     name: 'p1',
     consentList: ['p2', 'p3'],
@@ -1560,9 +1588,7 @@ test('migrateToConsentDict works correctly backwards compat', () => {
   };
   reproLib.migrateToConsentDict(person);
   expect(person.consentDict).toBeDefined();
-  expect(person.consentDict['p2']).toBe('consent');
-  expect(person.consentDict['p3']).toBe('consent');
-  expect(person.consentDict['p4']).toBe('decline');
+  expect(person.consentDict).toEqual({});
 });
 
 test('handleRomanceResponse correctly sets consent and decline in consentDict', () => {

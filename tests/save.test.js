@@ -318,7 +318,7 @@ describe('Save Module', () => {
       fs.unlinkSync.mockImplementation(() => {});
       fs.readFileSync.mockReturnValue(JSON.stringify(mockGameState));
 
-      await savelib.archiveTribe(mockGameState);
+      savelib.archiveTribe(mockGameState);
 
       // Verify final state was saved (check for -final- in filename)
       const writeCall = fs.writeFileSync.mock.calls[0];
@@ -340,7 +340,7 @@ describe('Save Module', () => {
       fs.readdirSync.mockReturnValue([]);
       fs.readFileSync.mockReturnValue(JSON.stringify(mockGameState));
 
-      await savelib.archiveTribe(mockGameState);
+      savelib.archiveTribe(mockGameState);
 
       // Verify snapshot was saved (should contain tribe name and timestamp)
       const writeCall = fs.writeFileSync.mock.calls[0];
@@ -359,7 +359,7 @@ describe('Save Module', () => {
       fs.writeFileSync.mockImplementation(() => {});
       fs.readFileSync.mockReturnValue(JSON.stringify(mockGameState));
 
-      await savelib.saveTribe(mockGameState);
+      savelib.saveTribe(mockGameState);
 
       expect(fs.writeFileSync).toHaveBeenCalled();
       const writeCall = fs.writeFileSync.mock.calls[0];
@@ -375,7 +375,7 @@ describe('Save Module', () => {
       fs.writeFileSync.mockImplementation(() => {});
       fs.readFileSync.mockReturnValue(JSON.stringify(mockGameState));
 
-      await savelib.saveTribe(mockGameState);
+      savelib.saveTribe(mockGameState);
 
       expect(mockGameState.lastSaved).toBeDefined();
     });
@@ -410,7 +410,7 @@ describe('Save Module', () => {
         })
       );
 
-      await savelib.saveTribe(mockGameState);
+      savelib.saveTribe(mockGameState);
 
       expect(mockGameState.population.player1.food).toBe(0);
       expect(mockGameState.population.player1.grain).toBe(0);

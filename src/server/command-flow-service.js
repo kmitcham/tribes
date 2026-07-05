@@ -87,7 +87,7 @@ async function handleCommandRequest(ws, data, gameState, deps) {
     if (gameState.archiveRequired) {
       const tribeName = gameState.name;
       const gameEnded = gameState.ended;
-      await savelib.archiveTribe(gameState);
+      savelib.archiveTribe(gameState);
       gameState.archiveRequired = false;
       if (gameEnded) {
         gameStateStore.resetEndedGameAfterArchive(tribeName, savelib);

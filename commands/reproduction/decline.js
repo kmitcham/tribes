@@ -34,8 +34,14 @@ module.exports = {
           );
 
       if (!rawList) {
-        if (player && player.declineList && player.declineList.length > 0) {
-          let message = 'Current declinelist: ' + player.declineList.join(' ');
+        const currentDeclines = player && player.consentDict
+          ? Object.entries(player.consentDict)
+              .filter(([, responseType]) => responseType === 'decline')
+              .map(([name]) => name)
+          : [];
+
+        if (currentDeclines.length > 0) {
+          let message = 'Current declinelist: ' + currentDeclines.join(' ');
           console.log(message);
           text.addMessage(gameState, sourceName, message);
           return message;
