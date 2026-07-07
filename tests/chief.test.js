@@ -44,7 +44,9 @@ test('should handle a person growing stronger (roll 16-18)', () => {
   // If a strong person was picked first, it should have tried a different person
   // This is a simplistic test - in reality you might want to mock randomMemberName
   // to guarantee which person is chosen
-  const personName = result.split(' ')[2];
+  const strongMatch = result.match(/([A-Za-z][A-Za-z0-9_-]*) grows stronger\./);
+  assert(strongMatch && strongMatch[1]);
+  const personName = strongMatch[1];
   const person = gameState.population[personName];
   assert.strictEqual(person.strength, 'strong');
   assert.strictEqual(gameState.needChanceRoll, false);
@@ -86,7 +88,9 @@ test("should handle rats spoiling one or two people's food (roll 14)", () => {
 test('should handle finding a spearhead (roll 13)', () => {
   const result = chiefLib.doChance(13, gameState);
   assert(result.includes('finds a spearhead'));
-  const personName = result.split(' ')[2];
+  const spearMatch = result.match(/([A-Za-z][A-Za-z0-9_-]*) finds a spearhead/);
+  assert(spearMatch && spearMatch[1]);
+  const personName = spearMatch[1];
   assert(gameState.population[personName].spearhead >= 1);
   assert.strictEqual(gameState.needChanceRoll, false);
   assert.strictEqual(gameState.saveRequired, true);
@@ -128,7 +132,11 @@ test('should handle predator attack (roll 10)', () => {
 test("should handle weevils eating one person's food (roll 9)", () => {
   const result = chiefLib.doChance(9, gameState);
   assert(result.includes('weevils'));
-  const personName = result.split(' ')[2];
+  const weevilMatch = result.match(
+    /([A-Za-z][A-Za-z0-9_-]*) loses \d+ food to weevils\./
+  );
+  assert(weevilMatch && weevilMatch[1]);
+  const personName = weevilMatch[1];
   assert(
     gameState.population[personName].food <
       (personName === 'Alice'
@@ -176,7 +184,9 @@ test('should handle injury (roll 6)', () => {
 test('should handle sickness (roll 5)', () => {
   const result = chiefLib.doChance(5, gameState);
   assert(result.includes('got sick'));
-  const personName = result.split(' ')[2];
+  const sickMatch = result.match(/([A-Za-z][A-Za-z0-9_-]*) got sick/);
+  assert(sickMatch && sickMatch[1]);
+  const personName = sickMatch[1];
   assert.strictEqual(gameState.population[personName].isSick, 3);
   assert(
     gameState.population[personName].food <=
@@ -201,7 +211,9 @@ test('should handle sickness (roll 5) with no food', () => {
   delete gameState.population['Charlie'];
   const result = chiefLib.doChance(5, gameState);
   assert(result.includes('got sick'));
-  const personName = result.split(' ')[2];
+  const sickMatch = result.match(/([A-Za-z][A-Za-z0-9_-]*) got sick/);
+  assert(sickMatch && sickMatch[1]);
+  const personName = sickMatch[1];
   assert.strictEqual(gameState.population[personName].isSick, 3);
   assert(gameState.population['Alice'].food == 0);
   assert.strictEqual(gameState.needChanceRoll, false);

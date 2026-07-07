@@ -165,8 +165,9 @@ test('devours unwatched child', () => {
   expect(children['c1'].guardians).toBeTruthy();
   expect(Object.keys(children['c1'].guardians).length).toBe(3);
   expect(lib.findGuardValueForChild('unwatched', population, children)).toBe(0);
-  msgArray = response.split(' ');
-  target = msgArray[3];
+  const attackMatch = response.match(/attacks\s+([A-Za-z][A-Za-z0-9_-]*)/);
+  expect(attackMatch).toBeTruthy();
+  target = attackMatch[1];
   expect(target.indexOf('unwatched')).toBeGreaterThan(-1);
   devoured = response.indexOf('devoured');
   expect(devoured).toBeGreaterThan(0);

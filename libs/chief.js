@@ -177,7 +177,7 @@ function doChance(rollValue, gameState) {
     logger.accessLog.info(' invalid chance roll' + rollValue);
     chanceRoll = dice.roll(3);
   }
-  message = 'Chance ' + chanceRoll + ': ';
+  message = '🎲 Chance ' + chanceRoll + ': ';
   switch (chanceRoll) {
     case 18:
     case 17:
@@ -189,12 +189,12 @@ function doChance(rollValue, gameState) {
         return !p.hasOwnProperty('strength') || p.strength != 'strong';
       });
       if (nonStrongMembers.length === 0) {
-        message += 'Every day is leg day; the tribe is strong.';
+        message += '💪 Every day is leg day; the tribe is strong.';
       } else {
         name =
           nonStrongMembers[Math.floor(Math.random() * nonStrongMembers.length)];
         person = pop.memberByName(name, gameState);
-        message += person.name + ' grows stronger.';
+        message += '💪 ' + person.name + ' grows stronger.';
         pop.history(name, message, gameState);
         if (person.strength && person.strength == 'weak') {
           delete person.strength;
@@ -205,7 +205,7 @@ function doChance(rollValue, gameState) {
       break;
     case 15:
       message +=
-        'Fungus! All stored food in the whole tribe, except grain, spoils and is lost.';
+        '🍄 Fungus! All stored food in the whole tribe, except grain, spoils and is lost.';
       for (const name in population) {
         person = population[name];
         pop.history(name, 'Lost ' + person.food + ' to fungus', gameState);
@@ -217,7 +217,7 @@ function doChance(rollValue, gameState) {
       name = pop.randomMemberName(population);
       person = pop.memberByName(name, gameState);
       message +=
-        'Rats! All ' +
+        '🐀 Rats! All ' +
         person.name +
         "'s food [" +
         person.food +
@@ -292,7 +292,7 @@ function doChance(rollValue, gameState) {
       }
       break;
     case 11:
-      message += 'Locusts! Each player loses two dice of stored food';
+      message += '🦗 Locusts! Each player loses two dice of stored food';
       for (const name in population) {
         person = pop.memberByName(name, gameState);
         amount = dice.roll(2);
@@ -331,7 +331,7 @@ function doChance(rollValue, gameState) {
       break;
     case 7:
       message +=
-        'FIRE! The hunting track moves to 20 (no game!) The tribe must migrate to another area immediately (Section 9 of the rulebook). ';
+        '🔥 FIRE! The hunting track moves to 20 (no game!) The tribe must migrate to another area immediately (Section 9 of the rulebook). ';
       if (
         utils.isColdSeason(gameState) &&
         (gameState.currentLocationName == 'marsh' ||
@@ -352,14 +352,14 @@ function doChance(rollValue, gameState) {
         message += ' They can no longer guard ' + person.guarding + '.';
         delete person.guarding;
       }
-      message += person.name + ' injured – miss next turn.';
+      message += '🤕 ' + person.name + ' injured – miss next turn.';
       break;
     case 5:
       name = pop.randomMemberName(population);
       person = population[name];
       person.isSick = 3;
       message +=
-        person.name + ' got sick – eat 2 extra food and miss next turn. ';
+        '🤢 ' + person.name + ' got sick – eat 2 extra food and miss next turn. ';
       if (person.food < 2) {
         message +=
           '(but they only had ' +
@@ -381,7 +381,7 @@ function doChance(rollValue, gameState) {
     case 3:
       name = pop.randomMemberName(population);
       person = population[name];
-      message += person.name + ' gets a severe injury: miss next turn and ';
+      message += '🤕 ' + person.name + ' gets a severe injury: miss next turn and ';
       pop.applyInjury(person, gameState);
       if (person.hasOwnProperty('strength') && person.strength == 'strong') {
         delete person.strength;

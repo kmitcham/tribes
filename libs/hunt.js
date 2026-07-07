@@ -90,10 +90,17 @@ module.exports.hunt = (playername, player, rollValue, gameState) => {
     }
     pop.applyInjury(player, gameState);
   } else if (netRoll <= 8) {
-    message += '\nNo game.';
+    message += '\n🚫🦌 No game.';
   } else {
     const huntRow = huntDataFor(huntData, netRoll);
-    message += '\n\t' + huntRow[2] + ' +' + huntRow[1] + ' food';
+    const huntIcon = huntResultIcon(huntRow[2]);
+    message +=
+      '\n\t' +
+      (huntIcon ? huntIcon + ' ' : '') +
+      huntRow[2] +
+      ' +' +
+      huntRow[1] +
+      ' food';
     player.food += huntRow[1];
     gameState.foodAcquired += huntRow[1];
   }
@@ -101,7 +108,7 @@ module.exports.hunt = (playername, player, rollValue, gameState) => {
   const breakRoll = dice.roll(1);
   if (player.spearhead > 0 && breakRoll <= 2) {
     player.spearhead -= 1;
-    message += '\n The spearhead broke! (roll ' + breakRoll + ')';
+    message += '\n💥 The spearhead broke! (roll ' + breakRoll + ')';
   }
 
   player.worked = true;
@@ -129,6 +136,55 @@ const huntDataFor = (huntData, netRoll) => {
   }
   return huntData[huntData.length - 1];
 };
+
+function huntResultIcon(resultText) {
+  const normalized = String(resultText || '').toLowerCase();
+  if (
+    normalized.includes('rabbit') ||
+    normalized.includes('hare') ||
+    normalized.includes('small game')
+  ) {
+    return '🐇';
+  }
+  if (
+    normalized.includes('rodent') ||
+    normalized.includes('squirrel') ||
+    normalized.includes('mouse')
+  ) {
+    return '🐿️';
+  }
+  if (normalized.includes('fish') || normalized.includes('sturgeon')) {
+    return '🐟';
+  }
+  if (
+    normalized.includes('deer') ||
+    normalized.includes('antelope') ||
+    normalized.includes('gazelle') ||
+    normalized.includes('buck') ||
+    normalized.includes('doe') ||
+    normalized.includes('stag') ||
+    normalized.includes('hart') ||
+    normalized.includes('moose')
+  ) {
+    return '🦌';
+  }
+  if (normalized.includes('buffalo') || normalized.includes('bison')) {
+    return '🦬';
+  }
+  if (normalized.includes('bear')) {
+    return '🐻';
+  }
+  if (normalized.includes('wolf')) {
+    return '🐺';
+  }
+  if (normalized.includes('alligator')) {
+    return '🐊';
+  }
+  if (normalized.includes('bird') || normalized.includes('hornbill')) {
+    return '🐦';
+  }
+  return '';
+}
 module.exports.huntDataFor = huntDataFor;
 
 function getScoutMessage(otherLocation, gameState) {

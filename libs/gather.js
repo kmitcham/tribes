@@ -69,7 +69,8 @@ module.exports.gather = (playername, player, rollValue, gameState) => {
         gatherData[i][3] + ' (' + (gatherData[i][1] + gatherData[i][2] + ')');
     }
   }
-  message += get_message;
+  const gatherIcon = gatherResultIcon(get_message);
+  message += (gatherIcon ? ' ' + gatherIcon : '') + get_message;
   player.food += getFood;
   player.grain += getGrain;
   gameState.foodAcquired += getFood + getGrain;
@@ -98,12 +99,13 @@ module.exports.gather = (playername, player, rollValue, gameState) => {
           gatherData[i][3] + ' (' + (gatherData[i][1] + gatherData[i][2] + ')');
       }
     }
-    message += get_message;
+    const basketIcon = gatherResultIcon(get_message);
+    message += (basketIcon ? basketIcon + ' ' : '') + get_message;
     player.food += getFood;
     player.grain += getGrain;
     // check for basket loss
     if (dice.roll(1) <= 2) {
-      message += ' basket breaks.';
+      message += '💥 basket breaks.';
       player.basket -= 1;
     }
   }
@@ -112,3 +114,41 @@ module.exports.gather = (playername, player, rollValue, gameState) => {
   text.addMessage(gameState, 'tribe', message);
   return message;
 };
+
+function gatherResultIcon(resultText) {
+  const normalized = String(resultText || '').toLowerCase();
+  if (normalized.includes('grain')) {
+    return '🌾';
+  }
+  if (
+    normalized.includes('roots') ||
+    normalized.includes('tubers') ||
+    normalized.includes('yams') ||
+    normalized.includes('carrots') ||
+    normalized.includes('onions')
+  ) {
+    return '🥕';
+  }
+  if (normalized.includes('mushroom')) {
+    return '🍄';
+  }
+  if (normalized.includes('berries') || normalized.includes('fruit')) {
+    return '🫐';
+  }
+  if (normalized.includes('nuts') || normalized.includes('walnuts') || normalized.includes('hazelnuts')) {
+    return '🌰';
+  }
+  if (normalized.includes('grubs')) {
+    return '🐛';
+  }
+  if (normalized.includes('eggs')) {
+    return '🥚';
+  }
+  if (normalized.includes('vegetables')) {
+    return '🌿';
+  }
+  if (normalized.includes('clams') || normalized.includes('frogs') || normalized.includes('turtles')) {
+    return '🐚';
+  }
+  return '';
+}

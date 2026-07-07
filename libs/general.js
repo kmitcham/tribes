@@ -59,6 +59,7 @@ function give(gameState, sourceName, targetName, amount, item) {
     return;
   }
   gameState.saveRequired = true;
+  const icon = itemIcon(item);
   response =
     sourceDisplayName +
     ' gives ' +
@@ -66,7 +67,8 @@ function give(gameState, sourceName, targetName, amount, item) {
     ' ' +
     amount +
     ' ' +
-    item;
+    item +
+    (icon ? ' ' + icon : '');
   text.addMessage(gameState, 'tribe', response);
   // ref might not be in tribe, but console error thrown by history is OK
   pop.history(sourceName, response, gameState);
@@ -74,6 +76,19 @@ function give(gameState, sourceName, targetName, amount, item) {
   console.log('give is complete.');
 }
 module.exports.give = give;
+
+function itemIcon(item) {
+  if (item === 'grain') {
+    return '🌾';
+  }
+  if (item === 'basket') {
+    return '🧺';
+  }
+  if (item === 'spearhead') {
+    return '🔱';
+  }
+  return '';
+}
 
 function legalGive(gameState, sourceName, item, amount) {
   let response = '';

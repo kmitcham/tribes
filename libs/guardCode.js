@@ -168,7 +168,9 @@ module.exports.hyenaAttack = (children, gameState) => {
   if (leastGuardedName === 'No') {
     return 'All the children are safely unborn, so predators are not a worry.';
   }
-  var response = 'A ' + predator + ' attacks ' + leastGuardedName; // exclamation point breaks simple string splitting elsewhere
+  const predatorEmoji = predatorIcon(predator);
+  var response =
+    predatorEmoji + ' A ' + predator + ' attacks ' + leastGuardedName; // exclamation point breaks simple string splitting elsewhere
   var child = children[leastGuardedName];
   if (!child) {
     console.log(
@@ -204,3 +206,26 @@ module.exports.hyenaAttack = (children, gameState) => {
   killlib.kill(leastGuardedName, predator + ' attack', gameState);
   return response;
 };
+
+function predatorIcon(predator) {
+  const normalized = String(predator || '').toLowerCase();
+  if (normalized.includes('hyena')) {
+    return '🐕';
+  }
+  if (normalized.includes('leopard')) {
+    return '🐆';
+  }
+  if (normalized.includes('bear')) {
+    return '🐻';
+  }
+  if (normalized.includes('alligator')) {
+    return '🐊';
+  }
+  if (normalized.includes('wolf')) {
+    return '🐺';
+  }
+  if (normalized.includes('vulture')) {
+    return '🦅';
+  }
+  return '🐾';
+}
