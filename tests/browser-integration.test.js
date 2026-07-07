@@ -82,6 +82,7 @@ let browserContext;
 let page;
 let serverProcess;
 let originalRegistry;
+let hadOriginalRegistry = false;
 let browserIntegrationUnavailableReason = null;
 
 function shouldSkipBrowserIntegration() {
@@ -172,7 +173,13 @@ beforeAll(async () => {
   global.clearTimeout = timers.clearTimeout;
   global.clearInterval = timers.clearInterval;
 
-  originalRegistry = fs.readFileSync(TRIBES_REGISTRY_PATH, 'utf8');
+  hadOriginalRegistry = fs.existsSync(TRIBES_REGISTRY_PATH);
+  if (hadOriginalRegistry) {
+    originalRegistry = fs.readFileSync(TRIBES_REGISTRY_PATH, 'utf8');
+  } else {
+    fs.mkdirSync(path.dirname(TRIBES_REGISTRY_PATH), { recursive: true });
+    originalRegistry = null;
+  }
 
   fs.mkdirSync(TEST_TRIBE_DIR, { recursive: true });
   fs.writeFileSync(
@@ -180,7 +187,7 @@ beforeAll(async () => {
     fs.readFileSync(TEST_TRIBE_FIXTURE_PATH, 'utf8')
   );
 
-  const registry = JSON.parse(originalRegistry);
+  const registry = hadOriginalRegistry ? JSON.parse(originalRegistry) : {};
   registry[TEST_TRIBE_NAME] = { name: TEST_TRIBE_NAME, hidden: false };
   fs.writeFileSync(TRIBES_REGISTRY_PATH, JSON.stringify(registry, null, 2));
 
@@ -275,8 +282,10 @@ afterAll(async () => {
       console.log('Error killing server:', e);
     }
   }
-  if (originalRegistry !== undefined) {
+  if (hadOriginalRegistry && originalRegistry !== undefined) {
     fs.writeFileSync(TRIBES_REGISTRY_PATH, originalRegistry);
+  } else if (!hadOriginalRegistry) {
+    fs.rmSync(TRIBES_REGISTRY_PATH, { force: true });
   }
   fs.rmSync(TEST_TRIBE_DIR, { recursive: true, force: true });
 });
