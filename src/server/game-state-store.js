@@ -1,6 +1,6 @@
 const allGames = {};
 
-async function getGameState(tribeName, savelib) {
+function getGameState(tribeName, savelib) {
   if (allGames[tribeName]) {
     return allGames[tribeName];
   }

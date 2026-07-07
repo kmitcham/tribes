@@ -4,6 +4,19 @@ const fs = require('fs');
 const path = require('path');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
+
+// Global error handlers to prevent container crashes
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Promise Rejection:', reason);
+  console.error('Promise:', promise);
+  logger ? logger.errorLog.error(`Unhandled rejection: ${reason}`) : null;
+});
+
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+  logger ? logger.errorLog.error(`Uncaught exception: ${error.message}`) : null;
+  process.exit(1);
+});
 const savelib = require('./libs/save.js');
 const tribesRegistry = require('./libs/tribesRegistry.js');
 const util = require('./libs/util.js');
@@ -385,6 +398,12 @@ function startServer() {
       const clientIP = getClientIP(ws, req);
       logWithTimestamp(`New client connected from ${clientIP}`);
 
+      // Handle WebSocket errors to prevent unhandled errors
+      ws.on('error', (error) => {
+        console.error(`WebSocket error from ${clientIP}:`, error);
+        logger.errorLog.error(`WebSocket error from ${clientIP}: ${error.message}`);
+      });
+
       ws.on('message', async (message) => {
         let data;
         try {
@@ -444,7 +463,11 @@ function startServer() {
       ws.on('close', () => {
         logWithTimestamp(`Client disconnected: ${ws.playerName || 'unknown'}`);
         connectionStore.cleanupSocketConnections(ws);
-        requestRateLimiter.cleanupRateLimitWindows();
+        // Debounce rate limiter cleanup to prevent OOM on high-churn scenarios
+        // Only cleanup every 10 disconnects to reduce frequency
+        if (Math.random() < 0.1) {
+          requestRateLimiter.cleanupRateLimitWindows();
+        }
         // Note: We don't destroy sessions on disconnect - they persist for reconnection
       });
     });

@@ -1,4 +1,4 @@
-async function refreshTribeCommandLists(gameState, tribeName, deps) {
+function refreshTribeCommandLists(gameState, tribeName, deps) {
   const { tribeConnections, logWithTimestamp, openState, handleListCommands } =
     deps;
 
@@ -30,7 +30,7 @@ async function refreshTribeCommandLists(gameState, tribeName, deps) {
   }
 }
 
-async function refreshTribeGameData(gameState, tribeName, deps) {
+function refreshTribeGameData(gameState, tribeName, deps) {
   const {
     tribeConnections,
     logWithTimestamp,

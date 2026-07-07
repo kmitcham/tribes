@@ -1,4 +1,4 @@
-async function sendGameMessages(ws, gameState, data, deps) {
+function sendGameMessages(ws, gameState, data, deps) {
   const {
     connectedClients,
     tribeConnections,

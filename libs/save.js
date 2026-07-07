@@ -139,7 +139,7 @@ function actuallyWriteToDisk(fileName, jsonData) {
   console.log(fileName + ' saved!');
 }
 
-async function saveGameState(gameState, tribeName) {
+function saveGameState(gameState, tribeName) {
   const d = new Date();
   let saveTime = d.toISOString();
   saveTime = saveTime.replace(/\//g, '-');
@@ -206,8 +206,13 @@ function clearMainGameFile(tribeName) {
   const mainGameFile = `./tribe-data/${tribeName}/${tribeName}.json`;
 
   if (fs.existsSync(mainGameFile)) {
-    fs.unlinkSync(mainGameFile);
-    console.log(`Cleared main game file for ${tribeName} - ready for new game`);
+    try {
+      fs.unlinkSync(mainGameFile);
+      console.log(`Cleared main game file for ${tribeName} - ready for new game`);
+    } catch (err) {
+      console.error(`Failed to clear main game file for ${tribeName}: ${err.message}`);
+      throw new Error(`Failed to clear game file: ${err.message}`);
+    }
   }
 }
 module.exports.clearMainGameFile = clearMainGameFile;
