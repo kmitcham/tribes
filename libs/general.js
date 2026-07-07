@@ -6,6 +6,7 @@ function give(gameState, sourceName, targetName, amount, item) {
   let response = '';
   const sourceDisplayName = text.capitalizeFirstLetter(sourceName || '');
   const targetDisplayName = text.capitalizeFirstLetter(targetName || '');
+  const isRef = referees.includes(sourceName);
   if (gameState.ended) {
     text.addMessage(
       gameState,
@@ -14,7 +15,7 @@ function give(gameState, sourceName, targetName, amount, item) {
     );
     return;
   }
-  if (targetName == sourceName) {
+  if (targetName == sourceName && !isRef) {
     response =
       'Giving things to yourself is useful self-care.  Nobody loves you like you love you.';
     console.log('self give: ' + targetName + ' ' + sourceName);
@@ -45,7 +46,6 @@ function give(gameState, sourceName, targetName, amount, item) {
     return;
   }
   sourcePerson = pop.memberByName(sourceName, gameState);
-  const isRef = referees.includes(sourceName);
   const isLegal = legalGive(gameState, sourceName, item, amount);
   console.log('isRef:' + isRef + ' isLegalgive:' + isLegal);
   if (isLegal) {

@@ -58,6 +58,26 @@ describe('give function', () => {
     expect(expectedMessage).toContain('self-care');
   });
 
+  test('should allow self-giving for referee in tribe', () => {
+    gameState.population.Kevin = {
+      name: 'Kevin',
+      gender: 'male',
+      food: 10,
+      grain: 10,
+      basket: 2,
+      spearhead: 2,
+      history: [],
+    };
+
+    general.give(gameState, 'Kevin', 'Kevin', 1, 'grain');
+
+    var messages = gameState.messages;
+    expect(messages['tribe']).toContain('Kevin gives Kevin 1 grain');
+    expect(messages['Kevin'] || '').not.toContain('self-care');
+    expect(gameState.population.Kevin.grain).toBe(10);
+    expect(gameState.saveRequired).toBe(true);
+  });
+
   test('should normalize item starting with "g" to "grain"', () => {
     general.give(gameState, 'player1', 'player2', 1, 'gold');
     var messages = gameState.messages;
