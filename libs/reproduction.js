@@ -145,6 +145,9 @@ module.exports.canStillInvite = canStillInvite;
 
 function canStillInviteCount(gameState) {
   const population = gameState.population;
+  if (!hasBothLivingSexes(population)) {
+    return 0;
+  }
   var count = 0;
   for (var personName in population) {
     const person = population[personName];

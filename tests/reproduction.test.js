@@ -555,6 +555,24 @@ test('matingList tests', () => {
   expect(canResponse).toBe('p1');
 });
 
+test('canStillInviteCount returns zero when tribe has one gender', () => {
+  var gameState = {
+    population: {
+      p1: {
+        name: 'p1',
+        gender: 'female',
+      },
+      p2: {
+        name: 'p2',
+        gender: 'female',
+      },
+    },
+    reproductionRound: true,
+  };
+
+  expect(reproLib.canStillInviteCount(gameState)).toBe(0);
+});
+
 test('make a invitelist, with commas, pass and save', () => {
   var gameState = {
     population: {

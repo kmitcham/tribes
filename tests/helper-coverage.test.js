@@ -19,6 +19,26 @@ describe('Helper coverage tests', () => {
     expect(util.countByType(population, 'role', 'hunter')).toBe(2);
   });
 
+  test('gameStateMessage does not show pending invitations for one-gender tribe', () => {
+    const gameState = {
+      name: 'bug',
+      seasonCounter: 4,
+      currentLocationName: 'veldt',
+      gameTrack: { veldt: 4 },
+      reproductionRound: true,
+      needChanceRoll: true,
+      population: {
+        ada: { name: 'ada', gender: 'female' },
+      },
+      children: {},
+    };
+
+    const message = util.gameStateMessage(gameState, null);
+
+    expect(message).not.toContain('awaiting invitations or pass');
+    expect(message).toContain('reproduction round, awaiting chance');
+  });
+
   test('countChildrenOfParentUnderAge counts children for either parent', () => {
     const childMap = {
       Ava: { mother: 'Alice', father: 'Bob', age: 3 },
