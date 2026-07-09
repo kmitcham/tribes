@@ -3,6 +3,7 @@ const pop = require('../../libs/population.js');
 const util = require('../../libs/util.js');
 const feed = require('../../libs/feed.js');
 const text = require('../../libs/textprocess.js');
+const roundTransitionAudit = require('../../libs/roundTransitionAudit.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -60,9 +61,13 @@ function startFoodFilter(actorName, gameState, bot) {
 module.exports.startFoodFilter = startFoodFilter;
 
 function startFood(gameState, bot) {
+  roundTransitionAudit.logRoundTransitionAnomaly(gameState, 'food', {
+    source: 'startFood',
+  });
   gameState.workRound = false;
   gameState.foodRound = true;
   gameState.reproductionRound = false;
+  gameState.round = 'food';
   const population = gameState.population;
   clearWorkFlags(population, gameState);
   pop.decrementSickness(population, gameState, 'work');

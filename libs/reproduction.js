@@ -7,6 +7,7 @@ const dice = require('./dice.js');
 const pop = require('./population.js');
 const feed = require('./feed.js');
 const end = require('./endgame.js');
+const roundTransitionAudit = require('./roundTransitionAudit.js');
 
 function eligibleMates(name, population, debug = false) {
   const matcher = population[name];
@@ -1308,11 +1309,15 @@ function startReproductionChecks(gameState, actorName) {
 module.exports.startReproductionChecks = startReproductionChecks;
 
 function startReproduction(gameState) {
+  roundTransitionAudit.logRoundTransitionAnomaly(gameState, 'reproduction', {
+    source: 'startReproduction',
+  });
   // actually consume food here
   gameState.needChanceRoll = true; // this magic boolean prevents starting work until we did chance roll
   gameState.workRound = false;
   gameState.foodRound = false;
   gameState.reproductionRound = true;
+  gameState.round = 'reproduction';
   delete gameState.enoughFood;
   let foodMessage = feed.consumeFood(gameState);
   if (Object.keys(gameState.population).length == 0) {

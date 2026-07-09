@@ -10,6 +10,7 @@ const locations = require('./locations.json');
 const utils = require('./util.js');
 const kill = require('./kill.js');
 const logger = require('./logger.js');
+const roundTransitionAudit = require('./roundTransitionAudit.js');
 
 function close(actorName, gameState) {
   var player = pop.memberByName(actorName, gameState);
@@ -445,6 +446,9 @@ function startWork(actorName, gameState) {
   }
   gameState.archiveRequired = true;
   recoverGameTracks(gameState);
+  roundTransitionAudit.logRoundTransitionAnomaly(gameState, 'work', {
+    source: 'startWork',
+  });
   // clear out old activities
   for (const personName in gameState.population) {
     const person = pop.memberByName(personName, gameState);
@@ -466,6 +470,7 @@ function startWork(actorName, gameState) {
   gameState.workRound = true;
   gameState.foodRound = false;
   gameState.reproductionRound = false;
+  gameState.round = 'work';
   gameState.doneMating = false;
   gameState.matingComplete = false;
   gameState.canJerky = false;

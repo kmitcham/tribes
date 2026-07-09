@@ -47,6 +47,16 @@ function getHistorySubjectChoices() {
   ];
 }
 
+function historyEntryMessage(entry) {
+  if (typeof entry === 'string') {
+    return entry;
+  }
+  if (entry && typeof entry === 'object' && typeof entry.message === 'string') {
+    return entry.message;
+  }
+  return '';
+}
+
 function parseHistorySeason(message) {
   if (!message || typeof message !== 'string') {
     return null;
@@ -264,7 +274,11 @@ function showCombinedHistory(playerName, gameState, subject, yearsBack) {
   }
   if (subjectLower !== 'your romance') {
     for (const entry of tribeHistory) {
-      combined.push({ source: 'Tribe history', message: entry });
+      const entryMessage = historyEntryMessage(entry);
+      if (!entryMessage) {
+        continue;
+      }
+      combined.push({ source: 'Tribe history', message: entryMessage });
     }
   }
 
@@ -354,7 +368,11 @@ function showTribeHistory(playerName, gameState) {
   }
 
   for (const message of messages) {
-    text.addMessage(gameState, playerName, message);
+    const entryMessage = historyEntryMessage(message);
+    if (!entryMessage) {
+      continue;
+    }
+    text.addMessage(gameState, playerName, entryMessage);
   }
 }
 

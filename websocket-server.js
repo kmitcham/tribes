@@ -544,6 +544,7 @@ function handleInfoRequest(ws, data, gameState) {
 async function handleCommandRequest(ws, data, gameState) {
   await commandFlowService.handleCommandRequest(ws, data, gameState, {
     commands,
+    commandLog: logger.commandLog,
     validateUser,
     prepareGameStateForJoin,
     replayPendingMessages,

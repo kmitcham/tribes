@@ -3,8 +3,12 @@ var path = require('path');
 var fs = require('fs');
 
 // Set this to whatever, by default the path of the script.
-var logPath = './tribe-data';
+var logPath = './tribe-data/logs';
 const tsFormat = () => new Date().toISOString();
+
+if (!fs.existsSync(logPath)) {
+  fs.mkdirSync(logPath, { recursive: true });
+}
 
 // Get current date in YYYY-MM-DD format
 const getDateString = () => {
@@ -28,6 +32,26 @@ const accessLog = winston.createLogger({
   transports: [
     new winston.transports.File({
       filename: path.join(logPath, `access.${dateString}.log`),
+      timestamp: tsFormat,
+      level: 'info',
+    }),
+  ],
+});
+
+const commandLog = winston.createLogger({
+  format: winston.format.printf((info) => {
+    const payload =
+      info && typeof info.message === 'object' && info.message !== null
+        ? info.message
+        : {
+            dateTime: tsFormat(),
+            message: String(info && info.message ? info.message : ''),
+          };
+    return JSON.stringify(payload);
+  }),
+  transports: [
+    new winston.transports.File({
+      filename: path.join(logPath, `command.${dateString}.log`),
       timestamp: tsFormat,
       level: 'info',
     }),
@@ -75,4 +99,5 @@ cleanupOldLogFiles();
 module.exports = {
   errorLog: errorLog,
   accessLog: accessLog,
+  commandLog: commandLog,
 };

@@ -27,11 +27,14 @@ function addMessage(gameState, address, message) {
     if (!gameState.tribeHistory) {
       gameState.tribeHistory = [];
     }
-    var entry = message;
+    var entryMessage = message;
     if (typeof gameState.seasonCounter === 'number') {
-      entry = gameState.seasonCounter / 2 + ': ' + message;
+      entryMessage = gameState.seasonCounter / 2 + ': ' + message;
     }
-    gameState.tribeHistory.push(entry);
+    gameState.tribeHistory.push({
+      message: entryMessage,
+      dateTime: new Date().toISOString(),
+    });
   }
 }
 module.exports.addMessage = addMessage;
