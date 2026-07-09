@@ -60,6 +60,49 @@ function removeChildNameFields(children) {
   }
 }
 
+const VALID_ROUNDS = new Set(['work', 'food', 'reproduction']);
+
+// Runtime historically used the boolean flags as the source of truth for
+// which round is active, while `round` was often left stale as 'work'.
+// Prefer a single exclusive flag when present so restarts don't snap back
+// to work mid-season (see GitHub issue #141).
+function exclusiveRoundFromFlags(gameState) {
+  const work = gameState.workRound === true;
+  const food = gameState.foodRound === true;
+  const reproduction = gameState.reproductionRound === true;
+  const trueCount = Number(work) + Number(food) + Number(reproduction);
+  if (trueCount !== 1) {
+    return null;
+  }
+  if (reproduction) {
+    return 'reproduction';
+  }
+  if (food) {
+    return 'food';
+  }
+  return 'work';
+}
+
+function syncRoundFields(gameState) {
+  if (!gameState || typeof gameState !== 'object') {
+    return;
+  }
+
+  const fromFlags = exclusiveRoundFromFlags(gameState);
+  const roundValid = VALID_ROUNDS.has(gameState.round);
+
+  if (fromFlags) {
+    // Exclusive flags win, including when they disagree with a stale round.
+    gameState.round = fromFlags;
+  } else if (!roundValid) {
+    gameState.round = 'work';
+  }
+
+  gameState.workRound = gameState.round === 'work';
+  gameState.foodRound = gameState.round === 'food';
+  gameState.reproductionRound = gameState.round === 'reproduction';
+}
+
 function normalizeLoadedGameState(gameState) {
   if (!gameState || typeof gameState !== 'object') {
     return;
@@ -72,21 +115,9 @@ function normalizeLoadedGameState(gameState) {
     gameState.seasonCounter = Math.floor(parsedSeasonCounter);
   }
 
-  const validRounds = new Set(['work', 'food', 'reproduction']);
-  if (!validRounds.has(gameState.round)) {
-    if (gameState.foodRound === true) {
-      gameState.round = 'food';
-    } else if (gameState.reproductionRound === true) {
-      gameState.round = 'reproduction';
-    } else {
-      gameState.round = 'work';
-    }
-  }
-
-  gameState.workRound = gameState.round === 'work';
-  gameState.foodRound = gameState.round === 'food';
-  gameState.reproductionRound = gameState.round === 'reproduction';
+  syncRoundFields(gameState);
 }
+module.exports.normalizeLoadedGameState = normalizeLoadedGameState;
 
 function loadTribe(tribeName) {
   const fileName = './tribe-data/' + tribeName + '/' + tribeName + '.json';
@@ -122,6 +153,7 @@ module.exports.loadTribe = loadTribe;
 function actuallyWriteToDisk(fileName, jsonData) {
   removeChildNameFields(jsonData.children);
   populationLib.normalizePopulationResources(jsonData);
+  syncRoundFields(jsonData);
   try {
     jsonUtils.writeJson(fileName, jsonData);
     const checkedData = loadJson(fileName);

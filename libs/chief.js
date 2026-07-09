@@ -493,6 +493,13 @@ function startWork(actorName, gameState) {
 module.exports.startWork = startWork;
 
 function recoverGameTracks(gameState) {
+  const parsedSeasonCounter = Number(gameState.seasonCounter);
+  if (!Number.isFinite(parsedSeasonCounter) || parsedSeasonCounter < 1) {
+    gameState.seasonCounter = 1;
+  } else {
+    gameState.seasonCounter = Math.floor(parsedSeasonCounter);
+  }
+
   if (utils.isColdSeason(gameState)) {
     for (const locationName in locations) {
       const modifier = locations[locationName]['game_track_recover'];

@@ -161,6 +161,83 @@ describe('Save Module', () => {
       expect(result.foodRound).toBe(false);
       expect(result.reproductionRound).toBe(true);
     });
+
+    test('should not snap food round back to work when round field is stale (issue #141)', () => {
+      // Pre-fix saves kept boolean flags as source of truth but left round at 'work'.
+      // Restart must not trust the stale round over exclusive flags.
+      const tribeData = {
+        name: 'bear',
+        seasonCounter: 32,
+        round: 'work',
+        workRound: false,
+        foodRound: true,
+        reproductionRound: false,
+        population: {},
+        children: {},
+      };
+      fs.existsSync.mockReturnValue(true);
+      fs.readFileSync.mockReturnValue(JSON.stringify(tribeData));
+
+      const result = savelib.loadTribe('bear');
+
+      expect(result.seasonCounter).toBe(32);
+      expect(result.round).toBe('food');
+      expect(result.workRound).toBe(false);
+      expect(result.foodRound).toBe(true);
+      expect(result.reproductionRound).toBe(false);
+    });
+
+    test('should not snap reproduction round back to work when round field is stale (issue #141)', () => {
+      const tribeData = {
+        name: 'bear',
+        seasonCounter: 32,
+        round: 'work',
+        workRound: false,
+        foodRound: false,
+        reproductionRound: true,
+        needChanceRoll: true,
+        population: {},
+        children: {},
+      };
+      fs.existsSync.mockReturnValue(true);
+      fs.readFileSync.mockReturnValue(JSON.stringify(tribeData));
+
+      const result = savelib.loadTribe('bear');
+
+      expect(result.seasonCounter).toBe(32);
+      expect(result.round).toBe('reproduction');
+      expect(result.workRound).toBe(false);
+      expect(result.foodRound).toBe(false);
+      expect(result.reproductionRound).toBe(true);
+      expect(result.needChanceRoll).toBe(true);
+    });
+
+    test('should sync round from flags when saving so restarts keep food/repro', () => {
+      const mockGameState = {
+        name: 'bear',
+        seasonCounter: 32,
+        round: 'work',
+        workRound: false,
+        foodRound: true,
+        reproductionRound: false,
+        population: {},
+        children: {},
+      };
+
+      fs.existsSync.mockReturnValue(true);
+      fs.writeFileSync.mockImplementation(() => {});
+      fs.readFileSync.mockImplementation(() => JSON.stringify(mockGameState));
+
+      savelib.saveTribe(mockGameState);
+
+      expect(mockGameState.round).toBe('food');
+      expect(mockGameState.foodRound).toBe(true);
+      expect(mockGameState.workRound).toBe(false);
+      const written = JSON.parse(fs.writeFileSync.mock.calls[0][1]);
+      expect(written.round).toBe('food');
+      expect(written.foodRound).toBe(true);
+      expect(written.workRound).toBe(false);
+    });
   });
 
   describe('saveFinalGameState', () => {
