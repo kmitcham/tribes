@@ -658,7 +658,10 @@ describe('consumeFoodChildren Function Tests', () => {
   });
 
   it('should age all living children by 1', () => {
+    // Child1 hits age 0 (birth). Stub roll so stillbirth (roll < 5) cannot flake the test.
+    const rollSpy = jest.spyOn(diceLib, 'roll').mockReturnValue(10);
     consumeFoodChildren(gameState);
+    rollSpy.mockRestore();
 
     // Check all living children aged by 1
     expect(gameState.children['Child1'].age).toBe(0);
@@ -670,7 +673,10 @@ describe('consumeFoodChildren Function Tests', () => {
   });
 
   it("should reduce each child's food by 2", () => {
+    // Child1 hits age 0 (birth). Stub roll so stillbirth (roll < 5) cannot flake the test.
+    const rollSpy = jest.spyOn(diceLib, 'roll').mockReturnValue(10);
     consumeFoodChildren(gameState);
+    rollSpy.mockRestore();
 
     // Check food reduction
     expect(gameState.children['Child1'].food).toBe(3);
@@ -680,7 +686,10 @@ describe('consumeFoodChildren Function Tests', () => {
 
   it('should mark children with negative food as dead', () => {
     gameState.children['Child2'].food = 1;
+    // Avoid birth stillbirth removing Child1 while we assert on Child2 starvation.
+    const rollSpy = jest.spyOn(diceLib, 'roll').mockReturnValue(10);
     consumeFoodChildren(gameState);
+    rollSpy.mockRestore();
 
     // Child2 should be marked as dead due to starvation
     expect(gameState.graveyard['Child2'].dead).toBe(true);

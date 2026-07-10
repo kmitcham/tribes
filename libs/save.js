@@ -3,6 +3,7 @@ const path = require('path');
 const locations = require('./locations.json');
 const jsonUtils = require('./jsonUtils.js');
 const populationLib = require('./population.js');
+const pathSafety = require('./pathSafety.js');
 
 // NOTE: Removed unused WebSocket server creation that was causing test failures
 // const server = new WebSocket.Server({ port: 8383 });
@@ -40,7 +41,10 @@ function initGame(gameName) {
   gameState.needChanceRoll = true;
   gameState.matingComplete = false;
   gameState.canJerky = false;
-  saveTribe(gameState);
+  // Only persist when the tribe name is a safe path segment.
+  if (pathSafety.isSafeTribeName(gameName)) {
+    saveTribe(gameState);
+  }
   return gameState;
 }
 module.exports.initGame = initGame;
@@ -120,7 +124,8 @@ function normalizeLoadedGameState(gameState) {
 module.exports.normalizeLoadedGameState = normalizeLoadedGameState;
 
 function loadTribe(tribeName) {
-  const fileName = './tribe-data/' + tribeName + '/' + tribeName + '.json';
+  pathSafety.assertSafeTribeName(tribeName);
+  const fileName = pathSafety.tribeMainFile(tribeName);
   if (fs.existsSync(fileName)) {
     try {
       const gameState = loadJson(fileName);
@@ -152,10 +157,10 @@ function loadTribe(tribeName) {
   );
 
   // Ensure tribe directory exists
-  const tribeDir = './tribe-data/' + tribeName;
-  if (!fs.existsSync(tribeDir)) {
-    fs.mkdirSync(tribeDir, { recursive: true });
-    console.log('Created directory: ' + tribeDir);
+  const dir = pathSafety.tribeDir(tribeName);
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+    console.log('Created directory: ' + dir);
   }
 
   // Initialize new tribe using existing initGame function
@@ -188,12 +193,13 @@ function actuallyWriteToDisk(fileName, jsonData) {
 }
 
 function saveGameState(gameState, tribeName) {
+  pathSafety.assertSafeTribeName(tribeName);
   const d = new Date();
   let saveTime = d.toISOString();
   saveTime = saveTime.replace(/\//g, '-');
   gameState.lastSaved = saveTime;
   console.log('trying to save ' + tribeName);
-  const saveFileName = './tribe-data/' + tribeName + '/' + tribeName + '.json';
+  const saveFileName = pathSafety.tribeMainFile(tribeName);
   console.log('trying to save ' + tribeName + ' as ' + saveFileName);
   actuallyWriteToDisk(saveFileName, gameState);
   console.log('saved file :' + saveFileName + ' at ' + saveTime);
@@ -205,6 +211,7 @@ function saveTribe(gameState) {
 module.exports.saveTribe = saveTribe;
 
 function archiveTribe(gameState) {
+  pathSafety.assertSafeTribeName(gameState.name);
   const d = new Date();
   let saveTime = d.toISOString();
   saveTime = saveTime.replace(/\//g, '-');
@@ -218,9 +225,11 @@ function archiveTribe(gameState) {
   }
 
   // Otherwise, create regular snapshot and manage snapshot count
-  const archiveName = gameState.name + '-' + saveTime;
-  const saveFileName =
-    './tribe-data/' + gameState.name + '/' + archiveName + '.json';
+  const archiveBase = gameState.name + '-' + saveTime;
+  const saveFileName = pathSafety.tribeSnapshotFile(
+    gameState.name,
+    archiveBase + '.json'
+  );
   actuallyWriteToDisk(saveFileName, gameState);
 
   // Manage snapshots - keep only 3 most recent
@@ -230,9 +239,13 @@ module.exports.archiveTribe = archiveTribe;
 
 // Save final game state with date-based filename
 function saveFinalGameState(gameState) {
+  pathSafety.assertSafeTribeName(gameState.name);
   const d = new Date();
   const dateStr = d.toISOString().split('T')[0]; // YYYY-MM-DD format
-  const finalFileName = `./tribe-data/${gameState.name}/${gameState.name}-final-${dateStr}.json`;
+  const finalFileName = pathSafety.tribeSnapshotFile(
+    gameState.name,
+    `${gameState.name}-final-${dateStr}.json`
+  );
 
   // Mark this as a final save
   gameState.finalSave = true;
@@ -245,7 +258,7 @@ module.exports.saveFinalGameState = saveFinalGameState;
 
 // Clear the main game file so tribe is ready for a new game
 function clearMainGameFile(tribeName) {
-  const mainGameFile = `./tribe-data/${tribeName}/${tribeName}.json`;
+  const mainGameFile = pathSafety.tribeMainFile(tribeName);
 
   if (fs.existsSync(mainGameFile)) {
     try {
@@ -261,15 +274,15 @@ module.exports.clearMainGameFile = clearMainGameFile;
 
 // Manage snapshots to keep only 3 most recent
 function manageSnapshots(tribeName) {
-  const tribeDir = `./tribe-data/${tribeName}`;
+  const dir = pathSafety.tribeDir(tribeName);
 
-  if (!fs.existsSync(tribeDir)) {
+  if (!fs.existsSync(dir)) {
     return;
   }
 
   // Get all snapshot files (exclude main game file and final saves)
   const files = fs
-    .readdirSync(tribeDir)
+    .readdirSync(dir)
     .filter((file) => {
       return (
         file.includes('-') &&
@@ -279,7 +292,7 @@ function manageSnapshots(tribeName) {
       );
     })
     .map((file) => {
-      const filePath = path.join(tribeDir, file);
+      const filePath = path.join(dir, file);
       const stats = fs.statSync(filePath);
       return {
         name: file,

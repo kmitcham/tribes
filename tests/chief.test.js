@@ -108,6 +108,21 @@ test('should handle children gathering food (roll 12)', () => {
   assert.strictEqual(gameState.saveRequired, true);
 });
 
+test('chance roll 12 does not crash when mother is missing (review #11)', () => {
+  gameState.children = {
+    Orphan: { name: 'Orphan', age: 12, mother: 'GoneMother' },
+    Motherless: { name: 'Motherless', age: 10, mother: null },
+  };
+  const result = chiefLib.doChance(12, gameState);
+  assert(result.includes('The younger tribesfolk gather food'));
+  assert(result.includes('GoneMother was not around, so Orphan eats it out of grief'));
+  assert(
+    result.includes('their mother was not around, so Motherless eats it out of grief')
+  );
+  assert.strictEqual(gameState.needChanceRoll, false);
+  assert.strictEqual(gameState.saveRequired, true);
+});
+
 test('should handle locusts eating food (roll 11)', () => {
   // Mock dice roll to return a predictable value for food loss
   const result = chiefLib.doChance(11, gameState);

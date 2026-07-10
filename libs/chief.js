@@ -279,9 +279,10 @@ function doChance(rollValue, gameState) {
               message +=
                 '\n  ' + mother.name + ' gets ' + gift + ' from ' + childName;
             } else {
+              const motherLabel = motherName || 'their mother';
               message +=
                 '\n  ' +
-                mother.name +
+                motherLabel +
                 ' was not around, so ' +
                 childName +
                 ' eats it out of grief.';

@@ -1,4 +1,5 @@
 const fs = require('fs');
+const pathSafety = require('./pathSafety.js');
 
 const REGISTRY_FILE = './tribe-data/tribesRegistry.json';
 
@@ -49,6 +50,7 @@ function getTribes() {
 }
 
 function setTribeHidden(tribeName, hidden) {
+  pathSafety.assertSafeTribeName(tribeName);
   const reg = initRegistry();
   if (!reg[tribeName]) {
     reg[tribeName] = { name: tribeName, hidden: hidden };
@@ -60,6 +62,7 @@ function setTribeHidden(tribeName, hidden) {
 }
 
 function createTribe(tribeName) {
+  pathSafety.assertSafeTribeName(tribeName);
   const reg = initRegistry();
   if (!reg[tribeName]) {
     reg[tribeName] = { name: tribeName, hidden: false };

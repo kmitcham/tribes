@@ -317,27 +317,34 @@ function startServer() {
           }
         );
       } else if (
-        req.url.endsWith('.png') ||
-        req.url.endsWith('.jpg') ||
-        req.url.endsWith('.gif') ||
-        req.url.endsWith('.jpeg')
+        req.url &&
+        (req.url.split('?')[0].endsWith('.png') ||
+          req.url.split('?')[0].endsWith('.jpg') ||
+          req.url.split('?')[0].endsWith('.gif') ||
+          req.url.split('?')[0].endsWith('.jpeg'))
       ) {
-        // Serve static image files
-        const filePath = path.join(__dirname, req.url);
-        fs.readFile(filePath, (err, data) => {
-          if (err) {
-            res.writeHead(404, { 'Content-Type': 'text/plain' });
-            res.end('Image not found');
-          } else {
-            const ext = path.extname(req.url).toLowerCase();
-            let contentType = 'image/png';
-            if (ext === '.jpg' || ext === '.jpeg') contentType = 'image/jpeg';
-            else if (ext === '.gif') contentType = 'image/gif';
+        // Serve static images from app root / png/ only (no path traversal).
+        const pathSafety = require('./libs/pathSafety.js');
+        const filePath = pathSafety.resolveSafeImagePath(__dirname, req.url);
+        if (!filePath) {
+          res.writeHead(404, { 'Content-Type': 'text/plain' });
+          res.end('Image not found');
+        } else {
+          fs.readFile(filePath, (err, data) => {
+            if (err) {
+              res.writeHead(404, { 'Content-Type': 'text/plain' });
+              res.end('Image not found');
+            } else {
+              const ext = path.extname(filePath).toLowerCase();
+              let contentType = 'image/png';
+              if (ext === '.jpg' || ext === '.jpeg') contentType = 'image/jpeg';
+              else if (ext === '.gif') contentType = 'image/gif';
 
-            res.writeHead(200, { 'Content-Type': contentType });
-            res.end(data);
-          }
-        });
+              res.writeHead(200, { 'Content-Type': contentType });
+              res.end(data);
+            }
+          });
+        }
       } else {
         res.writeHead(404, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Not found' }));
@@ -666,6 +673,7 @@ async function handleImportGame(ws, data, currentGameState) {
     savelib,
     refreshTribeGameData,
     refreshTribeCommandLists,
+    getGameState,
   });
 }
 

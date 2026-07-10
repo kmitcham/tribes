@@ -1,3 +1,5 @@
+const pathSafety = require('../../libs/pathSafety.js');
+
 function isReferee(playerName, referees) {
   return playerName && referees.includes(playerName);
 }
@@ -80,7 +82,17 @@ async function handleManageTribe(ws, data, deps) {
   }
 
   if (data.action === 'create') {
-    tribesRegistry.createTribe(data.tribeName);
+    try {
+      tribesRegistry.createTribe(data.tribeName);
+    } catch (err) {
+      ws.send(
+        JSON.stringify({
+          type: 'error',
+          message: err.message || 'Invalid tribe name',
+        })
+      );
+      return;
+    }
     broadcastTribeUpdate(connectedClients, tribesRegistry, openState);
     ws.send(
       JSON.stringify({
@@ -94,7 +106,17 @@ async function handleManageTribe(ws, data, deps) {
   }
 
   if (data.action === 'setVisibility') {
-    tribesRegistry.setTribeHidden(data.tribeName, data.hidden);
+    try {
+      tribesRegistry.setTribeHidden(data.tribeName, data.hidden);
+    } catch (err) {
+      ws.send(
+        JSON.stringify({
+          type: 'error',
+          message: err.message || 'Invalid tribe name',
+        })
+      );
+      return;
+    }
     broadcastTribeUpdate(connectedClients, tribesRegistry, openState);
     ws.send(
       JSON.stringify({
@@ -221,6 +243,19 @@ async function handleExportGame(ws, data, deps) {
       return;
     }
 
+    if (!pathSafety.isSafeTribeName(tribeName)) {
+      ws.send(
+        JSON.stringify({
+          type: 'exportGameResponse',
+          success: false,
+          message:
+            'Invalid tribe name. Use 1-64 characters: letters, numbers, _ or - only.',
+          clientId: data.clientId,
+        })
+      );
+      return;
+    }
+
     const gameState = await getGameState(tribeName);
     if (!gameState) {
       ws.send(
@@ -285,6 +320,7 @@ async function handleImportGame(ws, data, currentGameState, deps) {
     savelib,
     refreshTribeGameData,
     refreshTribeCommandLists,
+    getGameState,
   } = deps;
 
   try {
@@ -315,7 +351,28 @@ async function handleImportGame(ws, data, currentGameState, deps) {
       return;
     }
 
-    const tribeName = data.tribeName || data.tribe;
+    // Single canonical target: never backup tribe A and write tribe B.
+    const tribeField = data.tribeName;
+    const tribeContext = data.tribe;
+    if (
+      tribeField &&
+      tribeContext &&
+      String(tribeField) !== String(tribeContext)
+    ) {
+      ws.send(
+        JSON.stringify({
+          type: 'importGameResponse',
+          success: false,
+          message:
+            `Tribe mismatch: tribeName ('${tribeField}') and tribe ('${tribeContext}') must match. ` +
+            'Import aborted to avoid backing up one tribe and overwriting another.',
+          clientId: data.clientId,
+        })
+      );
+      return;
+    }
+
+    const tribeName = tribeField || tribeContext;
     const importData = data.importData;
 
     if (!tribeName) {
@@ -324,6 +381,19 @@ async function handleImportGame(ws, data, currentGameState, deps) {
           type: 'importGameResponse',
           success: false,
           message: 'Tribe name is required',
+          clientId: data.clientId,
+        })
+      );
+      return;
+    }
+
+    if (!pathSafety.isSafeTribeName(tribeName)) {
+      ws.send(
+        JSON.stringify({
+          type: 'importGameResponse',
+          success: false,
+          message:
+            'Invalid tribe name. Use 1-64 characters: letters, numbers, _ or - only.',
           clientId: data.clientId,
         })
       );
@@ -348,6 +418,12 @@ async function handleImportGame(ws, data, currentGameState, deps) {
       logWithTimestamp(
         `[REFEREE] Importing with metadata - exported by: ${importData.metadata?.exportedBy}, exported at: ${importData.metadata?.exportedAt}`
       );
+      const metaTribe = importData.metadata && importData.metadata.tribeName;
+      if (metaTribe && String(metaTribe) !== String(tribeName)) {
+        logWithTimestamp(
+          `[REFEREE] Import note: payload metadata tribe '${metaTribe}' differs from target '${tribeName}' (clone/cross-tribe import)`
+        );
+      }
     } else if (importData.name || importData.population) {
       gameDataToImport = importData;
       logWithTimestamp('[REFEREE] Importing legacy format game data');
@@ -378,47 +454,67 @@ async function handleImportGame(ws, data, currentGameState, deps) {
       return;
     }
 
-    const backupData = {
-      metadata: {
-        tribeName: tribeName,
-        backedUpBy: data.playerName,
-        backedUpAt: new Date().toISOString(),
-        reason: 'Pre-import backup',
-      },
-      gameData: currentGameState,
-    };
+    const runLocked =
+      gameStateStore && typeof gameStateStore.runExclusive === 'function'
+        ? (fn) => gameStateStore.runExclusive(tribeName, fn)
+        : (fn) => fn();
 
-    const archiveDir = path.join(baseDir, 'archive', tribeName);
-    if (!fs.existsSync(archiveDir)) {
-      fs.mkdirSync(archiveDir, { recursive: true });
-    }
+    await runLocked(async () => {
+      // Always backup the live target tribe, not a router-loaded sibling tribe.
+      let liveState = null;
+      if (typeof getGameState === 'function') {
+        liveState = await getGameState(tribeName);
+      } else if (
+        currentGameState &&
+        (currentGameState.name === tribeName || !currentGameState.name)
+      ) {
+        liveState = currentGameState;
+      } else if (savelib && typeof savelib.loadTribe === 'function') {
+        liveState = savelib.loadTribe(tribeName);
+      }
 
-    const backupFilename = `${tribeName}-pre-import-backup-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.json`;
-    const backupPath = path.join(archiveDir, backupFilename);
-    writeJson(backupPath, backupData);
+      const backupData = {
+        metadata: {
+          tribeName: tribeName,
+          backedUpBy: data.playerName,
+          backedUpAt: new Date().toISOString(),
+          reason: 'Pre-import backup',
+        },
+        gameData: liveState,
+      };
 
-    gameDataToImport.name = tribeName;
-    gameStateStore.setGameState(tribeName, gameDataToImport);
-    savelib.saveTribe(gameDataToImport);
+      const archiveDir = pathSafety.archiveDirForTribe(tribeName, baseDir);
+      if (!fs.existsSync(archiveDir)) {
+        fs.mkdirSync(archiveDir, { recursive: true });
+      }
 
-    logWithTimestamp(
-      `[REFEREE] ${data.playerName} successfully imported game data for tribe: ${tribeName}`
-    );
-    logWithTimestamp(`[REFEREE] Backup saved as: ${backupFilename}`);
+      const backupFilename = `${tribeName}-pre-import-backup-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.json`;
+      const backupPath = path.join(archiveDir, backupFilename);
+      writeJson(backupPath, backupData);
 
-    ws.send(
-      JSON.stringify({
-        type: 'importGameResponse',
-        success: true,
-        tribeName: tribeName,
-        message: `Game data imported successfully. Backup saved as: ${backupFilename}`,
-        backupFilename: backupFilename,
-        clientId: data.clientId,
-      })
-    );
+      gameDataToImport.name = tribeName;
+      gameStateStore.setGameState(tribeName, gameDataToImport);
+      savelib.saveTribe(gameDataToImport);
 
-    await refreshTribeGameData(gameDataToImport, tribeName);
-    await refreshTribeCommandLists(gameDataToImport, tribeName);
+      logWithTimestamp(
+        `[REFEREE] ${data.playerName} successfully imported game data for tribe: ${tribeName}`
+      );
+      logWithTimestamp(`[REFEREE] Backup saved as: ${backupFilename}`);
+
+      ws.send(
+        JSON.stringify({
+          type: 'importGameResponse',
+          success: true,
+          tribeName: tribeName,
+          message: `Game data imported successfully. Backup saved as: ${backupFilename}`,
+          backupFilename: backupFilename,
+          clientId: data.clientId,
+        })
+      );
+
+      await refreshTribeGameData(gameDataToImport, tribeName);
+      await refreshTribeCommandLists(gameDataToImport, tribeName);
+    });
   } catch (error) {
     console.error('Error importing game data:', error);
     ws.send(

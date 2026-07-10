@@ -12,6 +12,7 @@ jest.mock('ws', () => ({
 }));
 
 const savelib = require('../libs/save.js');
+const pathSafety = require('../libs/pathSafety.js');
 
 // Suppress console.log during tests
 console.log = jest.fn();
@@ -132,39 +133,28 @@ describe('Save Module', () => {
       expect(result.population.player1.basket).toBe(0);
       expect(result.population.player1.spearhead).toBe(0);
       expect(fs.existsSync).toHaveBeenCalledWith(
-        './tribe-data/test-tribe/test-tribe.json'
+        pathSafety.tribeMainFile('test-tribe')
       );
     });
 
     test('should create new tribe if file does not exist', () => {
-      // loadTribe path checks: main file missing, tribe dir missing, then atomic save checks.
-      fs.existsSync.mockImplementation((p) => {
-        if (String(p).endsWith('new-tribe.json')) {
-          return false;
-        }
-        if (String(p) === './tribe-data/new-tribe') {
-          return false;
-        }
-        return true;
-      });
+      const mainFile = pathSafety.tribeMainFile('new-tribe');
+      const dir = pathSafety.tribeDir('new-tribe');
       fs.mkdirSync.mockImplementation(() => {});
       mockAtomicFsSuccess();
-      // After mkdir/save setup, keep main file "missing" for the load check only once.
       fs.existsSync.mockImplementation((p) => {
-        if (String(p) === './tribe-data/new-tribe/new-tribe.json') {
-          // initGame save writes via temp+rename; exists for bak check can be false
+        const s = String(p);
+        if (s === mainFile || s === dir) {
           return false;
         }
-        if (String(p) === './tribe-data/new-tribe') {
-          return false;
-        }
-        return true;
+        // temp/bak paths during atomic save
+        return false;
       });
 
       const result = savelib.loadTribe('new-tribe');
 
       expect(result.name).toBe('new-tribe');
-      expect(fs.mkdirSync).toHaveBeenCalledWith('./tribe-data/new-tribe', {
+      expect(fs.mkdirSync).toHaveBeenCalledWith(dir, {
         recursive: true,
       });
     });
@@ -267,7 +257,7 @@ describe('Save Module', () => {
       expect(written.workRound).toBe(false);
       expect(fs.renameSync).toHaveBeenCalledWith(
         expect.stringMatching(/bear\.json\.\d+\.\d+\.tmp$/),
-        './tribe-data/bear/bear.json'
+        pathSafety.tribeMainFile('bear')
       );
     });
 
@@ -304,7 +294,7 @@ describe('Save Module', () => {
           /test-tribe-final-\d{4}-\d{2}-\d{2}\.json\.\d+\.\d+\.tmp$/
         ),
         expect.stringMatching(
-          /\.\/tribe-data\/test-tribe\/test-tribe-final-\d{4}-\d{2}-\d{2}\.json$/
+          /tribe-data[/\\]test-tribe[/\\]test-tribe-final-\d{4}-\d{2}-\d{2}\.json$/
         )
       );
     });
@@ -331,10 +321,10 @@ describe('Save Module', () => {
       await savelib.clearMainGameFile('test-tribe');
 
       expect(fs.existsSync).toHaveBeenCalledWith(
-        './tribe-data/test-tribe/test-tribe.json'
+        pathSafety.tribeMainFile('test-tribe')
       );
       expect(fs.unlinkSync).toHaveBeenCalledWith(
-        './tribe-data/test-tribe/test-tribe.json'
+        pathSafety.tribeMainFile('test-tribe')
       );
     });
 
@@ -344,7 +334,7 @@ describe('Save Module', () => {
       await savelib.clearMainGameFile('test-tribe');
 
       expect(fs.existsSync).toHaveBeenCalledWith(
-        './tribe-data/test-tribe/test-tribe.json'
+        pathSafety.tribeMainFile('test-tribe')
       );
       expect(fs.unlinkSync).not.toHaveBeenCalled();
     });
@@ -483,11 +473,11 @@ describe('Save Module', () => {
       expect(fs.writeFileSync).toHaveBeenCalled();
       const writeCall = fs.writeFileSync.mock.calls[0];
       expect(writeCall[0]).toMatch(
-        /\.\/tribe-data\/test-tribe\/test-tribe\.json\.\d+\.\d+\.tmp$/
+        /tribe-data[/\\]test-tribe[/\\]test-tribe\.json\.\d+\.\d+\.tmp$/
       );
       expect(fs.renameSync).toHaveBeenCalledWith(
         expect.stringMatching(/test-tribe\.json\.\d+\.\d+\.tmp$/),
-        './tribe-data/test-tribe/test-tribe.json'
+        pathSafety.tribeMainFile('test-tribe')
       );
     });
 
