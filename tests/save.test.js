@@ -15,17 +15,31 @@ const savelib = require('../libs/save.js');
 
 // Suppress console.log during tests
 console.log = jest.fn();
+console.error = jest.fn();
+
+/** Atomic writeJson + post-write verify: echo written payload on read. */
+function mockAtomicFsSuccess() {
+  fs.existsSync.mockReturnValue(true);
+  fs.writeFileSync.mockImplementation((_path, content) => {
+    fs.readFileSync.mockReturnValue(content);
+  });
+  fs.renameSync.mockImplementation(() => {});
+  fs.copyFileSync.mockImplementation(() => {});
+  fs.openSync.mockReturnValue(1);
+  fs.fsyncSync.mockImplementation(() => {});
+  fs.closeSync.mockImplementation(() => {});
+  fs.unlinkSync.mockImplementation(() => {});
+}
 
 describe('Save Module', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockAtomicFsSuccess();
   });
 
   describe('initGame', () => {
     beforeEach(() => {
-      fs.existsSync.mockReturnValue(true);
-      fs.writeFileSync.mockImplementation(() => {});
-      fs.readFileSync.mockReturnValue(JSON.stringify({}));
+      mockAtomicFsSuccess();
     });
 
     test('should initialize game with default values', () => {
@@ -123,13 +137,29 @@ describe('Save Module', () => {
     });
 
     test('should create new tribe if file does not exist', () => {
-      fs.existsSync
-        .mockReturnValueOnce(false) // file doesn't exist
-        .mockReturnValueOnce(false) // directory doesn't exist
-        .mockReturnValueOnce(true); // after creation
+      // loadTribe path checks: main file missing, tribe dir missing, then atomic save checks.
+      fs.existsSync.mockImplementation((p) => {
+        if (String(p).endsWith('new-tribe.json')) {
+          return false;
+        }
+        if (String(p) === './tribe-data/new-tribe') {
+          return false;
+        }
+        return true;
+      });
       fs.mkdirSync.mockImplementation(() => {});
-      fs.writeFileSync.mockImplementation(() => {});
-      fs.readFileSync.mockReturnValue(JSON.stringify({}));
+      mockAtomicFsSuccess();
+      // After mkdir/save setup, keep main file "missing" for the load check only once.
+      fs.existsSync.mockImplementation((p) => {
+        if (String(p) === './tribe-data/new-tribe/new-tribe.json') {
+          // initGame save writes via temp+rename; exists for bak check can be false
+          return false;
+        }
+        if (String(p) === './tribe-data/new-tribe') {
+          return false;
+        }
+        return true;
+      });
 
       const result = savelib.loadTribe('new-tribe');
 
@@ -224,9 +254,7 @@ describe('Save Module', () => {
         children: {},
       };
 
-      fs.existsSync.mockReturnValue(true);
-      fs.writeFileSync.mockImplementation(() => {});
-      fs.readFileSync.mockImplementation(() => JSON.stringify(mockGameState));
+      mockAtomicFsSuccess();
 
       savelib.saveTribe(mockGameState);
 
@@ -237,6 +265,20 @@ describe('Save Module', () => {
       expect(written.round).toBe('food');
       expect(written.foodRound).toBe(true);
       expect(written.workRound).toBe(false);
+      expect(fs.renameSync).toHaveBeenCalledWith(
+        expect.stringMatching(/bear\.json\.\d+\.\d+\.tmp$/),
+        './tribe-data/bear/bear.json'
+      );
+    });
+
+    test('should refuse to init a new game over a corrupt existing save', () => {
+      fs.existsSync.mockReturnValue(true);
+      fs.readFileSync.mockReturnValue('{ not valid json');
+
+      expect(() => savelib.loadTribe('bear')).toThrow(/Failed to load tribe/);
+      expect(() => savelib.loadTribe('bear')).toThrow(/not overwritten/);
+      // Must not write a replacement empty game.
+      expect(fs.writeFileSync).not.toHaveBeenCalled();
     });
   });
 
@@ -248,26 +290,31 @@ describe('Save Module', () => {
         ended: true,
       };
 
-      fs.writeFileSync.mockImplementation(() => {});
-      fs.readFileSync.mockReturnValue(JSON.stringify(mockGameState));
+      mockAtomicFsSuccess();
 
       await savelib.saveFinalGameState(mockGameState);
 
       expect(fs.writeFileSync).toHaveBeenCalled();
       const callArgs = fs.writeFileSync.mock.calls[0];
       expect(callArgs[0]).toMatch(
-        /\.\/tribe-data\/test-tribe\/test-tribe-final-\d{4}-\d{2}-\d{2}\.json/
+        /test-tribe-final-\d{4}-\d{2}-\d{2}\.json\.\d+\.\d+\.tmp$/
+      );
+      expect(fs.renameSync).toHaveBeenCalledWith(
+        expect.stringMatching(
+          /test-tribe-final-\d{4}-\d{2}-\d{2}\.json\.\d+\.\d+\.tmp$/
+        ),
+        expect.stringMatching(
+          /\.\/tribe-data\/test-tribe\/test-tribe-final-\d{4}-\d{2}-\d{2}\.json$/
+        )
       );
     });
 
     test('should add final save markers to game state', async () => {
+      mockAtomicFsSuccess();
       const mockGameState = {
         name: 'test-tribe',
         ended: true,
       };
-
-      fs.writeFileSync.mockImplementation(() => {});
-      fs.readFileSync.mockReturnValue(JSON.stringify(mockGameState));
 
       await savelib.saveFinalGameState(mockGameState);
 
@@ -390,10 +437,7 @@ describe('Save Module', () => {
         population: { player1: { name: 'Player1' } },
       };
 
-      fs.writeFileSync.mockImplementation(() => {});
-      fs.existsSync.mockReturnValue(true);
-      fs.unlinkSync.mockImplementation(() => {});
-      fs.readFileSync.mockReturnValue(JSON.stringify(mockGameState));
+      mockAtomicFsSuccess();
 
       savelib.archiveTribe(mockGameState);
 
@@ -412,10 +456,8 @@ describe('Save Module', () => {
         population: { player1: { name: 'Player1' } },
       };
 
-      fs.writeFileSync.mockImplementation(() => {});
-      fs.existsSync.mockReturnValue(true);
+      mockAtomicFsSuccess();
       fs.readdirSync.mockReturnValue([]);
-      fs.readFileSync.mockReturnValue(JSON.stringify(mockGameState));
 
       savelib.archiveTribe(mockGameState);
 
@@ -423,6 +465,7 @@ describe('Save Module', () => {
       const writeCall = fs.writeFileSync.mock.calls[0];
       expect(writeCall[0]).toContain('test-tribe-');
       expect(writeCall[0]).not.toContain('-final-');
+      expect(fs.renameSync).toHaveBeenCalled();
     });
   });
 
@@ -433,14 +476,19 @@ describe('Save Module', () => {
         population: { player1: { name: 'Player1' } },
       };
 
-      fs.writeFileSync.mockImplementation(() => {});
-      fs.readFileSync.mockReturnValue(JSON.stringify(mockGameState));
+      mockAtomicFsSuccess();
 
       savelib.saveTribe(mockGameState);
 
       expect(fs.writeFileSync).toHaveBeenCalled();
       const writeCall = fs.writeFileSync.mock.calls[0];
-      expect(writeCall[0]).toBe('./tribe-data/test-tribe/test-tribe.json');
+      expect(writeCall[0]).toMatch(
+        /\.\/tribe-data\/test-tribe\/test-tribe\.json\.\d+\.\d+\.tmp$/
+      );
+      expect(fs.renameSync).toHaveBeenCalledWith(
+        expect.stringMatching(/test-tribe\.json\.\d+\.\d+\.tmp$/),
+        './tribe-data/test-tribe/test-tribe.json'
+      );
     });
 
     test('should update lastSaved timestamp', async () => {
@@ -449,8 +497,7 @@ describe('Save Module', () => {
         population: {},
       };
 
-      fs.writeFileSync.mockImplementation(() => {});
-      fs.readFileSync.mockReturnValue(JSON.stringify(mockGameState));
+      mockAtomicFsSuccess();
 
       savelib.saveTribe(mockGameState);
 
@@ -471,21 +518,7 @@ describe('Save Module', () => {
         },
       };
 
-      fs.writeFileSync.mockImplementation(() => {});
-      fs.readFileSync.mockReturnValue(
-        JSON.stringify({
-          name: 'test-tribe',
-          population: {
-            player1: {
-              name: 'player1',
-              food: 0,
-              grain: 0,
-              basket: 0,
-              spearhead: 0,
-            },
-          },
-        })
-      );
+      mockAtomicFsSuccess();
 
       savelib.saveTribe(mockGameState);
 

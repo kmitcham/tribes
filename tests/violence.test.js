@@ -27,6 +27,7 @@ test('Happy Path Demand', () => {
   expect(actualMessage).toBe(expectedMessage);
   expect(gameState['population'][playername]['faction']).toEqual('for');
   expect(gameState['demand']).toEqual(message);
+  expect(gameState.saveRequired).toBe(true);
 });
 
 test('Faction Check', () => {

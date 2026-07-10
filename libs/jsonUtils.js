@@ -38,15 +38,54 @@ function loadJson(fileName, defaultValue = {}) {
   }
 }
 
+function fsyncFile(filePath) {
+  try {
+    const fd = fs.openSync(filePath, 'r');
+    try {
+      fs.fsyncSync(fd);
+    } finally {
+      fs.closeSync(fd);
+    }
+  } catch (_err) {
+    // Best-effort: some environments (tests, network FS) may not support fsync.
+  }
+}
+
+/**
+ * Atomically write JSON: temp file in the same directory, optional backup of the
+ * previous file, then rename into place. Rename is atomic on POSIX filesystems.
+ */
 function writeJson(fileName, jsonData, spacing = 2) {
   const dir = path.dirname(fileName);
   if (dir && dir !== '.' && !fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }
 
+  const payload = JSON.stringify(jsonData, null, spacing);
+  const tempFile = `${fileName}.${process.pid}.${Date.now()}.tmp`;
+
   try {
-    fs.writeFileSync(fileName, JSON.stringify(jsonData, null, spacing), 'utf8');
+    fs.writeFileSync(tempFile, payload, 'utf8');
+    fsyncFile(tempFile);
+
+    if (fs.existsSync(fileName)) {
+      const bakFile = `${fileName}.bak`;
+      try {
+        fs.copyFileSync(fileName, bakFile);
+      } catch (_bakErr) {
+        // Best-effort backup only.
+      }
+    }
+
+    fs.renameSync(tempFile, fileName);
   } catch (err) {
+    try {
+      if (fs.existsSync(tempFile)) {
+        fs.unlinkSync(tempFile);
+      }
+    } catch (_cleanupErr) {
+      // ignore cleanup failure
+    }
     throw new Error(`Failed to write JSON file ${fileName}: ${err.message}`);
   }
 }

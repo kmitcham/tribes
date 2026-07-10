@@ -129,24 +129,37 @@ function loadTribe(tribeName) {
       populationLib.normalizePopulationResources(gameState);
       return gameState;
     } catch (err) {
-      console.log('the json file load of ' + fileName + ' failed ' + err);
+      // Fail closed: never init/overwrite when a main save exists but is unreadable.
+      console.error(
+        'the json file load of ' +
+          fileName +
+          ' failed ' +
+          err +
+          '; refusing to create a new game over existing save'
+      );
+      const loadError = new Error(
+        `Failed to load tribe '${tribeName}' from ${fileName}: ${err.message}. Existing save was not overwritten; restore from a snapshot or ${fileName}.bak if available.`
+      );
+      loadError.code = 'TRIBE_LOAD_FAILED';
+      loadError.tribeName = tribeName;
+      loadError.fileName = fileName;
+      throw loadError;
     }
-  } else {
-    console.log(
-      'No file found for ' + fileName + ', initializing new tribe: ' + tribeName
-    );
-
-    // Ensure tribe directory exists
-    const tribeDir = './tribe-data/' + tribeName;
-    if (!fs.existsSync(tribeDir)) {
-      fs.mkdirSync(tribeDir, { recursive: true });
-      console.log('Created directory: ' + tribeDir);
-    }
-
-    // Initialize new tribe using existing initGame function
-    return initGame(tribeName);
   }
-  return null;
+
+  console.log(
+    'No file found for ' + fileName + ', initializing new tribe: ' + tribeName
+  );
+
+  // Ensure tribe directory exists
+  const tribeDir = './tribe-data/' + tribeName;
+  if (!fs.existsSync(tribeDir)) {
+    fs.mkdirSync(tribeDir, { recursive: true });
+    console.log('Created directory: ' + tribeDir);
+  }
+
+  // Initialize new tribe using existing initGame function
+  return initGame(tribeName);
 }
 module.exports.loadTribe = loadTribe;
 
@@ -159,11 +172,14 @@ function actuallyWriteToDisk(fileName, jsonData) {
     const checkedData = loadJson(fileName);
     const jsonString = JSON.stringify(jsonData, null, 2);
     const checkedString = JSON.stringify(checkedData, null, 2);
-    if (checkedString === jsonString) {
-      console.log('checked data match');
-    } else {
-      console.log('checked data did not match');
+    if (checkedString !== jsonString) {
+      throw new Error(
+        'Save verification failed for ' +
+          fileName +
+          ': on-disk JSON does not match in-memory state'
+      );
     }
+    console.log('checked data match');
   } catch (err) {
     console.log('save failed. ' + err);
     throw err;
@@ -180,12 +196,6 @@ function saveGameState(gameState, tribeName) {
   const saveFileName = './tribe-data/' + tribeName + '/' + tribeName + '.json';
   console.log('trying to save ' + tribeName + ' as ' + saveFileName);
   actuallyWriteToDisk(saveFileName, gameState);
-  try {
-    loadJson(saveFileName);
-  } catch (err) {
-    console.log('Failed to load saved file for ' + saveFileName);
-    console.log(err);
-  }
   console.log('saved file :' + saveFileName + ' at ' + saveTime);
 }
 function saveTribe(gameState) {

@@ -626,6 +626,8 @@ async function handleRomanceRequest(ws, data, gameState) {
   await requestFlowService.handleRomanceRequest(ws, data, gameState, {
     validateUser,
     processRomance,
+    savelib,
+    gameStateStore,
   });
 }
 

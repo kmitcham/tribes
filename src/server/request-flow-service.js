@@ -47,14 +47,11 @@ async function handleRegisterRequest(ws, data, gameState, deps) {
 }
 
 async function handleRomanceRequest(ws, data, gameState, deps) {
-  const { validateUser, processRomance } = deps;
+  const { validateUser, processRomance, savelib, gameStateStore } = deps;
+  const tribeName = data.tribe || gameState?.name || 'bug';
 
   try {
-    if (await validateUser(data)) {
-      const romanceUpdate = processRomance(data, gameState);
-      gameState.saveRequired = true;
-      ws.send(JSON.stringify(romanceUpdate));
-    } else {
+    if (!(await validateUser(data))) {
       ws.send(
         JSON.stringify({
           type: 'error',
@@ -62,7 +59,30 @@ async function handleRomanceRequest(ws, data, gameState, deps) {
           clientId: data.clientId,
         })
       );
+      return;
     }
+
+    const runLocked =
+      gameStateStore && typeof gameStateStore.runExclusive === 'function'
+        ? (fn) => gameStateStore.runExclusive(tribeName, fn)
+        : (fn) => fn();
+
+    await runLocked(async () => {
+      let lockedState = gameState;
+      if (gameStateStore && typeof gameStateStore.getGameState === 'function' && savelib) {
+        lockedState = gameStateStore.getGameState(tribeName, savelib);
+      }
+
+      const romanceUpdate = processRomance(data, lockedState);
+      lockedState.saveRequired = true;
+
+      if (savelib && typeof savelib.saveTribe === 'function') {
+        savelib.saveTribe(lockedState);
+        lockedState.saveRequired = false;
+      }
+
+      ws.send(JSON.stringify(romanceUpdate));
+    });
   } catch (error) {
     ws.send(
       JSON.stringify({

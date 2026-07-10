@@ -1,15 +1,31 @@
 const allGames = {};
+const tribeQueues = new Map();
+
+/**
+ * Serialize async work per tribe so concurrent commands/romance/import
+ * cannot interleave mutations of the same in-memory gameState.
+ */
+function runExclusive(tribeName, fn) {
+  const key = tribeName || 'bug';
+  const previous = tribeQueues.get(key) || Promise.resolve();
+  const run = previous.catch(() => {}).then(() => fn());
+  const tracked = run.finally(() => {
+    if (tribeQueues.get(key) === tracked) {
+      tribeQueues.delete(key);
+    }
+  });
+  tribeQueues.set(key, tracked);
+  return run;
+}
 
 function getGameState(tribeName, savelib) {
   if (allGames[tribeName]) {
     return allGames[tribeName];
   }
 
-  let gameState = savelib.loadTribe(tribeName);
-  if (!gameState) {
-    gameState = savelib.initGame(tribeName);
-  }
-
+  // loadTribe either returns a loaded/new game or throws TRIBE_LOAD_FAILED.
+  // Never call initGame here when a corrupt main save exists.
+  const gameState = savelib.loadTribe(tribeName);
   allGames[tribeName] = gameState;
   return gameState;
 }
@@ -53,4 +69,5 @@ module.exports = {
   prepareGameStateForJoin,
   resetEndedGameAfterArchive,
   getAllGames,
+  runExclusive,
 };

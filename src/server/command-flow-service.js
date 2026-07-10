@@ -15,7 +15,7 @@ async function handleCommandRequest(ws, data, gameState, deps) {
 
   const commandName = data.command;
   const playerName = data.playerName || ws.playerName || 'unknown';
-  const tribeName = data.tribe || 'bug';
+  const tribeName = data.tribe || gameState?.name || 'bug';
   let argsPayload = {};
   try {
     argsPayload = JSON.parse(JSON.stringify(data.parameters || {}));
@@ -74,57 +74,69 @@ async function handleCommandRequest(ws, data, gameState, deps) {
     return;
   }
 
-  gameState = prepareGameStateForJoin(commandName, data, gameState);
+  const runLocked = gameStateStore.runExclusive
+    ? (fn) => gameStateStore.runExclusive(tribeName, fn)
+    : (fn) => fn();
 
-  replayPendingMessages(
-    ws,
-    data.playerName,
-    data.tribe || 'bug',
-    data.clientId
-  );
+  await runLocked(async () => {
+    // Re-fetch under the lock so we never mutate a replaced/stale object.
+    let lockedState =
+      typeof gameStateStore.getGameState === 'function'
+        ? gameStateStore.getGameState(tribeName, savelib)
+        : gameState;
 
-  try {
-    const interaction = createMockInteraction(data, ws, gameState);
+    lockedState = prepareGameStateForJoin(commandName, data, lockedState);
 
-    gameState.messages = {};
-
-    await command.execute(interaction, gameState, null);
-
-    await sendGameMessages(ws, gameState, data);
-
-    if (gameState.saveRequired) {
-      savelib.saveTribe(gameState);
-      gameState.saveRequired = false;
-
-      await refreshTribeGameData(gameState, data.tribe || 'bug');
-
-      if (gameState.commandsNeedRefresh) {
-        await refreshTribeCommandLists(gameState, data.tribe || 'bug');
-        delete gameState.commandsNeedRefresh;
-      }
-    }
-
-    if (gameState.archiveRequired) {
-      const tribeName = gameState.name;
-      const gameEnded = gameState.ended;
-      savelib.archiveTribe(gameState);
-      gameState.archiveRequired = false;
-      if (gameEnded) {
-        gameStateStore.resetEndedGameAfterArchive(tribeName, savelib);
-      }
-    }
-  } catch (error) {
-    console.error(`Error executing command ${commandName}:`, error);
-    ws.send(
-      JSON.stringify({
-        type: 'commandResponse',
-        command: commandName,
-        success: false,
-        message: 'Command execution failed: ' + error.message,
-        clientId: data.clientId,
-      })
+    replayPendingMessages(
+      ws,
+      data.playerName,
+      data.tribe || 'bug',
+      data.clientId
     );
-  }
+
+    try {
+      const interaction = createMockInteraction(data, ws, lockedState);
+
+      lockedState.messages = {};
+
+      await command.execute(interaction, lockedState, null);
+
+      await sendGameMessages(ws, lockedState, data);
+
+      if (lockedState.saveRequired) {
+        savelib.saveTribe(lockedState);
+        lockedState.saveRequired = false;
+
+        await refreshTribeGameData(lockedState, data.tribe || 'bug');
+
+        if (lockedState.commandsNeedRefresh) {
+          await refreshTribeCommandLists(lockedState, data.tribe || 'bug');
+          delete lockedState.commandsNeedRefresh;
+        }
+      }
+
+      if (lockedState.archiveRequired) {
+        const archiveTribeName = lockedState.name;
+        const gameEnded = lockedState.ended;
+        savelib.archiveTribe(lockedState);
+        lockedState.archiveRequired = false;
+        if (gameEnded) {
+          gameStateStore.resetEndedGameAfterArchive(archiveTribeName, savelib);
+        }
+      }
+    } catch (error) {
+      console.error(`Error executing command ${commandName}:`, error);
+      ws.send(
+        JSON.stringify({
+          type: 'commandResponse',
+          command: commandName,
+          success: false,
+          message: 'Command execution failed: ' + error.message,
+          clientId: data.clientId,
+        })
+      );
+    }
+  });
 }
 
 module.exports = {

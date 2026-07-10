@@ -62,6 +62,7 @@ function demand(gameState, actorName, demandText) {
   }
 
   violencelib.demand(actorName, demandText, gameState);
+  gameState.saveRequired = true;
 
   return;
 }
