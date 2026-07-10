@@ -39,6 +39,49 @@ test('simple watch cases', () => {
   expect(Object.keys(children['c1'].guardians).length).toBe(1);
 });
 
+test('issue #136: age 23 (11.5) is pruned from adult guarding lists', () => {
+  var population = {
+    EncinoMan: {
+      name: 'EncinoMan',
+      guarding: ['Ayo', 'Baibee'],
+    },
+  };
+  var children = {
+    Ayo: {
+      name: 'Ayo',
+      mother: 'Mom',
+      age: 23, // 11.5 years — no longer needs guarding
+      guardians: { EncinoMan: 2 },
+    },
+    Baibee: {
+      name: 'Baibee',
+      mother: 'Mom',
+      age: 4,
+    },
+  };
+
+  expect(lib.isChildGuardEligible(children.Ayo)).toBe(false);
+  expect(lib.isChildGuardEligible(children.Baibee)).toBe(true);
+
+  lib.normalizeGuardAssignments(population, children);
+
+  expect(population.EncinoMan.guarding).toEqual(['Baibee']);
+  expect(children.Ayo.guardians).toBeUndefined();
+  // Baibee's score is full attention, not diluted by Ayo.
+  expect(lib.findGuardValueForChild('Baibee', population, children)).toBe(1);
+  expect(lib.findGuardValueForChild('Ayo', population, children)).toBe(0);
+});
+
+test('issue #136: releaseChildFromAllGuards removes one child and deletes empty lists', () => {
+  var population = {
+    A: { name: 'A', guarding: ['OnlyKid'] },
+    B: { name: 'B', guarding: ['OnlyKid', 'Other'] },
+  };
+  lib.releaseChildFromAllGuards('OnlyKid', population);
+  expect(population.A.guarding).toBeUndefined();
+  expect(population.B.guarding).toEqual(['Other']);
+});
+
 test('finds least watched', () => {
   var population = {
     p1: {

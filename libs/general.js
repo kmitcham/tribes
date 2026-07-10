@@ -175,8 +175,20 @@ function inventoryMessage(person) {
   if (person.isSick && person.isSick > 0) {
     message += '\n\t\t is ***sick*** and unable to work';
   }
-  if (person.guarding) {
-    message += '\n\t\t is guarding ' + person.guarding;
+  if (person.guarding && person.guarding.length > 0) {
+    // Prefer eligible-only list when children are available (age < 23).
+    let guarded = person.guarding;
+    if (gameState && gameState.children) {
+      try {
+        const guardlib = require('./guardCode.js');
+        guarded = guardlib.getEligibleGuardTargets(person, gameState.children);
+      } catch (_err) {
+        guarded = person.guarding;
+      }
+    }
+    if (guarded && guarded.length > 0) {
+      message += '\n\t\t is guarding ' + guarded;
+    }
   }
   if (person.strength && person.strength != 'average') {
     message += '\n\t\t is ' + person.strength;

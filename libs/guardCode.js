@@ -2,6 +2,8 @@ const locations = require('./locations.json');
 const dice = require('./dice.js');
 const killlib = require('./kill.js');
 
+// Seasons: ages 0–22 need guarding; age 23+ (11.5+ years) does not.
+// Full adulthood / newAdult is age 24.
 function isChildGuardEligible(child) {
   return !!(
     child &&
@@ -10,6 +12,7 @@ function isChildGuardEligible(child) {
     child.age < 23
   );
 }
+module.exports.isChildGuardEligible = isChildGuardEligible;
 
 function getEligibleGuardTargets(person, children) {
   if (!person || !Array.isArray(person.guarding)) {
@@ -29,7 +32,12 @@ function getEligibleGuardTargets(person, children) {
   }
   return eligibleTargets;
 }
+module.exports.getEligibleGuardTargets = getEligibleGuardTargets;
 
+/**
+ * Drop children who no longer need guards (missing, unborn, age >= 23)
+ * from every adult's guarding list. Mutates population in place.
+ */
 module.exports.normalizeGuardAssignments = (population, children) => {
   for (var personName in population) {
     var person = population[personName];
@@ -41,6 +49,38 @@ module.exports.normalizeGuardAssignments = (population, children) => {
     if (eligibleTargets.length > 0) {
       person.guarding = eligibleTargets;
     } else {
+      delete person.guarding;
+    }
+  }
+
+  // Clear guardian maps on children who no longer need guarding.
+  if (children) {
+    for (var childName in children) {
+      var child = children[childName];
+      if (child && !isChildGuardEligible(child) && child.guardians) {
+        delete child.guardians;
+      }
+    }
+  }
+};
+
+/**
+ * Remove a child from every adult's guarding list and tidy empty arrays.
+ */
+module.exports.releaseChildFromAllGuards = (childName, population) => {
+  if (!childName || !population) {
+    return;
+  }
+  for (var personName in population) {
+    var person = population[personName];
+    if (!person || !Array.isArray(person.guarding)) {
+      continue;
+    }
+    var index = person.guarding.indexOf(childName);
+    if (index > -1) {
+      person.guarding.splice(index, 1);
+    }
+    if (person.guarding.length === 0) {
       delete person.guarding;
     }
   }

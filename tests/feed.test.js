@@ -634,6 +634,15 @@ describe('consumeFoodChildren Function Tests', () => {
           age: 2,
           food: 0,
         },
+        // Referenced on Mother3.guarding; must exist and stay guard-eligible.
+        OtherChild: {
+          name: 'OtherChild',
+          mother: 'Mother3',
+          father: 'Father1',
+          gender: 'female',
+          age: 5,
+          food: 4,
+        },
       },
     };
 
@@ -760,8 +769,8 @@ describe('consumeFoodChildren Function Tests', () => {
     // Should have called addChild to create twin
     //expect(gameState.childre).toHaveBeenCalledWith('Mother1', 'Father1', gameState);
 
-    // Mother's pregnancy status should be cleared
-    expect(Object.keys(gameState.children).length).toEqual(5);
+    // Base fixtures (4 living + DeadChild + OtherChild) plus one twin.
+    expect(Object.keys(gameState.children).length).toEqual(6);
 
     // Twin should be included in mother's guarding list
     expect(gameState.population['Mother1'].guarding.length).toEqual(2);
@@ -785,8 +794,37 @@ describe('consumeFoodChildren Function Tests', () => {
     expect(gameState.children['Child3'].newAdult).toBe(true);
 
     // Child3 should be removed from Mother3's guarding list
-    expect(gameState.population['Mother3'].guarding).not.toContain('Child3');
-    expect(gameState.population['Mother3'].guarding).toContain('OtherChild');
+    const mother3Guarding = gameState.population['Mother3'].guarding || [];
+    expect(mother3Guarding).not.toContain('Child3');
+    expect(mother3Guarding).toContain('OtherChild');
+  });
+
+  it('issue #136: drops guards when child ages to 23 (11.5 years)', () => {
+    const rollSpy = jest.spyOn(diceLib, 'roll').mockReturnValue(10);
+    gameState.children['AlmostGrown'] = {
+      name: 'AlmostGrown',
+      mother: 'Mother3',
+      father: 'Father1',
+      gender: 'female',
+      age: 22,
+      food: 4,
+    };
+    gameState.population['Mother3'].guarding = [
+      'Child3',
+      'AlmostGrown',
+      'OtherChild',
+    ];
+
+    const message = consumeFoodChildren(gameState);
+    rollSpy.mockRestore();
+
+    expect(gameState.children['AlmostGrown'].age).toBe(23);
+    const mother3Guarding = gameState.population['Mother3'].guarding || [];
+    expect(mother3Guarding).not.toContain('AlmostGrown');
+    // Child3 also ages to 24 in this same pass and is cleared as new adult.
+    expect(mother3Guarding).not.toContain('Child3');
+    expect(mother3Guarding).toContain('OtherChild');
+    expect(message).toMatch(/AlmostGrown is old enough not to need guarding/);
   });
 
   it('should clear babysitters when child becomes an adult', () => {

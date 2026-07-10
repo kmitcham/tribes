@@ -51,6 +51,11 @@ function refreshTribeGameData(gameState, tribeName, deps) {
     `Refreshing game data for ${tribeMembers.size} members of ${tribeName} tribe`
   );
 
+  // Normalize guards before packaging population so clients never see adults
+  // still "guarding" children age 23+ (issue #136). refreshChildGuardians also
+  // normalizes; run it first so both population and children snapshots match.
+  refreshChildGuardians(gameState.children, gameState.population);
+
   const populationData = {
     type: 'infoRequest',
     label: 'population',
@@ -60,9 +65,7 @@ function refreshTribeGameData(gameState, tribeName, deps) {
   const childrenData = {
     type: 'infoRequest',
     label: 'children',
-    content: removeFatherReferences(
-      refreshChildGuardians(gameState.children, gameState.population)
-    ),
+    content: removeFatherReferences(gameState.children),
   };
 
   const graveyardData = {

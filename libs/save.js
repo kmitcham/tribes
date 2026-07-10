@@ -132,6 +132,15 @@ function loadTribe(tribeName) {
       normalizeLoadedGameState(gameState);
       removeChildNameFields(gameState.children);
       populationLib.normalizePopulationResources(gameState);
+      try {
+        const guardlib = require('./guardCode.js');
+        guardlib.normalizeGuardAssignments(
+          gameState.population,
+          gameState.children
+        );
+      } catch (_err) {
+        // Guard cleanup is best-effort on load.
+      }
       return gameState;
     } catch (err) {
       // Fail closed: never init/overwrite when a main save exists but is unreadable.

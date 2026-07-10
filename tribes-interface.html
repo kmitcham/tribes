@@ -5157,7 +5157,18 @@
                 }
 
                 if (key === 'guarding') {
-                    return Array.isArray(value) && value.length > 0 ? `Guarding ${value.join(', ')}` : '';
+                    if (!Array.isArray(value) || value.length === 0) {
+                        return '';
+                    }
+                    // Hide children age 23+ (11.5 years) who no longer need guards (#136).
+                    const eligible = value.filter((childName) => {
+                        const child = (this.currentChildren || {})[childName];
+                        if (!child || typeof child.age !== 'number') {
+                            return true;
+                        }
+                        return child.age >= 0 && child.age < 23;
+                    });
+                    return eligible.length > 0 ? `Guarding ${eligible.join(', ')}` : '';
                 }
 
                 if (key === 'nursing') {
