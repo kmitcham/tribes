@@ -17,11 +17,10 @@ async function handleWebSocketMessage(ws, data, deps) {
     }
   }
 
+  // Tribe association is non-sensitive UI context. Player→socket binding for
+  // private delivery must only happen after successful auth (commands, romance,
+  // sessionAuth, register, referee manage/export/import).
   connectionStore.trackTribeConnection(ws, tribe);
-
-  if (data.playerName) {
-    connectionStore.trackPlayerConnection(ws, data.playerName);
-  }
 
   const handler = handlers[data.type];
   if (handler) {

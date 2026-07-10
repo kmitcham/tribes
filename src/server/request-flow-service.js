@@ -47,7 +47,13 @@ async function handleRegisterRequest(ws, data, gameState, deps) {
 }
 
 async function handleRomanceRequest(ws, data, gameState, deps) {
-  const { validateUser, processRomance, savelib, gameStateStore } = deps;
+  const {
+    validateUser,
+    processRomance,
+    savelib,
+    gameStateStore,
+    connectionStore,
+  } = deps;
   const tribeName = data.tribe || gameState?.name || 'bug';
 
   try {
@@ -60,6 +66,16 @@ async function handleRomanceRequest(ws, data, gameState, deps) {
         })
       );
       return;
+    }
+
+    if (data.playerName) {
+      ws.playerName = data.playerName;
+      if (
+        connectionStore &&
+        typeof connectionStore.trackPlayerConnection === 'function'
+      ) {
+        connectionStore.trackPlayerConnection(ws, data.playerName);
+      }
     }
 
     const runLocked =

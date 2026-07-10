@@ -18,13 +18,64 @@ function broadcastTribeUpdate(connectedClients, tribesRegistry, openState) {
   }
 }
 
-function handleManageTribe(ws, data, deps) {
-  const { referees, tribesRegistry, connectedClients, openState } = deps;
+/**
+ * Require real credentials/session via validateUser, then referee membership.
+ * Never authorize on a client-claimed name alone.
+ * On success, binds ws.playerName to the authenticated identity.
+ */
+async function requireAuthenticatedReferee(ws, data, deps) {
+  const { validateUser, referees, connectionStore } = deps;
 
-  if (!isReferee(data.playerName, referees)) {
+  if (typeof validateUser !== 'function') {
+    ws.send(
+      JSON.stringify({
+        type: 'error',
+        message: 'Authentication is required for referee actions.',
+      })
+    );
+    return false;
+  }
+
+  try {
+    if (!(await validateUser(data))) {
+      ws.send(
+        JSON.stringify({
+          type: 'error',
+          message: 'Authentication failed',
+        })
+      );
+      return false;
+    }
+  } catch (error) {
+    ws.send(
+      JSON.stringify({
+        type: 'error',
+        message: error.message || 'Authentication failed',
+      })
+    );
+    return false;
+  }
+
+  // validateUser rewrites data.playerName to the canonical stored name.
+  const authenticatedName = data.playerName;
+  if (!isReferee(authenticatedName, referees)) {
     ws.send(
       JSON.stringify({ type: 'error', message: 'You are not a referee.' })
     );
+    return false;
+  }
+
+  ws.playerName = authenticatedName;
+  if (connectionStore && typeof connectionStore.trackPlayerConnection === 'function') {
+    connectionStore.trackPlayerConnection(ws, authenticatedName);
+  }
+  return true;
+}
+
+async function handleManageTribe(ws, data, deps) {
+  const { tribesRegistry, connectedClients, openState } = deps;
+
+  if (!(await requireAuthenticatedReferee(ws, data, deps))) {
     return;
   }
 
@@ -57,12 +108,9 @@ function handleManageTribe(ws, data, deps) {
 }
 
 async function handleManageUsers(ws, data, deps) {
-  const { referees, usersDict, writeUsers, hashPasswordFn } = deps;
+  const { usersDict, writeUsers, hashPasswordFn } = deps;
 
-  if (!isReferee(data.playerName, referees)) {
-    ws.send(
-      JSON.stringify({ type: 'error', message: 'You are not a referee.' })
-    );
+  if (!(await requireAuthenticatedReferee(ws, data, deps))) {
     return;
   }
 
@@ -92,7 +140,12 @@ async function handleManageUsers(ws, data, deps) {
       );
       await handleManageUsers(
         ws,
-        { action: 'list', playerName: data.playerName },
+        {
+          action: 'list',
+          playerName: data.playerName,
+          password: data.password,
+          sessionToken: data.sessionToken,
+        },
         deps
       );
     }

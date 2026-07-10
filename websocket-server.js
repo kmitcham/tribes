@@ -554,6 +554,7 @@ async function handleCommandRequest(ws, data, gameState) {
     refreshTribeGameData,
     refreshTribeCommandLists,
     gameStateStore,
+    connectionStore,
   });
 }
 
@@ -628,6 +629,7 @@ async function handleRomanceRequest(ws, data, gameState) {
     processRomance,
     savelib,
     gameStateStore,
+    connectionStore,
   });
 }
 
@@ -747,21 +749,25 @@ function actuallyWriteToDisk(fileName, jsonData) {
   }
 }
 
-function handleManageTribe(ws, data) {
-  adminRefereeService.handleManageTribe(ws, data, {
+async function handleManageTribe(ws, data) {
+  await adminRefereeService.handleManageTribe(ws, data, {
+    validateUser,
     referees,
     tribesRegistry,
     connectedClients,
     openState: WebSocket.OPEN,
+    connectionStore,
   });
 }
 
 async function handleManageUsers(ws, data) {
   await adminRefereeService.handleManageUsers(ws, data, {
+    validateUser,
     referees,
     usersDict,
     writeUsers: () => actuallyWriteToDisk('./tribe-data/users.json', usersDict),
     hashPasswordFn: hashPassword,
+    connectionStore,
   });
 }
 

@@ -11,6 +11,7 @@ async function handleCommandRequest(ws, data, gameState, deps) {
     refreshTribeGameData,
     refreshTribeCommandLists,
     gameStateStore,
+    connectionStore,
   } = deps;
 
   const commandName = data.command;
@@ -72,6 +73,17 @@ async function handleCommandRequest(ws, data, gameState, deps) {
       })
     );
     return;
+  }
+
+  // Bind delivery identity only after auth (validateUser rewrote data.playerName).
+  if (data.playerName) {
+    ws.playerName = data.playerName;
+    if (
+      connectionStore &&
+      typeof connectionStore.trackPlayerConnection === 'function'
+    ) {
+      connectionStore.trackPlayerConnection(ws, data.playerName);
+    }
   }
 
   const runLocked = gameStateStore.runExclusive
