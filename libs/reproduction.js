@@ -504,13 +504,14 @@ function consent(actorName, arrayOfNames, gameState) {
 }
 module.exports.consent = consent;
 
-function declinePrep(interaction, gameState) {
-  var sourceName = interaction.member.displayName;
-  var rawList = interaction.options.getString('declinelist');
+function declinePrep(gameState, sourceName, rawList) {
+  var member = pop.memberByName(sourceName, gameState);
 
-  var player = pop.memberByName(sourceName, gameState);
   if (!rawList) {
-    const currentDeclineTargets = getRomanceTargetsByResponse(player, 'decline');
+    const currentDeclineTargets = getRomanceTargetsByResponse(
+      member,
+      'decline'
+    );
     if (currentDeclineTargets.length > 0) {
       text.addMessage(
         gameState,
@@ -518,16 +519,24 @@ function declinePrep(interaction, gameState) {
         'Current declinelist: ' + currentDeclineTargets.join(' ')
       );
       return 'Current declinelist: ' + currentDeclineTargets.join(' ');
-    } else {
-      text.addMessage(gameState, sourceName, 'No current declinelist');
-      return 'No current declinelist';
     }
+    text.addMessage(gameState, sourceName, 'No current declinelist');
+    return 'No current declinelist';
   }
+
   const listAsArray = parseRomanceInput(rawList);
+  if (listAsArray.length < 1) {
+    text.addMessage(
+      gameState,
+      sourceName,
+      'No values parsed from that declinelist: ' + rawList
+    );
+    return 'No values parsed from that declinelist: ' + rawList;
+  }
+
   console.log('applying decline list to mating for ' + sourceName);
-  const response = decline(sourceName, listAsArray, gameState);
-  console.log('decline response:' + response);
-  return;
+  decline(sourceName, listAsArray, gameState);
+  return getRomanceTargetsByResponse(member, 'decline');
 }
 module.exports.declinePrep = declinePrep;
 
