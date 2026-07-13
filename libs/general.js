@@ -15,6 +15,37 @@ function give(gameState, sourceName, targetName, amount, item) {
     );
     return;
   }
+
+  // Require all three arguments: item, amount, and player/target.
+  const missing = [];
+  if (item === null || item === undefined || String(item).trim() === '') {
+    missing.push('item');
+  }
+  if (
+    amount === null ||
+    amount === undefined ||
+    amount === '' ||
+    !Number.isFinite(Number(amount))
+  ) {
+    missing.push('amount');
+  }
+  if (
+    targetName === null ||
+    targetName === undefined ||
+    String(targetName).trim() === ''
+  ) {
+    missing.push('player');
+  }
+  if (missing.length > 0) {
+    text.addMessage(
+      gameState,
+      sourceName,
+      'give requires item, amount, and player. Missing: ' + missing.join(', ')
+    );
+    return;
+  }
+  amount = Number(amount);
+
   if (targetName == sourceName && !isRef) {
     response =
       'Giving things to yourself is useful self-care.  Nobody loves you like you love you.';
@@ -22,6 +53,7 @@ function give(gameState, sourceName, targetName, amount, item) {
     text.addMessage(gameState, sourceName, response);
     return;
   }
+  item = String(item);
   if (item.startsWith('g')) {
     item = 'grain';
   } else if (item.startsWith('f')) {
@@ -176,7 +208,7 @@ function inventoryMessage(person) {
     message += '\n\t\t is ***sick*** and unable to work';
   }
   if (person.guarding && person.guarding.length > 0) {
-    // Prefer eligible-only list when children are available (age < 23).
+    // Prefer list members still assignable (years -0.5..11.5 / seasons -1..23).
     let guarded = person.guarding;
     if (gameState && gameState.children) {
       try {

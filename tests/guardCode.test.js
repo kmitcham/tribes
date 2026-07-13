@@ -39,18 +39,23 @@ test('simple watch cases', () => {
   expect(Object.keys(children['c1'].guardians).length).toBe(1);
 });
 
-test('issue #136: age 23 (11.5) is pruned from adult guarding lists', () => {
+test('assignment ages include unborn (-0.5y) through 11.5y; adults pruned', () => {
   var population = {
     EncinoMan: {
       name: 'EncinoMan',
-      guarding: ['Ayo', 'Baibee'],
+      guarding: ['Unborn', 'Ayo', 'Baibee', 'AdultKid'],
     },
   };
   var children = {
+    Unborn: {
+      name: 'Unborn',
+      mother: 'Mom',
+      age: -1, // -0.5 years — assignable in work, born in food
+    },
     Ayo: {
       name: 'Ayo',
       mother: 'Mom',
-      age: 23, // 11.5 years — no longer needs guarding
+      age: 23, // 11.5 years — still assignable / threat-eligible until 24
       guardians: { EncinoMan: 2 },
     },
     Baibee: {
@@ -58,18 +63,30 @@ test('issue #136: age 23 (11.5) is pruned from adult guarding lists', () => {
       mother: 'Mom',
       age: 4,
     },
+    AdultKid: {
+      name: 'AdultKid',
+      mother: 'Mom',
+      age: 24, // adult — must be pruned
+    },
   };
 
-  expect(lib.isChildGuardEligible(children.Ayo)).toBe(false);
-  expect(lib.isChildGuardEligible(children.Baibee)).toBe(true);
+  expect(lib.isChildGuardAssignable(children.Unborn)).toBe(true);
+  expect(lib.isChildGuardAssignable(children.Ayo)).toBe(true);
+  expect(lib.isChildGuardAssignable(children.AdultKid)).toBe(false);
+
+  expect(lib.isChildGuardThreatEligible(children.Unborn)).toBe(false);
+  expect(lib.isChildGuardThreatEligible(children.Ayo)).toBe(true);
+  expect(lib.isChildGuardThreatEligible(children.AdultKid)).toBe(false);
 
   lib.normalizeGuardAssignments(population, children);
 
-  expect(population.EncinoMan.guarding).toEqual(['Baibee']);
-  expect(children.Ayo.guardians).toBeUndefined();
-  // Baibee's score is full attention, not diluted by Ayo.
-  expect(lib.findGuardValueForChild('Baibee', population, children)).toBe(1);
-  expect(lib.findGuardValueForChild('Ayo', population, children)).toBe(0);
+  // Unborn + Ayo + Baibee stay on the list; adult dropped.
+  expect(population.EncinoMan.guarding).toEqual(['Unborn', 'Ayo', 'Baibee']);
+  // Threat scores ignore unborn so they do not dilute Baibee/Ayo.
+  expect(lib.findGuardValueForChild('Baibee', population, children)).toBe(0.5);
+  expect(lib.findGuardValueForChild('Ayo', population, children)).toBe(0.5);
+  expect(lib.findGuardValueForChild('Unborn', population, children)).toBe(0);
+  expect(lib.findGuardValueForChild('AdultKid', population, children)).toBe(0);
 });
 
 test('issue #136: releaseChildFromAllGuards removes one child and deletes empty lists', () => {
@@ -267,26 +284,31 @@ test('multi-watch checks each guard', () => {
   }
 });
 
-test('normalizes guarding lists by dropping children who no longer need guarding', () => {
+test('normalizes guarding lists by dropping adults (age 24+)', () => {
   var population = {
     EncinoMan: {
       name: 'EncinoMan',
-      guarding: ['Ayo', 'Baibee'],
+      guarding: ['Ayo', 'Baibee', 'Grown'],
     },
   };
   var children = {
     Ayo: {
-      age: 23,
+      age: 23, // 11.5y — still needs protection until adulthood
       name: 'Ayo',
     },
     Baibee: {
       age: 22,
       name: 'Baibee',
     },
+    Grown: {
+      age: 24,
+      name: 'Grown',
+    },
   };
 
-  expect(lib.findGuardValueForChild('Ayo', population, children)).toBe(0);
-  expect(population.EncinoMan.guarding).toEqual(['Baibee']);
-  expect(lib.findGuardValueForChild('Baibee', population, children)).toBe(1);
-  expect(children.Baibee.guardians).toEqual({ EncinoMan: 1 });
+  expect(lib.findGuardValueForChild('Grown', population, children)).toBe(0);
+  expect(population.EncinoMan.guarding).toEqual(['Ayo', 'Baibee']);
+  expect(lib.findGuardValueForChild('Ayo', population, children)).toBe(0.5);
+  expect(lib.findGuardValueForChild('Baibee', population, children)).toBe(0.5);
+  expect(children.Baibee.guardians).toEqual({ EncinoMan: 2 });
 });

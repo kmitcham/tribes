@@ -2,6 +2,7 @@ const { SlashCommandBuilder } = require('../../libs/command-builders.js');
 const text = require('../../libs/textprocess.js');
 const pop = require('../../libs/population.js');
 const guardValidation = require('../../libs/guardValidation.js');
+const guardlib = require('../../libs/guardCode.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -68,6 +69,10 @@ function onCommand(interaction, gameState) {
     return;
   }
   const person = validation.person;
+  const previousGuarding = Array.isArray(person.guarding)
+    ? person.guarding.slice()
+    : [];
+
   let response = '';
   response += guardChild(actorName, gameState, c1Name) + '\n';
 
@@ -79,23 +84,67 @@ function onCommand(interaction, gameState) {
   if (response.includes('FAIL')) {
     text.addMessage(gameState, actorName, response);
   } else {
-    if (person.guarding && person.guarding.length > 0) {
-      text.addMessage(
-        gameState,
-        'tribe',
-        actorName + ' starts guarding ' + person.guarding
-      );
-    } else {
-      text.addMessage(
-        gameState,
-        actorName,
-        actorName + ' is not guarding any children'
-      );
-    }
+    const summary = summarizeGuardChange(
+      actorName,
+      previousGuarding,
+      person.guarding
+    );
+    text.addMessage(gameState, 'tribe', summary);
     console.log('Saving gameState');
     gameState.saveRequired = true;
   }
 }
+
+function formatChildList(names) {
+  if (!names || names.length === 0) {
+    return '';
+  }
+  if (names.length === 1) {
+    return names[0];
+  }
+  if (names.length === 2) {
+    return names[0] + ' and ' + names[1];
+  }
+  return names.slice(0, -1).join(', ') + ', and ' + names[names.length - 1];
+}
+
+/**
+ * Build a tribe message that reflects what actually changed when the UI
+ * resets guards via child1=none then re-adds the kept set.
+ */
+function summarizeGuardChange(actorName, previousGuarding, nextGuarding) {
+  const before = Array.isArray(previousGuarding) ? previousGuarding : [];
+  const after = Array.isArray(nextGuarding) ? nextGuarding : [];
+  const beforeSet = new Set(before);
+  const afterSet = new Set(after);
+
+  const stopped = before.filter((name) => !afterSet.has(name));
+  const started = after.filter((name) => !beforeSet.has(name));
+  const continued = after.filter((name) => beforeSet.has(name));
+
+  const parts = [];
+  if (stopped.length > 0) {
+    parts.push(actorName + ' stops guarding ' + formatChildList(stopped));
+  }
+  if (started.length > 0) {
+    parts.push(actorName + ' starts guarding ' + formatChildList(started));
+  }
+  if (continued.length > 0 && (stopped.length > 0 || started.length > 0)) {
+    parts.push(actorName + ' continues guarding ' + formatChildList(continued));
+  } else if (
+    continued.length > 0 &&
+    stopped.length === 0 &&
+    started.length === 0
+  ) {
+    parts.push(actorName + ' continues guarding ' + formatChildList(continued));
+  }
+
+  if (parts.length === 0) {
+    return actorName + ' is not guarding any children';
+  }
+  return parts.join('. ') + '.';
+}
+module.exports.summarizeGuardChange = summarizeGuardChange;
 
 function guardChild(actorName, gameState, cName) {
   var person = pop.memberByName(actorName, gameState);
@@ -125,17 +174,15 @@ function guardChild(actorName, gameState, cName) {
   const child = children[childName];
   if (!child) {
     return 'FAIL Could not find child: ' + childName;
-  } else if (
-    typeof child.age !== 'number' ||
-    child.age < 0 ||
-    child.age >= 23
-  ) {
+  } else if (!guardlib.isChildGuardAssignable(child)) {
+    // Work-round assignment: years -0.5..11.5 (seasons -1..23). Food ages +1
+    // before reproduction threats.
     return (
       'FAIL ' +
       childName +
       ' is age ' +
       Number(child.age || 0) / 2 +
-      ' and does not need guarding'
+      ' and cannot be guarded this work round (only ages -0.5 to 11.5)'
     );
   } else if (person.guarding && person.guarding.indexOf(childName) != -1) {
     console.log(person.guarding);

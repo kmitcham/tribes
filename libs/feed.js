@@ -373,9 +373,11 @@ function consumeFoodChildren(gameState) {
         }
       }
     }
-    // Age 23 (11.5 years): no longer needs guarding. Prune adults' lists so
-    // remaining siblings aren't stuck with diluted guard scores (issue #136).
-    if (child.age === 23) {
+    // Adulthood at 24 seasons (12 years). Guard lists keep ages -1..23
+    // (work assignment -0.5..11.5y); release when they become adults.
+    if (child.age >= 24 && !child.newAdult) {
+      child.newAdult = true;
+      response += '>> ' + childName + ' has reached adulthood!\n';
       const wasGuarded = Object.keys(population).some((name) => {
         const player = pop.memberByName(name, gameState);
         return (
@@ -385,34 +387,9 @@ function consumeFoodChildren(gameState) {
         );
       });
       guardlib.releaseChildFromAllGuards(childName, population);
-      delete child.guardians;
       if (wasGuarded) {
         response +=
-          childName +
-          ' is old enough not to need guarding (age 11.5).\n';
-      }
-    }
-
-    if (child.age >= 24 && !child.newAdult) {
-      child.newAdult = true;
-      response += '>> ' + childName + ' has reached adulthood!\n';
-      // Safety: clear any leftover guards (should already be gone at 23).
-      for (var name in population) {
-        const player = pop.memberByName(name, gameState);
-        if (
-          player &&
-          player.guarding &&
-          player.guarding.includes(childName)
-        ) {
-          const index = player.guarding.indexOf(childName);
-          if (index > -1) {
-            player.guarding.splice(index, 1);
-            response += name + ' stops watching the new adult.\n';
-          }
-          if (player.guarding.length === 0) {
-            delete player.guarding;
-          }
-        }
+          'Adults stop watching ' + childName + ' (no longer a child).\n';
       }
       for (var sitterName in children) {
         const sitter = children[sitterName];
@@ -424,7 +401,7 @@ function consumeFoodChildren(gameState) {
       delete child.guardians;
     }
   }
-  // Belt-and-suspenders: drop any age>=23 kids still listed after aging.
+  // Drop any adults still listed after aging.
   guardlib.normalizeGuardAssignments(population, children);
   // clean up the dead
   const perishedCount = perishedChildren.length;

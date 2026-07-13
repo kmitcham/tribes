@@ -484,5 +484,49 @@ describe('Work Module Tests', () => {
       );
       expect(mockGameState.saveRequired).toBe(true);
     });
+
+    test('guard summary describes stop/start/continue after unified reset', async () => {
+      mockGameState.children = {
+        April: { age: 2 },
+        Bobo: { age: 3 },
+      };
+      mockPlayer.guarding = ['April', 'Bobo'];
+      // Unified UI: clear with none, then re-add only April.
+      const interaction = createInteraction('testPlayer', {
+        child1: 'none',
+        child2: 'April',
+      });
+
+      await guardCommand.execute(interaction, mockGameState);
+
+      expect(mockPlayer.guarding).toEqual(['April']);
+      expect(text.addMessage).toHaveBeenCalledWith(
+        mockGameState,
+        'tribe',
+        'testPlayer stops guarding Bobo. testPlayer continues guarding April.'
+      );
+    });
+
+    test('summarizeGuardChange formats start-only and stop-only', () => {
+      const {
+        summarizeGuardChange,
+      } = require('../commands/work/guard.js');
+
+      expect(summarizeGuardChange('A', ['April', 'Bobo'], ['April'])).toBe(
+        'A stops guarding Bobo. A continues guarding April.'
+      );
+      expect(summarizeGuardChange('A', ['April'], ['April', 'Bobo'])).toBe(
+        'A starts guarding Bobo. A continues guarding April.'
+      );
+      expect(summarizeGuardChange('A', ['April', 'Bobo'], [])).toBe(
+        'A stops guarding April and Bobo.'
+      );
+      expect(summarizeGuardChange('A', [], ['April'])).toBe(
+        'A starts guarding April.'
+      );
+      expect(summarizeGuardChange('A', [], [])).toBe(
+        'A is not guarding any children'
+      );
+    });
   });
 });

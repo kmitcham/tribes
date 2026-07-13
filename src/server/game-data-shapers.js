@@ -48,13 +48,15 @@ function removeFatherReferences(children) {
 function refreshChildGuardians(children, population) {
   guardlib.normalizeGuardAssignments(population || {}, children || {});
   for (const [childName, child] of Object.entries(children || {})) {
+    // Threat scores only for born, non-adult children (0..23 seasons).
     if (
       !child ||
-      typeof child.age !== 'number' ||
-      child.age < 0 ||
-      child.age >= 23
+      !guardlib.isChildGuardThreatEligible ||
+      !guardlib.isChildGuardThreatEligible(child)
     ) {
-      delete child.guardians;
+      if (child) {
+        delete child.guardians;
+      }
       continue;
     }
 

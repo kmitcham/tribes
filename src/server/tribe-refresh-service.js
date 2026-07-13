@@ -52,8 +52,8 @@ function refreshTribeGameData(gameState, tribeName, deps) {
   );
 
   // Normalize guards before packaging population so clients never see adults
-  // still "guarding" children age 23+ (issue #136). refreshChildGuardians also
-  // normalizes; run it first so both population and children snapshots match.
+  // still "guarding" age-24+ adults. refreshChildGuardians also normalizes;
+  // run it first so both population and children snapshots match.
   refreshChildGuardians(gameState.children, gameState.population);
 
   const populationData = {

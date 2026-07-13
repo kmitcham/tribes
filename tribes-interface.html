@@ -3620,6 +3620,8 @@
                     return;
                 }
 
+                // Food defaults to 4; tools default to 1. Applied when item changes
+                // or amount is empty (including preserved blank values).
                 const amountDefaultsByItem = {
                     basket: '1',
                     spearhead: '1',
@@ -3640,8 +3642,13 @@
                     }
                 };
 
-                // Keep preserved explicit amount values; otherwise prime from the selected item.
-                if (!Object.prototype.hasOwnProperty.call(preservedValues, 'amount')) {
+                const preservedAmount = Object.prototype.hasOwnProperty.call(
+                    preservedValues,
+                    'amount'
+                )
+                    ? String(preservedValues.amount || '').trim()
+                    : '';
+                if (preservedAmount === '') {
                     applyAmountDefault(true);
                 }
 
@@ -4051,9 +4058,13 @@
                         // Don't append input separately since it's in the container
                         input = null;
                     } else {
-                        // Regular text input
-                        input = document.createElement(option.type === 'number' ? 'input' : 'input');
-                        input.type = option.type || 'text';
+                        // Regular text/number input (command builder uses 'integer')
+                        input = document.createElement('input');
+                        if (option.type === 'number' || option.type === 'integer') {
+                            input.type = 'number';
+                        } else {
+                            input.type = option.type || 'text';
+                        }
                         if (option.placeholder) {
                             input.placeholder = option.placeholder;
                         }
@@ -4229,10 +4240,12 @@
                     return Math.round(guardValue * 100) / 100;
                 };
 
+                // Work-round assignment: years -0.5..11.5 (seasons -1..23).
+                // Food ages +1 before reproduction threats.
                 Object.keys(this.currentChildren).forEach(childName => {
                     const child = this.currentChildren[childName];
-                    const age = child.age || 0;
-                    if (age >= 0 && age < 23) {
+                    const age = typeof child.age === 'number' ? child.age : 0;
+                    if (age >= -1 && age <= 23) {
                         eligibleChildren.push({
                             childName: childName,
                             age: age,
@@ -5160,13 +5173,13 @@
                     if (!Array.isArray(value) || value.length === 0) {
                         return '';
                     }
-                    // Hide children age 23+ (11.5 years) who no longer need guards (#136).
+                    // Hide adults (age >= 24). Keep unborn (-1) through 11.5y (23).
                     const eligible = value.filter((childName) => {
                         const child = (this.currentChildren || {})[childName];
                         if (!child || typeof child.age !== 'number') {
                             return true;
                         }
-                        return child.age >= 0 && child.age < 23;
+                        return child.age >= -1 && child.age <= 23;
                     });
                     return eligible.length > 0 ? `Guarding ${eligible.join(', ')}` : '';
                 }
@@ -5474,7 +5487,7 @@
                 const tbody = document.createElement('tbody');
                 const guardableChildNames = new Set(
                     Object.entries(this.currentChildren || {})
-                        .filter(([, child]) => child && typeof child.age === 'number' && child.age >= 0 && child.age < 23)
+                        .filter(([, child]) => child && typeof child.age === 'number' && child.age >= -1 && child.age <= 23)
                         .map(([childName]) => childName)
                 );
                 

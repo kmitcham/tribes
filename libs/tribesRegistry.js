@@ -30,11 +30,21 @@ function initRegistry() {
 
   // Add default options if empty
   if (Object.keys(registry).length === 0) {
-    ['bear', 'flounder', 'bug', 'vashon', 'mib', 'sloth', 'wolf'].forEach(
-      (t) => {
-        registry[t] = { name: t, hidden: false };
-      }
-    );
+    [
+      'bear',
+      'flounder',
+      'bug',
+      'vashon',
+      'mib',
+      'sloth',
+      'wolf',
+      'bat',
+      'loon',
+      'yak',
+      'zebra',
+    ].forEach((t) => {
+      registry[t] = { name: t, hidden: false };
+    });
   }
 
   saveRegistry(registry);

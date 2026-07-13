@@ -2,15 +2,59 @@ const locations = require('./locations.json');
 const dice = require('./dice.js');
 const killlib = require('./kill.js');
 
-// Seasons: ages 0–22 need guarding; age 23+ (11.5+ years) does not.
-// Full adulthood / newAdult is age 24.
-function isChildGuardEligible(child) {
-  return !!(
-    child &&
-    typeof child.age === 'number' &&
-    child.age >= 0 &&
-    child.age < 23
+// Age is in seasons; years shown as age/2.
+// Adulthood / newAdult at age 24 (12 years).
+//
+// Guard/ignore is chosen in the *work* round. Children age +1 in *food*,
+// then predators threaten in *reproduction*. So:
+//   - Assignable at work: years -0.5..11.5 → seasons -1..23 (unborn through 11.5)
+//   - Threat / scores after aging: born children still under 24 seasons (0..23)
+//   - Drop from guard lists at adulthood (age >= 24)
+
+const GUARD_ASSIGN_MIN_AGE = -1; // -0.5 years (unborn, ages to 0 in food)
+const GUARD_ASSIGN_MAX_AGE = 23; // 11.5 years inclusive
+const GUARD_THREAT_MIN_AGE = 0;
+const GUARD_THREAT_MAX_EXCLUSIVE = 24; // age 24 = adult
+
+function hasNumericAge(child) {
+  return !!(child && typeof child.age === 'number' && Number.isFinite(child.age));
+}
+
+/** Work-round selection: years -0.5 to 11.5 (seasons -1..23). */
+function isChildGuardAssignable(child) {
+  return (
+    hasNumericAge(child) &&
+    child.age >= GUARD_ASSIGN_MIN_AGE &&
+    child.age <= GUARD_ASSIGN_MAX_AGE
   );
+}
+module.exports.isChildGuardAssignable = isChildGuardAssignable;
+
+/**
+ * Reproduction-time protection (after food aging): born, not yet adult.
+ * Seasons 0..23 (years 0..11.5).
+ */
+function isChildGuardThreatEligible(child) {
+  return (
+    hasNumericAge(child) &&
+    child.age >= GUARD_THREAT_MIN_AGE &&
+    child.age < GUARD_THREAT_MAX_EXCLUSIVE
+  );
+}
+module.exports.isChildGuardThreatEligible = isChildGuardThreatEligible;
+
+/**
+ * May remain on an adult's guarding list (not yet adult, includes unborn).
+ * Seasons -1..23.
+ */
+function isChildGuardListMember(child) {
+  return isChildGuardAssignable(child);
+}
+module.exports.isChildGuardListMember = isChildGuardListMember;
+
+/** @deprecated Use isChildGuardThreatEligible or isChildGuardAssignable */
+function isChildGuardEligible(child) {
+  return isChildGuardThreatEligible(child);
 }
 module.exports.isChildGuardEligible = isChildGuardEligible;
 
@@ -23,8 +67,9 @@ function getEligibleGuardTargets(person, children) {
   for (var i = 0; i < person.guarding.length; i++) {
     var childName = person.guarding[i];
     var child = children ? children[childName] : null;
+    // Keep anyone still assignable/list-eligible (includes unborn through 11.5y).
     if (
-      isChildGuardEligible(child) &&
+      isChildGuardListMember(child) &&
       eligibleTargets.indexOf(childName) === -1
     ) {
       eligibleTargets.push(childName);
@@ -35,8 +80,7 @@ function getEligibleGuardTargets(person, children) {
 module.exports.getEligibleGuardTargets = getEligibleGuardTargets;
 
 /**
- * Drop children who no longer need guards (missing, unborn, age >= 23)
- * from every adult's guarding list. Mutates population in place.
+ * Drop adults/missing kids from every adult's guarding list. Mutates population.
  */
 module.exports.normalizeGuardAssignments = (population, children) => {
   for (var personName in population) {
@@ -53,11 +97,10 @@ module.exports.normalizeGuardAssignments = (population, children) => {
     }
   }
 
-  // Clear guardian maps on children who no longer need guarding.
   if (children) {
     for (var childName in children) {
       var child = children[childName];
-      if (child && !isChildGuardEligible(child) && child.guardians) {
+      if (child && !isChildGuardThreatEligible(child) && child.guardians) {
         delete child.guardians;
       }
     }
@@ -92,7 +135,7 @@ module.exports.findGuardValueForChild = (childName, population, children) => {
 
   module.exports.normalizeGuardAssignments(population, children);
 
-  if (!child || !isChildGuardEligible(child)) {
+  if (!child || !isChildGuardThreatEligible(child)) {
     if (child) {
       child.guardians = {};
     }
@@ -103,13 +146,18 @@ module.exports.findGuardValueForChild = (childName, population, children) => {
   for (var personName in population) {
     var person = population[personName];
     var guardTargets = getEligibleGuardTargets(person, children);
-    if (guardTargets.includes(childName)) {
-      var watchValue = 1 / guardTargets.length;
+    // Only count toward score if this child is currently threat-eligible;
+    // unborn on a list don't dilute scores for born kids until after birth.
+    var scoreTargets = guardTargets.filter(function (name) {
+      return isChildGuardThreatEligible(children[name]);
+    });
+    if (scoreTargets.includes(childName) && scoreTargets.length > 0) {
+      var watchValue = 1 / scoreTargets.length;
       guardValue = guardValue + watchValue;
-      child.guardians[person.name] = guardTargets.length;
+      child.guardians[person.name] = scoreTargets.length;
     }
   }
-  // check for babysitters
+  // Near-adults / new adults can babysit (age >= 23 seasons).
   for (var name in children) {
     var babysitter = children[name];
     if (babysitter.age >= 23 && babysitter.babysitting == childName) {
@@ -117,13 +165,10 @@ module.exports.findGuardValueForChild = (childName, population, children) => {
       child.guardians[name] = 1;
     }
   }
-  //console.log( logMessage+'\t\t TOTAL: '+guardValue)
-  // round to two decimals
   return Math.round(100 * guardValue) / 100;
 };
 
 function findLeastGuarded(children, population) {
-  // guard score = 7 if unguarded; otherwise is the length of the guarders 'guarding' array
   var guardChildSort = [];
   var leastGuarded = [];
   if (Object.keys(children).length == 0) {
@@ -134,11 +179,8 @@ function findLeastGuarded(children, population) {
   }
   for (var childName in children) {
     var child = children[childName];
-    if (child.age < 0) {
-      // unborn children should be skipped; 0 is born
-      continue;
-    }
-    if (child.age >= 23) {
+    // Predators only hit born, non-adult children (after food aging).
+    if (!isChildGuardThreatEligible(child)) {
       continue;
     }
     var guardValue = module.exports.findGuardValueForChild(
@@ -158,7 +200,6 @@ function findLeastGuarded(children, population) {
     if (guardChildSort[i].score == lowGuardValue) {
       leastGuarded.push(guardChildSort[i]);
     } else {
-      // we are out of the tie, so ignore the rest
       break;
     }
   }
@@ -166,7 +207,6 @@ function findLeastGuarded(children, population) {
   if (leastGuarded.length == 1) {
     leastGuardedName = leastGuarded[0].name;
   } else {
-    // sort the least guarded by age
     leastGuarded.sort((a, b) => parseFloat(a.age) - parseFloat(b.age));
     var startAge = leastGuarded[0].age;
     var maxIndex = 0;
@@ -182,13 +222,7 @@ function findLeastGuarded(children, population) {
 module.exports.findLeastGuarded = findLeastGuarded;
 
 module.exports.unguardChild = (childName, population) => {
-  for (var personName in population) {
-    var person = population[personName];
-    if (person.guarding && person.guarding.indexOf(childName) != -1) {
-      var childIndex = person.guarding.indexOf(childName);
-      person.guarding.splice(childIndex, 1);
-    }
-  }
+  module.exports.releaseChildFromAllGuards(childName, population);
 };
 
 module.exports.hyenaAttack = (children, gameState) => {
@@ -196,21 +230,18 @@ module.exports.hyenaAttack = (children, gameState) => {
   var currentLocation = gameState['currentLocationName'];
   var predator = locations[currentLocation]['predator'] || 'vulture';
   if (!children || Object.keys(children).length == 0) {
-    // this needs to check if children are born
     return 'No children, no predator problem ';
   }
-  // get the least guarded message
   var leastGuardedMessageArray = findLeastGuarded(children, population).split(
     ' '
   );
-  //  this is stupid and hacky; take the name from the start of the message, and the value from the last bit
   var leastGuardedName = leastGuardedMessageArray[0];
   if (leastGuardedName === 'No') {
     return 'All the children are safely unborn, so predators are not a worry.';
   }
   const predatorEmoji = predatorIcon(predator);
   var response =
-    predatorEmoji + ' A ' + predator + ' attacks ' + leastGuardedName; // exclamation point breaks simple string splitting elsewhere
+    predatorEmoji + ' A ' + predator + ' attacks ' + leastGuardedName;
   var child = children[leastGuardedName];
   if (!child) {
     console.log(
@@ -222,7 +253,6 @@ module.exports.hyenaAttack = (children, gameState) => {
   for (var guardName in guardians) {
     var rollValue = dice.roll(1);
     var watchValue = guardians[guardName];
-    //console.log(guardName+' rollValue '+rollValue+ ' watchValue '+watchValue)
     if (rollValue > watchValue) {
       response +=
         '\n\tFortunately, ' +
@@ -269,3 +299,7 @@ function predatorIcon(predator) {
   }
   return '🐾';
 }
+
+module.exports.GUARD_ASSIGN_MIN_AGE = GUARD_ASSIGN_MIN_AGE;
+module.exports.GUARD_ASSIGN_MAX_AGE = GUARD_ASSIGN_MAX_AGE;
+module.exports.GUARD_THREAT_MAX_EXCLUSIVE = GUARD_THREAT_MAX_EXCLUSIVE;

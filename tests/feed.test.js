@@ -799,7 +799,7 @@ describe('consumeFoodChildren Function Tests', () => {
     expect(mother3Guarding).toContain('OtherChild');
   });
 
-  it('issue #136: drops guards when child ages to 23 (11.5 years)', () => {
+  it('keeps guards on age-23 kids; drops only at adulthood (24)', () => {
     const rollSpy = jest.spyOn(diceLib, 'roll').mockReturnValue(10);
     gameState.children['AlmostGrown'] = {
       name: 'AlmostGrown',
@@ -818,13 +818,14 @@ describe('consumeFoodChildren Function Tests', () => {
     const message = consumeFoodChildren(gameState);
     rollSpy.mockRestore();
 
+    // AlmostGrown 22→23: still assignable/threat-eligible (11.5y).
     expect(gameState.children['AlmostGrown'].age).toBe(23);
     const mother3Guarding = gameState.population['Mother3'].guarding || [];
-    expect(mother3Guarding).not.toContain('AlmostGrown');
-    // Child3 also ages to 24 in this same pass and is cleared as new adult.
+    expect(mother3Guarding).toContain('AlmostGrown');
+    // Child3 23→24: new adult, cleared from guards.
     expect(mother3Guarding).not.toContain('Child3');
     expect(mother3Guarding).toContain('OtherChild');
-    expect(message).toMatch(/AlmostGrown is old enough not to need guarding/);
+    expect(message).toMatch(/reached adulthood/);
   });
 
   it('should clear babysitters when child becomes an adult', () => {

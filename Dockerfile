@@ -18,7 +18,7 @@ COPY . .
 RUN ls -la /app/ && echo "Checking for websocket-server.js:" && ls -la /app/websocket-server.js
 
 # Create necessary directories for data persistence  
-RUN mkdir -p /app/archive /app/logs /app/tribe-data/bug /app/tribe-data/bear /app/tribe-data/sloth /app/tribe-data/wolf /app/tribe-data/vashon /app/tribe-data/mib /app/tribe-data/flounder
+RUN mkdir -p /app/archive /app/logs /app/tribe-data/bug /app/tribe-data/bear /app/tribe-data/sloth /app/tribe-data/wolf /app/tribe-data/vashon /app/tribe-data/mib /app/tribe-data/flounder /app/tribe-data/bat /app/tribe-data/loon /app/tribe-data/yak /app/tribe-data/zebra
 
 # Expose the port the app runs on
 EXPOSE 8000

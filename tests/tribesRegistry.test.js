@@ -17,7 +17,7 @@ describe('tribesRegistry.js', () => {
     expect(fs.mkdirSync).toHaveBeenCalledWith('./tribe-data', {
       recursive: true,
     });
-    // Should create defualts: bear, flounder, bug, vashon, mib, sloth, wolf
+    // Should create defaults including newer animal tribes
     expect(Object.keys(tribes)).toEqual([
       'bear',
       'flounder',
@@ -26,6 +26,10 @@ describe('tribesRegistry.js', () => {
       'mib',
       'sloth',
       'wolf',
+      'bat',
+      'loon',
+      'yak',
+      'zebra',
     ]);
     expect(fs.writeFileSync).toHaveBeenCalled();
   });

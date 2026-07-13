@@ -58,6 +58,22 @@ describe('give function', () => {
     expect(expectedMessage).toContain('self-care');
   });
 
+  test('rejects give when item, amount, or player is missing', () => {
+    general.give(gameState, 'player1', 'player2', 1, null);
+    expect(gameState.messages.player1).toMatch(/Missing: item/);
+    expect(gameState.population.player1.food).toBe(10);
+
+    gameState.messages = {};
+    general.give(gameState, 'player1', 'player2', null, 'food');
+    expect(gameState.messages.player1).toMatch(/Missing: amount/);
+    expect(gameState.population.player1.food).toBe(10);
+
+    gameState.messages = {};
+    general.give(gameState, 'player1', null, 1, 'food');
+    expect(gameState.messages.player1).toMatch(/Missing: player/);
+    expect(gameState.population.player1.food).toBe(10);
+  });
+
   test('should allow self-giving for referee in tribe', () => {
     gameState.population.Kevin = {
       name: 'Kevin',
