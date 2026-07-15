@@ -65,4 +65,26 @@ describe('attack command', () => {
     expect(gameState.population.alice.attack_target).toBe('bob');
     expect(gameState.population.alice.strategy).toBe('attack');
   });
+
+  test('rejects non-member attacker', () => {
+    const gameState = {
+      population: {
+        bob: {
+          name: 'bob',
+          faction: 'against',
+          strategy: null,
+        },
+      },
+      messages: {},
+      violence: 'test demand',
+      saveRequired: false,
+    };
+
+    const interaction = createInteraction('outsider', 'bob');
+    attackCommand.execute(interaction, gameState);
+
+    expect(gameState.messages.outsider).toBe('Not in the tribe');
+    expect(gameState.population.bob.strategy).toBeNull();
+    expect(gameState.saveRequired).toBe(false);
+  });
 });

@@ -1268,7 +1268,7 @@ function pass(gameState, actorName) {
 module.exports.pass = pass;
 
 function startReproductionChecks(gameState, actorName) {
-  var player = pop.memberByName(actorName, gameState);
+  const access = require('./access.js');
   if (gameState.demand || gameState.violence) {
     const activeDemand = gameState.demand || gameState.violence;
     text.addMessage(
@@ -1279,7 +1279,7 @@ function startReproductionChecks(gameState, actorName) {
     );
     return;
   }
-  if (!player.chief) {
+  if (!access.canActAsChief(actorName, gameState)) {
     text.addMessage(
       gameState,
       actorName,

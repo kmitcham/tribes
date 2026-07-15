@@ -1,6 +1,7 @@
 const { SlashCommandBuilder } = require('../../libs/command-builders.js');
 const pop = require('../../libs/population.js');
 const text = require('../../libs/textprocess.js');
+const access = require('../../libs/access.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -25,8 +26,7 @@ module.exports = {
 };
 
 function skip(gameState, actorName, targetName) {
-  var actor = pop.memberByName(actorName, gameState);
-  if (!actor || !actor.chief) {
+  if (!access.canActAsChief(actorName, gameState)) {
     text.addMessage(gameState, actorName, 'skip requires chief privileges');
     return;
   }

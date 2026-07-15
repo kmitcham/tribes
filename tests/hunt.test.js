@@ -25,7 +25,7 @@ test('no profession', () => {
   var playername = 'Hunter1';
   var player = gameState['population'][playername];
   output = lib.hunt(playername, player, 10, gameState);
-  expect(output).toContain('10]-skill');
+  expect(output).toContain('(-3 skill)');
   expect(gameState['gameTrack']['marsh']).toBe(2);
   expect(gameState['population'][playername]['food']).toBe(0);
 });
@@ -54,7 +54,7 @@ test('non-hunting profession', () => {
   var playername = 'Hunter1';
   var player = gameState['population'][playername];
   output = lib.hunt(playername, player, 10, gameState);
-  expect(output).toContain('10]-skill');
+  expect(output).toContain('(-3 skill)');
   expect(gameState['gameTrack']['marsh']).toBe(2);
   expect(gameState['population'][playername]['food']).toBe(0);
 });
@@ -178,7 +178,8 @@ test('spear fail', () => {
   var player = gameState['population'][playername];
   output = lib.hunt(playername, player, 8, gameState);
   expect(output).toMatch('No game');
-  expect(output).not.toMatch('+spearhead');
+  // Bonus only applies on roll >= 9; break message may still mention spearhead.
+  expect(output).not.toMatch('(+3 spearhead)');
   expect(gameState['gameTrack']['marsh']).toBe(2);
   expect(gameState['population'][playername]['food']).toBe(0);
 });
@@ -208,7 +209,7 @@ test('spear conversion', () => {
   var player = gameState['population'][playername];
   output = lib.hunt(playername, player, '9', gameState);
   expect(output).toMatch('small fish');
-  expect(output).toMatch('+spearhead');
+  expect(output).toMatch('(+3 spearhead)');
   expect(gameState['population'][playername]['food']).toBe(12);
   expect(gameState['gameTrack']['marsh']).toBe(2);
 });

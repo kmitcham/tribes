@@ -6,14 +6,17 @@ const text = require('./textprocess.js');
 
 // return 0 on success, error messages otherwise
 function migrate(sourceName, destination, force, gameState) {
+  const access = require('./access.js');
   const children = gameState.children;
   const population = gameState.population;
   const member = populationLib.memberByName(sourceName, gameState);
-  if (!member) {
+  // Non-members may only act if they are referees (force path).
+  if (!member && !access.isReferee(sourceName)) {
     text.addMessage(gameState, sourceName, 'Are you even in a tribe?');
     return 'Not a member';
   }
-  if (!member.chief && force) {
+  // Referees may force-migrate without membership; members need chief for force.
+  if (force && !access.canActAsChief(sourceName, gameState)) {
     text.addMessage(
       gameState,
       sourceName,

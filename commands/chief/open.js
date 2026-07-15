@@ -1,6 +1,6 @@
 const { SlashCommandBuilder } = require('../../libs/command-builders.js');
-const pop = require('../../libs/population.js');
 const text = require('../../libs/textprocess.js');
+const access = require('../../libs/access.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -13,8 +13,7 @@ module.exports = {
 };
 
 function close(actorName, gameState) {
-  var player = pop.memberByName(actorName, gameState);
-  if (!player || !player.chief) {
+  if (!access.canActAsChief(actorName, gameState)) {
     text.addMessage(gameState, actorName, 'open requires chief privileges');
     return;
   }

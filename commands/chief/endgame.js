@@ -1,7 +1,7 @@
 const { SlashCommandBuilder } = require('../../libs/command-builders.js');
 const endLib = require('../../libs/endgame.js');
-const pop = require('../../libs/population.js');
 const text = require('../../libs/textprocess.js');
+const access = require('../../libs/access.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -11,8 +11,7 @@ module.exports = {
     ),
   async execute(interaction, gameState, bot) {
     const actorName = interaction.member.displayName;
-    const player = pop.memberByName(actorName, gameState);
-    if (!player || !player.chief) {
+    if (!access.canActAsChief(actorName, gameState)) {
       text.addMessage(
         gameState,
         actorName,

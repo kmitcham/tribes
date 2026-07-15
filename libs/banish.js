@@ -74,14 +74,10 @@ function banish(gameState, targetName, reason) {
 module.exports.banish = banish;
 
 function banishAdmin(gameState, actorName, targetName, reason) {
-  const actingMember = populationLib.memberByName(actorName, gameState);
+  const access = require('./access.js');
   const targetMember = populationLib.memberByName(targetName, gameState);
 
-  if (!actingMember) {
-    text.addMessage(gameState, actorName, 'Are you even in a tribe?');
-    return;
-  }
-  if (!actingMember.chief) {
+  if (!access.canActAsChief(actorName, gameState)) {
     text.addMessage(gameState, actorName, 'banish requires chief privileges');
     return;
   }

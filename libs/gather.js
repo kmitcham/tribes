@@ -10,22 +10,22 @@ module.exports.gather = (playername, player, rollValue, gameState) => {
   let modifier = 0;
   let guardCount;
   if (gameState.seasonCounter % 2 == 0) {
-    message += '-season ';
+    message += ' (-3 season)';
     modifier -= 3;
   }
 
   if (!('profession' in player) || !player.profession.startsWith('g')) {
-    message += '(-3 skill) ';
+    message += ' (-3 skill)';
     modifier -= 3;
   }
   if (player.guarding) {
     guardCount = player.guarding.length;
     if (guardCount == 3) {
-      message += '(-2 kids) ';
+      message += ' (-2 kids)';
       modifier -= 2;
     }
     if (guardCount == 4) {
-      message += '(-4 kids) ';
+      message += ' (-4 kids)';
       modifier -= 4;
     }
     if (guardCount > 4) {
@@ -34,10 +34,10 @@ module.exports.gather = (playername, player, rollValue, gameState) => {
   }
   if (player.strength) {
     if (player.strength.toLowerCase() == 'strong'.valueOf()) {
-      message += '(strong)';
+      message += ' (+1 strong)';
       modifier += 1;
     } else if (player.strength.toLowerCase() == 'weak'.valueOf()) {
-      message += '(weak)';
+      message += ' (-1 weak)';
       modifier -= 1;
     }
   }
@@ -147,7 +147,11 @@ function gatherResultIcon(resultText) {
   if (normalized.includes('vegetables')) {
     return '🌿';
   }
-  if (normalized.includes('clams') || normalized.includes('frogs') || normalized.includes('turtles')) {
+  // eggs already handled above (e.g. turtle eggs → 🥚)
+  if (normalized.includes('turtles')) {
+    return '🐢';
+  }
+  if (normalized.includes('clams')) {
     return '🐚';
   }
   return '';

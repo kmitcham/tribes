@@ -34,32 +34,33 @@ module.exports.hunt = (playername, player, rollValue, gameState) => {
   let strMod = 0;
   if (player.strength && player.strength.toLowerCase() == 'strong'.valueOf()) {
     strMod = 1;
-    message += ' +strong ';
+    message += ' (+1 strong)';
   }
   var modifier = Number(strMod);
   if (player.strength && player.strength.toLowerCase() == 'weak'.valueOf()) {
     modifier -= 1;
-    message += ' -weak ';
+    message += ' (-1 weak)';
   }
   if (gameState.seasonCounter % 2 == 0) {
-    message += '-season ';
+    message += ' (-1 season)';
     modifier -= 1;
   }
   if (!('profession' in player) || !player.profession.startsWith('h')) {
-    message += '-skill ';
+    message += ' (-3 skill)';
     modifier -= 3;
   }
   if (player.spearhead > 0 && rollValue >= 9) {
     modifier += 3;
-    message += '+spearhead ';
+    message += ' (+3 spearhead)';
   }
   let netRoll = Number(rollValue) + modifier;
   const gameTrack = gameState.gameTrack[gameState.currentLocationName];
   const hunt_cap = locationDecay[gameTrack];
   const huntData = locations[gameState.currentLocationName]['hunt'];
   if (netRoll > hunt_cap) {
+    const gameTrackPenalty = netRoll - hunt_cap;
     netRoll = hunt_cap;
-    message += ' -game track ';
+    message += ' (-' + gameTrackPenalty + ' game track)';
     console.log(
       ' hunt with netRoll ' +
         netRoll +

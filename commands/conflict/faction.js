@@ -31,6 +31,10 @@ module.exports = {
 function setFaction(gameState, actorName, side) {
   const player = pop.memberByName(actorName, gameState);
 
+  if (!player) {
+    text.addMessage(gameState, actorName, 'Not in the tribe');
+    return;
+  }
   if (side != 'for' && side != 'against' && side != 'neutral') {
     text.addMessage(
       gameState,

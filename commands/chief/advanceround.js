@@ -1,10 +1,10 @@
 const { SlashCommandBuilder } = require('../../libs/command-builders.js');
-const pop = require('../../libs/population.js');
 const text = require('../../libs/textprocess.js');
 const chief = require('../../libs/chief.js');
 const repro = require('../../libs/reproduction.js');
 const food = require('../../libs/feed.js');
 const startFood = require('./startfood.js');
+const access = require('../../libs/access.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -13,9 +13,8 @@ module.exports = {
 
   async execute(interaction, gameState, bot) {
     var actorName = interaction.member.displayName;
-    var actor = pop.memberByName(actorName, gameState);
 
-    if (!actor || !actor.chief) {
+    if (!access.canActAsChief(actorName, gameState)) {
       text.addMessage(
         gameState,
         actorName,

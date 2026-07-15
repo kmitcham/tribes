@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const guardlib = require('./guardCode.js');
 const dice = require('./dice.js');
-const referees = require('./referees.json');
+const access = require('./access.js');
 const text = require('./textprocess.js');
 const pop = require('./population.js');
 const reproLib = require('./reproduction.js');
@@ -13,8 +13,7 @@ const logger = require('./logger.js');
 const roundTransitionAudit = require('./roundTransitionAudit.js');
 
 function close(actorName, gameState) {
-  var player = pop.memberByName(actorName, gameState);
-  if (!player || !player.chief) {
+  if (!access.canActAsChief(actorName, gameState)) {
     text.addMessage(gameState, actorName, 'close requires chief privileges');
     return;
   }
@@ -34,9 +33,8 @@ function close(actorName, gameState) {
 module.exports.close = close;
 
 function decree(gameState, actorName, number, lawText) {
-  var player = pop.memberByName(actorName, gameState);
   let law = lawText;
-  if (!player.chief) {
+  if (!access.canActAsChief(actorName, gameState)) {
     text.addMessage(gameState, actorName, 'decree requires chief privileges');
     return;
   }
@@ -69,17 +67,11 @@ function decree(gameState, actorName, number, lawText) {
 module.exports.decree = decree;
 
 function induct(gameState, sourceName, targetName, gender) {
-  var chief = pop.memberByName(sourceName, gameState);
   let response = '';
 
-  if (!chief) {
-    response = 'You must be in the tribe to do that';
-    text.addMessage(gameState, 'tribe', response);
-    return;
-  }
-  if (!chief.chief) {
+  if (!access.canActAsChief(sourceName, gameState)) {
     response = 'You must be chief to induct a member';
-    text.addMessage(gameState, 'tribe', response);
+    text.addMessage(gameState, sourceName, response);
     return;
   }
   if (gameState.ended) {
@@ -125,7 +117,7 @@ function induct(gameState, sourceName, targetName, gender) {
 module.exports.induct = induct;
 
 function isChanceLegal(gameState, actorName, forceRoll) {
-  const isRef = referees.includes(actorName);
+  const isRef = access.isReferee(actorName);
   let chanceRoll;
   if (isRef && forceRoll) {
     chanceRoll = forceRoll;
@@ -134,8 +126,7 @@ function isChanceLegal(gameState, actorName, forceRoll) {
       return false;
     }
   }
-  var player = pop.memberByName(actorName, gameState);
-  if (!player.chief && !isRef) {
+  if (!access.canActAsChief(actorName, gameState)) {
     text.addMessage(gameState, actorName, 'Chance requires chief privileges');
     return false;
   }
@@ -406,7 +397,6 @@ function doChance(rollValue, gameState) {
 module.exports.doChance = doChance;
 
 function startWork(actorName, gameState) {
-  var player = pop.memberByName(actorName, gameState);
   if (gameState.demand || gameState.violence) {
     const activeDemand = gameState.demand || gameState.violence;
     text.addMessage(
@@ -425,7 +415,7 @@ function startWork(actorName, gameState) {
     );
     return;
   }
-  if (!player.chief) {
+  if (!access.canActAsChief(actorName, gameState)) {
     text.addMessage(
       gameState,
       actorName,

@@ -181,12 +181,15 @@ function handleListCommands(ws, data, gameState, deps) {
   }
 
   const isRef = playerName && referees.includes(playerName);
+  // Refs may run chief controls in any tribe they view (even non-members).
+  // Work, guard, romance, and conflict stay member-bound in command handlers.
+  const canUseChiefCommands = isChief || isRef;
   const sortedCommands = Array.from(commands.entries()).sort(([a], [b]) =>
     a.localeCompare(b)
   );
 
   for (const [name, command] of sortedCommands) {
-    if (command.category === 'chief' && !isChief) {
+    if (command.category === 'chief' && !canUseChiefCommands) {
       continue;
     }
 
@@ -215,6 +218,8 @@ function handleListCommands(ws, data, gameState, deps) {
       commands: commandList,
       isReferee: isRef,
       isChief: isChief,
+      // Client may use this to treat refs as having chief UI affordances.
+      canActAsChief: canUseChiefCommands,
       tribes: tribesRegistry.getTribes(),
       clientId: data.clientId,
     })

@@ -48,4 +48,20 @@ describe('faction command', () => {
     expect(gameState.messages.tribe).toContain('FOR side score is now');
     expect(gameState.messages.tribe).toContain('AGAINST side score is now');
   });
+
+  test('rejects non-member', () => {
+    const gameState = {
+      demand: 'share the food',
+      population: {
+        eggplant: { name: 'eggplant', faction: 'for' },
+      },
+      messages: {},
+    };
+
+    factionCommand.setFaction(gameState, 'outsider', 'for');
+
+    expect(gameState.messages.outsider).toBe('Not in the tribe');
+    expect(gameState.population.outsider).toBeUndefined();
+    expect(gameState.saveRequired).toBeUndefined();
+  });
 });

@@ -46,7 +46,7 @@ function specialize(playerName, profession, gameState) {
     'You can also gather, but at a penalty. If your tribe has someone who knows how to craft, you can try to learn that skill with `train`';
   helpMessage += 'A hunting result looks like this: \n';
   helpMessage +=
-    'playername goes hunting. [roll 13] +strong +spearhead\n    sturgeon +40 food\n The spearhead broke! (roll 1)\nThe game track goes from 1 to 2\n\n';
+    'playername goes hunting. [roll 13] (+1 strong) (+3 spearhead)\n    sturgeon +40 food\n The spearhead broke! (roll 1)\nThe game track goes from 1 to 2\n\n';
   helpMessage +=
     'The first number in [] is the result of 3d6.  The +number is how much food was aquired.  The (roll 1) is the 1d6 spearhead damage result.\n';
 
@@ -78,7 +78,7 @@ function specialize(playerName, profession, gameState) {
       'You can also hunt, but at a penalty. If your tribe has someone who knows how to craft, you can try to learn that skill with `train`\n';
     helpMessage += 'A gathering result looks like this:\n';
     helpMessage +=
-      'playername gathers [roll 11]-season mushrooms (6) basket: [roll 4] clams (4)\n';
+      'playername gathers [roll 11] (-3 season) mushrooms (6) basket: [roll 4] clams (4)\n';
     helpMessage +=
       'The first number in [] represents the 3d6 roll.  The number in () is how much food was aquired.  If you have a basket, you gather twice.\n';
   }

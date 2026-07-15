@@ -1,9 +1,10 @@
 const { SlashCommandBuilder } = require('../../libs/command-builders.js');
-const pop = require('../../libs/population.js');
 const util = require('../../libs/util.js');
 const feed = require('../../libs/feed.js');
 const text = require('../../libs/textprocess.js');
 const roundTransitionAudit = require('../../libs/roundTransitionAudit.js');
+const access = require('../../libs/access.js');
+const pop = require('../../libs/population.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -19,7 +20,6 @@ module.exports = {
 };
 
 function startFoodFilter(actorName, gameState, bot) {
-  var player = pop.memberByName(actorName, gameState);
   if (gameState.demand || gameState.violence) {
     text.addMessage(
       gameState,
@@ -28,7 +28,7 @@ function startFoodFilter(actorName, gameState, bot) {
     );
     return;
   }
-  if (!player.chief) {
+  if (!access.canActAsChief(actorName, gameState)) {
     text.addMessage(
       gameState,
       actorName,
