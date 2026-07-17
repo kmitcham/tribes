@@ -2,6 +2,7 @@ const locations = require('./locations.json');
 const dice = require('./dice.js');
 const text = require('./textprocess.js');
 const pop = require('./population.js');
+const career = require('./career.js');
 
 const locationDecay = [
   30, // arrays count from 0 so add extra item
@@ -104,6 +105,7 @@ module.exports.hunt = (playername, player, rollValue, gameState) => {
       ' food';
     player.food += huntRow[1];
     gameState.foodAcquired += huntRow[1];
+    career.addFoodProduced(player, huntRow[1]);
   }
   // check for spearhead loss
   const breakRoll = dice.roll(1);

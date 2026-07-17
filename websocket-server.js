@@ -757,6 +757,18 @@ function actuallyWriteToDisk(fileName, jsonData) {
   }
 }
 
+// Keep career endgame writes on the live usersDict (not a stale disk load).
+try {
+  const career = require('./libs/career.js');
+  career.configureUsersStore({
+    getUsersDict: () => usersDict,
+    writeUsers: () =>
+      actuallyWriteToDisk('./tribe-data/users.json', usersDict),
+  });
+} catch (careerErr) {
+  logWithTimestamp('Career store not configured: ' + careerErr.message);
+}
+
 async function handleManageTribe(ws, data) {
   await adminRefereeService.handleManageTribe(ws, data, {
     validateUser,

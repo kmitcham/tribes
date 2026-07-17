@@ -47,6 +47,12 @@ describe('Help Module', () => {
       expect(result).toContain('inventory');
     });
 
+    test('should include incarnations command', () => {
+      const result = help.playerHelpBasic();
+      expect(result).toContain('incarnations');
+      expect(result).toContain('lifetime results');
+    });
+
     test('should include scout command', () => {
       const result = help.playerHelpBasic();
       expect(result).toContain('scout');

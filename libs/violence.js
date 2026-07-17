@@ -249,6 +249,20 @@ function getFactionScores(gameState) {
 }
 module.exports.getFactionScores = getFactionScores;
 
+/**
+ * Clear demand-phase state so round advance / migrate are unblocked.
+ * Does not clear active violence combat (that uses violence + violenceFactions).
+ */
+function clearDemandPhase(gameState) {
+  delete gameState.demand;
+  delete gameState.violenceRounds;
+  if (gameState.population) {
+    for (const playerName in gameState.population) {
+      delete gameState.population[playerName].faction;
+    }
+  }
+}
+
 const getFactionResult = (gameState) => {
   let response = '';
   const gameFactions = getGameFactions(gameState);
@@ -262,11 +276,8 @@ const getFactionResult = (gameState) => {
       demand +
       '.  The conflict has been resolved.';
     console.log('nobody wants the demand anymore');
-    delete gameState['demand'];
-    delete gameState.violenceRounds;
-    for (const playerName in gameState['population']) {
-      delete gameState['population'][playerName]['faction'];
-    }
+    clearDemandPhase(gameState);
+    text.addMessage(gameState, 'tribe', response);
     return response;
   }
   const scores = getFactionScores(gameState);
@@ -293,15 +304,11 @@ const getFactionResult = (gameState) => {
       ').  The demand to ' +
       gameState.demand +
       ' should be done immediately.';
-    for (const playerName in gameState['population']) {
-      delete gameState['population'][playerName]['faction'];
-    }
     console.log(
       'The demand has been resolved via overwheming support.  Deleting: ' +
         gameState.demand
     );
-    delete gameState['demand'];
-    delete gameState.violenceRounds;
+    clearDemandPhase(gameState);
   } else if (againstScore >= 2 * (forScore + undeclaredScore)) {
     response =
       'The Oppostion faction has overwhelming support (' +
@@ -309,10 +316,13 @@ const getFactionResult = (gameState) => {
       '). The demand to ' +
       gameState.demand +
       ' should be ignored.';
-    for (const playerName in gameState['population']) {
-      delete gameState['population'][playerName]['faction'];
-    }
-    delete gameState.violenceRounds;
+    console.log(
+      'The demand has been resolved via overwhelming opposition.  Deleting: ' +
+        gameState.demand
+    );
+    // Bugfix: this branch previously cleared factions/violenceRounds but left
+    // gameState.demand set, so migrate/startfood/etc. stayed blocked.
+    clearDemandPhase(gameState);
   } else if (
     gameFactions['undeclared'] &&
     gameFactions['undeclared'].length > 0
@@ -336,6 +346,7 @@ const getFactionResult = (gameState) => {
         ').  The demand to ' +
         gameState.demand +
         ' should be done immediately.';
+      clearDemandPhase(gameState);
     } else if (againstScore >= 2 * forScore) {
       response =
         'The Oppostion faction has enough support (' +
@@ -343,6 +354,7 @@ const getFactionResult = (gameState) => {
         '). The demand to ' +
         gameState.demand +
         ' should be ignored.';
+      clearDemandPhase(gameState);
     } else {
       gameState.violence = gameState.demand;
       gameState.violenceRounds = 0;
@@ -358,17 +370,18 @@ const getFactionResult = (gameState) => {
         'Tribal society breaks down as VIOLENCE is required to settle the issue of ' +
         gameState.demand +
         '\n The demand is lost in the conflict.';
+      // Demand text moves to violence; clear demand so demand-block checks use violence only.
+      delete gameState.demand;
+      for (const playerName in gameState['population']) {
+        delete gameState.population[playerName].faction;
+      }
     }
-    console.log('The demand has been resolved.  Deleting: ' + gameState.demand);
-    delete gameState['demand'];
-    for (const playerName in gameState['population']) {
-      delete gameState['population'][playerName]['faction'];
-    }
-    console.log('Deleted: ' + gameState.demand);
+    console.log('The demand has been resolved.  Deleted demand field.');
   }
   text.addMessage(gameState, 'tribe', response);
 };
 module.exports.getFactionResult = getFactionResult;
+module.exports.clearDemandPhase = clearDemandPhase;
 
 function displayFaction(faction) {
   let message = '';

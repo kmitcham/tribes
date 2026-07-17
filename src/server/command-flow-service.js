@@ -1,3 +1,6 @@
+const access = require('../../libs/access.js');
+const text = require('../../libs/textprocess.js');
+
 async function handleCommandRequest(ws, data, gameState, deps) {
   const {
     commands,
@@ -112,6 +115,17 @@ async function handleCommandRequest(ws, data, gameState, deps) {
       lockedState.messages = {};
 
       await command.execute(interaction, lockedState, null);
+
+      // Non-member refs acting on a tribe are called out in tribe chat.
+      const actorName = data.playerName;
+      if (access.isNonMemberReferee(actorName, lockedState)) {
+        text.addMessage(
+          lockedState,
+          'tribe',
+          'Referee ' + actorName + ' used ' + commandName
+        );
+        lockedState.saveRequired = true;
+      }
 
       await sendGameMessages(ws, lockedState, data);
 

@@ -10,6 +10,8 @@ function playerHelpBasic() {
   text += ' graveyard list of all deceased members and children\n';
   text +=
     ' inventory <target>  show inventory and character info. No arg means show inventory for entire tribe\n';
+  text +=
+    ' incarnations  private view of your lifetime results across finished games (children, survival, tribe outcomes)\n';
   text += ' law see the current list of laws\n';
   text +=
     ' sacrifice <amount> <type>  place an item beyond use for religious or other reasons [non-standard]\n';

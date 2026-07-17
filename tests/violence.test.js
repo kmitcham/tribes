@@ -275,6 +275,8 @@ test('Faction Voting -> Overwhelmning For', () => {
   result = violencelib.getFactionResult(gameState);
   result = gameState.messages['tribe'];
   expect(result).toBe(message);
+  expect(gameState.demand).toBeUndefined();
+  expect(gameState.population.pro1.faction).toBeUndefined();
 });
 test('Faction Voting -> against', () => {
   var gameState = {
@@ -309,6 +311,9 @@ test('Faction Voting -> against', () => {
   result = gameState.messages['tribe'];
 
   expect(result).toBe(message);
+  // Previously this path left demand set, blocking migrate/startfood/etc.
+  expect(gameState.demand).toBeUndefined();
+  expect(gameState.population.con1.faction).toBeUndefined();
 });
 
 test('Faction Voting -> marginal For', () => {

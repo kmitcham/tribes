@@ -1,6 +1,7 @@
 const locations = require('./locations.json');
 const dice = require('./dice.js');
 const text = require('./textprocess.js');
+const career = require('./career.js');
 
 //module.exports.hunt = (playername, player, rollValue, gameState) =>{
 //    function gather(playername, player, rollValue,gameState){
@@ -74,6 +75,7 @@ module.exports.gather = (playername, player, rollValue, gameState) => {
   player.food += getFood;
   player.grain += getGrain;
   gameState.foodAcquired += getFood + getGrain;
+  career.addFoodProduced(player, getFood + getGrain);
   if (player.basket > 0) {
     var broll = dice.roll(3) + modifier;
     message += ' basket: [roll ' + broll + '] ';
@@ -103,6 +105,8 @@ module.exports.gather = (playername, player, rollValue, gameState) => {
     message += (basketIcon ? basketIcon + ' ' : '') + get_message;
     player.food += getFood;
     player.grain += getGrain;
+    gameState.foodAcquired += getFood + getGrain;
+    career.addFoodProduced(player, getFood + getGrain);
     // check for basket loss
     if (dice.roll(1) <= 2) {
       message += '💥 basket breaks.';

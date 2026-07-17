@@ -127,4 +127,124 @@ describe('persistence integrity', () => {
     expect(gameState.saveRequired).toBe(false);
     expect(refreshTribeGameData).toHaveBeenCalled();
   });
+
+  test('non-member referee command is announced to the tribe', async () => {
+    const gameState = {
+      name: 'bug',
+      population: {
+        Alice: { name: 'Alice', chief: true },
+      },
+      messages: {},
+      tribeHistory: [],
+      saveRequired: false,
+      archiveRequired: false,
+    };
+    const commands = new Map([
+      [
+        'startfood',
+        {
+          execute: async () => {},
+        },
+      ],
+    ]);
+    const saveTribe = jest.fn();
+    let tribeMessageSeen = null;
+    const sendGameMessages = jest.fn((_ws, state) => {
+      tribeMessageSeen = state.messages && state.messages.tribe;
+    });
+    const store = {
+      runExclusive: (tribe, fn) => gameStateStore.runExclusive(tribe, fn),
+      getGameState: jest.fn(() => gameState),
+      resetEndedGameAfterArchive: jest.fn(),
+    };
+
+    await commandFlow.handleCommandRequest(
+      { send: jest.fn(), playerName: 'Kevin' },
+      {
+        command: 'startfood',
+        tribe: 'bug',
+        playerName: 'Kevin',
+        clientId: 'c1',
+        parameters: {},
+      },
+      gameState,
+      {
+        commands,
+        commandLog: null,
+        validateUser: async () => true,
+        prepareGameStateForJoin: (_cmd, _data, state) => state,
+        replayPendingMessages: jest.fn(),
+        createMockInteraction: () => ({ member: { displayName: 'Kevin' } }),
+        sendGameMessages,
+        savelib: { saveTribe, archiveTribe: jest.fn() },
+        refreshTribeGameData: jest.fn(),
+        refreshTribeCommandLists: jest.fn(),
+        gameStateStore: store,
+      }
+    );
+
+    expect(tribeMessageSeen).toBe('Referee Kevin used startfood');
+    expect(saveTribe).toHaveBeenCalled();
+    expect(
+      gameState.tribeHistory.some((e) =>
+        String(e.message).includes('Referee Kevin used startfood')
+      )
+    ).toBe(true);
+  });
+
+  test('member referee command is not announced as referee action', async () => {
+    const gameState = {
+      name: 'bug',
+      population: {
+        Kevin: { name: 'Kevin', profession: 'hunter' },
+      },
+      messages: {},
+      tribeHistory: [],
+      saveRequired: false,
+      archiveRequired: false,
+    };
+    const commands = new Map([
+      [
+        'status',
+        {
+          execute: async () => {},
+        },
+      ],
+    ]);
+    let tribeMessageSeen = null;
+    const sendGameMessages = jest.fn((_ws, state) => {
+      tribeMessageSeen = state.messages && state.messages.tribe;
+    });
+    const store = {
+      runExclusive: (tribe, fn) => gameStateStore.runExclusive(tribe, fn),
+      getGameState: jest.fn(() => gameState),
+    };
+
+    await commandFlow.handleCommandRequest(
+      { send: jest.fn(), playerName: 'Kevin' },
+      {
+        command: 'status',
+        tribe: 'bug',
+        playerName: 'Kevin',
+        clientId: 'c1',
+        parameters: {},
+      },
+      gameState,
+      {
+        commands,
+        commandLog: null,
+        validateUser: async () => true,
+        prepareGameStateForJoin: (_cmd, _data, state) => state,
+        replayPendingMessages: jest.fn(),
+        createMockInteraction: () => ({ member: { displayName: 'Kevin' } }),
+        sendGameMessages,
+        savelib: { saveTribe: jest.fn(), archiveTribe: jest.fn() },
+        refreshTribeGameData: jest.fn(),
+        refreshTribeCommandLists: jest.fn(),
+        gameStateStore: store,
+      }
+    );
+
+    expect(tribeMessageSeen).toBeUndefined();
+  });
 });

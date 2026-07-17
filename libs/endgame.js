@@ -1,6 +1,7 @@
 const killlib = require('./kill.js');
 const dice = require('./dice.js');
 const text = require('./textprocess.js');
+const career = require('./career.js');
 
 const childSurvivalChance = [
   8,
@@ -154,6 +155,17 @@ function endGame(gameState, _bot) {
   text.addMessage(gameState, 'tribe', response);
   const childrenMessage = scoreChildrenMessage(gameState);
   text.addMessage(gameState, 'tribe', childrenMessage);
+
+  // Persist career summaries after child scoring so parent/grow-up counts match.
+  try {
+    career.recordEndedGame(gameState);
+    const blurbs = career.buildEndgameLifetimeBlurbs(gameState);
+    for (const blurb of blurbs) {
+      text.addMessage(gameState, blurb.playerName, blurb.message);
+    }
+  } catch (err) {
+    console.error('endGame: failed to record career stats', err);
+  }
 
   return response;
 }
