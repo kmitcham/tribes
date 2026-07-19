@@ -1,3 +1,5 @@
+const access = require('../../libs/access.js');
+
 function handleInfoRequest(ws, data, gameState, deps) {
   const {
     util,
@@ -290,7 +292,7 @@ function processRomance(data, gameState) {
   return {
     type: 'error',
     label: 'romance',
-    content: 'No such user in tribe',
+    content: access.NOT_IN_TRIBE_MESSAGE,
   };
 }
 

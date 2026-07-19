@@ -554,6 +554,25 @@ describe('vote function', () => {
     expect(gameState.population.player2.chief).toBeUndefined();
     expect(gameState.saveRequired).toBe(true);
     expect(gameState.population.player1.vote).toBe('player2');
+    expect(gameState.messages.tribe).toContain(
+      'player1 supports player2 for chief.'
+    );
+  });
+
+  test('announces support publicly when voting', () => {
+    const gameState = {
+      population: {
+        Alice: { name: 'Alice', gender: 'female', food: 5, grain: 5 },
+        Bob: { name: 'Bob', gender: 'male', food: 5, grain: 5 },
+      },
+      messages: {},
+      saveRequired: false,
+    };
+
+    pop.vote(gameState, 'Alice', 'Bob');
+
+    expect(gameState.messages.tribe).toBe('Alice supports Bob for chief.');
+    expect(gameState.population.Alice.vote).toBe('Bob');
   });
 });
 

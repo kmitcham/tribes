@@ -12,7 +12,7 @@ function migrate(sourceName, destination, force, gameState) {
   const member = populationLib.memberByName(sourceName, gameState);
   // Non-members may only act if they are referees (force path).
   if (!member && !access.isReferee(sourceName)) {
-    text.addMessage(gameState, sourceName, 'Are you even in a tribe?');
+    text.addMessage(gameState, sourceName, access.NOT_IN_TRIBE_MESSAGE);
     return 'Not a member';
   }
   // Referees may force-migrate without membership; members need chief for force.

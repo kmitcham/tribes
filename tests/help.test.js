@@ -53,6 +53,12 @@ describe('Help Module', () => {
       expect(result).toContain('lifetime results');
     });
 
+    test('should include lastgame command', () => {
+      const result = help.playerHelpBasic();
+      expect(result).toContain('lastgame');
+      expect(result).toContain('end report');
+    });
+
     test('should include scout command', () => {
       const result = help.playerHelpBasic();
       expect(result).toContain('scout');

@@ -1,9 +1,10 @@
 const pop = require('./population.js');
+const access = require('./access.js');
 
 function validateGuardingChange(actorName, gameState) {
   const person = pop.memberByName(actorName, gameState);
   if (!person) {
-    return { error: 'FAIL: you are not a person' };
+    return { error: access.NOT_IN_TRIBE_MESSAGE };
   }
   if (person.worked === true) {
     return {

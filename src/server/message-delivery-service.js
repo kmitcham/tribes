@@ -24,9 +24,28 @@ function sendGameMessages(ws, gameState, data, deps) {
   const playerName = data.playerName;
   const playerPopulationKey =
     pop.getPopulationKey && pop.getPopulationKey(playerName, gameState);
-  const playerMessage =
+  let playerMessageKey = null;
+  let playerMessage =
     gameState.messages[playerName] ||
     (playerPopulationKey && gameState.messages[playerPopulationKey]);
+  if (gameState.messages[playerName]) {
+    playerMessageKey = playerName;
+  } else if (playerPopulationKey && gameState.messages[playerPopulationKey]) {
+    playerMessageKey = playerPopulationKey;
+  } else if (playerName && gameState.messages) {
+    // Non-members are not in population; match private keys case-insensitively.
+    const lower = String(playerName).toLowerCase();
+    for (const key of Object.keys(gameState.messages)) {
+      if (key === 'tribe') {
+        continue;
+      }
+      if (String(key).toLowerCase() === lower) {
+        playerMessage = gameState.messages[key];
+        playerMessageKey = key;
+        break;
+      }
+    }
+  }
 
   if (playerMessage) {
     ws.send(
@@ -36,6 +55,9 @@ function sendGameMessages(ws, gameState, data, deps) {
         clientId: data.clientId,
       })
     );
+    if (playerMessageKey) {
+      delete gameState.messages[playerMessageKey];
+    }
     delete gameState.messages[playerName];
     if (playerPopulationKey) {
       delete gameState.messages[playerPopulationKey];

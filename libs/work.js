@@ -4,6 +4,7 @@ const dice = require('./dice.js');
 const gatherlib = require('./gather.js');
 const referees = require('./referees.json');
 const locations = require('./locations.json');
+const access = require('./access.js');
 
 //////////////////////////////////////////////////////////
 /////  WORK SECTION
@@ -95,7 +96,7 @@ function canWork(gameState, player) {
     return msg;
   }
   if (player == null) {
-    msg = 'Only tribe members can work.  Maybe join';
+    msg = access.NOT_IN_TRIBE_MESSAGE;
     return msg;
   }
   if (player.isInjured && player.isInjured > 0) {
@@ -243,8 +244,11 @@ function train(gameState, sourceName, forceRoll) {
 module.exports.train = train;
 
 function setSecrets(gameState, actorName, willTrain) {
-  const member = pop.memberByName(actorName, gameState);
-  if (member && member.canCraft == true) {
+  const member = access.requireTribeMember(gameState, actorName);
+  if (!member) {
+    return;
+  }
+  if (member.canCraft == true) {
     if (willTrain) {
       delete member.noTeach;
       text.addMessage(

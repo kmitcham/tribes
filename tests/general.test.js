@@ -140,7 +140,7 @@ describe('give function', () => {
     general.give(gameState, 'notaplayer', 'player2', 1, 'grain');
     var messages = gameState.messages;
     var expectedMessage = messages['notaplayer'];
-    expect(expectedMessage).toContain('not a member');
+    expect(expectedMessage).toContain('not a member of this tribe');
   });
 
   test('should fail if source does not have enough items and is not a referee', () => {

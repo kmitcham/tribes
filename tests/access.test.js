@@ -28,4 +28,23 @@ describe('access helpers', () => {
   test('canActAsChief is true for any referee', () => {
     expect(access.canActAsChief('Kevin', { population: {} })).toBe(true);
   });
+
+  test('requireTribeMember sends private message when not a member', () => {
+    const gameState = {
+      population: { Alice: { name: 'Alice' } },
+      messages: {},
+    };
+    expect(access.requireTribeMember(gameState, 'Outsider')).toBeNull();
+    expect(gameState.messages.Outsider).toBe(access.NOT_IN_TRIBE_MESSAGE);
+  });
+
+  test('requireTribeMember returns the member when present', () => {
+    const gameState = {
+      population: { Alice: { name: 'Alice' } },
+      messages: {},
+    };
+    const member = access.requireTribeMember(gameState, 'Alice');
+    expect(member.name).toBe('Alice');
+    expect(gameState.messages.Alice).toBeUndefined();
+  });
 });

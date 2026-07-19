@@ -1,6 +1,7 @@
 const text = require('./textprocess.js');
 const pop = require('./population.js');
 const referees = require('./referees.json');
+const access = require('./access.js');
 
 function give(gameState, sourceName, targetName, amount, item) {
   let response = '';
@@ -126,7 +127,7 @@ function legalGive(gameState, sourceName, item, amount) {
   let response = '';
   const sourcePerson = pop.memberByName(sourceName, gameState);
   if (!sourcePerson) {
-    response = 'You are not a member of tribe';
+    response = access.NOT_IN_TRIBE_MESSAGE;
     text.addMessage(gameState, sourceName, response);
     return false;
   }
@@ -249,11 +250,7 @@ function makeJerky(sourceName, amount, gameState, _bot) {
   }
   const player = pop.memberByName(sourceName, gameState);
   if (!player) {
-    text.addMessage(
-      gameState,
-      sourceName,
-      'Only tribe members can make jerky.'
-    );
+    text.addMessage(gameState, sourceName, access.NOT_IN_TRIBE_MESSAGE);
     return;
   }
   amount = Number(amount);
@@ -331,7 +328,7 @@ function sacrifice(gameState, sourceName, item, amount, rollOf2dice) {
   var sourcePerson = pop.memberByName(sourceName, gameState);
   // check if person is in tribe
   if (!sourcePerson) {
-    response = sourceName + ' not found in tribe';
+    response = access.NOT_IN_TRIBE_MESSAGE;
     text.addMessage(gameState, sourceName, response);
     return;
   }

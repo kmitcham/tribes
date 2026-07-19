@@ -815,7 +815,7 @@ test('pass when not in tribe', () => {
   };
   reproLib.pass(gameState, 'dummy');
   const message = gameState['messages']['dummy'];
-  expect(message).toContain('You are not in this tribe.');
+  expect(message).toContain('You are not a member of this tribe.');
 });
 
 test('pass when not in reproduction', () => {

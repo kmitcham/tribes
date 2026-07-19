@@ -8,6 +8,7 @@ const pop = require('./population.js');
 const feed = require('./feed.js');
 const end = require('./endgame.js');
 const roundTransitionAudit = require('./roundTransitionAudit.js');
+const access = require('./access.js');
 
 function eligibleMates(name, population, debug = false) {
   const matcher = population[name];
@@ -270,11 +271,7 @@ function invite(gameState, rawActorName, rawList) {
   var player = pop.memberByName(rawActorName, gameState);
   var message = 'error in invite, message not set';
   if (!player) {
-    text.addMessage(
-      gameState,
-      rawActorName,
-      'You must be a member of the tribe to invite someone to mate.'
-    );
+    text.addMessage(gameState, rawActorName, access.NOT_IN_TRIBE_MESSAGE);
     return;
   }
   if (!rawList) {
@@ -388,7 +385,7 @@ function applyRomanceResponseUpdates(
   const member = pop.memberByName(actorName, gameState);
   if (!member) {
     console.log(actorName + ' not found in tribe for ' + defaultResponseType);
-    text.addMessage(gameState, actorName, 'You are not in the tribe');
+    text.addMessage(gameState, actorName, access.NOT_IN_TRIBE_MESSAGE);
     return [];
   }
 
@@ -468,7 +465,7 @@ function consent(actorName, arrayOfNames, gameState) {
   var member = pop.memberByName(actorName, gameState);
   if (!member) {
     console.log(actorName + ' not found in tribe for consent');
-    text.addMessage(gameState, actorName, 'You are not in the tribe');
+    text.addMessage(gameState, actorName, access.NOT_IN_TRIBE_MESSAGE);
     return;
   }
   const priorConsentList = getRomanceTargetsByResponse(member, 'consent');
@@ -1240,7 +1237,7 @@ module.exports.addDrone = addDrone;
 function pass(gameState, actorName) {
   const person = pop.memberByName(actorName, gameState);
   if (!person) {
-    text.addMessage(gameState, actorName, 'You are not in this tribe.');
+    text.addMessage(gameState, actorName, access.NOT_IN_TRIBE_MESSAGE);
     return;
   }
   if (gameState.reproductionRound) {
@@ -1268,7 +1265,6 @@ function pass(gameState, actorName) {
 module.exports.pass = pass;
 
 function startReproductionChecks(gameState, actorName) {
-  const access = require('./access.js');
   if (gameState.demand || gameState.violence) {
     const activeDemand = gameState.demand || gameState.violence;
     text.addMessage(

@@ -1,6 +1,7 @@
 const { SlashCommandBuilder } = require('../../libs/command-builders.js');
 const text = require('../../libs/textprocess.js');
 const pop = require('../../libs/population.js');
+const access = require('../../libs/access.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -13,13 +14,8 @@ module.exports = {
 
 function idle(interaction, gameState) {
   var sourceName = interaction.member.displayName;
-  var player = pop.memberByName(sourceName, gameState);
+  var player = access.requireTribeMember(gameState, sourceName);
   if (!player) {
-    text.addMessage(
-      gameState,
-      sourceName,
-      'Only tribe members can idle.  Maybe join'
-    );
     return;
   }
 

@@ -156,9 +156,12 @@ function endGame(gameState, _bot) {
   const childrenMessage = scoreChildrenMessage(gameState);
   text.addMessage(gameState, 'tribe', childrenMessage);
 
+  const fullRecap = [response, childrenMessage].filter(Boolean).join('\n\n');
+
   // Persist career summaries after child scoring so parent/grow-up counts match.
   try {
     career.recordEndedGame(gameState);
+    career.storeLastGameRecap(gameState, fullRecap);
     const blurbs = career.buildEndgameLifetimeBlurbs(gameState);
     for (const blurb of blurbs) {
       text.addMessage(gameState, blurb.playerName, blurb.message);

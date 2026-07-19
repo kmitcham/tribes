@@ -539,7 +539,7 @@ describe('Browser Integration: tribes-interface.html', () => {
     const messages = await page.evaluate(
       () => document.getElementById('messagesContainer').innerHTML
     );
-    expect(messages).toContain('Only tribe members can work');
+    expect(messages).toContain('You are not a member of this tribe');
   }, 15000);
 
   test('guard and ignore update the guarded child list', async () => {

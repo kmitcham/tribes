@@ -1,7 +1,7 @@
 const { SlashCommandBuilder } = require('../../libs/command-builders.js');
-const pop = require('../../libs/population.js');
 const text = require('../../libs/textprocess.js');
 const violence = require('../../libs/violence.js');
+const access = require('../../libs/access.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -15,9 +15,8 @@ module.exports = {
 };
 
 function defend(gameState, actorName) {
-  var player = pop.memberByName(actorName, gameState);
+  var player = access.requireTribeMember(gameState, actorName);
   if (!player) {
-    text.addMessage(gameState, actorName, 'Not in the tribe');
     return;
   }
   text.addMessage(

@@ -183,6 +183,71 @@ test('formatIncarnationsMessage when user missing', () => {
   expect(msg).toContain('Ghost');
 });
 
+test('storeLastGameRecap replaces previous recap for registered players', () => {
+  const usersDict = {
+    Alice: { name: 'Alice', password: '' },
+    other: { name: 'other', password: '' },
+  };
+  let wrote = 0;
+  const gameState = {
+    name: 'bear',
+    seasonCounter: 12,
+    tribeResult: 'Successful',
+    population: {
+      Alice: { name: 'Alice', profession: 'gatherer' },
+      Ghost: { name: 'Ghost', profession: 'hunter' },
+    },
+    banished: {},
+    graveyard: {},
+    children: {},
+  };
+
+  career.storeLastGameRecap(gameState, '### GAME OVER ###\nAlice score stuff', {
+    usersDict,
+    writeUsers: () => {
+      wrote += 1;
+    },
+  });
+
+  expect(wrote).toBe(1);
+  expect(usersDict.Alice.lastGame.message).toContain('GAME OVER');
+  expect(usersDict.Alice.lastGame.tribe).toBe('bear');
+  expect(usersDict.Alice.lastGame.tribeResult).toBe('Successful');
+  expect(usersDict.other.lastGame).toBeUndefined();
+
+  career.storeLastGameRecap(gameState, 'second recap only', {
+    usersDict,
+    writeUsers: () => {
+      wrote += 1;
+    },
+  });
+  expect(usersDict.Alice.lastGame.message).toBe('second recap only');
+  expect(wrote).toBe(2);
+});
+
+test('formatLastGameMessage shows stored recap or empty guidance', () => {
+  expect(career.formatLastGameMessage(null, 'Ghost')).toContain(
+    'No registered account'
+  );
+  expect(career.formatLastGameMessage({ name: 'Alice' }, 'Alice')).toContain(
+    'No finished-game recap'
+  );
+
+  const user = {
+    name: 'Alice',
+    lastGame: {
+      tribe: 'bear',
+      tribeResult: 'Successful',
+      endedAt: '2026-07-18T00:00:00.000Z',
+      message: 'full endgame body',
+    },
+  };
+  const msg = career.formatLastGameMessage(user, 'Alice');
+  expect(msg).toContain('Last game recap');
+  expect(msg).toContain('bear');
+  expect(msg).toContain('full endgame body');
+});
+
 test('formatLifetimeChildrenBlurb includes this incarnation', () => {
   const user = { name: 'Alice' };
   const c = career.ensureCareer(user);

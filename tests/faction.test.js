@@ -60,7 +60,9 @@ describe('faction command', () => {
 
     factionCommand.setFaction(gameState, 'outsider', 'for');
 
-    expect(gameState.messages.outsider).toBe('Not in the tribe');
+    expect(gameState.messages.outsider).toBe(
+      'You are not a member of this tribe.'
+    );
     expect(gameState.population.outsider).toBeUndefined();
     expect(gameState.saveRequired).toBeUndefined();
   });

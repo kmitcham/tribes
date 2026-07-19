@@ -95,7 +95,7 @@ function ignoreChild(gameState, actorName, cName) {
   const children = gameState.children;
   var response = '';
   if (!person) {
-    return 'FAIL: you are not a person';
+    return require('../../libs/access.js').NOT_IN_TRIBE_MESSAGE;
   }
   console.log(
     'inside ignore cName ' +

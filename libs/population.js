@@ -2,6 +2,7 @@ const text = require('./textprocess.js');
 const dice = require('./dice.js');
 const prof = require('./profession.js');
 const help = require('./help.js');
+const access = require('./access.js');
 
 function normalizeStoredResourceValue(value) {
   var numericValue = Number(value);
@@ -174,13 +175,6 @@ function memberByName(name, gameState) {
     }
     return person;
   }
-  console.log(
-    'tribe ' +
-      gameState.name +
-      ' has no such member ' +
-      name +
-      ' in population.'
-  );
   return null;
 }
 module.exports.memberByName = memberByName;
@@ -505,11 +499,7 @@ function vote(gameState, actorName, candidateName) {
     return;
   }
   if (!player) {
-    text.addMessage(
-      gameState,
-      actorName,
-      'You are not a member of the tribe yet.'
-    );
+    text.addMessage(gameState, actorName, access.NOT_IN_TRIBE_MESSAGE);
     return;
   }
   if (gameState.ended) {
@@ -531,6 +521,12 @@ function vote(gameState, actorName, candidateName) {
     }
   }
   console.log('Drone count while voting is ' + droneCount);
+
+  text.addMessage(
+    gameState,
+    'tribe',
+    player.name + ' supports ' + candidate.name + ' for chief.'
+  );
 
   // Find current chief (before any changes)
   var currentChief = null;

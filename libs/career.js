@@ -450,3 +450,117 @@ function buildEndgameLifetimeBlurbs(gameState, deps) {
   return blurbs;
 }
 module.exports.buildEndgameLifetimeBlurbs = buildEndgameLifetimeBlurbs;
+
+/**
+ * Store the full endgame recap on each registered player who was in this game.
+ * Replaces any previous lastGame until the next game they finish ends.
+ * @returns {{ recorded: number, skipped: number }}
+ */
+function storeLastGameRecap(gameState, fullMessage, deps) {
+  deps = deps || {};
+  let usersDict = deps.usersDict;
+  let writeUsers = deps.writeUsers;
+  const usersPath = deps.usersPath || DEFAULT_USERS_PATH;
+
+  if (!usersDict && usersStore && typeof usersStore.getUsersDict === 'function') {
+    usersDict = usersStore.getUsersDict();
+  }
+  if (!writeUsers && usersStore && typeof usersStore.writeUsers === 'function') {
+    writeUsers = usersStore.writeUsers;
+  }
+  if (!usersDict) {
+    return { recorded: 0, skipped: 0 };
+  }
+  if (typeof writeUsers !== 'function') {
+    writeUsers = () => jsonUtils.writeJson(usersPath, usersDict);
+  }
+
+  const message = String(fullMessage || '').trim();
+  if (!message) {
+    return { recorded: 0, skipped: 0 };
+  }
+
+  const recap = {
+    endedAt: new Date().toISOString(),
+    tribe: gameState && gameState.name ? gameState.name : '',
+    tribeResult: gameState && gameState.tribeResult ? gameState.tribeResult : '',
+    seasons:
+      gameState &&
+      typeof gameState.seasonCounter === 'number' &&
+      Number.isFinite(gameState.seasonCounter)
+        ? gameState.seasonCounter
+        : null,
+    message: message,
+  };
+
+  const adults = collectAdultEntries(gameState || {});
+  let recorded = 0;
+  let skipped = 0;
+
+  for (const adult of adults) {
+    const key = findUserKey(usersDict, adult.name);
+    if (!key) {
+      skipped += 1;
+      continue;
+    }
+    const user = usersDict[key];
+    if (!user || typeof user !== 'object') {
+      skipped += 1;
+      continue;
+    }
+    user.lastGame = Object.assign({}, recap, {
+      survived: adult.status,
+      profession: adult.profession || null,
+    });
+    recorded += 1;
+  }
+
+  if (recorded > 0) {
+    try {
+      writeUsers();
+    } catch (err) {
+      console.error('career.storeLastGameRecap: failed to write users', err);
+    }
+  }
+
+  return { recorded, skipped };
+}
+module.exports.storeLastGameRecap = storeLastGameRecap;
+
+/**
+ * Private text for the `lastgame` command.
+ */
+function formatLastGameMessage(user, playerName) {
+  const displayName = (user && user.name) || playerName || 'you';
+  if (!user) {
+    return (
+      'No registered account found for ' +
+      displayName +
+      '. End-of-game recaps are stored for registered players.'
+    );
+  }
+  if (!user.lastGame || typeof user.lastGame !== 'object' || !user.lastGame.message) {
+    return (
+      'No finished-game recap stored for ' +
+      displayName +
+      ' yet. After a game you are in ends, use lastgame to re-read the full report.'
+    );
+  }
+  const g = user.lastGame;
+  const headerParts = [];
+  if (g.tribe) {
+    headerParts.push('tribe ' + g.tribe);
+  }
+  if (g.tribeResult) {
+    headerParts.push(g.tribeResult);
+  }
+  if (g.endedAt) {
+    headerParts.push(g.endedAt);
+  }
+  const header =
+    headerParts.length > 0
+      ? 'Last game recap (' + headerParts.join(' · ') + ')\n\n'
+      : 'Last game recap\n\n';
+  return header + g.message;
+}
+module.exports.formatLastGameMessage = formatLastGameMessage;

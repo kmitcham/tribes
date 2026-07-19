@@ -151,7 +151,7 @@ function guardChild(actorName, gameState, cName) {
   const children = gameState.children;
   var response = '';
   if (!person) {
-    return 'FAIL: you are not a person';
+    return require('../../libs/access.js').NOT_IN_TRIBE_MESSAGE;
   }
   if (person.worked == true || gameState.workRound == false) {
     return 'FAIL You can not change guard status after having worked, or outside the work round';

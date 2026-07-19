@@ -2,6 +2,7 @@ const { SlashCommandBuilder } = require('../../libs/command-builders.js');
 const pop = require('../../libs/population.js');
 const violencelib = require('../../libs/violence.js');
 const text = require('../../libs/textprocess.js');
+const access = require('../../libs/access.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -36,11 +37,7 @@ function demand(gameState, actorName, demandText) {
     currentDemand = gameState['demand'];
   }
   if (!player) {
-    text.addMessage(
-      gameState,
-      actorName,
-      'Only tribe members can make demands'
-    );
+    text.addMessage(gameState, actorName, access.NOT_IN_TRIBE_MESSAGE);
     return;
   }
   if (currentDemand || gameState.violence) {

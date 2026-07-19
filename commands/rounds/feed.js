@@ -3,6 +3,7 @@ const pop = require('../../libs/population.js');
 const feedlib = require('../../libs/feed.js');
 const text = require('../../libs/textprocess.js');
 const referees = require('../../libs/referees.json');
+const access = require('../../libs/access.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -47,11 +48,7 @@ function feed(interaction, gameState) {
   }
   if (!player) {
     // this makes sure the author is in the tribe
-    text.addMessage(
-      gameState,
-      sourceName,
-      'Children do not take food from strangers'
-    );
+    text.addMessage(gameState, sourceName, access.NOT_IN_TRIBE_MESSAGE);
     return;
   }
   if (amount == 0 || amount > 2) {

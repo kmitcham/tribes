@@ -83,7 +83,9 @@ describe('attack command', () => {
     const interaction = createInteraction('outsider', 'bob');
     attackCommand.execute(interaction, gameState);
 
-    expect(gameState.messages.outsider).toBe('Not in the tribe');
+    expect(gameState.messages.outsider).toBe(
+      'You are not a member of this tribe.'
+    );
     expect(gameState.population.bob.strategy).toBeNull();
     expect(gameState.saveRequired).toBe(false);
   });

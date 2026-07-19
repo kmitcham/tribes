@@ -167,7 +167,7 @@ describe('Work Module Tests', () => {
     test('should return message when player is null', () => {
       const result = canWork(mockGameState, null);
 
-      expect(result).toBe('Only tribe members can work.  Maybe join');
+      expect(result).toBe('You are not a member of this tribe.');
     });
 
     test('should return message when player is injured', () => {
@@ -452,7 +452,7 @@ describe('Work Module Tests', () => {
       expect(text.addMessage).toHaveBeenCalledWith(
         mockGameState,
         'ghost',
-        'FAIL: you are not a person'
+        'You are not a member of this tribe.'
       );
     });
 
@@ -465,7 +465,7 @@ describe('Work Module Tests', () => {
       expect(text.addMessage).toHaveBeenCalledWith(
         mockGameState,
         'ghost',
-        'FAIL: you are not a person'
+        'You are not a member of this tribe.'
       );
     });
 
