@@ -777,6 +777,7 @@ async function handleManageTribe(ws, data) {
     connectedClients,
     openState: WebSocket.OPEN,
     connectionStore,
+    gameStateStore,
   });
 }
 

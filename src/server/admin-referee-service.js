@@ -75,7 +75,12 @@ async function requireAuthenticatedReferee(ws, data, deps) {
 }
 
 async function handleManageTribe(ws, data, deps) {
-  const { tribesRegistry, connectedClients, openState } = deps;
+  const {
+    tribesRegistry,
+    connectedClients,
+    openState,
+    gameStateStore,
+  } = deps;
 
   if (!(await requireAuthenticatedReferee(ws, data, deps))) {
     return;
@@ -126,6 +131,49 @@ async function handleManageTribe(ws, data, deps) {
         message: `${data.hidden ? 'Hidden' : 'Revealed'} tribe ${data.tribeName}`,
       })
     );
+    return;
+  }
+
+  if (data.action === 'delete') {
+    if (data.confirm !== true) {
+      ws.send(
+        JSON.stringify({
+          type: 'error',
+          message:
+            'Delete requires confirm: true (client must confirm permanent deletion).',
+        })
+      );
+      return;
+    }
+    const tribeName = data.tribeName;
+    try {
+      pathSafety.assertSafeTribeName(tribeName);
+      const result = tribesRegistry.deleteTribe(tribeName);
+      if (
+        gameStateStore &&
+        typeof gameStateStore.removeGameState === 'function'
+      ) {
+        gameStateStore.removeGameState(tribeName);
+      }
+      broadcastTribeUpdate(connectedClients, tribesRegistry, openState);
+      ws.send(
+        JSON.stringify({
+          type: 'commandResponse',
+          success: true,
+          command: 'Manage Tribe',
+          message:
+            `Deleted tribe ${tribeName}` +
+            (result.deletedDir ? ' (data directory removed)' : ' (registry only)'),
+        })
+      );
+    } catch (err) {
+      ws.send(
+        JSON.stringify({
+          type: 'error',
+          message: err.message || 'Failed to delete tribe',
+        })
+      );
+    }
   }
 }
 

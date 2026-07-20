@@ -136,4 +136,45 @@ describe('tribesRegistry.js', () => {
     expect(reg['brand-new-tribe'].hidden).toBe(false);
     expect(fs.writeFileSync).toHaveBeenCalled();
   });
+
+  test('deleteTribe removes registry entry and deletes data directory', () => {
+    fs.existsSync.mockImplementation((p) => {
+      if (p === './tribe-data') return true;
+      if (p === './tribe-data/tribesRegistry.json') return true;
+      // tribeDir resolves under cwd/tribe-data/doomed
+      if (String(p).includes('doomed')) return true;
+      return false;
+    });
+    fs.readFileSync.mockReturnValue(
+      JSON.stringify({
+        doomed: { name: 'doomed', hidden: false },
+        keep: { name: 'keep', hidden: false },
+      })
+    );
+    fs.rmSync = jest.fn();
+
+    const result = tribesRegistry.deleteTribe('doomed');
+
+    expect(result.registry.doomed).toBeUndefined();
+    expect(result.registry.keep).toBeDefined();
+    expect(result.deletedDir).toBe(true);
+    expect(fs.rmSync).toHaveBeenCalledWith(
+      expect.stringContaining('doomed'),
+      expect.objectContaining({ recursive: true, force: true })
+    );
+    expect(fs.writeFileSync).toHaveBeenCalled();
+  });
+
+  test('deleteTribe throws when tribe is unknown and has no directory', () => {
+    fs.existsSync.mockImplementation((p) => {
+      if (p === './tribe-data') return true;
+      if (p === './tribe-data/tribesRegistry.json') return true;
+      return false;
+    });
+    fs.readFileSync.mockReturnValue(JSON.stringify({ keep: { name: 'keep' } }));
+
+    expect(() => tribesRegistry.deleteTribe('missing-tribe')).toThrow(
+      /not found/
+    );
+  });
 });

@@ -63,11 +63,20 @@ function getAllGames() {
   return allGames;
 }
 
+function removeGameState(tribeName) {
+  if (tribeName && Object.prototype.hasOwnProperty.call(allGames, tribeName)) {
+    delete allGames[tribeName];
+    return true;
+  }
+  return false;
+}
+
 module.exports = {
   getGameState,
   setGameState,
   prepareGameStateForJoin,
   resetEndedGameAfterArchive,
   getAllGames,
+  removeGameState,
   runExclusive,
 };

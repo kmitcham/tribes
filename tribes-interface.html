@@ -350,9 +350,12 @@
         .command-search {
             margin-bottom: 1rem;
             display: grid;
-            grid-template-columns: minmax(0, 1fr) auto auto;
+            /* Fixed tracks for clear (×) and Go so they cannot be squeezed off narrow sidebars */
+            grid-template-columns: minmax(0, 1fr) 2.75rem 3.5rem;
             gap: 0.5rem;
             align-items: center;
+            width: 100%;
+            min-width: 0;
         }
 
         .command-search-input {
@@ -373,14 +376,16 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
-            padding: 0.5rem 1rem;
+            padding: 0.5rem 0.35rem;
             border-radius: 4px;
             cursor: pointer;
             font-weight: 600;
             white-space: nowrap;
             flex-shrink: 0;
             min-height: 44px;
-            min-width: 56px;
+            min-width: 3.5rem;
+            width: 100%;
+            justify-self: stretch;
         }
 
         .search-go-btn:hover {
@@ -396,16 +401,23 @@
 
         .search-clear-btn {
             background: #f1f3f5;
-            color: #495057;
+            color: #343a40;
             border: 1px solid #ced4da;
-            padding: 0.5rem 0.75rem;
+            padding: 0;
             border-radius: 4px;
             cursor: pointer;
             font-weight: 700;
+            font-size: 1.35rem;
             line-height: 1;
             white-space: nowrap;
             flex-shrink: 0;
             min-height: 44px;
+            min-width: 2.75rem;
+            width: 100%;
+            justify-self: stretch;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .search-clear-btn:hover {
@@ -413,10 +425,11 @@
         }
 
         .search-clear-btn:disabled {
-            color: #adb5bd;
-            background: #f8f9fa;
-            border-color: #e9ecef;
+            color: #868e96;
+            background: #f1f3f5;
+            border-color: #dee2e6;
             cursor: not-allowed;
+            opacity: 1; /* stay visible when empty; only muted */
         }
 
         .command-search-suggestions {
@@ -429,7 +442,8 @@
             z-index: 1000;
             display: none;
             left: 0;
-            right: 112px;
+            /* leave room for clear + Go columns + gaps (~2.75 + 3.5 + 1rem) */
+            right: calc(2.75rem + 3.5rem + 1rem);
         }
 
         .search-suggestion {
@@ -1325,31 +1339,45 @@
         .modal-header {
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-start;
+            gap: 0.75rem;
             margin-bottom: 1rem;
             padding-bottom: 1rem;
             border-bottom: 2px solid #eee;
+            position: relative;
         }
 
         .modal-title {
             font-size: 1.5rem;
             font-weight: bold;
             color: #333;
+            min-width: 0;
+            flex: 1 1 auto;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+            padding-right: 0.25rem;
         }
 
         .modal-close {
             background: none;
             border: none;
-            font-size: 1.5rem;
+            font-size: 1.75rem;
             cursor: pointer;
             color: #666;
             padding: 0;
-            width: 30px;
-            height: 30px;
+            width: 44px;
+            height: 44px;
+            min-width: 44px;
+            min-height: 44px;
+            flex: 0 0 auto;
             display: flex;
             align-items: center;
             justify-content: center;
             border-radius: 50%;
+            /* Keep × visible even when title is long on narrow screens */
+            position: sticky;
+            top: 0;
+            z-index: 2;
         }
 
         .modal-close:hover {
@@ -1540,12 +1568,48 @@
 
             .command-search-container {
                 order: 2;
+                width: 100%;
+                min-width: 0;
+                overflow: visible;
+            }
+
+            .command-search {
+                grid-template-columns: minmax(0, 1fr) 2.75rem 3.5rem;
+                width: 100%;
+            }
+
+            .search-clear-btn,
+            .search-go-btn {
+                /* Never collapse under narrow viewports */
+                min-width: 2.75rem;
+                visibility: visible;
+                opacity: 1;
+            }
+
+            .search-go-btn {
+                min-width: 3.5rem;
             }
 
             .command-list {
                 order: 3;
                 max-height: 180px;
                 overflow-y: auto;
+            }
+
+            .modal-popup {
+                width: min(96vw, 500px);
+                max-width: 96vw;
+                padding: 1.25rem;
+            }
+
+            .modal-header {
+                align-items: flex-start;
+            }
+
+            .modal-close {
+                width: 44px;
+                height: 44px;
+                min-width: 44px;
             }
 
             #refereeAdminSection {
@@ -1717,9 +1781,9 @@
                 
                 <div class="command-search-container">
                     <div class="command-search">
-                        <input type="text" id="commandSearchInput" class="command-search-input" placeholder="Type command name..." autocomplete="off">
-                        <button id="commandClearBtn" class="search-clear-btn" disabled>x</button>
-                        <button id="commandGoBtn" class="search-go-btn" disabled>Go</button>
+                        <input type="text" id="commandSearchInput" class="command-search-input" placeholder="Type command name..." autocomplete="off" aria-label="Command name">
+                        <button type="button" id="commandClearBtn" class="search-clear-btn" disabled title="Clear command name" aria-label="Clear command name">&times;</button>
+                        <button type="button" id="commandGoBtn" class="search-go-btn" disabled title="Run or open command">Go</button>
                     </div>
                     <div id="commandSuggestions" class="command-search-suggestions"></div>
                 </div>
@@ -1887,6 +1951,12 @@
                 this.orientationMessageSessionKey = 'tribesOrientationShown';
                 this.orientationMessageShownFallback = false;
                 this.orientationMessageShownThisRuntime = false;
+                // Dedupe live/replay/restored chat lines (fingerprint -> last seen ms).
+                this.messageFingerprints = new Map();
+                this.messageHistoryMaxAgeMs = 48 * 60 * 60 * 1000;
+                this.messageHistoryMaxStored = 200;
+                // Live network double-delivery window (same text/type/label).
+                this.messageDedupeWindowMs = 60 * 1000;
                 
                 this.loadSavedSettings();
                 this.initializeEventListeners();
@@ -2316,10 +2386,24 @@
                         this.handleInfoResponse(data);
                         break;
                     case 'tribeMessage':
-                        this.addMessage(data.message, 'tribe', '[TRIBE]');
+                        this.addMessage(
+                            data.message,
+                            'tribe',
+                            '[TRIBE]',
+                            false,
+                            true,
+                            !!data.replay
+                        );
                         break;
                     case 'privateMessage':
-                        this.addMessage(data.message, 'private', '[PRIVATE]');
+                        this.addMessage(
+                            data.message,
+                            'private',
+                            '[PRIVATE]',
+                            false,
+                            true,
+                            !!data.replay
+                        );
                         break;
                     case 'registration':
                         this.handleRegistrationResponse(data);
@@ -4819,11 +4903,84 @@
                 this.addMessage('Please select a command from the sidebar to open the command modal', 'info');
             }
 
-            addMessage(text, type = 'info', typeLabel = null, isRestored = false, insertAtTop = true) {
+            messageFingerprint(text, type, typeLabel) {
+                return [
+                    String(type || 'info'),
+                    String(typeLabel || ''),
+                    String(text || '').trim(),
+                ].join('\u0001');
+            }
+
+            clearMessageFingerprints() {
+                if (this.messageFingerprints) {
+                    this.messageFingerprints.clear();
+                } else {
+                    this.messageFingerprints = new Map();
+                }
+                this._loadedHistoryKey = null;
+            }
+
+            /**
+             * @returns {boolean} true if this line should be treated as a duplicate
+             */
+            isDuplicateMessage(text, type, typeLabel, options = {}) {
+                const { isRestored = false, isReplay = false, timestamp = Date.now() } = options;
+                if (!this.messageFingerprints) {
+                    this.messageFingerprints = new Map();
+                }
+                const fp = this.messageFingerprint(text, type, typeLabel);
+                const prev = this.messageFingerprints.get(fp);
+                const now = Number(timestamp) || Date.now();
+                const windowMs = this.messageDedupeWindowMs || 60 * 1000;
+
+                if (prev != null) {
+                    // Server replay of something already shown (live or restored from localStorage).
+                    if (isReplay) {
+                        return true;
+                    }
+                    // Live path only: same payload within the short network-retry window.
+                    // Restored history may legitimately contain identical lines (e.g. two idles).
+                    if (!isRestored && now - prev < windowMs) {
+                        return true;
+                    }
+                }
+
+                this.messageFingerprints.set(fp, now);
+                // Bound map growth across long sessions.
+                if (this.messageFingerprints.size > 1000) {
+                    const cutoff = now - (this.messageHistoryMaxAgeMs || 48 * 60 * 60 * 1000);
+                    for (const [key, ts] of this.messageFingerprints) {
+                        if (ts < cutoff) {
+                            this.messageFingerprints.delete(key);
+                        }
+                    }
+                }
+                return false;
+            }
+
+            addMessage(
+                text,
+                type = 'info',
+                typeLabel = null,
+                isRestored = false,
+                insertAtTop = true,
+                isReplay = false
+            ) {
                 const container = document.getElementById('messagesContainer');
                 const message = document.createElement('div');
                 message.className = `message ${type}`;
-                console.log('Adding message:', text, 'Type:', type, 'TypeLabel:', typeLabel, 'IsRestored:', isRestored);
+                console.log(
+                    'Adding message:',
+                    text,
+                    'Type:',
+                    type,
+                    'TypeLabel:',
+                    typeLabel,
+                    'IsRestored:',
+                    isRestored,
+                    'IsReplay:',
+                    isReplay
+                );
                 
                 // Skip empty or whitespace-only messages
                 if (!text || text === '') {
@@ -4831,6 +4988,17 @@
                     return;
                 }
                 text = text.trim();
+
+                if (
+                    this.isDuplicateMessage(text, type, typeLabel, {
+                        isRestored,
+                        isReplay,
+                        timestamp: Date.now(),
+                    })
+                ) {
+                    console.log('Skipping duplicate message');
+                    return;
+                }
 
                 const normalizedText = text.toLowerCase();
                 const normalizedTypeLabel = String(typeLabel || '').toLowerCase();
@@ -4846,9 +5014,11 @@
                 if (isRestored) {
                     message.classList.add('restored');
                 }
+                if (isReplay) {
+                    message.classList.add('replayed');
+                }
                 
                 const timestamp = new Date().toLocaleTimeString();
-                const labelText = typeLabel ? `${typeLabel} ` : '';
                 
                 if (typeLabel) {
                     const typeLabelSpan = document.createElement('span');
@@ -4861,6 +5031,12 @@
 
                     message.appendChild(typeLabelSpan);
                     message.appendChild(contentSpan);
+                    if (isReplay) {
+                        const badge = document.createElement('span');
+                        badge.className = 'message-replay-badge';
+                        badge.textContent = 'replay';
+                        message.appendChild(badge);
+                    }
                 } else {
                     message.innerText = `[${timestamp}] ${text}`;
                 }
@@ -4872,8 +5048,8 @@
                     container.appendChild(message);
                 }
                 
-                // Store message in history (don't store restored messages to avoid duplication)
-                if (!isRestored && this.shouldPersistMessage(text)) {
+                // Store message in history (don't store restored/replay lines to avoid duplication)
+                if (!isRestored && !isReplay && this.shouldPersistMessage(text)) {
                     this.storeMessage({
                         text: text,
                         type: type,
@@ -4881,11 +5057,8 @@
                         timestamp: Date.now()
                     });
                 }
-                
-                // Limit to 50 messages in display
-                while (container.children.length > 50) {
-                    container.removeChild(container.lastChild);
-                }
+
+                // Show all locally kept messages; container scrolls (no display cap).
             }
 
             shouldPersistMessage(text) {
@@ -4899,6 +5072,14 @@
                 }
 
                 if (trimmedText === 'Previous settings restored 🏛️') {
+                    return false;
+                }
+
+                if (trimmedText.startsWith('Switched tribes - loading')) {
+                    return false;
+                }
+
+                if (trimmedText.startsWith('Switched players - loading')) {
                     return false;
                 }
 
@@ -4933,11 +5114,37 @@
                         typeLabel: messageData.typeLabel ? String(messageData.typeLabel) : null,
                         timestamp: Number(messageData.timestamp) || Date.now()
                     };
+
+                    // Avoid writing the same payload twice in a short window (reconnect/store races).
+                    const last = messages.length > 0 ? messages[messages.length - 1] : null;
+                    const windowMs = this.messageDedupeWindowMs || 60 * 1000;
+                    if (
+                        last &&
+                        last.text === sanitizedMessage.text &&
+                        last.type === sanitizedMessage.type &&
+                        String(last.typeLabel || '') === String(sanitizedMessage.typeLabel || '') &&
+                        Math.abs(
+                            (Number(sanitizedMessage.timestamp) || 0) -
+                                (Number(last.timestamp) || 0)
+                        ) < windowMs
+                    ) {
+                        return;
+                    }
                     
                     messages.push(sanitizedMessage);
+
+                    const maxAge = this.messageHistoryMaxAgeMs || 48 * 60 * 60 * 1000;
+                    const now = Date.now();
+                    messages = messages.filter(
+                        (msg) =>
+                            msg &&
+                            typeof msg.timestamp === 'number' &&
+                            now - msg.timestamp < maxAge
+                    );
                     
-                    if (messages.length > 200) {
-                        messages = messages.slice(-200);
+                    const maxStored = this.messageHistoryMaxStored || 200;
+                    if (messages.length > maxStored) {
+                        messages = messages.slice(-maxStored);
                     }
                     
                     window.TribesStorage.setItem(key, JSON.stringify(messages));
@@ -4954,6 +5161,10 @@
             loadMessageHistory() {
                 try {
                     const key = this.getMessageHistoryKey();
+                    // Avoid re-painting the same local history (reconnect / double init).
+                    if (this._loadedHistoryKey === key) {
+                        return;
+                    }
                     const messagesJson = window.TribesStorage.getItem(key);
                     
                     if (!messagesJson) return;
@@ -4969,7 +5180,7 @@
                     }
                     
                     const currentTime = Date.now();
-                    const maxAge = 24 * 60 * 60 * 1000;
+                    const maxAge = this.messageHistoryMaxAgeMs || 48 * 60 * 60 * 1000;
                     
                     const recentMessages = messages.filter(msg => 
                         msg && 
@@ -4979,21 +5190,43 @@
                         msg.text.trim().length > 0 &&
                         this.shouldPersistMessage(msg.text)
                     );
+
+                    // Prune expired entries on load so storage stays within 48h.
+                    if (recentMessages.length !== messages.length) {
+                        try {
+                            window.TribesStorage.setItem(key, JSON.stringify(recentMessages));
+                        } catch (_e) {
+                            /* ignore */
+                        }
+                    }
                     
                     if (recentMessages.length > 0) {
-                        const container = document.getElementById('messagesContainer');
-                        const recentNewestFirst = [...recentMessages].sort((a, b) => b.timestamp - a.timestamp);
+                        // Newest first so with append order the top of the scroll is most recent
+                        // when combined with insertAtTop live messages.
+                        const recentNewestFirst = [...recentMessages].sort(
+                            (a, b) => b.timestamp - a.timestamp
+                        );
 
-                        recentNewestFirst.forEach(msg => {
-                            this.addMessage(msg.text, msg.type, msg.typeLabel, true, false);
+                        recentNewestFirst.forEach((msg) => {
+                            this.addMessage(
+                                msg.text,
+                                msg.type,
+                                msg.typeLabel,
+                                true,
+                                false,
+                                false
+                            );
                         });
 
                         const separator = document.createElement('div');
                         separator.className = 'message info';
                         separator.style.cssText = 'text-align: center; font-style: italic; opacity: 0.7; border-top: 1px dashed #ccc; padding-top: 0.5rem;';
                         separator.innerText = `--- Previous messages (${recentMessages.length}) ---`;
+                        separator.dataset.historySeparator = '1';
+                        const container = document.getElementById('messagesContainer');
                         container.appendChild(separator);
                     }
+                    this._loadedHistoryKey = key;
                 } catch (error) {
                     console.warn('Failed to load message history:', error);
                 }
@@ -5002,6 +5235,7 @@
             clearMessageHistory() {
                 const key = this.getMessageHistoryKey();
                 window.TribesStorage.removeItem(key);
+                this.clearMessageFingerprints();
                 
                 const container = document.getElementById('messagesContainer');
                 container.innerHTML = '';
@@ -6580,6 +6814,7 @@
                     // Clear message display when switching tribes  
                     const container = document.getElementById('messagesContainer');
                     container.innerHTML = '';
+                    this.clearMessageFingerprints();
                     this.addMessage('Switched tribes - loading new message history...', 'info');
                     
                     // Load message history for new tribe
@@ -6598,6 +6833,7 @@
                     // Clear message display when switching players  
                     const container = document.getElementById('messagesContainer');
                     container.innerHTML = '';
+                    this.clearMessageFingerprints();
                     this.addMessage('Switched players - loading message history...', 'info');
                     
                     // Load message history for new player
@@ -6817,6 +7053,26 @@
                     action: 'setVisibility',
                     tribeName: tribeName,
                     hidden: hidden
+                });
+            }
+
+            deleteTribe(tribeName) {
+                if (!this.isReferee) return;
+                const label =
+                    String(tribeName || '').charAt(0).toUpperCase() +
+                    String(tribeName || '').slice(1);
+                const confirmed = window.confirm(
+                    `Delete tribe "${label}" permanently?\n\n` +
+                        'This removes it from the registry and deletes its tribe-data directory (saves and snapshots). This cannot be undone.'
+                );
+                if (!confirmed) {
+                    return;
+                }
+                this.send({
+                    type: 'manageTribe',
+                    action: 'delete',
+                    tribeName: tribeName,
+                    confirm: true,
                 });
             }
 
@@ -7040,15 +7296,22 @@
                     div.style.alignItems = 'center';
                     div.style.padding = '0.5rem';
                     div.style.borderBottom = '1px solid #eee';
+                    div.style.gap = '0.5rem';
                     
                     const nameSpan = document.createElement('span');
                     nameSpan.textContent = tribe.name.charAt(0).toUpperCase() + tribe.name.slice(1);
                     nameSpan.style.fontWeight = 'bold';
+                    nameSpan.style.flex = '1';
                     if (tribe.hidden) {
                         nameSpan.style.color = '#dc3545';
                         nameSpan.textContent += ' (Hidden)';
                     }
                     div.appendChild(nameSpan);
+
+                    const actions = document.createElement('div');
+                    actions.style.display = 'flex';
+                    actions.style.gap = '0.35rem';
+                    actions.style.flexShrink = '0';
                     
                     const btn = document.createElement('button');
                     btn.className = 'btn btn-small';
@@ -7061,7 +7324,17 @@
                         btn.style.background = '#6c757d';
                         btn.onclick = () => this.toggleTribeVisibility(tribe.name, true);
                     }
-                    div.appendChild(btn);
+                    actions.appendChild(btn);
+
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'btn btn-small';
+                    deleteBtn.textContent = 'Delete';
+                    deleteBtn.style.background = '#dc3545';
+                    deleteBtn.title = 'Permanently delete tribe data and registry entry';
+                    deleteBtn.onclick = () => this.deleteTribe(tribe.name);
+                    actions.appendChild(deleteBtn);
+
+                    div.appendChild(actions);
                     
                     container.appendChild(div);
                 });

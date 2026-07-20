@@ -81,8 +81,38 @@ function createTribe(tribeName) {
   return reg;
 }
 
+/**
+ * Remove a tribe from the registry and delete its tribe-data directory.
+ * @returns {{ registry: object, deletedDir: boolean }}
+ */
+function deleteTribe(tribeName) {
+  pathSafety.assertSafeTribeName(tribeName);
+  const reg = initRegistry();
+  const existedInRegistry = !!reg[tribeName];
+  if (existedInRegistry) {
+    delete reg[tribeName];
+    saveRegistry(reg);
+  }
+
+  const dir = pathSafety.tribeDir(tribeName);
+  let deletedDir = false;
+  if (fs.existsSync(dir)) {
+    fs.rmSync(dir, { recursive: true, force: true });
+    deletedDir = true;
+  }
+
+  if (!existedInRegistry && !deletedDir) {
+    const err = new Error(`Tribe '${tribeName}' was not found in the registry or on disk.`);
+    err.code = 'TRIBE_NOT_FOUND';
+    throw err;
+  }
+
+  return { registry: reg, deletedDir };
+}
+
 module.exports = {
   getTribes,
   setTribeHidden,
   createTribe,
+  deleteTribe,
 };
