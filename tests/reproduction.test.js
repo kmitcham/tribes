@@ -223,7 +223,7 @@ test('make a invitelist, with pass', () => {
     gameState,
     {}
   );
-  exp = 'Setting your inviteList list to:p2,p3,!pass\n';
+  exp = 'Setting your invite list to: p2, p3, pass.\n';
   expect(response).toBe(exp);
   expect(gameState['population']['p1']['inviteList']).toStrictEqual(
     expectedList
@@ -261,7 +261,7 @@ test('make a invitelist, with !all', () => {
     gameState,
     {}
   );
-  exp = 'Setting your inviteList list to:p2,p3,!pass\n';
+  exp = 'Setting your invite list to: p2, p3, pass.\n';
   expect(response).toBe(exp);
   expect(gameState['population']['p1']['inviteList']).toStrictEqual(
     expectedList
@@ -299,7 +299,7 @@ test('make a invitelist, with Pass', () => {
     gameState,
     {}
   );
-  exp = 'Setting your inviteList list to:p2,p3,!Pass\n';
+  exp = 'Setting your invite list to: p2, p3, pass.\n';
   expect(response).toBe(exp);
   expect(gameState['population']['p1']['inviteList']).toStrictEqual(
     expectedList
@@ -371,7 +371,7 @@ test('make a inviteList, with pass happypath', () => {
     gameState,
     {}
   );
-  expect(response).toBe('Setting your inviteList list to:p2,p4,!pass\n');
+  expect(response).toBe('Setting your invite list to: p2, p4, pass.\n');
 });
 
 test('trigger end of mating', () => {
@@ -546,10 +546,10 @@ test('matingList tests', () => {
   };
   //function handleReproductionList(actorName, args, listName, gameState, bot){
   response = reproLib.showMatingLists('p1', gameState, {});
-  expect(response.indexOf('inviteList')).toBeGreaterThan(0);
+  expect(response.indexOf('invite list')).toBeGreaterThan(0);
   expect(response.indexOf('romantic responses')).toBeGreaterThan(0);
   response = reproLib.showMatingLists('p2', gameState, {});
-  expect(response.indexOf('inviteList')).toBeGreaterThan(0);
+  expect(response.indexOf('invite list')).toBeGreaterThan(0);
   expect(response.indexOf('romantic responses')).toBeGreaterThan(0);
   canResponse = reproLib.canStillInvite(gameState);
   expect(canResponse).toBe('p1');
@@ -605,7 +605,7 @@ test('make a invitelist, with commas, pass and save', () => {
     gameState,
     {}
   );
-  exp = 'Setting your inviteList list to:p2,p3,!pass\n';
+  exp = 'Setting your invite list to: p2, p3, pass.\n';
   expect(response).toBe(exp);
   expect(gameState['population']['p1']['inviteList']).toStrictEqual(
     expectedList

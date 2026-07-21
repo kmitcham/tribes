@@ -552,7 +552,11 @@ function vote(gameState, actorName, candidateName) {
 
     // Only send message if chief actually changed (none to chief, or one chief to another)
     if (currentChief === null || currentChief !== candidate.name) {
-      text.addMessage(gameState, 'tribe', candidate.name + ' is the new chief');
+      text.addMessage(
+        gameState,
+        'tribe',
+        '👑 ' + candidate.name + ' is the new chief.'
+      );
       var chiefHelp = help.chiefHelp();
       text.addMessage(gameState, candidate.name, chiefHelp);
     }

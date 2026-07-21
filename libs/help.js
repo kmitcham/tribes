@@ -78,11 +78,11 @@ function chiefHelp() {
   text +=
     ' startwork begins the work round, enabling work attempts and rolls\n';
   text +=
-    ' startfood ends the work round; subtract food/grain; birth; child age increase\n';
+    ' startfood starts the food round (ends work): food/grain use, births, and child aging\n';
   text +=
-    ' startreproduction  start the reproduction round. Also when migration happens\n';
+    ' startreproduction starts the reproduction round (mating); migration also happens here\n';
   text +=
-    ' advanceround advance to the next legal round transition automatically\n';
+    ' advanceround advances to the next legal round when the current one is ready (work→food→reproduction→work)\n';
   text += ' chance after mating, chance is required to end the season\n';
   //text+=' command <target> <command>  (order a tribe member.  They might obey)\n'
   text +=
@@ -92,7 +92,7 @@ function chiefHelp() {
   text += ' skip <person>   end a players reproduction turn\n';
   text += ' checkmating report on status of mating attempts\n';
   text +=
-    ' endgame convert all the children to new adults or corpses.  Twenty years is often considered a good duration for a game.\n';
+    ' endgame ends the game, converting all the children to new adults or corpses. Twenty years is a standard duration for a game.\n';
   return text;
 }
 

@@ -24,6 +24,8 @@ const pop = require('./libs/population.js');
 const help = require('./libs/help.js');
 const guardlib = require('./libs/guardCode.js');
 const jsonUtils = require('./libs/jsonUtils.js');
+// Bind early so startup code can load users.json before other module setup.
+const loadJson = jsonUtils.loadJson;
 const logger = require('./libs/logger.js');
 const {
   createMockInteraction: createMockInteractionImpl,
@@ -98,6 +100,7 @@ const playerSessions = sessionStore.getPlayerSessions(); // playerName -> Set of
 const { SESSION_TIMEOUT } = sessionStore;
 
 // Load users data
+const USERS_JSON_PATH = './tribe-data/users.json';
 try {
   // Ensure tribe-data directory exists
   if (!fs.existsSync('./tribe-data')) {
@@ -105,9 +108,26 @@ try {
     logWithTimestamp('Created tribe-data directory');
   }
 
-  usersDict = loadJson('./tribe-data/users.json');
-} catch (_error) {
-  logWithTimestamp('No existing users.json, starting fresh');
+  if (!fs.existsSync(USERS_JSON_PATH)) {
+    logWithTimestamp('No existing users.json, starting with empty users dict');
+    usersDict = {};
+  } else {
+    const loaded = loadJson(USERS_JSON_PATH, {});
+    usersDict =
+      loaded && typeof loaded === 'object' && !Array.isArray(loaded)
+        ? loaded
+        : {};
+    logWithTimestamp(
+      `Loaded ${Object.keys(usersDict).length} user(s) from users.json`
+    );
+  }
+} catch (error) {
+  // Never wipe a real file on parse/IO failure — leave empty in memory only
+  // and log loudly so a later write does not silently replace disk without notice.
+  logWithTimestamp(
+    'ERROR loading users.json (in-memory users start empty): ' +
+      (error && error.message ? error.message : String(error))
+  );
   usersDict = {};
 }
 
@@ -744,8 +764,6 @@ function arrayMatch(array1, array2) {
   if (!array1 || !array2) return false;
   return array1.sort().join(',') === array2.sort().join(',');
 }
-
-const loadJson = jsonUtils.loadJson;
 
 function actuallyWriteToDisk(fileName, jsonData) {
   try {

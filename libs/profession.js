@@ -87,7 +87,7 @@ function specialize(playerName, profession, gameState) {
   text.addMessage(
     gameState,
     'tribe',
-    playerName + ' is a skilled ' + profession
+    playerName + ' is a skilled ' + profession + '.'
   );
 
   if (profession.startsWith('c')) {

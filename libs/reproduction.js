@@ -96,10 +96,13 @@ function showMatingLists(actorName, gameState) {
     actor.inviteList &&
     actor.inviteList.length > 0
   ) {
-    response += 'Your inviteList is:' + actor.inviteList + '\n';
+    response +=
+      'Your invite list is: ' +
+      formatRomanceListForDisplay(actor.inviteList) +
+      '.\n';
   } else {
     actor.inviteList = [];
-    response += 'Your inviteList is empty\n';
+    response += 'Your invite list is empty.\n';
   }
   //"consentDict": {
   //      "Kevin": "consent",
@@ -173,6 +176,31 @@ function hasBothLivingSexes(population) {
     }
   }
   return false;
+}
+
+/** Pretty-print a romance list for private messages (spaces; friendly "pass"). */
+function formatRomanceListForDisplay(list) {
+  if (!list || !list.length) {
+    return '(empty)';
+  }
+  return list
+    .map((entry) => {
+      const s = String(entry || '').trim();
+      if (s.toLowerCase() === '!pass' || s.toLowerCase() === 'pass') {
+        return 'pass';
+      }
+      if (s.toLowerCase() === '!none' || s.toLowerCase() === 'none') {
+        return 'none';
+      }
+      if (s.toLowerCase() === '!all' || s.toLowerCase() === 'all') {
+        return 'all';
+      }
+      if (s.toLowerCase() === '!save' || s.toLowerCase() === 'save') {
+        return 'save';
+      }
+      return s;
+    })
+    .join(', ');
 }
 
 function handleReproductionList(actorName, arrayOfNames, listName, gameState) {
@@ -251,14 +279,25 @@ function handleReproductionList(actorName, arrayOfNames, listName, gameState) {
     returnMessage += 'Please try again to set your ' + listName + '\n';
   } else {
     actingMember[listName] = list;
-    returnMessage += 'Setting your ' + listName + ' list to:' + list + '\n';
+    const listLabel =
+      listName === 'inviteList'
+        ? 'invite'
+        : listName === 'consentList'
+          ? 'consent'
+          : listName;
+    returnMessage +=
+      'Setting your ' +
+      listLabel +
+      ' list to: ' +
+      formatRomanceListForDisplay(list) +
+      '.\n';
     if (save) {
       if (gameState.reproductionRound) {
         returnMessage +=
-          'Changing your list during the reproduction may cause secret informatio to leak.\n';
+          'Changing your list during the reproduction may cause secret information to leak.\n';
       } else {
         returnMessage +=
-          'Saving your ' + listName + ' list be used in future rounds\n';
+          'Saving your ' + listLabel + ' list for use in future rounds.\n';
       }
     }
   }
@@ -279,7 +318,7 @@ function invite(gameState, rawActorName, rawList) {
       text.addMessage(
         gameState,
         player.name,
-        'Current invitelist: ' + player.inviteList.join(' ')
+        'Current invite list: ' + formatRomanceListForDisplay(player.inviteList)
       );
       return;
     } else {

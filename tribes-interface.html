@@ -685,13 +685,15 @@
         .message-replay-badge {
             display: inline-block;
             margin-left: 0.35rem;
-            font-size: 0.68rem;
-            font-weight: 500;
-            letter-spacing: 0.02em;
-            text-transform: uppercase;
-            color: rgba(0, 0, 0, 0.45);
-            opacity: 0.75;
-            vertical-align: top;
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+            color: rgba(0, 0, 0, 0.55);
+            opacity: 0.9;
+            vertical-align: middle;
+            background: rgba(0, 0, 0, 0.06);
+            border-radius: 4px;
+            padding: 0.1rem 0.35rem;
         }
 
         .connection-status {
@@ -1186,6 +1188,23 @@
             background-color: #f8f9fa;
             font-weight: 600;
             color: #495057;
+        }
+
+        th.sortable {
+            cursor: pointer;
+            user-select: none;
+            white-space: nowrap;
+        }
+
+        th.sortable:hover {
+            background-color: #e9ecef;
+            color: #212529;
+        }
+
+        th.sortable .sort-indicator {
+            margin-left: 0.25rem;
+            font-size: 0.75em;
+            opacity: 0.85;
         }
 
         .status-text {
@@ -1957,6 +1976,12 @@
                 this.messageHistoryMaxStored = 200;
                 // Live network double-delivery window (same text/type/label).
                 this.messageDedupeWindowMs = 60 * 1000;
+                // Population / children / graveyard column sort (default: name ascending).
+                this.tableSort = {
+                    population: { key: 'name', dir: 'asc' },
+                    children: { key: 'name', dir: 'asc' },
+                    graveyard: { key: 'name', dir: 'asc' },
+                };
                 
                 this.loadSavedSettings();
                 this.initializeEventListeners();
@@ -2079,8 +2104,8 @@
                 if (savedTribe || savedPlayerName) {
                     setTimeout(() => {
                         const welcomeMsg = savedPlayerName ? 
-                            `Welcome back, ${savedPlayerName}! 🏛️` : 
-                            'Previous settings restored 🏛️';
+                            `Welcome back, ${savedPlayerName}! 🏕️` : 
+                            'Previous settings restored 🏕️';
                         this.addMessage(welcomeMsg, 'info');
                     }, 400);
                 }
@@ -3049,6 +3074,7 @@
                             command: commandName,
                             parameters: {}
                         });
+                        this.clearCommandEntry();
                     }
                 } else {
                     // Show modal for commands with parameters
@@ -3111,6 +3137,38 @@
                 modal.classList.remove('active');
             }
 
+            /**
+             * Blank the command name search field after a successful send.
+             * Does not open/close the modal; call after execute paths only.
+             */
+            clearCommandEntry() {
+                const searchInput = document.getElementById('commandSearchInput');
+                const clearBtn = document.getElementById('commandClearBtn');
+                const goBtn = document.getElementById('commandGoBtn');
+                const suggestions = document.getElementById('commandSuggestions');
+
+                if (searchInput) {
+                    searchInput.value = '';
+                }
+                if (suggestions) {
+                    suggestions.style.display = 'none';
+                    suggestions.innerHTML = '';
+                }
+                if (goBtn) {
+                    goBtn.disabled = true;
+                }
+                if (clearBtn) {
+                    clearBtn.disabled = true;
+                }
+                this.selectedCommand = null;
+                document.querySelectorAll('.command-item').forEach((item) => {
+                    item.classList.remove('selected');
+                });
+                if (typeof this.filterCommands === 'function') {
+                    this.filterCommands('');
+                }
+            }
+
             executeModalCommand() {
                 try {
                     const parametersContainer = document.getElementById('modalCommandParameters');
@@ -3145,6 +3203,7 @@
                         consentDict: newConsentDict
                     });
                     this.closeCommandModal();
+                    this.clearCommandEntry();
                     return;
                 }
                 if ((cmdNameExec === 'consent' || cmdNameExec === 'decline') && document.getElementById('unifiedRomanceGrid')) {
@@ -3163,6 +3222,7 @@
                         consentDict: newConsentDict
                     });
                     this.closeCommandModal();
+                    this.clearCommandEntry();
                     return;
                 }
                 
@@ -3176,6 +3236,7 @@
                         parameters: parameters
                     });
                     this.closeCommandModal();
+                    this.clearCommandEntry();
                 }
                 } catch (e) {
                     console.error('Modal execution error:', e);
@@ -5034,7 +5095,9 @@
                     if (isReplay) {
                         const badge = document.createElement('span');
                         badge.className = 'message-replay-badge';
-                        badge.textContent = 'replay';
+                        badge.textContent = 'while you were away';
+                        badge.title =
+                            'This message was sent while you were offline and delivered when you reconnected';
                         message.appendChild(badge);
                     }
                 } else {
@@ -5071,7 +5134,10 @@
                     return false;
                 }
 
-                if (trimmedText === 'Previous settings restored 🏛️') {
+                if (
+                    trimmedText === 'Previous settings restored 🏕️' ||
+                    trimmedText === 'Previous settings restored 🏛️'
+                ) {
                     return false;
                 }
 
@@ -5695,6 +5761,100 @@
                 return '';
             }
 
+            getTableSortState(tableId) {
+                if (!this.tableSort) {
+                    this.tableSort = {};
+                }
+                if (!this.tableSort[tableId]) {
+                    this.tableSort[tableId] = { key: 'name', dir: 'asc' };
+                }
+                return this.tableSort[tableId];
+            }
+
+            setTableSort(tableId, key) {
+                const state = this.getTableSortState(tableId);
+                if (state.key === key) {
+                    state.dir = state.dir === 'asc' ? 'desc' : 'asc';
+                } else {
+                    state.key = key;
+                    state.dir = 'asc';
+                }
+                if (tableId === 'population') {
+                    this.updatePopulationTable(this.currentPopulation);
+                } else if (tableId === 'children') {
+                    this.updateChildrenTable(this.currentChildren);
+                } else if (tableId === 'graveyard') {
+                    this.updateGraveyardTable(this.currentGraveyard);
+                }
+            }
+
+            compareSortValues(a, b, dir) {
+                const mul = dir === 'desc' ? -1 : 1;
+                const aEmpty = a === undefined || a === null || a === '';
+                const bEmpty = b === undefined || b === null || b === '';
+                if (aEmpty && bEmpty) return 0;
+                if (aEmpty) return 1;
+                if (bEmpty) return -1;
+                if (typeof a === 'number' && typeof b === 'number') {
+                    if (a === b) return 0;
+                    return a < b ? -mul : mul;
+                }
+                const aNum = Number(a);
+                const bNum = Number(b);
+                if (
+                    Number.isFinite(aNum) &&
+                    Number.isFinite(bNum) &&
+                    String(a).trim() !== '' &&
+                    String(b).trim() !== ''
+                ) {
+                    if (aNum === bNum) return 0;
+                    return aNum < bNum ? -mul : mul;
+                }
+                return (
+                    String(a).localeCompare(String(b), undefined, {
+                        sensitivity: 'base',
+                        numeric: true,
+                    }) * mul
+                );
+            }
+
+            sortNamedEntries(entries, getSortValue, sortState) {
+                const key = sortState.key || 'name';
+                const dir = sortState.dir || 'asc';
+                return entries.slice().sort((left, right) => {
+                    const primary = this.compareSortValues(
+                        getSortValue(left, key),
+                        getSortValue(right, key),
+                        dir
+                    );
+                    if (primary !== 0) return primary;
+                    return this.compareSortValues(
+                        getSortValue(left, 'name'),
+                        getSortValue(right, 'name'),
+                        'asc'
+                    );
+                });
+            }
+
+            createSortableHeader(tableId, key, label) {
+                const th = document.createElement('th');
+                th.className = 'sortable';
+                th.dataset.sortKey = key;
+                const state = this.getTableSortState(tableId);
+                const labelSpan = document.createElement('span');
+                labelSpan.textContent = label;
+                th.appendChild(labelSpan);
+                if (state.key === key) {
+                    const ind = document.createElement('span');
+                    ind.className = 'sort-indicator';
+                    ind.textContent = state.dir === 'asc' ? '▲' : '▼';
+                    th.appendChild(ind);
+                }
+                th.title = 'Click to sort';
+                th.onclick = () => this.setTableSort(tableId, key);
+                return th;
+            }
+
             updatePopulationTable(population) {
                 const container = document.getElementById('populationTable');
                 container.innerHTML = '';
@@ -5709,11 +5869,15 @@
 
                 const thead = document.createElement('thead');
                 const headerRow = document.createElement('tr');
-                const headers = ['Name', 'Resources', 'Work/Mating Status', 'Status Labels'];
-                headers.forEach(header => {
-                    const th = document.createElement('th');
-                    th.textContent = header;
-                    headerRow.appendChild(th);
+                [
+                    { key: 'name', label: 'Name' },
+                    { key: 'resources', label: 'Resources' },
+                    { key: 'work', label: 'Work/Mating Status' },
+                    { key: 'status', label: 'Status Labels' },
+                ].forEach((header) => {
+                    headerRow.appendChild(
+                        this.createSortableHeader('population', header.key, header.label)
+                    );
                 });
                 thead.appendChild(headerRow);
                 table.appendChild(thead);
@@ -5724,8 +5888,48 @@
                         .filter(([, child]) => child && typeof child.age === 'number' && child.age >= -1 && child.age <= 23)
                         .map(([childName]) => childName)
                 );
+
+                const getPopulationSortValue = (entry, key) => {
+                    const person = entry.data || {};
+                    const name = person.name || entry.name || '';
+                    if (key === 'name') return String(name).toLowerCase();
+                    if (key === 'resources') {
+                        return (
+                            Number(person.food || 0) * 1000000 +
+                            Number(person.grain || 0) * 10000 +
+                            Number(person.basket || 0) * 100 +
+                            Number(person.spearhead || 0)
+                        );
+                    }
+                    if (key === 'work') {
+                        const worked = person.worked ? 1 : 0;
+                        const activity = String(
+                            person.activity || (person.worked ? 'worked' : '')
+                        ).toLowerCase();
+                        return `${worked}:${activity}`;
+                    }
+                    if (key === 'status') {
+                        const bits = [];
+                        if (person.chief) bits.push('chief');
+                        if (Number(person.isInjured) > 0) bits.push('injured');
+                        if (Number(person.isSick) > 0) bits.push('sick');
+                        if (person.isPregnant) bits.push('pregnant');
+                        if (person.canCraft) bits.push('craft');
+                        if (person.faction) bits.push(String(person.faction));
+                        if (person.escaped) bits.push('escaped');
+                        if (person.strength) bits.push(String(person.strength));
+                        return bits.sort().join(',') || '';
+                    }
+                    return '';
+                };
+
+                const entries = this.sortNamedEntries(
+                    Object.entries(population).map(([name, data]) => ({ name, data })),
+                    getPopulationSortValue,
+                    this.getTableSortState('population')
+                );
                 
-                Object.entries(population).forEach(([name, data]) => {
+                entries.forEach(({ name, data }) => {
                     const person = data || {};
                     const tr = document.createElement('tr');
                     tr.className = this.getGenderRowClass(person.gender);
@@ -5886,7 +6090,13 @@
                     orderedKeys.push('guardValue');
                 }
 
-                const columns = ['Name', ...orderedKeys.map(key => key === 'guardValue' ? 'Guard Value' : key)];
+                const columns = [
+                    { key: 'name', label: 'Name' },
+                    ...orderedKeys.map((key) => ({
+                        key,
+                        label: key === 'guardValue' ? 'Guard Value' : key,
+                    })),
+                ];
 
                 const getCurrentGuardValue = (childData) => {
                     if (typeof childData.guardValue === 'number' && Number.isFinite(childData.guardValue)) {
@@ -5910,16 +6120,50 @@
                 
                 const thead = document.createElement('thead');
                 const headerRow = document.createElement('tr');
-                columns.forEach(col => {
-                    const th = document.createElement('th');
-                    th.textContent = col;
-                    headerRow.appendChild(th);
+                columns.forEach((col) => {
+                    headerRow.appendChild(
+                        this.createSortableHeader('children', col.key, col.label)
+                    );
                 });
                 thead.appendChild(headerRow);
                 table.appendChild(thead);
                 
                 const tbody = document.createElement('tbody');
-                Object.entries(children).forEach(([name, data]) => {
+                const getChildSortValue = (entry, key) => {
+                    const data = entry.data || {};
+                    if (key === 'name') {
+                        return String(entry.name || data.name || '').toLowerCase();
+                    }
+                    if (key === 'guardValue') {
+                        return getCurrentGuardValue(data);
+                    }
+                    if (key === 'guardians') {
+                        const g = data.guardians;
+                        if (g && typeof g === 'object') {
+                            return Object.keys(g).sort().join(', ').toLowerCase();
+                        }
+                        return '';
+                    }
+                    if (key === 'age' || key === 'food') {
+                        const n = Number(data[key]);
+                        return Number.isFinite(n) ? n : data[key];
+                    }
+                    const v = data[key];
+                    if (Array.isArray(v)) return v.join(', ').toLowerCase();
+                    if (v && typeof v === 'object') {
+                        return Object.keys(v).join(', ').toLowerCase();
+                    }
+                    return v === undefined || v === null ? '' : String(v).toLowerCase();
+                };
+
+                const entries = this.sortNamedEntries(
+                    Object.entries(children).map(([name, data]) => ({ name, data })),
+                    getChildSortValue,
+                    this.getTableSortState('children')
+                );
+
+                entries.forEach(({ name, data }) => {
+
                     const row = document.createElement('tr');
                     row.className = this.getGenderRowClass(data && data.gender);
                     const childAge = typeof data['age'] === 'number' ? data['age'] : 0;
@@ -6016,7 +6260,13 @@
                     return;
                 }
 
-                const columns = ['Name', 'Age', 'Death Season', 'Profession', 'Death Message'];
+                const columns = [
+                    { key: 'name', label: 'Name' },
+                    { key: 'age', label: 'Age' },
+                    { key: 'deathSeason', label: 'Death Season' },
+                    { key: 'profession', label: 'Profession' },
+                    { key: 'deathMessage', label: 'Death Message' },
+                ];
 
                 const formatAge = (value) => {
                     if (value === undefined || value === null || value === '') {
@@ -6049,16 +6299,44 @@
 
                 const thead = document.createElement('thead');
                 const headerRow = document.createElement('tr');
-                columns.forEach(col => {
-                    const th = document.createElement('th');
-                    th.textContent = col;
-                    headerRow.appendChild(th);
+                columns.forEach((col) => {
+                    headerRow.appendChild(
+                        this.createSortableHeader('graveyard', col.key, col.label)
+                    );
                 });
                 thead.appendChild(headerRow);
                 table.appendChild(thead);
 
                 const tbody = document.createElement('tbody');
-                Object.entries(graveyard).forEach(([name, data]) => {
+                const getGraveSortValue = (entry, key) => {
+                    const data = entry.data || {};
+                    if (key === 'name') {
+                        return String(entry.name || data.name || '').toLowerCase();
+                    }
+                    if (key === 'age') {
+                        const n = Number(data.age);
+                        return Number.isFinite(n) ? n : data.age;
+                    }
+                    if (key === 'deathSeason') {
+                        const n = Number(getDeathSeason(data));
+                        return Number.isFinite(n) ? n : getDeathSeason(data);
+                    }
+                    if (key === 'profession') {
+                        return String(getProfession(data) || '').toLowerCase();
+                    }
+                    if (key === 'deathMessage') {
+                        return String(getDeathMessage(data) || '').toLowerCase();
+                    }
+                    return '';
+                };
+
+                const entries = this.sortNamedEntries(
+                    Object.entries(graveyard).map(([name, data]) => ({ name, data })),
+                    getGraveSortValue,
+                    this.getTableSortState('graveyard')
+                );
+
+                entries.forEach(({ name, data }) => {
                     const row = document.createElement('tr');
                     row.className = this.getGenderRowClass(data && data.gender);
 
@@ -7233,6 +7511,7 @@
                 }
 
                 this.closeCombatModal();
+                this.clearCommandEntry();
             }
             
             handleManageUsersList(data) {
