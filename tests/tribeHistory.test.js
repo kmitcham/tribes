@@ -186,6 +186,90 @@ describe('tribeHistory.js', () => {
     );
   });
 
+  test('showCombinedHistory should filter to current season only', () => {
+    gameState.seasonCounter = 21; // current season stamp = 10.5
+    gameState.tribeHistory = [
+      '10: previous season event',
+      '10.5: current season event',
+      '9.5: older event',
+    ];
+    pop.memberByName.mockReturnValue({
+      name: playerName,
+      history: ['10.5: personal current'],
+    });
+
+    tribeHistory.showCombinedHistory(playerName, gameState, 'all', 0);
+
+    expect(text.addMessage).toHaveBeenNthCalledWith(
+      1,
+      gameState,
+      playerName,
+      'History:all years_back=current season'
+    );
+    expect(text.addMessage).toHaveBeenCalledWith(
+      gameState,
+      playerName,
+      '[Your history] 10.5: personal current'
+    );
+    expect(text.addMessage).toHaveBeenCalledWith(
+      gameState,
+      playerName,
+      '[Tribe history] 10.5: current season event'
+    );
+    expect(text.addMessage).not.toHaveBeenCalledWith(
+      gameState,
+      playerName,
+      '[Tribe history] 10: previous season event'
+    );
+    expect(text.addMessage).not.toHaveBeenCalledWith(
+      gameState,
+      playerName,
+      '[Tribe history] 9.5: older event'
+    );
+  });
+
+  test('showCombinedHistory should filter to previous season only', () => {
+    gameState.seasonCounter = 21; // current = 10.5, previous = 10
+    gameState.tribeHistory = [
+      '10: previous season event',
+      '10.5: current season event',
+      '9.5: older event',
+    ];
+    pop.memberByName.mockReturnValue({
+      name: playerName,
+      history: ['10: personal previous'],
+    });
+
+    tribeHistory.showCombinedHistory(playerName, gameState, 'all', -1);
+
+    expect(text.addMessage).toHaveBeenNthCalledWith(
+      1,
+      gameState,
+      playerName,
+      'History:all years_back=previous season'
+    );
+    expect(text.addMessage).toHaveBeenCalledWith(
+      gameState,
+      playerName,
+      '[Your history] 10: personal previous'
+    );
+    expect(text.addMessage).toHaveBeenCalledWith(
+      gameState,
+      playerName,
+      '[Tribe history] 10: previous season event'
+    );
+    expect(text.addMessage).not.toHaveBeenCalledWith(
+      gameState,
+      playerName,
+      '[Tribe history] 10.5: current season event'
+    );
+    expect(text.addMessage).not.toHaveBeenCalledWith(
+      gameState,
+      playerName,
+      '[Tribe history] 9.5: older event'
+    );
+  });
+
   test('showCombinedHistory chance filter should ignore non-chance references', () => {
     gameState.seasonCounter = 20;
     gameState.tribeHistory = [

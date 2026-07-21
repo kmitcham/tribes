@@ -1,12 +1,19 @@
 const { SlashCommandBuilder } = require('../../libs/command-builders.js');
 const tribeHistory = require('../../libs/tribeHistory.js');
 
+// Special years_back sentinels (must match tribeHistory.LOOKBACK_*).
+const LOOKBACK_CURRENT_SEASON = 0;
+const LOOKBACK_PREVIOUS_SEASON = -1;
+
 function getYearsBackChoices(gameState) {
   const currentYear = Number(gameState && gameState.seasonCounter) / 2;
   const maxYears = Number.isFinite(currentYear)
     ? Math.max(1, Math.ceil(currentYear))
     : 1;
-  const choices = [];
+  const choices = [
+    { name: 'current season', value: LOOKBACK_CURRENT_SEASON },
+    { name: 'previous season', value: LOOKBACK_PREVIOUS_SEASON },
+  ];
   for (let year = 1; year <= maxYears; year++) {
     choices.push({
       name: year === 1 ? '1 year' : `${year} years`,
@@ -28,7 +35,7 @@ function getHistoryCommandOptions(gameState) {
     {
       type: 'integer',
       name: 'years_back',
-      description: 'How many years back to search',
+      description: 'Current/previous season, or how many years back',
       required: true,
       choices: getYearsBackChoices(gameState),
     },
@@ -51,7 +58,7 @@ module.exports = {
     .addIntegerOption((option) =>
       option
         .setName('years_back')
-        .setDescription('How many years back to search')
+        .setDescription('Current/previous season, or how many years back')
         .addChoices(...getYearsBackChoices())
         .setRequired(true)
     ),

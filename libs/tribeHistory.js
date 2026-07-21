@@ -69,15 +69,41 @@ function parseHistorySeason(message) {
   return Number.isFinite(season) ? season : null;
 }
 
+// Special years_back sentinels used by the history command choices.
+const LOOKBACK_CURRENT_SEASON = 0;
+const LOOKBACK_PREVIOUS_SEASON = -1;
+
 function normalizeYearsBack(yearsBack) {
   if (yearsBack === null || yearsBack === undefined || yearsBack === '') {
     return null;
   }
   var parsed = Number(yearsBack);
-  if (!Number.isFinite(parsed) || parsed < 0) {
+  if (!Number.isFinite(parsed)) {
+    return null;
+  }
+  // Allow 0 (current season) and -1 (previous season); reject other negatives.
+  if (parsed < LOOKBACK_PREVIOUS_SEASON) {
     return null;
   }
   return parsed;
+}
+
+function sameSeasonStamp(left, right) {
+  return Math.abs(left - right) < 0.0001;
+}
+
+function formatYearsBackLabel(yearsBack) {
+  var years = normalizeYearsBack(yearsBack);
+  if (years === LOOKBACK_CURRENT_SEASON) {
+    return 'current season';
+  }
+  if (years === LOOKBACK_PREVIOUS_SEASON) {
+    return 'previous season';
+  }
+  if (years === null) {
+    return String(yearsBack);
+  }
+  return String(years);
 }
 
 function matchesYearsBack(message, gameState, yearsBack) {
@@ -85,15 +111,21 @@ function matchesYearsBack(message, gameState, yearsBack) {
   if (years === null) {
     return true;
   }
-  var currentYear = Number(gameState && gameState.seasonCounter) / 2;
-  if (!Number.isFinite(currentYear)) {
+  var currentSeason = Number(gameState && gameState.seasonCounter) / 2;
+  if (!Number.isFinite(currentSeason)) {
     return true;
   }
   var season = parseHistorySeason(message);
   if (season === null) {
     return true;
   }
-  return season >= currentYear - years;
+  if (years === LOOKBACK_CURRENT_SEASON) {
+    return sameSeasonStamp(season, currentSeason);
+  }
+  if (years === LOOKBACK_PREVIOUS_SEASON) {
+    return sameSeasonStamp(season, currentSeason - 0.5);
+  }
+  return season >= currentSeason - years;
 }
 
 function matchesSubject(message, subject, playerName) {
@@ -263,7 +295,7 @@ function showCombinedHistory(playerName, gameState, subject, yearsBack) {
   if (hasSubjectOption || hasYearsOption) {
     var optionSummary = hasSubjectOption ? String(subject) : 'all';
     if (hasYearsOption) {
-      optionSummary += ' years_back=' + String(yearsBack);
+      optionSummary += ' years_back=' + formatYearsBackLabel(yearsBack);
     }
     text.addMessage(gameState, playerName, 'History:' + optionSummary);
   }
