@@ -6,39 +6,47 @@ const career = require('./career.js');
 //module.exports.hunt = (playername, player, rollValue, gameState) =>{
 //    function gather(playername, player, rollValue,gameState){
 module.exports.gather = (playername, player, rollValue, gameState) => {
-  var message = playername + ' gathers [roll ' + rollValue + ']';
+  // Build modifiers first so they appear ahead of the roll in the message.
+  var modifiers = '';
   var netRoll = rollValue;
   let modifier = 0;
   let guardCount;
   if (gameState.seasonCounter % 2 == 0) {
-    message += ' (-3 season)';
+    modifiers += ' (-3 season)';
     modifier -= 3;
   }
 
   if (!('profession' in player) || !player.profession.startsWith('g')) {
-    message += ' (-3 skill)';
+    modifiers += ' (-3 skill)';
     modifier -= 3;
   }
   if (player.guarding) {
     guardCount = player.guarding.length;
     if (guardCount == 3) {
-      message += ' (-2 kids)';
+      modifiers += ' (-2 kids)';
       modifier -= 2;
     }
     if (guardCount == 4) {
-      message += ' (-4 kids)';
+      modifiers += ' (-4 kids)';
       modifier -= 4;
     }
     if (guardCount > 4) {
-      return message + ' is guarding too many children to gather.';
+      return (
+        playername +
+        ' gathers' +
+        modifiers +
+        ' [roll ' +
+        rollValue +
+        '] is guarding too many children to gather.'
+      );
     }
   }
   if (player.strength) {
     if (player.strength.toLowerCase() == 'strong'.valueOf()) {
-      message += ' (+1 strong)';
+      modifiers += ' (+1 strong)';
       modifier += 1;
     } else if (player.strength.toLowerCase() == 'weak'.valueOf()) {
-      message += ' (-1 weak)';
+      modifiers += ' (-1 weak)';
       modifier -= 1;
     }
   }
@@ -46,6 +54,8 @@ module.exports.gather = (playername, player, rollValue, gameState) => {
   console.log(
     'gather roll:' + rollValue + ' mod:' + modifier + ' net:' + netRoll
   );
+  var message =
+    playername + ' gathers' + modifiers + ' [roll ' + rollValue + ']';
   const gatherData = locations[gameState.currentLocationName]['gather'];
   var get_message = '';
   var getFood = 0;
@@ -156,7 +166,7 @@ function gatherResultIcon(resultText) {
     return '🐢';
   }
   if (normalized.includes('clams')) {
-    return '🐚';
+    return '🦪';
   }
   return '';
 }

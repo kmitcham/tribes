@@ -223,6 +223,44 @@ describe('makeJerky function', () => {
       'Amount of food must be a number.'
     );
   });
+
+  test('should message the player when canJerky is false', () => {
+    gameState.canJerky = false;
+
+    general.makeJerky('player1', 6, gameState);
+
+    expect(gameState.population.player1.food).toBe(7);
+    expect(gameState.population.player1.grain).toBeUndefined();
+    expect(gameState.messages.player1).toContain(
+      'Conditions are not right for making jerky now.'
+    );
+    expect(gameState.messages.tribe).toBeUndefined();
+    expect(gameState.saveRequired).toBe(false);
+  });
+});
+
+describe('inventory function', () => {
+  test('should message the actor when target is not found', () => {
+    const gameState = {
+      messages: {},
+      population: {
+        player1: {
+          name: 'player1',
+          gender: 'female',
+          food: 1,
+          grain: 0,
+          basket: 0,
+          spearhead: 0,
+        },
+      },
+    };
+
+    general.inventory(gameState, 'Nobody', 'player1');
+
+    expect(gameState.messages.player1).toContain(
+      'Nobody does not seem to be a person'
+    );
+  });
 });
 
 describe('jerky command', () => {

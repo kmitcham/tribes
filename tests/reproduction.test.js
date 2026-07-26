@@ -406,7 +406,7 @@ test('trigger end of mating', () => {
   //function handleReproductionList(actorName, args, listName, gameState, bot){
   response = reproLib.globalMatingCheck(gameState, {});
   expect(gameState['population']['p1']['cannotInvite']).toBeTruthy();
-  expect(response).toBe('this many people are done mating: 4');
+  expect(response).toMatch(/^Reproduction complete\./);
 });
 
 test('single-sex tribes complete reproduction immediately', () => {
@@ -433,9 +433,9 @@ test('single-sex tribes complete reproduction immediately', () => {
   expect(gameState.doneMating).toBeTruthy();
   expect(gameState.matingComplete).toBeTruthy();
   expect(gameState.messages['tribe']).toContain(
-    '---> Reproductive activites are complete for the season <---'
+    '---> Reproductive activities are complete for the season <---'
   );
-  expect(response).toBe('this many people are done mating: 2');
+  expect(response).toMatch(/^Reproduction complete\./);
 });
 
 test('romance update after chance is complete does not re-prompt chance', () => {
@@ -774,7 +774,7 @@ test('mating with spaces in names', () => {
   expect(p1messages).toContain('Checking');
   expect(p1messages).toContain('p2');
   expect(p1messages).toContain('over');
-  expect(p1messages).toContain('done mating');
+  expect(p1messages).toContain('Reproduction complete');
 });
 test('make a consentList, null in the array', () => {
   var gameState = {
@@ -894,7 +894,139 @@ test('handle mating with lists and decline', () => {
   const p3message = gameState['messages']['p3'];
   expect(p3message).toContain('p1 flirts');
   expect(p3message).toContain('feelings');
-  expect(response).toBe('this many people are done mating: 4');
+  expect(response).toMatch(/^Reproduction complete\./);
+});
+
+test('globalMatingCheck does not re-announce pregnancies after completion', () => {
+  var gameState = {
+    name: 'unitTest-tribe',
+    population: {
+      Featherfin: {
+        name: 'Featherfin',
+        gender: 'female',
+        cannotInvite: true,
+        hiddenPregnant: 'Rob',
+      },
+      Rob: {
+        name: 'Rob',
+        gender: 'male',
+        cannotInvite: true,
+      },
+    },
+    children: {},
+    conceptionCounter: 0,
+    reproductionRound: true,
+  };
+
+  var first = reproLib.globalMatingCheck(gameState);
+  expect(gameState.matingComplete).toBeTruthy();
+  expect(first).toBe('Reproduction complete. 1 new pregnancy.');
+  expect(gameState.messages['tribe']).toContain(
+    'Featherfin has been blessed with a child'
+  );
+  expect(gameState.messages['tribe']).not.toContain(
+    'No one has become pregnant this season.'
+  );
+  expect(gameState.population.Featherfin.isPregnant).toBeTruthy();
+  expect(gameState.population.Featherfin.hiddenPregnant).toBeUndefined();
+
+  // Clear messages so we only assert second-pass side effects.
+  gameState.messages = {};
+  var second = reproLib.globalMatingCheck(gameState);
+  expect(second).toContain('already complete');
+  expect(gameState.messages['tribe'] || '').not.toContain(
+    'No one has become pregnant this season.'
+  );
+  expect(gameState.messages['tribe'] || '').not.toContain(
+    'has been blessed with a child'
+  );
+  expect(gameState.messages['tribe'] || '').not.toContain(
+    'Reproductive activities are complete'
+  );
+});
+
+test('globalMatingCheck does not re-announce no pregnancies after completion', () => {
+  var gameState = {
+    name: 'unitTest-tribe',
+    population: {
+      p1: {
+        name: 'p1',
+        gender: 'female',
+        cannotInvite: true,
+      },
+      p2: {
+        name: 'p2',
+        gender: 'male',
+        cannotInvite: true,
+      },
+    },
+    children: {},
+    reproductionRound: true,
+  };
+
+  var first = reproLib.globalMatingCheck(gameState);
+  expect(first).toBe('Reproduction complete. No new pregnancies this season.');
+  expect(gameState.messages['tribe']).toContain(
+    'No one has become pregnant this season.'
+  );
+  expect(gameState.messages['tribe']).toContain(
+    'Reproduction complete. Next: chance (then migration if desired).'
+  );
+
+  gameState.messages = {};
+  var second = reproLib.globalMatingCheck(gameState);
+  expect(second).toContain('already complete');
+  expect(gameState.messages['tribe'] || '').not.toContain(
+    'No one has become pregnant this season.'
+  );
+});
+
+test('globalMatingCheck reports who is still waiting when incomplete', () => {
+  var gameState = {
+    name: 'unitTest-tribe',
+    population: {
+      p1: {
+        name: 'p1',
+        gender: 'female',
+        // no cannotInvite — still needs invite or pass
+      },
+      p2: {
+        name: 'p2',
+        gender: 'male',
+        cannotInvite: true,
+      },
+    },
+    children: {},
+    reproductionRound: true,
+  };
+
+  var response = reproLib.globalMatingCheck(gameState);
+  expect(gameState.matingComplete).toBeFalsy();
+  expect(response).toContain('Still waiting on invites or pass from:');
+  expect(response).toContain('p1');
+  expect(gameState.messages['tribe']).toContain(
+    'Reproduction round activities are not complete.'
+  );
+});
+
+test('checkMating does not run resolver outside reproduction round', () => {
+  var gameState = {
+    name: 'unitTest-tribe',
+    population: {
+      p1: { name: 'p1', gender: 'female' },
+      p2: { name: 'p2', gender: 'male' },
+    },
+    children: {},
+    reproductionRound: false,
+    messages: {},
+  };
+
+  reproLib.checkMating(gameState, 'p1');
+  expect(gameState.messages['p1']).toContain(
+    'checkMating is only relevant in the reproduction round.'
+  );
+  expect(gameState.messages['p1']).not.toContain('Checking on the mating status');
+  expect(gameState.messages['tribe']).toBeUndefined();
 });
 
 test('Infinite loop issue', () => {
@@ -1589,7 +1721,8 @@ test('Infinite loop issue', () => {
     },
   };
   response = reproLib.globalMatingCheck(gameState, {});
-  expect(response).toContain('5');
+  expect(response).toMatch(/^Reproduction complete\./);
+  expect(gameState.matingComplete).toBeTruthy();
   var playerJMessage = gameState['messages']['Jonayla'];
   expect(playerJMessage).toContain('Ragnar');
   expect(playerJMessage).toContain('flirts');

@@ -37,6 +37,9 @@ describe('Helper coverage tests', () => {
 
     expect(message).not.toContain('awaiting invitations or pass');
     expect(message).toContain('reproduction round, awaiting chance');
+    expect(message).toContain('It is Year 2, cold season.');
+    expect(message).toContain('adults and 0 children.');
+    expect(message).toContain('game track is at 4.');
   });
 
   test('countChildrenOfParentUnderAge counts children for either parent', () => {

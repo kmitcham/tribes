@@ -30,29 +30,29 @@ const locationDecay = [
 module.exports.locationDecay = locationDecay;
 
 module.exports.hunt = (playername, player, rollValue, gameState) => {
-  let message = playername + ' goes hunting. [roll ' + rollValue + ']';
-  // injury check
+  // Build modifiers first so they appear ahead of the roll in the message.
+  let modifiers = '';
   let strMod = 0;
   if (player.strength && player.strength.toLowerCase() == 'strong'.valueOf()) {
     strMod = 1;
-    message += ' (+1 strong)';
+    modifiers += ' (+1 strong)';
   }
   var modifier = Number(strMod);
   if (player.strength && player.strength.toLowerCase() == 'weak'.valueOf()) {
     modifier -= 1;
-    message += ' (-1 weak)';
+    modifiers += ' (-1 weak)';
   }
   if (gameState.seasonCounter % 2 == 0) {
-    message += ' (-1 season)';
+    modifiers += ' (-1 season)';
     modifier -= 1;
   }
   if (!('profession' in player) || !player.profession.startsWith('h')) {
-    message += ' (-3 skill)';
+    modifiers += ' (-3 skill)';
     modifier -= 3;
   }
   if (player.spearhead > 0 && rollValue >= 9) {
     modifier += 3;
-    message += ' (+3 spearhead)';
+    modifiers += ' (+3 spearhead)';
   }
   let netRoll = Number(rollValue) + modifier;
   const gameTrack = gameState.gameTrack[gameState.currentLocationName];
@@ -61,7 +61,7 @@ module.exports.hunt = (playername, player, rollValue, gameState) => {
   if (netRoll > hunt_cap) {
     const gameTrackPenalty = netRoll - hunt_cap;
     netRoll = hunt_cap;
-    message += ' (-' + gameTrackPenalty + ' game track)';
+    modifiers += ' (-' + gameTrackPenalty + ' game track)';
     console.log(
       ' hunt with netRoll ' +
         netRoll +
@@ -74,6 +74,8 @@ module.exports.hunt = (playername, player, rollValue, gameState) => {
   if (netRoll > 18) {
     netRoll = 18;
   }
+  let message =
+    playername + ' goes hunting.' + modifiers + ' [roll ' + rollValue + ']';
   if (
     rollValue + strMod < 6 ||
     (rollValue + strMod < 7 && player.profession != 'hunter')

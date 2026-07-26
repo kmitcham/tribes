@@ -628,6 +628,13 @@ function globalMatingCheck(gameState) {
   if (!gameState.reproductionRound) {
     return 'It is not the mating round';
   }
+  // Completion side effects (pregnancy reveal, banners) run once per season.
+  if (gameState.matingComplete) {
+    return (
+      'Reproduction is already complete for this season. ' +
+      'Next: chance (then migration if desired).'
+    );
+  }
   const population = gameState.population;
   const canStillMate = hasBothLivingSexes(population);
   var inviteCheck = canStillMate ? canStillInvite(gameState) : '';
@@ -875,9 +882,9 @@ function globalMatingCheck(gameState) {
     text.addMessage(
       gameState,
       'tribe',
-      '---> Reproductive activites are complete for the season <---'
+      '---> Reproductive activities are complete for the season <---'
     );
-    let noPregnancies = true;
+    let pregnancyCount = 0;
     for (const personName in population) {
       const invitingMember = pop.memberByName(personName, gameState);
       text.addMessage(
@@ -885,11 +892,11 @@ function globalMatingCheck(gameState) {
         personName,
         'Reproduction round activities are over.'
       );
-      if (invitingMember.hiddenPregnant) {
+      if (invitingMember && invitingMember.hiddenPregnant) {
         const fatherName = invitingMember.hiddenPregnant;
         addChild(invitingMember.name, fatherName, gameState);
         delete invitingMember.hiddenPregnant;
-        noPregnancies = false;
+        pregnancyCount += 1;
         text.addMessage(
           gameState,
           'tribe',
@@ -904,27 +911,50 @@ function globalMatingCheck(gameState) {
         );
       }
     }
-    if (noPregnancies) {
+    if (pregnancyCount === 0) {
       text.addMessage(
         gameState,
         'tribe',
         'No one has become pregnant this season.'
       );
     }
+    text.addMessage(
+      gameState,
+      'tribe',
+      'Reproduction complete. Next: chance (then migration if desired).'
+    );
     if (gameState.needChanceRoll !== false) {
       text.addMessage(gameState, 'tribe', 'Time for chance.');
     }
     gameState.doneMating = true;
     gameState.matingComplete = true;
     gameState.saveRequired = true;
-  } else {
-    text.addMessage(
-      gameState,
-      'tribe',
-      'Reproduction round activities are not complete.'
+    if (pregnancyCount === 0) {
+      return 'Reproduction complete. No new pregnancies this season.';
+    }
+    if (pregnancyCount === 1) {
+      return 'Reproduction complete. 1 new pregnancy.';
+    }
+    return (
+      'Reproduction complete. ' + pregnancyCount + ' new pregnancies.'
     );
   }
-  return 'this many people are done mating: ' + doneMating.length;
+
+  text.addMessage(
+    gameState,
+    'tribe',
+    'Reproduction round activities are not complete.'
+  );
+  if (inviteCheck && inviteCheck.length > 0) {
+    return 'Still waiting on invites or pass from: ' + inviteCheck;
+  }
+  if (whoNeedsToGiveAnAnswer && whoNeedsToGiveAnAnswer.length > 0) {
+    return (
+      'Still waiting on romance responses from: ' +
+      whoNeedsToGiveAnAnswer.join(', ')
+    );
+  }
+  return 'Reproduction round activities are not complete.';
 }
 module.exports.globalMatingCheck = globalMatingCheck;
 
@@ -1421,6 +1451,7 @@ function checkMating(gameState, displayName) {
       displayName,
       'checkMating is only relevant in the reproduction round.'
     );
+    return;
   }
   text.addMessage(
     gameState,

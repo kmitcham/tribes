@@ -168,8 +168,12 @@ function inventory(gameState, targetName, actorName) {
   } else {
     person = pop.memberByName(targetName, gameState);
     if (!person || person == null) {
-      response = targetName + ' does not seem to be a person';
-      return response;
+      text.addMessage(
+        gameState,
+        actorName,
+        targetName + ' does not seem to be a person'
+      );
+      return;
     }
     response = inventoryMessage(person);
   }
@@ -238,7 +242,12 @@ module.exports.inventoryMessage = inventoryMessage;
 
 function makeJerky(sourceName, amount, gameState, _bot) {
   if (!gameState.canJerky) {
-    return 'Conditions are not right for making jerky now.';
+    text.addMessage(
+      gameState,
+      sourceName,
+      'Conditions are not right for making jerky now.'
+    );
+    return;
   }
   if (gameState.ended) {
     text.addMessage(
