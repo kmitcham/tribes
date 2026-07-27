@@ -288,7 +288,7 @@ describe('Work Module Tests', () => {
         mockGameState,
         'tribe',
         expect.stringContaining(
-          'creates something [roll 1], but it is not a basket'
+          'creates something [roll 1], but it is not a basket.'
         )
       );
     });

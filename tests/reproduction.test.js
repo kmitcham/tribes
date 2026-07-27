@@ -766,13 +766,19 @@ test('mating with spaces in names', () => {
 
   expect('p2' in messages);
   p2messages = messages['p2'];
-  expect(p2messages).toContain('p1 is impressed');
-  expect(p2messages).toContain('You share good feelings with p1');
-  expect(p2messages).toContain('p1 flirts with you, and you are interested.');
+  // Inviter sees one accept line with roll (#169)
+  expect(p2messages).toContain(
+    'p1 accepts your invitation to share good feelings [roll'
+  );
+  expect(p2messages).not.toContain('is impressed by your flirtation');
   expect('p1' in messages);
   p1messages = messages['p1'];
+  // Invitee sees one invite line with roll (#169)
+  expect(p1messages).toContain(
+    'p2 invites you to share good feelings [roll'
+  );
+  expect(p1messages).not.toContain('flirts with you, and you are interested');
   expect(p1messages).toContain('Checking');
-  expect(p1messages).toContain('p2');
   expect(p1messages).toContain('over');
   expect(p1messages).toContain('Reproduction complete');
 });
@@ -887,13 +893,16 @@ test('handle mating with lists and decline', () => {
   expect(gameState['population']['p1']['cannotInvite']).toBeTruthy();
   const p1message = gameState['messages']['p1'];
   expect(p1message).toContain('p2 declines');
-  expect(p1message).toContain('You share good feelings with p3');
+  expect(p1message).toContain(
+    'p3 accepts your invitation to share good feelings [roll'
+  );
   const p2message = gameState['messages']['p2'];
   expect(p2message).toContain('p1 flirts');
   expect(p2message).toContain('decline');
   const p3message = gameState['messages']['p3'];
-  expect(p3message).toContain('p1 flirts');
-  expect(p3message).toContain('feelings');
+  expect(p3message).toContain(
+    'p1 invites you to share good feelings [roll'
+  );
   expect(response).toMatch(/^Reproduction complete\./);
 });
 
@@ -1808,7 +1817,12 @@ test('globalMatingCheck resolves consent directly dictionary', () => {
     activity: 'reproduction',
   };
   reproLib.globalMatingCheck(gameState, {});
-  expect(gameState.messages['p1']).toContain('impressed');
+  expect(gameState.messages['p1']).toContain(
+    'p2 accepts your invitation to share good feelings [roll'
+  );
+  expect(gameState.messages['p2']).toContain(
+    'p1 invites you to share good feelings [roll'
+  );
 });
 
 test('globalMatingCheck resolves decline directly dictionary', () => {

@@ -557,6 +557,10 @@ describe('vote function', () => {
     expect(gameState.messages.tribe).toContain(
       'player1 supports player2 for chief.'
     );
+    // private ACK for voter (#148)
+    expect(gameState.messages.player1).toContain(
+      'You support player2 as chief.'
+    );
   });
 
   test('announces support publicly when voting', () => {
@@ -571,7 +575,10 @@ describe('vote function', () => {
 
     pop.vote(gameState, 'Alice', 'Bob');
 
-    expect(gameState.messages.tribe).toBe('Alice supports Bob for chief.');
+    expect(gameState.messages.tribe).toContain(
+      'Alice supports Bob for chief.'
+    );
+    expect(gameState.messages.Alice).toContain('You support Bob as chief.');
     expect(gameState.population.Alice.vote).toBe('Bob');
   });
 });

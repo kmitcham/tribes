@@ -527,6 +527,11 @@ function vote(gameState, actorName, candidateName) {
     'tribe',
     player.name + ' supports ' + candidate.name + ' for chief.'
   );
+  text.addMessage(
+    gameState,
+    actorName,
+    'You support ' + candidate.name + ' as chief.'
+  );
 
   // Find current chief (before any changes)
   var currentChief = null;

@@ -294,7 +294,12 @@ function doChance(rollValue, gameState) {
         }
         gameState.spoiled += amount;
         person.food -= amount;
-        message += '\n ' + person.name + ' loses ' + amount;
+        if (amount === 0) {
+          message +=
+            '\n ' + person.name + ' loses 0 food — but no one notices.';
+        } else {
+          message += '\n ' + person.name + ' loses ' + amount + ' food.';
+        }
         if (person.food < 0) {
           person.food = 0;
         }
@@ -314,7 +319,12 @@ function doChance(rollValue, gameState) {
       if (person.food < 0) {
         person.food = 0;
       }
-      message += person.name + ' loses ' + amount + ' food to weevils.';
+      if (amount === 0) {
+        message +=
+          person.name + ' loses 0 food to weevils — but no one notices.';
+      } else {
+        message += person.name + ' loses ' + amount + ' food to weevils.';
+      }
       gameState.spoiled += amount;
       break;
     case 8:

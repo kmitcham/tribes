@@ -16,12 +16,14 @@ const SUBJECT_KEYWORDS = {
     'invite',
     'invites',
     'invitation',
+    'accepts your invitation',
     'consent',
     'decline',
     'share good feelings',
   ],
   'your romance': [
     'invites you to share good feelings',
+    'accepts your invitation to share good feelings',
     'shares good feelings with you',
     'you share good feelings with',
     'flirts with you',
@@ -206,6 +208,7 @@ function matchesSubject(message, subject, playerName) {
       messageLower.includes('invite') ||
       messageLower.includes('invites') ||
       messageLower.includes('invitation') ||
+      messageLower.includes('accepts your invitation') ||
       messageLower.includes('consent') ||
       messageLower.includes('decline') ||
       messageLower.includes('share good feelings')
@@ -218,6 +221,7 @@ function matchesSubject(message, subject, playerName) {
     }
     return (
       messageLower.includes('invites you to share good feelings') ||
+      messageLower.includes('accepts your invitation to share good feelings') ||
       messageLower.includes('shares good feelings with you') ||
       messageLower.includes('you share good feelings with') ||
       messageLower.includes('flirts with you') ||

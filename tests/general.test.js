@@ -178,6 +178,7 @@ describe('give function', () => {
     var messages = gameState.messages;
     var expectedMessage = messages['tribe'];
     expect(expectedMessage).toContain('Player1 gives Player2 2 grain');
+    expect(expectedMessage).toMatch(/\.\s*$/);
     expect(gameState.population.player1.grain).toBe(8);
     expect(gameState.population.player2.grain).toBe(12);
     expect(gameState.saveRequired).toBe(true);

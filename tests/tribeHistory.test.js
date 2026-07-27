@@ -590,7 +590,7 @@ describe('tribeHistory.js', () => {
     pop.memberByName.mockReturnValue({
       name: playerName,
       history: [
-        '9: You share good feelings with ursa [roll 4]',
+        '9: ursa accepts your invitation to share good feelings [roll 4]',
         '9: ursa invites you to share good feelings [roll 2]',
       ],
     });
@@ -600,7 +600,7 @@ describe('tribeHistory.js', () => {
     expect(text.addMessage).toHaveBeenCalledWith(
       gameState,
       playerName,
-      '[Your history] 9: You share good feelings with ursa [roll 4]'
+      '[Your history] 9: ursa accepts your invitation to share good feelings [roll 4]'
     );
     expect(text.addMessage).toHaveBeenCalledWith(
       gameState,

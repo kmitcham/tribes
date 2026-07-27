@@ -101,7 +101,8 @@ function give(gameState, sourceName, targetName, amount, item) {
     amount +
     ' ' +
     item +
-    (icon ? ' ' + icon : '');
+    (icon ? ' ' + icon : '') +
+    '.';
   text.addMessage(gameState, 'tribe', response);
   // ref might not be in tribe, but console error thrown by history is OK
   pop.history(sourceName, response, gameState);

@@ -474,12 +474,13 @@ function consentPrep(gameState, sourceName, rawList) {
       'consent'
     );
     if (currentConsentTargets.length > 0) {
+      const consentDisplay = formatRomanceListForDisplay(currentConsentTargets);
       text.addMessage(
         gameState,
         sourceName,
-        'Current consentList: ' + currentConsentTargets.join(' ')
+        'Current consent list: ' + consentDisplay + '.'
       );
-      return 'Current consentList: ' + currentConsentTargets.join(' ');
+      return 'Current consent list: ' + consentDisplay + '.';
     } else {
       text.addMessage(gameState, sourceName, 'No current consentList.');
       return 'No current consentList.';
@@ -527,7 +528,9 @@ function consent(actorName, arrayOfNames, gameState) {
     text.addMessage(
       gameState,
       actorName,
-      'Updated consentlist to ' + updatedConsentTargets
+      'Updated consent list to: ' +
+        formatRomanceListForDisplay(updatedConsentTargets) +
+        '.'
     );
   } else {
     text.addMessage(
@@ -549,12 +552,13 @@ function declinePrep(gameState, sourceName, rawList) {
       'decline'
     );
     if (currentDeclineTargets.length > 0) {
+      const declineDisplay = formatRomanceListForDisplay(currentDeclineTargets);
       text.addMessage(
         gameState,
         sourceName,
-        'Current declinelist: ' + currentDeclineTargets.join(' ')
+        'Current decline list: ' + declineDisplay + '.'
       );
-      return 'Current declinelist: ' + currentDeclineTargets.join(' ');
+      return 'Current decline list: ' + declineDisplay + '.';
     }
     text.addMessage(gameState, sourceName, 'No current declinelist');
     return 'No current declinelist';
@@ -790,16 +794,7 @@ function globalMatingCheck(gameState) {
           console.log('\t sick or injured');
           attemptFailed = true;
         } else if (targetResponse === 'consent') {
-          text.addMessage(
-            gameState,
-            invitingMemberKey,
-            targetDisplayName + ' is impressed by your flirtation.'
-          );
-          text.addMessage(
-            gameState,
-            targetPopulationKey,
-            inviterDisplayName + ' flirts with you, and you are interested.'
-          );
+          // Success copy is one role-aware line each (with roll) inside makeLove.
           makeLove(targetName, inviterDisplayName, gameState);
           invitingMember.cannotInvite = true;
           doneMating.push(invitingMemberKey);
@@ -901,13 +896,13 @@ function globalMatingCheck(gameState) {
           gameState,
           'tribe',
           invitingMember.name +
-            ' has been blessed with a child: ' +
+            ' has been blessed with a child: 👶 ' +
             invitingMember.isPregnant
         );
         text.addMessage(
           gameState,
           personName,
-          'You have been blessed with the child ' + invitingMember.isPregnant
+          'You have been blessed with the child 👶 ' + invitingMember.isPregnant
         );
       }
     }
@@ -1032,8 +1027,6 @@ function makeLove(targetName, inviterName, gameState, force = false) {
   }
   const motherName = mother.name;
   const fatherName = father.name;
-  const motherKey = pop.getPopulationKey(mother, gameState) || motherName;
-  const fatherKey = pop.getPopulationKey(father, gameState) || fatherName;
   console.log('mother:' + motherName + ' father:' + fatherName);
   let spawnChance = 9;
   if (mother.nursing && mother.nursing.length > 0) {
@@ -1051,18 +1044,30 @@ function makeLove(targetName, inviterName, gameState, force = false) {
       mother.hiddenPregnant = fatherName;
     }
   }
-  const motherMessage =
-    'You share good feelings with ' + fatherName + ' [roll ' + roll1 + ']';
-  const fatherMessage =
-    'You share good feelings with ' + motherName + ' [roll ' + roll2 + ']';
+  // Role-symmetric private lines (issue #169): one message each, with roll.
+  // Inviter: "{target} accepts your invitation to share good feelings [roll N]"
+  // Invitee: "{inviter} invites you to share good feelings [roll N]"
+  const inviterKey = pop.getPopulationKey(
+    pop.memberByName(inviterName, gameState),
+    gameState
+  ) || inviterName;
+  const targetKey =
+    pop.getPopulationKey(pop.memberByName(targetName, gameState), gameState) ||
+    targetName;
   const inviterMessage =
-    'You share good feelings with ' + targetName + ' [roll ' + roll1 + ']';
+    targetName +
+    ' accepts your invitation to share good feelings [roll ' +
+    roll1 +
+    ']';
   const targetMessage =
-    inviterName + ' invites you to share good feelings [roll ' + roll2 + ']';
+    inviterName +
+    ' invites you to share good feelings [roll ' +
+    roll2 +
+    ']';
   pop.history(inviterName, inviterMessage, gameState);
   pop.history(targetName, targetMessage, gameState);
-  text.addMessage(gameState, motherKey, motherMessage);
-  text.addMessage(gameState, fatherKey, fatherMessage);
+  text.addMessage(gameState, inviterKey, inviterMessage);
+  text.addMessage(gameState, targetKey, targetMessage);
   detection(mother, father, roll1 + roll2, gameState);
   return;
 }
