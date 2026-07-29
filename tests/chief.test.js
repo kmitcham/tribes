@@ -185,8 +185,19 @@ test('should handle fire (roll 7)', () => {
 
 test('should handle injury (roll 6)', () => {
   gameState.population.Alice.guarding = ['Child1', 'Child2'];
+  gameState.population.Bob.guarding = ['Child1'];
+  gameState.population.Charlie.guarding = ['Child2'];
+  gameState.population.Dave.guarding = ['Child1', 'Child2'];
   const result = chiefLib.doChance(6, gameState);
   assert(result.includes('injured – miss next turn'));
+  // Injury cause before guard-loss effect (#174)
+  const injuryIdx = result.indexOf('injured – miss next turn');
+  const guardIdx = result.indexOf('can no longer guard');
+  assert(guardIdx > -1, 'expected guard-loss clause when victim was guarding');
+  assert(
+    injuryIdx < guardIdx,
+    'injury sentence should appear before guard-loss sentence'
+  );
   const injuredNames = Object.keys(gameState.population).filter(
     (name) => gameState.population[name].isInjured === 2
   );
@@ -261,7 +272,7 @@ test('startWork reports active demand details when blocked', () => {
 
   assert.strictEqual(
     gameState.messages['Alice'],
-    'You cannot start a new round while there is an active demand. Active demand: share fish equally'
+    'You cannot start a new round while there is an active demand. Active demand: share fish equally.'
   );
 });
 

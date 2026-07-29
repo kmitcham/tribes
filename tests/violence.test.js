@@ -21,7 +21,7 @@ test('Happy Path Demand', () => {
   };
   var playername = 'gather1';
   var message = 'all tests pass';
-  expectedMessage = 'gather1 DEMANDS: all tests pass';
+  expectedMessage = 'gather1 DEMANDS: all tests pass.';
   violencelib.demand(playername, message, gameState);
   actualMessage = gameState.messages['tribe'];
   expect(actualMessage).toBe(expectedMessage);

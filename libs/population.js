@@ -403,7 +403,7 @@ function showHistory(playerName, gameState) {
       text.addMessage(
         gameState,
         playerName,
-        'You have no history with this tribe'
+        'You have no history with this tribe.'
       );
       return;
     }
@@ -413,7 +413,7 @@ function showHistory(playerName, gameState) {
     text.addMessage(
       gameState,
       playerName,
-      'You have no history.  How did you get in the tribe?'
+      'You have no history. How did you get in the tribe?'
     );
     console.log(playerName + ' was in tribe but had no history');
     return;
@@ -439,7 +439,7 @@ function addToPopulation(gameState, sourceName, gender, profession, handle) {
   }
 
   if (gameState.population[target]) {
-    text.addMessage(gameState, sourceName, target + ' is already in the tribe');
+    text.addMessage(gameState, sourceName, target + ' is already in the tribe.');
     return;
   }
   if (gender.startsWith('m')) {
@@ -472,7 +472,7 @@ function addToPopulation(gameState, sourceName, gender, profession, handle) {
   );
   text.addMessage(gameState, 'tribe', response);
   if (!person.strength) {
-    text.addMessage(gameState, sourceName, 'You are of average strength');
+    text.addMessage(gameState, sourceName, 'You are of average strength.');
   }
   if (profession) {
     prof.specialize(sourceName, profession, gameState);

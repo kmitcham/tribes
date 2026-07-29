@@ -71,7 +71,7 @@ describe('Helper coverage tests', () => {
     expect(addMessageSpy).toHaveBeenCalledWith(
       gameState,
       'Leader',
-      'banish requires chief privileges'
+      'banish requires chief privileges.'
     );
   });
 
@@ -91,7 +91,7 @@ describe('Helper coverage tests', () => {
     expect(addMessageSpy).toHaveBeenCalledWith(
       gameState,
       'Leader',
-      'banish can not be used while a demand is active. Active demand: food redistribution'
+      'Banish can not be used while a demand is active. Active demand: food redistribution.'
     );
   });
 });

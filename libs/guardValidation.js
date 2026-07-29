@@ -13,7 +13,7 @@ function validateGuardingChange(actorName, gameState) {
   }
   if (gameState.workRound === false) {
     return {
-      error: 'You can not change guard status outside the work round',
+      error: 'You can not change guard status outside the work round.',
     };
   }
 

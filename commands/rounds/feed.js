@@ -42,7 +42,7 @@ function feed(interaction, gameState) {
     text.addMessage(
       gameState,
       sourceName,
-      'Only the referee can reduce amounts'
+      'Only the referee can reduce amounts.'
     );
     return;
   }

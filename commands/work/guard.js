@@ -154,7 +154,7 @@ function guardChild(actorName, gameState, cName) {
     return require('../../libs/access.js').NOT_IN_TRIBE_MESSAGE;
   }
   if (person.worked == true || gameState.workRound == false) {
-    return 'FAIL You can not change guard status after having worked, or outside the work round';
+    return 'FAIL You can not change guard status after having worked, or outside the work round.';
   }
   if (text.capitalizeFirstLetter(cName) == 'None') {
     if (person.guarding) {
@@ -164,16 +164,16 @@ function guardChild(actorName, gameState, cName) {
     return response;
   }
   if (person.guarding && person.guarding.length > 4) {
-    return 'FAIL You are already guarding enough children: ' + person.guarding;
+    return 'FAIL You are already guarding enough children: ' + person.guarding + '.';
   }
   if (person.isSick && person.isSick > 0) {
-    return 'FAIL You are too sick to watch children';
+    return 'FAIL You are too sick to watch children.';
   }
   const childName = text.capitalizeFirstLetter(cName);
   console.log('checking ' + childName);
   const child = children[childName];
   if (!child) {
-    return 'FAIL Could not find child: ' + childName;
+    return 'FAIL Could not find child: ' + childName + '.';
   } else if (!guardlib.isChildGuardAssignable(child)) {
     // Work-round assignment: years -0.5..11.5 (seasons -1..23). Food ages +1
     // before reproduction threats.
@@ -186,7 +186,7 @@ function guardChild(actorName, gameState, cName) {
     );
   } else if (person.guarding && person.guarding.indexOf(childName) != -1) {
     console.log(person.guarding);
-    return 'FAIL You are already guarding ' + childName;
+    return 'FAIL You are already guarding ' + childName + '.';
   } else {
     console.log('valid guard ' + childName);
     if (person.guarding) {
@@ -194,6 +194,6 @@ function guardChild(actorName, gameState, cName) {
     } else {
       person.guarding = [childName];
     }
-    return 'You start guarding ' + childName;
+    return 'You start guarding ' + childName + '.';
   }
 }

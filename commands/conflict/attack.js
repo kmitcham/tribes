@@ -36,7 +36,7 @@ function attack(gameState, actorName, targetName) {
     text.addMessage(
       gameState,
       actorName,
-      targetName + ' was not found in the tribe'
+      targetName + ' was not found in the tribe.'
     );
     return;
   }
@@ -51,14 +51,14 @@ function attack(gameState, actorName, targetName) {
     text.addMessage(
       gameState,
       actorName,
-      targetName + ' has already run away and can not be attacked.'
+      targetName + ' has already run away and cannot be attacked.'
     );
     return;
   }
   text.addMessage(
     gameState,
     actorName,
-    'If a fight happens, you will try to kill ' + targetPlayer.name
+    'If a fight happens, you will try to kill ' + targetPlayer.name + '.'
   );
   player.attack_target = targetPlayer.name;
   player.strategy = 'attack';

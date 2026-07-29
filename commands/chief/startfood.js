@@ -45,7 +45,7 @@ function startFoodFilter(actorName, gameState, bot) {
     return;
   }
   if (gameState.foodRound == true) {
-    text.addMessage(gameState, actorName, 'already in the foodRound');
+    text.addMessage(gameState, actorName, 'Already in the food round.');
     return;
   }
   if (gameState.workRound == false) {

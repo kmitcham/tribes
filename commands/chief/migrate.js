@@ -38,7 +38,7 @@ module.exports = {
       text.addMessage(
         gameState,
         sourceName,
-        'You lead the tribe to ' + destination
+        'You lead the tribe to ' + destination + '.'
       );
     }
     console.log('response to migrate was ' + value);

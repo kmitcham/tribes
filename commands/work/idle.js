@@ -23,7 +23,7 @@ function idle(interaction, gameState) {
     text.addMessage(
       gameState,
       sourceName,
-      'Can only idle during the work round'
+      'Can only idle during the work round.'
     );
     return;
   }
@@ -32,7 +32,7 @@ function idle(interaction, gameState) {
     text.addMessage(
       gameState,
       sourceName,
-      'You cannot idle (again) this round'
+      'You cannot idle (again) this round.'
     );
     return;
   }

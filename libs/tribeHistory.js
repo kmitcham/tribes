@@ -272,7 +272,7 @@ function showCombinedHistory(playerName, gameState, subject, yearsBack) {
     text.addMessage(
       gameState,
       playerName,
-      'No tribe in this channel.  Do you want to join and create one?'
+      'No tribe in this channel. Do you want to join and create one?'
     );
     return;
   }
@@ -281,7 +281,7 @@ function showCombinedHistory(playerName, gameState, subject, yearsBack) {
     text.addMessage(
       gameState,
       playerName,
-      'You have no history with this tribe'
+      'You have no history with this tribe.'
     );
     return;
   }
@@ -373,7 +373,7 @@ function showTribeHistory(playerName, gameState) {
     text.addMessage(
       gameState,
       playerName,
-      'No tribe in this channel.  Do you want to join and create one?'
+      'No tribe in this channel. Do you want to join and create one?'
     );
     return;
   }
@@ -387,7 +387,7 @@ function showTribeHistory(playerName, gameState) {
       text.addMessage(
         gameState,
         playerName,
-        'You have no history with this tribe'
+        'You have no history with this tribe.'
       );
       return;
     }

@@ -15,7 +15,7 @@ module.exports = {
       text.addMessage(
         gameState,
         actorName,
-        'endgame requires chief privileges'
+        'endgame requires chief privileges.'
       );
       return;
     }

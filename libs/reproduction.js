@@ -322,7 +322,7 @@ function invite(gameState, rawActorName, rawList) {
       );
       return;
     } else {
-      text.addMessage(gameState, player.name, 'No current inviteList');
+      text.addMessage(gameState, player.name, 'No current invite list.');
       return;
     }
   }
@@ -560,8 +560,8 @@ function declinePrep(gameState, sourceName, rawList) {
       );
       return 'Current decline list: ' + declineDisplay + '.';
     }
-    text.addMessage(gameState, sourceName, 'No current declinelist');
-    return 'No current declinelist';
+    text.addMessage(gameState, sourceName, 'No current decline list.');
+    return 'No current decline list.';
   }
 
   const listAsArray = parseRomanceInput(rawList);
@@ -600,7 +600,7 @@ function decline(actorName, messageArray, gameState) {
   if (updatedDeclineTargets.length > 0) {
     text.addMessage(gameState, actorName, 'Updated your decline responses.');
   } else {
-    text.addMessage(gameState, actorName, 'Emptying your declineList');
+    text.addMessage(gameState, actorName, 'Emptying your decline list.');
   }
   return globalMatingCheck(gameState);
 }
@@ -806,7 +806,7 @@ function globalMatingCheck(gameState) {
             gameState,
             targetPopulationKey,
             inviterDisplayName +
-              ' has invited you to mate- update your romance lists to include them (consent or decline) '
+              ' has invited you to mate — update your romance lists to include them (consent or decline).'
           );
           text.addMessage(
             gameState,
@@ -852,7 +852,7 @@ function globalMatingCheck(gameState) {
       text.addMessage(
         gameState,
         personName,
-        'You have not responded to an invitation'
+        'You have not responded to an invitation.'
       );
     }
   }
@@ -1319,7 +1319,7 @@ function pass(gameState, actorName) {
       text.addMessage(
         gameState,
         person.name,
-        'You do not have a invite left to pass on.'
+        'You do not have an invite left to pass on.'
       );
       return;
     }
@@ -1331,7 +1331,7 @@ function pass(gameState, actorName) {
     text.addMessage(
       gameState,
       person.name,
-      'You can only pass during reproduction round.'
+      'You can only pass during the reproduction round.'
     );
     return;
   }
@@ -1345,7 +1345,8 @@ function startReproductionChecks(gameState, actorName) {
       gameState,
       actorName,
       'You cannot start a new round while there is an active demand. Active demand: ' +
-        activeDemand
+        activeDemand +
+        '.'
     );
     return;
   }
@@ -1353,7 +1354,7 @@ function startReproductionChecks(gameState, actorName) {
     text.addMessage(
       gameState,
       actorName,
-      'startreproduction requires chief priviliges'
+      'startreproduction requires chief privileges.'
     );
     return;
   }
@@ -1366,7 +1367,7 @@ function startReproductionChecks(gameState, actorName) {
     return;
   }
   if (gameState.reproductionRound == true) {
-    text.addMessage(gameState, actorName, 'already in the reproductionRound');
+    text.addMessage(gameState, actorName, 'Already in the reproduction round.');
     return;
   }
   if (gameState.foodRound == false) {

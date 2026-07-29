@@ -20,7 +20,7 @@ function migrate(sourceName, destination, force, gameState) {
     text.addMessage(
       gameState,
       sourceName,
-      'Actually migrating requires chief priviliges'
+      'Actually migrating requires chief privileges.'
     );
     return 'not a chief';
   }
@@ -28,7 +28,7 @@ function migrate(sourceName, destination, force, gameState) {
     text.addMessage(
       gameState,
       sourceName,
-      'The game is over.  Maybe you want to join to start a new game?'
+      'The game is over. Maybe you want to join to start a new game?'
     );
     return;
   }
@@ -36,7 +36,7 @@ function migrate(sourceName, destination, force, gameState) {
     text.addMessage(
       gameState,
       sourceName,
-      'Migrate requires a destination (and force to make it happen)'
+      'Migrate requires a destination (and force to make it happen).'
     );
     return 'no destination';
   }
@@ -46,7 +46,8 @@ function migrate(sourceName, destination, force, gameState) {
       gameState,
       sourceName,
       'The game can not advance until the demand is dealt with. Active demand: ' +
-        activeDemand
+        activeDemand +
+        '.'
     );
     return 'blocked by demand';
   }
@@ -54,7 +55,7 @@ function migrate(sourceName, destination, force, gameState) {
     text.addMessage(
       gameState,
       sourceName,
-      'Migration happens in the reproduction, after chance'
+      'Migration happens in the reproduction round, after chance.'
     );
     return 'not reproduction round';
   }
@@ -62,7 +63,7 @@ function migrate(sourceName, destination, force, gameState) {
     text.addMessage(
       gameState,
       sourceName,
-      'Migration happens in the reproduction, after chance'
+      'Migration happens in the reproduction round, after chance.'
     );
     return 'waiting for chance';
   }
@@ -70,7 +71,7 @@ function migrate(sourceName, destination, force, gameState) {
     text.addMessage(
       gameState,
       sourceName,
-      destination + ' not a valid location.  Valid locations:' + legalLocations
+      destination + ' is not a valid location. Valid locations: ' + legalLocations.join(', ') + '.'
     );
     return 'bad destination';
   }
@@ -87,7 +88,7 @@ function migrate(sourceName, destination, force, gameState) {
   // every child under 2 years (4 seasons) needs 2 food, or dies
   let deceasedChildren = [];
   // actually do the move if force is set
-  let response = 'Finding a route to ' + destination;
+  let response = 'Finding a route to ' + destination + '.';
   if (force) {
     // this code is mostly duplicated, but feed eating is too complex to repeat the iteration
     for (const personName in population) {
@@ -139,7 +140,7 @@ function migrate(sourceName, destination, force, gameState) {
     text.addMessage(
       gameState,
       'tribe',
-      'The tribe migrates to the ' + destination
+      'The tribe migrates to the ' + destination + '.'
     );
     gameState.currentLocationName = destination;
     return 0;

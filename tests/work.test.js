@@ -83,7 +83,7 @@ describe('Work Module Tests', () => {
       expect(text.addMessage).toHaveBeenCalledWith(
         mockGameState,
         'testPlayer',
-        'You cannot work (again) this round'
+        'You cannot work (again) this round.'
       );
     });
 
@@ -95,7 +95,7 @@ describe('Work Module Tests', () => {
       expect(text.addMessage).toHaveBeenCalledWith(
         mockGameState,
         'testPlayer',
-        'You can not gather while guarding more than 4 children.  You are guarding child1,child2,child3,child4,child5'
+        'You can not gather while guarding more than 4 children. You are guarding child1,child2,child3,child4,child5.'
       );
     });
 
@@ -161,7 +161,7 @@ describe('Work Module Tests', () => {
 
       const result = canWork(mockGameState, mockPlayer);
 
-      expect(result).toBe('Can only work during the work round');
+      expect(result).toBe('Can only work during the work round.');
     });
 
     test('should return message when player is null', () => {
@@ -175,7 +175,7 @@ describe('Work Module Tests', () => {
 
       const result = canWork(mockGameState, mockPlayer);
 
-      expect(result).toBe('You cannot work while you are injured');
+      expect(result).toBe('You cannot work while you are injured.');
     });
 
     test('should return message when player is sick', () => {
@@ -183,7 +183,7 @@ describe('Work Module Tests', () => {
 
       const result = canWork(mockGameState, mockPlayer);
 
-      expect(result).toBe('You cannot work while you are sick');
+      expect(result).toBe('You cannot work while you are sick.');
     });
 
     test('should return message when player has already worked', () => {
@@ -191,7 +191,7 @@ describe('Work Module Tests', () => {
 
       const result = canWork(mockGameState, mockPlayer);
 
-      expect(result).toBe('You cannot work (again) this round');
+      expect(result).toBe('You cannot work (again) this round.');
     });
 
     test('should return null when player can work', () => {
@@ -210,7 +210,7 @@ describe('Work Module Tests', () => {
       expect(text.addMessage).toHaveBeenCalledWith(
         mockGameState,
         'testPlayer',
-        'You cannot work (again) this round'
+        'You cannot work (again) this round.'
       );
     });
 
@@ -222,7 +222,7 @@ describe('Work Module Tests', () => {
       expect(text.addMessage).toHaveBeenCalledWith(
         mockGameState,
         'testPlayer',
-        'You do not know how to craft'
+        'You do not know how to craft.'
       );
     });
     test('should not allow crafting when player knows nothing', () => {
@@ -233,7 +233,7 @@ describe('Work Module Tests', () => {
       expect(text.addMessage).toHaveBeenCalledWith(
         mockGameState,
         'testPlayer',
-        'You do not know how to craft'
+        'You do not know how to craft.'
       );
     });
 
@@ -246,7 +246,7 @@ describe('Work Module Tests', () => {
       expect(text.addMessage).toHaveBeenCalledWith(
         mockGameState,
         'testPlayer',
-        'You can not craft while guarding more than 2 children.  You are guarding child1,child2,child3'
+        'You can not craft while guarding more than 2 children. You are guarding child1,child2,child3.'
       );
     });
 
@@ -312,7 +312,7 @@ describe('Work Module Tests', () => {
       expect(text.addMessage).toHaveBeenCalledWith(
         mockGameState,
         'testPlayer',
-        'You cannot work (again) this round'
+        'You cannot work (again) this round.'
       );
     });
 
@@ -336,7 +336,7 @@ describe('Work Module Tests', () => {
       expect(text.addMessage).toHaveBeenCalledWith(
         mockGameState,
         'testPlayer',
-        'You can not learn crafting while guarding more than 2 children.  You are guarding child1,child2,child3'
+        'You can not learn crafting while guarding more than 2 children. You are guarding child1,child2,child3.'
       );
     });
 
@@ -400,7 +400,7 @@ describe('Work Module Tests', () => {
       expect(text.addMessage).toHaveBeenCalledWith(
         mockGameState,
         'testPlayer',
-        'You will try to teach those willing to learn'
+        'You will try to teach those willing to learn.'
       );
       expect(mockGameState.saveRequired).toBe(true);
     });
@@ -414,7 +414,7 @@ describe('Work Module Tests', () => {
       expect(text.addMessage).toHaveBeenCalledWith(
         mockGameState,
         'testPlayer',
-        'You will no longer teach others to craft'
+        'You will no longer teach others to craft.'
       );
       expect(mockGameState.saveRequired).toBe(true);
     });
@@ -427,7 +427,7 @@ describe('Work Module Tests', () => {
       expect(text.addMessage).toHaveBeenCalledWith(
         mockGameState,
         'testPlayer',
-        'You do not know any crafting secrets'
+        'You do not know any crafting secrets.'
       );
       expect(mockGameState.saveRequired).toBe(true);
     });
@@ -480,7 +480,7 @@ describe('Work Module Tests', () => {
       expect(text.addMessage).toHaveBeenCalledWith(
         mockGameState,
         'tribe',
-        'testPlayer stops guarding Pebble\n\n'
+        'testPlayer stops guarding Pebble.\n\n'
       );
       expect(mockGameState.saveRequired).toBe(true);
     });

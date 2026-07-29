@@ -44,19 +44,19 @@ function hunt(gameState, sourceName, forceRoll) {
     text.addMessage(
       gameState,
       sourceName,
-      'You can not go hunting while guarding ' + player.guarding
+      'You can not go hunting while guarding ' + player.guarding + '.'
     );
     return;
   }
   if (player.isPregnant && player.isPregnant != 'false') {
-    text.addMessage(gameState, sourceName, 'You can not hunt while pregnant');
+    text.addMessage(gameState, sourceName, 'You can not hunt while pregnant.');
     return;
   }
   var huntRoll = dice.roll(3);
   if (referees.includes(sourceName) && forceRoll) {
     huntRoll = forceRoll;
     if (huntRoll < 3 || 18 < huntRoll) {
-      text.addMessage(gameState, sourceName, 'Roll must be 3-18');
+      text.addMessage(gameState, sourceName, 'Roll must be 3-18.');
       return;
     }
   }

@@ -8,12 +8,12 @@ function specialize(playerName, profession, gameState) {
     text.addMessage(
       gameState,
       playerName,
-      'usage:specialize [hunter|gatherer|crafter]'
+      'Usage: specialize [hunter|gatherer|crafter].'
     );
     console.log(
       ' did not find profession:' + profession + ' in ' + professionList
     );
-    return 'usage:specialize [hunter|gatherer|crafter] ';
+    return 'Usage: specialize [hunter|gatherer|crafter].';
   }
 
   var person = pop.memberByName(playerName, gameState);
@@ -31,7 +31,7 @@ function specialize(playerName, profession, gameState) {
     text.addMessage(
       gameState,
       person.name,
-      'You are already skilled at ' + person.profession
+      'You are already skilled at ' + person.profession + '.'
     );
     profession = person.profession; // do no allow profession changes after creation
   }

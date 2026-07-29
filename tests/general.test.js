@@ -209,7 +209,7 @@ describe('makeJerky function', () => {
     expect(gameState.population.player1.food).toBe(1);
     expect(gameState.population.player1.grain).toBe(2);
     expect(gameState.messages.tribe).toContain(
-      'player1 converts 6 food into 2 jerky'
+      'player1 converts 6 food into 2 jerky.'
     );
     expect(gameState.messages.tribe).not.toContain('NaN');
     expect(gameState.saveRequired).toBe(true);

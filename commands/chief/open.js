@@ -14,7 +14,7 @@ module.exports = {
 
 function close(actorName, gameState) {
   if (!access.canActAsChief(actorName, gameState)) {
-    text.addMessage(gameState, actorName, 'open requires chief privileges');
+    text.addMessage(gameState, actorName, 'open requires chief privileges.');
     return;
   }
   if (gameState.ended) {
@@ -27,6 +27,6 @@ function close(actorName, gameState) {
   }
   gameState.open = true;
   gameState.saveRequired = true;
-  text.addMessage(gameState, 'tribe', 'The tribe is open to all');
+  text.addMessage(gameState, 'tribe', 'The tribe is open to all.');
   return;
 }

@@ -17,7 +17,8 @@ function onCommand(displayName, gameState) {
   if (gameState.workRound) {
     message =
       'People available to work: ' +
-      worklib.listReadyToWork(gameState.population);
+      worklib.listReadyToWork(gameState.population) +
+      '.';
   }
   text.addMessage(gameState, displayName, message);
   return;

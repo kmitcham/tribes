@@ -39,7 +39,7 @@ function babysit(gameState, actorName, babysitterName, childName) {
     text.addMessage(
       gameState,
       actorName,
-      'Did not recognize babysitter ' + babysitterName
+      'Did not recognize babysitter ' + babysitterName + '.'
     );
     return;
   }
@@ -49,7 +49,7 @@ function babysit(gameState, actorName, babysitterName, childName) {
     text.addMessage(
       gameState,
       actorName,
-      'Did not recognize child ' + childName
+      'Did not recognize child ' + childName + '.'
     );
     return;
   }
@@ -57,7 +57,7 @@ function babysit(gameState, actorName, babysitterName, childName) {
     text.addMessage(
       gameState,
       actorName,
-      'You are not the mother of ' + babysitterName
+      'You are not the mother of ' + babysitterName + '.'
     );
     return;
   }
@@ -73,23 +73,23 @@ function babysit(gameState, actorName, babysitterName, childName) {
       text.addMessage(
         gameState,
         actorName,
-        childName + ' does not need watching'
+        childName + ' does not need watching.'
       );
       return;
     }
     var response = '';
     if (babysitter.babysitting) {
       response +=
-        babysitterName + ' stops watching ' + babysitter.babysitting + '.  \n';
+        babysitterName + ' stops watching ' + babysitter.babysitting + '.\n';
     }
     babysitter.babysitting = childName;
-    response += babysitterName + ' starts watching ' + childName;
+    response += babysitterName + ' starts watching ' + childName + '.';
     text.addMessage(gameState, 'tribe', response);
   } else {
     text.addMessage(
       gameState,
       actorName,
-      babysitterName + ' is not old enough to watch children'
+      babysitterName + ' is not old enough to watch children.'
     );
     return;
   }

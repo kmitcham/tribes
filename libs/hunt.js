@@ -113,7 +113,7 @@ module.exports.hunt = (playername, player, rollValue, gameState) => {
   const breakRoll = dice.roll(1);
   if (player.spearhead > 0 && breakRoll <= 2) {
     player.spearhead -= 1;
-    message += '\n💥 The spearhead broke! (roll ' + breakRoll + ')';
+    message += '\n💥 The spearhead broke! (roll ' + breakRoll + ').';
   }
 
   player.worked = true;
@@ -123,7 +123,8 @@ module.exports.hunt = (playername, player, rollValue, gameState) => {
     '\nThe game track goes from ' +
     gameTrack +
     ' to ' +
-    gameState.gameTrack[gameState.currentLocationName];
+    gameState.gameTrack[gameState.currentLocationName] +
+    '.';
 
   player.activity = 'hunted';
   player.worked = true;

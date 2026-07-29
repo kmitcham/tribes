@@ -67,7 +67,7 @@ function banish(gameState, targetName, reason) {
     text.addMessage(
       gameState,
       'tribe',
-      targetName + ' was not found in the tribe'
+      targetName + ' was not found in the tribe.'
     );
   }
 }
@@ -78,7 +78,7 @@ function banishAdmin(gameState, actorName, targetName, reason) {
   const targetMember = populationLib.memberByName(targetName, gameState);
 
   if (!access.canActAsChief(actorName, gameState)) {
-    text.addMessage(gameState, actorName, 'banish requires chief privileges');
+    text.addMessage(gameState, actorName, 'banish requires chief privileges.');
     return;
   }
   if (gameState.demand || gameState.violence) {
@@ -86,8 +86,9 @@ function banishAdmin(gameState, actorName, targetName, reason) {
     text.addMessage(
       gameState,
       actorName,
-      'banish can not be used while a demand is active. Active demand: ' +
-        activeDemand
+      'Banish can not be used while a demand is active. Active demand: ' +
+        activeDemand +
+        '.'
     );
     return;
   }
@@ -95,7 +96,7 @@ function banishAdmin(gameState, actorName, targetName, reason) {
     text.addMessage(
       gameState,
       actorName,
-      targetName + ' was not found in the tribe'
+      targetName + ' was not found in the tribe.'
     );
     return;
   }

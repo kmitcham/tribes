@@ -49,7 +49,7 @@ function give(gameState, sourceName, targetName, amount, item) {
 
   if (targetName == sourceName && !isRef) {
     response =
-      'Giving things to yourself is useful self-care.  Nobody loves you like you love you.';
+      'Giving things to yourself is useful self-care. Nobody loves you like you love you.';
     console.log('self give: ' + targetName + ' ' + sourceName);
     text.addMessage(gameState, sourceName, response);
     return;
@@ -65,8 +65,9 @@ function give(gameState, sourceName, targetName, amount, item) {
     item = 'spearhead';
   } else {
     response =
-      'Valid items are: food, grain, basket or spearhead.  Unrecognized item ' +
-      item;
+      'Valid items are: food, grain, basket or spearhead. Unrecognized item ' +
+      item +
+      '.';
     text.addMessage(gameState, sourceName, response);
     return;
   }
@@ -74,7 +75,7 @@ function give(gameState, sourceName, targetName, amount, item) {
   var sourcePerson = {};
   targetPerson = pop.memberByName(targetName, gameState);
   if (!targetPerson) {
-    response = 'Target ' + targetDisplayName + ' not found in tribe';
+    response = 'Target ' + targetDisplayName + ' not found in tribe.';
     text.addMessage(gameState, sourceName, response);
     return;
   }
@@ -85,7 +86,7 @@ function give(gameState, sourceName, targetName, amount, item) {
     sourcePerson[item] -= amount;
     targetPerson[item] += amount;
   } else if (isRef) {
-    text.addMessage(gameState, 'tribe', 'Referee powers invoked');
+    text.addMessage(gameState, 'tribe', 'Referee powers invoked.');
     targetPerson[item] += amount;
   } else {
     // not a valid operation
@@ -133,7 +134,7 @@ function legalGive(gameState, sourceName, item, amount) {
     return false;
   }
   if (!sourcePerson[item] || sourcePerson[item] < amount) {
-    response = 'You do not have ' + amount + ' ' + item;
+    response = 'You do not have ' + amount + ' ' + item + '.';
     text.addMessage(gameState, sourcePerson.name, response);
     return false;
   }
@@ -145,7 +146,7 @@ function legalGive(gameState, sourceName, item, amount) {
     sourcePerson.spearhead - amount < 1
   ) {
     response =
-      'You already hunted with a spearhead, and cannot trade spearheads during the work round';
+      'You already hunted with a spearhead, and cannot trade spearheads during the work round.';
     text.addMessage(gameState, sourcePerson.name, response);
     return false;
   }
@@ -202,16 +203,16 @@ function inventoryMessage(person) {
     message += '         ';
   }
   if (person.isPregnant && person.isPregnant != '') {
-    message += '\n\t\t is pregnant with ' + person.isPregnant;
+    message += '\n\t\t is pregnant with ' + person.isPregnant + '.';
   }
   if (person.nursing && person.nursing.length > 0) {
-    message += '\n\t\t is nursing ' + person.nursing;
+    message += '\n\t\t is nursing ' + person.nursing + '.';
   }
   if (person.isInjured && person.isInjured > 0) {
-    message += '\n\t\t is ***injured*** and unable to work';
+    message += '\n\t\t is ***injured*** and unable to work.';
   }
   if (person.isSick && person.isSick > 0) {
-    message += '\n\t\t is ***sick*** and unable to work';
+    message += '\n\t\t is ***sick*** and unable to work.';
   }
   if (person.guarding && person.guarding.length > 0) {
     // Prefer list members still assignable (years -0.5..11.5 / seasons -1..23).
@@ -225,17 +226,17 @@ function inventoryMessage(person) {
       }
     }
     if (guarded && guarded.length > 0) {
-      message += '\n\t\t is guarding ' + guarded;
+      message += '\n\t\t is guarding ' + guarded + '.';
     }
   }
   if (person.strength && person.strength != 'average') {
-    message += '\n\t\t is ' + person.strength;
+    message += '\n\t\t is ' + person.strength + '.';
   }
   if (person.profession != 'crafter' && person.canCraft) {
-    message += '\n\t\t is able to craft a little';
+    message += '\n\t\t is able to craft a little.';
   }
   if (person.chief) {
-    message += '\n\t\t is Chief';
+    message += '\n\t\t is Chief.';
   }
   return message;
 }
@@ -280,7 +281,7 @@ function makeJerky(sourceName, amount, gameState, _bot) {
   player.food = actualFood - amount + leftover;
   player.grain = actualGrain + jerky;
   const message =
-    sourceName + ' converts ' + jerky * 3 + ' food into ' + jerky + ' jerky';
+    sourceName + ' converts ' + jerky * 3 + ' food into ' + jerky + ' jerky.';
   text.addMessage(gameState, 'tribe', message);
   gameState.saveRequired = true;
   return;
@@ -325,13 +326,13 @@ function sacrifice(gameState, sourceName, item, amount, rollOf2dice) {
   } else if (item.startsWith('s')) {
     item = 'spearhead';
   } else {
-    response = 'Unrecognized item ' + item;
+    response = 'Unrecognized item ' + item + '.';
     text.addMessage(gameState, sourceName, response);
     return;
   }
 
   if (amount <= 0) {
-    response = 'Must sacrifice at least one item';
+    response = 'Must sacrifice at least one item.';
     text.addMessage(gameState, sourceName, response);
     return;
   }
@@ -343,7 +344,7 @@ function sacrifice(gameState, sourceName, item, amount, rollOf2dice) {
     return;
   }
   if (!sourcePerson[item] || sourcePerson[item] < amount) {
-    response = sourceName + ' does not have ' + amount + ' ' + item;
+    response = sourceName + ' does not have ' + amount + ' ' + item + '.';
     text.addMessage(gameState, sourceName, response);
     return;
   }
@@ -381,7 +382,7 @@ function sacrifice(gameState, sourceName, item, amount, rollOf2dice) {
     ];
     rndMsg = ritualResults[net] || ritualResults[ritualResults.length - 1];
   } else {
-    response = 'You do not have that many ' + item + ': ' + sourcePerson[item];
+    response = 'You do not have that many ' + item + ': ' + sourcePerson[item] + '.';
     text.addMessage(gameState, sourceName, response);
     return;
   }

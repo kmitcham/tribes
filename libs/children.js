@@ -21,7 +21,7 @@ function showChildrenPrep(
       text.addMessage(
         gameState,
         displayName,
-        'Could not find ' + filterParentName
+        'Could not find ' + filterParentName + '.'
       );
     } else {
       if (parentPerson.gender == 'male') {

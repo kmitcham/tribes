@@ -29,7 +29,7 @@ function demand(gameState, actorName, demandText) {
     text.addMessage(
       gameState,
       actorName,
-      'The game is over.  Maybe you want to join to start a new game?'
+      'The game is over. Maybe you want to join to start a new game?'
     );
     return;
   }
@@ -44,7 +44,7 @@ function demand(gameState, actorName, demandText) {
     text.addMessage(
       gameState,
       actorName,
-      'The current demand is : ' + currentDemand
+      'The current demand is: ' + currentDemand + '.'
     );
     return;
   }
@@ -53,7 +53,7 @@ function demand(gameState, actorName, demandText) {
     text.addMessage(
       gameState,
       actorName,
-      'Syntax: demand <text of your demand here>'
+      'Syntax: demand <text of your demand here>.'
     );
     return;
   }

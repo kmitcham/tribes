@@ -31,8 +31,9 @@ function gather(gameState, sourceName, forceRoll) {
     text.addMessage(
       gameState,
       sourceName,
-      'You can not gather while guarding more than 4 children.  You are guarding ' +
-        player.guarding
+      'You can not gather while guarding more than 4 children. You are guarding ' +
+        player.guarding +
+        '.'
     );
     return;
   }
@@ -40,7 +41,7 @@ function gather(gameState, sourceName, forceRoll) {
   if (referees.includes(sourceName) && forceRoll) {
     gatherRoll = forceRoll;
     if (gatherRoll < 3 || 18 < gatherRoll) {
-      text.addMessage(gameState, sourceName, 'Roll must be 3-18');
+      text.addMessage(gameState, sourceName, 'Roll must be 3-18.');
       return;
     }
   }
@@ -92,7 +93,7 @@ module.exports.listReadyToWork = listReadyToWork;
 function canWork(gameState, player) {
   let msg;
   if (gameState.workRound == false) {
-    msg = 'Can only work during the work round';
+    msg = 'Can only work during the work round.';
     return msg;
   }
   if (player == null) {
@@ -100,15 +101,15 @@ function canWork(gameState, player) {
     return msg;
   }
   if (player.isInjured && player.isInjured > 0) {
-    msg = 'You cannot work while you are injured';
+    msg = 'You cannot work while you are injured.';
     return msg;
   }
   if (player.isSick && player.isSick > 0) {
-    msg = 'You cannot work while you are sick';
+    msg = 'You cannot work while you are sick.';
     return msg;
   }
   if (player.worked == true) {
-    msg = 'You cannot work (again) this round';
+    msg = 'You cannot work (again) this round.';
     return msg;
   }
   return null;
@@ -124,15 +125,16 @@ function craft(gameState, sourceName, item, forceRoll) {
     return;
   }
   if (!('canCraft' in player) || player.canCraft == false) {
-    text.addMessage(gameState, sourceName, 'You do not know how to craft');
+    text.addMessage(gameState, sourceName, 'You do not know how to craft.');
     return;
   }
   if (player.guarding && player.guarding.length > 2) {
     text.addMessage(
       gameState,
       sourceName,
-      'You can not craft while guarding more than 2 children.  You are guarding ' +
-        player.guarding
+      'You can not craft while guarding more than 2 children. You are guarding ' +
+        player.guarding +
+        '.'
     );
     return;
   }
@@ -142,7 +144,7 @@ function craft(gameState, sourceName, item, forceRoll) {
   } else if (item.startsWith('s')) {
     item = 'spearhead';
   } else {
-    text.addMessage(gameState, sourceName, 'Unrecognized item ' + item);
+    text.addMessage(gameState, sourceName, 'Unrecognized item ' + item + '.');
     return;
   }
 
@@ -150,7 +152,7 @@ function craft(gameState, sourceName, item, forceRoll) {
   if (referees.includes(sourceName) && forceRoll) {
     craftRoll = forceRoll;
     if (craftRoll < 1 || 6 < craftRoll) {
-      text.addMessage(gameState, sourceName, 'forceRoll must be 1-6');
+      text.addMessage(gameState, sourceName, 'forceRoll must be 1-6.');
       return;
     }
   }
@@ -200,8 +202,9 @@ function train(gameState, sourceName, forceRoll) {
     text.addMessage(
       gameState,
       sourceName,
-      'You can not learn crafting while guarding more than 2 children.  You are guarding ' +
-        player.guarding
+      'You can not learn crafting while guarding more than 2 children. You are guarding ' +
+        player.guarding +
+        '.'
     );
     return;
   }
@@ -219,7 +222,7 @@ function train(gameState, sourceName, forceRoll) {
   if (referees.includes(sourceName) && forceRoll) {
     learnRoll = forceRoll;
     if (learnRoll < 2 || 12 < learnRoll) {
-      text.addMessage(gameState, sourceName, 'Roll must be 2-12');
+      text.addMessage(gameState, sourceName, 'Roll must be 2-12.');
       return;
     }
   }
@@ -256,21 +259,21 @@ function setSecrets(gameState, actorName, willTrain) {
       text.addMessage(
         gameState,
         actorName,
-        'You will try to teach those willing to learn'
+        'You will try to teach those willing to learn.'
       );
     } else {
       member.noTeach = true;
       text.addMessage(
         gameState,
         actorName,
-        'You will no longer teach others to craft'
+        'You will no longer teach others to craft.'
       );
     }
   } else {
     text.addMessage(
       gameState,
       actorName,
-      'You do not know any crafting secrets'
+      'You do not know any crafting secrets.'
     );
   }
   gameState.saveRequired = true;

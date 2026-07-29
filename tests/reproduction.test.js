@@ -1873,6 +1873,6 @@ test('startReproductionChecks reports active demand details when blocked', () =>
   reproLib.startReproductionChecks(gameState, 'Chief');
 
   expect(gameState.messages.Chief).toBe(
-    'You cannot start a new round while there is an active demand. Active demand: share all food now'
+    'You cannot start a new round while there is an active demand. Active demand: share all food now.'
   );
 });

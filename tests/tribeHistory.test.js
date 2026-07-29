@@ -27,7 +27,7 @@ describe('tribeHistory.js', () => {
     expect(text.addMessage).toHaveBeenCalledWith(
       null,
       playerName,
-      'No tribe in this channel.  Do you want to join and create one?'
+      'No tribe in this channel. Do you want to join and create one?'
     );
     consoleSpy.mockRestore();
   });
@@ -41,7 +41,7 @@ describe('tribeHistory.js', () => {
     expect(text.addMessage).toHaveBeenCalledWith(
       gameState,
       playerName,
-      'You have no history with this tribe'
+      'You have no history with this tribe.'
     );
   });
 

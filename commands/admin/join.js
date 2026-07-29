@@ -51,7 +51,7 @@ function join(actorName, gameState, gender, profession, handle) {
     text.addMessage(
       gameState,
       actorName,
-      'You are already a member of this tribe'
+      'You are already a member of this tribe.'
     );
     return;
   }
@@ -59,7 +59,7 @@ function join(actorName, gameState, gender, profession, handle) {
     text.addMessage(
       gameState,
       actorName,
-      'You need to be inducted by the chief to join this tribe'
+      'You need to be inducted by the chief to join this tribe.'
     );
     return;
   }

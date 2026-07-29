@@ -14,17 +14,17 @@ const roundTransitionAudit = require('./roundTransitionAudit.js');
 
 function close(actorName, gameState) {
   if (!access.canActAsChief(actorName, gameState)) {
-    text.addMessage(gameState, actorName, 'close requires chief privileges');
+    text.addMessage(gameState, actorName, 'close requires chief privileges.');
     return;
   }
   gameState.open = false;
   if (gameState.open) {
-    text.addMessage(gameState, 'tribe', 'The tribe is open to all who join');
+    text.addMessage(gameState, 'tribe', 'The tribe is open to all who join.');
   } else {
     text.addMessage(
       gameState,
       'tribe',
-      'The tribe is closed; the chief must induct new members'
+      'The tribe is closed; the chief must induct new members.'
     );
   }
   gameState.saveRequired = true;
@@ -35,14 +35,14 @@ module.exports.close = close;
 function decree(gameState, actorName, number, lawText) {
   let law = lawText;
   if (!access.canActAsChief(actorName, gameState)) {
-    text.addMessage(gameState, actorName, 'decree requires chief privileges');
+    text.addMessage(gameState, actorName, 'decree requires chief privileges.');
     return;
   }
   if (gameState.ended) {
     text.addMessage(
       gameState,
       actorName,
-      'The game is over.  Maybe you want to join to start a new game?'
+      'The game is over. Maybe you want to join to start a new game?'
     );
     return;
   }
@@ -70,7 +70,7 @@ function induct(gameState, sourceName, targetName, gender) {
   let response = '';
 
   if (!access.canActAsChief(sourceName, gameState)) {
-    response = 'You must be chief to induct a member';
+    response = 'You must be chief to induct a member.';
     text.addMessage(gameState, sourceName, response);
     return;
   }
@@ -78,7 +78,7 @@ function induct(gameState, sourceName, targetName, gender) {
     text.addMessage(
       gameState,
       sourceName,
-      'The game is over.  Maybe you want to join to start a new game?'
+      'The game is over. Maybe you want to join to start a new game?'
     );
     return;
   }
@@ -122,19 +122,19 @@ function isChanceLegal(gameState, actorName, forceRoll) {
   if (isRef && forceRoll) {
     chanceRoll = forceRoll;
     if (chanceRoll < 3 || 18 < chanceRoll) {
-      text.addMessage(gameState, actorName, 'Roll must be 3-18');
+      text.addMessage(gameState, actorName, 'Roll must be 3-18.');
       return false;
     }
   }
   if (!access.canActAsChief(actorName, gameState)) {
-    text.addMessage(gameState, actorName, 'Chance requires chief privileges');
+    text.addMessage(gameState, actorName, 'Chance requires chief privileges.');
     return false;
   }
   if (gameState.reproductionRound == false) {
     text.addMessage(
       gameState,
       actorName,
-      'Can only do chance during the reproduction round, after reproduction activites are complete.'
+      'Can only do chance during the reproduction round, after reproduction activities are complete.'
     );
     return false;
   }
@@ -248,7 +248,7 @@ function doChance(rollValue, gameState) {
       } else {
         person.spearhead = 1;
       }
-      message += person.name + ' finds a spearhead';
+      message += person.name + ' finds a spearhead.';
       break;
     case 12:
       if (gameState.children) {
@@ -281,11 +281,11 @@ function doChance(rollValue, gameState) {
           }
         }
       } else {
-        message += 'If the tribe had children, they might gather food';
+        message += 'If the tribe had children, they might gather food.';
       }
       break;
     case 11:
-      message += '🦗 Locusts! Each player loses two dice of stored food';
+      message += '🦗 Locusts! Each player loses two dice of stored food.';
       for (const name in population) {
         person = pop.memberByName(name, gameState);
         amount = dice.roll(2);
@@ -351,11 +351,11 @@ function doChance(rollValue, gameState) {
       name = pop.randomMemberName(population);
       person = population[name];
       pop.applyInjury(person, gameState);
+      message += '🤕 ' + person.name + ' injured – miss next turn.';
       if (person.guarding && person.guarding.length > 0) {
         message += ' They can no longer guard ' + person.guarding + '.';
         delete person.guarding;
       }
-      message += '🤕 ' + person.name + ' injured – miss next turn.';
       break;
     case 5:
       name = pop.randomMemberName(population);
@@ -376,7 +376,7 @@ function doChance(rollValue, gameState) {
         person.food = 0;
       }
       if (person.guarding && person.guarding.length > 0) {
-        message += ' They can no longer guard ' + person.guarding;
+        message += ' They can no longer guard ' + person.guarding + '.';
         delete person.guarding;
       }
       break;
@@ -397,7 +397,7 @@ function doChance(rollValue, gameState) {
       }
       break;
     default:
-      message = 'bug in the chance system';
+      message = 'Bug in the chance system.';
   }
   text.addMessage(gameState, 'tribe', message);
   gameState.needChanceRoll = false;
@@ -413,7 +413,8 @@ function startWork(actorName, gameState) {
       gameState,
       actorName,
       'You cannot start a new round while there is an active demand. Active demand: ' +
-        activeDemand
+        activeDemand +
+        '.'
     );
     return;
   }
@@ -421,7 +422,7 @@ function startWork(actorName, gameState) {
     text.addMessage(
       gameState,
       actorName,
-      'The game is over.  Maybe you want to join to start a new game?'
+      'The game is over. Maybe you want to join to start a new game?'
     );
     return;
   }
@@ -429,19 +430,19 @@ function startWork(actorName, gameState) {
     text.addMessage(
       gameState,
       actorName,
-      'startwork requires chief privileges'
+      'startwork requires chief privileges.'
     );
     return;
   }
   if (gameState.workRound == true) {
-    text.addMessage(gameState, actorName, 'already in the workRound');
+    text.addMessage(gameState, actorName, 'Already in the work round.');
     return;
   }
   if (gameState.reproductionRound == false) {
     text.addMessage(
       gameState,
       actorName,
-      'Can only go to work round from reproduction round'
+      'Can only go to work round from reproduction round.'
     );
     return;
   }

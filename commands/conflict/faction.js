@@ -38,7 +38,7 @@ function setFaction(gameState, actorName, side) {
     text.addMessage(
       gameState,
       actorName,
-      'faction syntax is faction <for|against|neutral>'
+      'Faction syntax is faction <for|against|neutral>.'
     );
     return;
   }
@@ -46,7 +46,7 @@ function setFaction(gameState, actorName, side) {
     text.addMessage(
       gameState,
       actorName,
-      'The time for factions has past; it has come to violence.  You must attack, defend or run.'
+      'The time for factions has passed; it has come to violence. You must attack, defend, or run.'
     );
     return;
   }
@@ -54,7 +54,7 @@ function setFaction(gameState, actorName, side) {
     text.addMessage(
       gameState,
       actorName,
-      'There is no demand to have a faction about'
+      'There is no demand to have a faction about.'
     );
     return;
   }

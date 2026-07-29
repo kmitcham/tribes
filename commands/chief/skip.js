@@ -27,7 +27,7 @@ module.exports = {
 
 function skip(gameState, actorName, targetName) {
   if (!access.canActAsChief(actorName, gameState)) {
-    text.addMessage(gameState, actorName, 'skip requires chief privileges');
+    text.addMessage(gameState, actorName, 'skip requires chief privileges.');
     return;
   }
   var target = pop.memberByName(targetName, gameState);
@@ -35,7 +35,7 @@ function skip(gameState, actorName, targetName) {
     text.addMessage(
       gameState,
       actorName,
-      targetName + ' was not found in the tribe'
+      targetName + ' was not found in the tribe.'
     );
     return;
   }
@@ -44,7 +44,7 @@ function skip(gameState, actorName, targetName) {
   text.addMessage(
     gameState,
     'tribe',
-    'Chief ' + actorName + ' cancels ' + targetName + "'s chance to reproduce"
+    'Chief ' + actorName + ' cancels ' + targetName + "'s chance to reproduce."
   );
   gameState.saveRequired = true;
   return;

@@ -111,7 +111,7 @@ function feed(unused, player, amount, inputChildList, gameState) {
         continue;
       }
       console.log('Feed did not find child ' + childName);
-      text.addMessage(gameState, player.name, 'no such child as ' + childName);
+      text.addMessage(gameState, player.name, 'No such child as ' + childName + '.');
       continue;
     }
     const targetChild = children[childName];
@@ -446,7 +446,7 @@ function birth(gameState, childName, child, motherMember, birthRoll) {
     gameState
   );
   if (birthRoll < 5) {
-    response += ' but the child did not survive\n';
+    response += ' but the child did not survive.\n';
     child.dead = true;
     killlib.kill(childName, 'birth complications', gameState);
     console.log('removing stillborn ' + childName);

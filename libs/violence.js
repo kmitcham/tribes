@@ -10,7 +10,7 @@ module.exports.demand = (playerName, demandText, gameState) => {
   const response = player;
   gameState['demand'] = demandText;
   player['faction'] = 'for';
-  text.addMessage(gameState, 'tribe', playerName + ' DEMANDS: ' + demandText);
+  text.addMessage(gameState, 'tribe', playerName + ' DEMANDS: ' + demandText + '.');
   gameState.saveRequired = true;
   return response;
 };
