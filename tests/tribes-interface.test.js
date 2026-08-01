@@ -28,6 +28,28 @@ function createClassList() {
   };
 }
 
+function matchesSelector(el, selector) {
+  if (!el || !selector) return false;
+  const parts = String(selector)
+    .split(',')
+    .map((part) => part.trim())
+    .filter(Boolean);
+  return parts.some((part) => {
+    if (part.startsWith('.')) {
+      const className = part.slice(1);
+      return (
+        el.className === className ||
+        (el.classList && el.classList.contains(className))
+      );
+    }
+    if (part.startsWith('#')) {
+      return el.id === part.slice(1);
+    }
+    // tag name, e.g. "input" or "select"
+    return String(el.tagName || '').toLowerCase() === part.toLowerCase();
+  });
+}
+
 function createElement(tagName = 'div') {
   const attributes = {};
   const element = {
@@ -35,6 +57,7 @@ function createElement(tagName = 'div') {
     id: '',
     value: '',
     type: 'text',
+    checked: false,
     className: '',
     style: {},
     dataset: {},
@@ -89,17 +112,22 @@ function createElement(tagName = 'div') {
     addEventListener: jest.fn(),
     removeEventListener: jest.fn(),
     querySelectorAll(selector) {
-      if (selector === '.command-item') {
-        return this.children.filter(
-          (child) =>
-            child.className === 'command-item' ||
-            (child.classList && child.classList.contains('command-item'))
-        );
-      }
-      return [];
+      const results = [];
+      const walk = (node) => {
+        if (!node || !node.children) return;
+        for (const child of node.children) {
+          if (matchesSelector(child, selector)) {
+            results.push(child);
+          }
+          walk(child);
+        }
+      };
+      walk(this);
+      return results;
     },
-    querySelector() {
-      return null;
+    querySelector(selector) {
+      const matches = this.querySelectorAll(selector);
+      return matches[0] || null;
     },
     set innerHTML(value) {
       this._innerHTML = value;
@@ -131,7 +159,10 @@ function createMockEnvironment() {
     tribeRemembered: createElement('span'),
     nameRemembered: createElement('span'),
     statusText: createElement('div'),
+    joinPromptStatus: createElement('div'),
   };
+  elements.joinPromptStatus.id = 'joinPromptStatus';
+  elements.joinPromptStatus.style.display = 'none';
 
   elements.tribeSelect.value = 'bug';
   elements.playerName.value = 'TestPlayer';
@@ -343,6 +374,59 @@ describe('Tribes Interface Client (real class)', () => {
     );
   });
 
+  test('join prompt status chip shows when logged in and not a tribe member', () => {
+    const joinChip = env.elements.joinPromptStatus;
+    joinChip.style.display = 'none';
+
+    // Not logged in — hidden even if isMember is false
+    client.isLoggedIn = false;
+    client.isMember = false;
+    client.updateJoinPromptStatusChip();
+    expect(joinChip.style.display).toBe('none');
+
+    // Logged in but membership unknown — still hidden
+    client.isLoggedIn = true;
+    client.isMember = null;
+    client.updateJoinPromptStatusChip();
+    expect(joinChip.style.display).toBe('none');
+
+    // Logged in non-member — show prompt
+    client.isMember = false;
+    client.updateJoinPromptStatusChip();
+    expect(joinChip.style.display).toBe('flex');
+    expect(joinChip.innerHTML).toMatch(/Use.*join.*to start playing/i);
+    expect(joinChip.innerHTML).toMatch(/<strong>join<\/strong>/i);
+    expect(joinChip.classList.contains('join-prompt-attention')).toBe(true);
+
+    // Logged in member — hide
+    client.isMember = true;
+    client.updateJoinPromptStatusChip();
+    expect(joinChip.style.display).toBe('none');
+    expect(joinChip.classList.contains('join-prompt-attention')).toBe(false);
+  });
+
+  test('handleCommandList updates join prompt from isMember', () => {
+    const joinChip = env.elements.joinPromptStatus;
+    joinChip.style.display = 'none';
+    client.isLoggedIn = true;
+
+    client.handleCommandList({
+      commands: { join: { description: 'Join the tribe' } },
+      isMember: false,
+    });
+    expect(client.isMember).toBe(false);
+    expect(joinChip.style.display).toBe('flex');
+    expect(joinChip.innerHTML).toMatch(/Use.*join.*to start playing/i);
+    expect(joinChip.innerHTML).toMatch(/<strong>join<\/strong>/i);
+
+    client.handleCommandList({
+      commands: { hunt: { description: 'Hunt for food' } },
+      isMember: true,
+    });
+    expect(client.isMember).toBe(true);
+    expect(joinChip.style.display).toBe('none');
+  });
+
   test('send injects client and player metadata into websocket payload', () => {
     client.ws = new env.InterfaceMockWebSocket('ws://localhost:8000');
     client.ws.readyState = env.InterfaceMockWebSocket.OPEN;
@@ -408,6 +492,12 @@ describe('Tribes Interface Client (real class)', () => {
       options: [
         { name: 'child', required: true, type: 'string' },
         { name: 'amount', required: false, type: 'number' },
+        {
+          name: 'use_grain',
+          required: false,
+          type: 'boolean',
+          description: 'Use grain if needed',
+        },
       ],
     };
 
@@ -451,5 +541,79 @@ describe('Tribes Interface Client (real class)', () => {
     expect(optionTexts).toContain('--- Mothers (feed all their children) ---');
     expect(optionValues).toContain('momA');
     expect(optionValues).toContain('momB');
+
+    // use_grain checkbox (default unchecked)
+    function findById(root, id) {
+      if (root.id === id) return root;
+      if (!root.children) return null;
+      for (const child of root.children) {
+        const found = findById(child, id);
+        if (found) return found;
+      }
+      return null;
+    }
+    function findByTag(root, tag, pred) {
+      if (root.tagName === tag && (!pred || pred(root))) return root;
+      if (!root.children) return null;
+      for (const child of root.children) {
+        const found = findByTag(child, tag, pred);
+        if (found) return found;
+      }
+      return null;
+    }
+
+    const useGrainCheckbox = findById(container, 'param_use_grain');
+    expect(useGrainCheckbox).toBeTruthy();
+    expect(useGrainCheckbox.type).toBe('checkbox');
+    expect(useGrainCheckbox.checked).toBe(false);
+    const useGrainLabel = findByTag(
+      container,
+      'LABEL',
+      (el) => el.getAttribute('for') === 'param_use_grain'
+    );
+    expect(useGrainLabel).toBeTruthy();
+    expect(useGrainLabel.textContent).toMatch(/grain/i);
+  });
+
+  test('feed use_grain checkbox value is collected as boolean parameter', () => {
+    client.selectedCommand = {
+      name: 'feed',
+      description: 'Feed children',
+      options: [
+        {
+          name: 'use_grain',
+          required: false,
+          type: 'boolean',
+          description: 'Use grain if needed',
+        },
+      ],
+    };
+
+    const paramsContainer = createElement('div');
+    paramsContainer.id = 'modalCommandParameters';
+    client.renderParametersInContainer(paramsContainer);
+
+    function findById(root, id) {
+      if (root.id === id) return root;
+      if (!root.children) return null;
+      for (const child of root.children) {
+        const found = findById(child, id);
+        if (found) return found;
+      }
+      return null;
+    }
+
+    const checkbox = findById(paramsContainer, 'param_use_grain');
+    expect(checkbox).toBeTruthy();
+    expect(checkbox.type).toBe('checkbox');
+    expect(checkbox.checked).toBe(false);
+
+    checkbox.checked = true;
+    let params = client.collectParametersFromContainer(paramsContainer);
+    expect(params).toEqual({ use_grain: true });
+
+    checkbox.checked = false;
+    params = client.collectParametersFromContainer(paramsContainer);
+    expect(params).toEqual({ use_grain: false });
   });
 });

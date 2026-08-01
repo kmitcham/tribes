@@ -131,6 +131,44 @@
             color: #6b5100;
         }
 
+        /* Onboarding CTA: solid amber so non-members notice "join" */
+        .status-item.join-prompt-indicator {
+            background: #f39c12;
+            border: 2px solid #e67e22;
+            color: #2c1a00;
+            font-weight: 600;
+            box-shadow:
+                0 0 0 1px rgba(230, 126, 34, 0.35),
+                0 2px 10px rgba(243, 156, 18, 0.55);
+            padding: 5px 14px;
+        }
+
+        .status-item.join-prompt-indicator strong {
+            font-weight: 800;
+            text-decoration: underline;
+            text-underline-offset: 2px;
+        }
+
+        .status-item.join-prompt-indicator.join-prompt-attention {
+            animation: join-prompt-pulse 1s ease-in-out 3;
+        }
+
+        @keyframes join-prompt-pulse {
+            0%,
+            100% {
+                transform: scale(1);
+                box-shadow:
+                    0 0 0 1px rgba(230, 126, 34, 0.35),
+                    0 2px 10px rgba(243, 156, 18, 0.55);
+            }
+            50% {
+                transform: scale(1.06);
+                box-shadow:
+                    0 0 0 4px rgba(243, 156, 18, 0.45),
+                    0 4px 16px rgba(230, 126, 34, 0.7);
+            }
+        }
+
         .collapsible-header {
             display: flex;
             align-items: center;
@@ -1555,6 +1593,12 @@
                 white-space: nowrap;
             }
 
+            .game-status-bar .status-item.join-prompt-indicator {
+                grid-column: 1 / -1;
+                justify-content: center;
+                font-size: 0.8rem;
+            }
+
             .container {
                 display: flex;
                 flex-direction: column;
@@ -1698,6 +1742,10 @@
     <div class="game-status-bar" id="gameStatusBar">
         <div class="header-icons">
             <img src="caveman.png" alt="Caveman" title="Caveman">
+        </div>
+        <div class="status-item join-prompt-indicator" id="joinPromptStatus" style="display: none;">
+            <span class="status-icon">🚪</span>
+            <span>Use <strong>join</strong> to start playing</span>
         </div>
         <div class="status-item" id="roundStatus">
             <span class="status-icon">⚙️</span>
@@ -1965,6 +2013,7 @@
                 this.maxReconnectAttempts = 1000; // Keep retrying for a long time if server is down (e.g. 5+ minutes)
                 this.reconnectInterval = 2000;
                 this.isLoggedIn = false; // Track login state
+                this.isMember = null; // null unknown; true/false from commandList
                 this.isReferee = false; // Track referee status
                 this.chiefStatus = false; // Track chief status
                 this.orientationMessageSessionKey = 'tribesOrientationShown';
@@ -2045,8 +2094,10 @@
                 
                 this.clearSession();
                 this.isLoggedIn = false;
+                this.isMember = null;
                 this.expandLoginArea();
                 this.hideCommandsSection();
+                this.updateJoinPromptStatusChip();
                 this.addMessage('Logged out successfully', 'info');
             }
             setCookie(name, value, days = 14) {
@@ -2462,14 +2513,18 @@
                     this.addMessage(`Welcome back, ${data.playerName}!`, 'success');
                     this.showLoginOrientationMessage();
                     this.requestCommandList();
+                    this.updateJoinPromptStatusChip();
                     if (document.getElementById('tribeSelect').value) {
                         this.refreshGameData();
                     }
                 } else {
                     // Session invalid, clear it and show login
                     this.clearSession();
+                    this.isLoggedIn = false;
+                    this.isMember = null;
                     this.addMessage('Session expired. Please log in again.', 'error');
                     this.expandLoginArea();
+                    this.updateJoinPromptStatusChip();
                 }
             }
             
@@ -2480,8 +2535,10 @@
             handleForceLogout(data) {
                 this.clearSession();
                 this.isLoggedIn = false;
+                this.isMember = null;
                 this.expandLoginArea();
                 this.hideCommandsSection();
+                this.updateJoinPromptStatusChip();
                 this.addMessage(data.message, 'info');
             }
 
@@ -2513,6 +2570,7 @@
 
                 this.updateCommandList();
                 this.initCommandSearch();
+                this.updateJoinPromptStatusChip();
 
                 // Show/hide referee tools based on referee status
                 const refereeSection = document.getElementById('refereeAdminSection');
@@ -2691,6 +2749,7 @@
                     this.requestCommandList(); // Refresh command list in case chief status changed
                     this.minimizeLoginArea(); // Minimize login area after successful registration
                     this.showLoginOrientationMessage();
+                    this.updateJoinPromptStatusChip();
                     if (document.getElementById('tribeSelect').value) {
                         this.refreshGameData();
                     }
@@ -2767,8 +2826,10 @@
                     toggleLoginBtn.textContent = '−';
                 }
                 this.isLoggedIn = false; // Reset login state when expanding login area
+                this.isMember = null;
                 this.hideCommandsSection(); // Hide commands when going back to login
                 this.syncMobileLayoutState();
+                this.updateJoinPromptStatusChip();
             }
 
             toggleLoginSection() {
@@ -6701,6 +6762,37 @@
                 waitingStatus.innerHTML = `<span class="status-icon">${waitingInfo.icon}</span><span>${waitingInfo.text}</span>`;
             }
 
+            /**
+             * Show a status-bar tile when the player is logged in but not a
+             * member of the currently selected tribe.
+             */
+            updateJoinPromptStatusChip() {
+                const joinPromptStatus = document.getElementById('joinPromptStatus');
+                if (!joinPromptStatus) {
+                    return;
+                }
+
+                if (this.isLoggedIn && this.isMember === false) {
+                    const wasHidden = joinPromptStatus.style.display === 'none';
+                    joinPromptStatus.style.display = 'flex';
+                    joinPromptStatus.innerHTML =
+                        '<span class="status-icon">🚪</span><span>Use <strong>join</strong> to start playing</span>';
+                    joinPromptStatus.title =
+                        'You are logged in but not a member of this tribe. Use the join command to start playing.';
+                    // Soft pulse a few times when the chip first appears
+                    if (wasHidden) {
+                        joinPromptStatus.classList.remove('join-prompt-attention');
+                        // Force reflow so the animation can restart
+                        void joinPromptStatus.offsetWidth;
+                        joinPromptStatus.classList.add('join-prompt-attention');
+                    }
+                } else {
+                    joinPromptStatus.style.display = 'none';
+                    joinPromptStatus.title = '';
+                    joinPromptStatus.classList.remove('join-prompt-attention');
+                }
+            }
+
             updateCurrentTribeStatusChip(gameState) {
                 const currentTribeStatus = document.getElementById('currentTribeStatus');
                 if (!currentTribeStatus) {
@@ -6991,6 +7083,7 @@
                 this.updateCurrentTribeStatusChip(gameState);
                 this.updateConflictStatusChip(gameState);
                 this.updateWaitingStatusChip();
+                this.updateJoinPromptStatusChip();
             }
 
             updateGameStatusBarWithData(gameState) {
