@@ -23,6 +23,8 @@ function playerHelpBasic() {
   text += ' specialize <hunter|gatherer|crafter> at the start of the game\n';
   text += ' status see the current location, year, season and local game\n';
   text +=
+    ' depart  leave this tribe voluntarily (not banished as punishment, not dead). Blocked during a demand or violence. There is no return: that player cannot rejoin this tribe for the rest of this game.\n';
+  text +=
     ' vote <target>  your choice for chief.  A chief is required for the game to proceed, and controls tribe membership\n';
   text += 'ping confirms the server is up and functional\n';
   //text+=' obey <commands>  (things you will do if the chief commands, in case of extended AFK)\n'
@@ -71,7 +73,10 @@ function playerHelpConflict() {
 
 function chiefHelp() {
   let text = '\n### Chief Commands ###\n';
-  text += ' induct|banish <player> add|remove a tribe member\n';
+  text +=
+    ' induct <player> add a tribe member\n';
+  text +=
+    ' banish <player> remove a tribe member (blocked during demand/violence). There is no return: that player cannot rejoin this tribe for the rest of this game. Players may also depart themselves.\n';
   text +=
     ' open|close  toggle if people can join with "join" or only with "induct" by the chief\n';
   //text+=' drone <gender> <profession> <name>  adds a worker to the tribe that takes commands but is sterile. [non-standard]\n'

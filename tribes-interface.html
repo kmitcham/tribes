@@ -2495,6 +2495,15 @@
                 if (data.isChief !== undefined) {
                     this.chiefStatus = data.isChief;
                 }
+                if (data.isMember !== undefined) {
+                    this.isMember = data.isMember;
+                }
+                if (data.canCraft !== undefined) {
+                    this.serverCanCraft = data.canCraft;
+                }
+                if (data.canActAsChief !== undefined) {
+                    this.canActAsChief = data.canActAsChief;
+                }
 
                 if (data.tribes) {
                     this.currentTribes = data.tribes;
@@ -2593,8 +2602,8 @@
                     case 'population':
                         this.currentPopulation = data.content;
                         this.updatePopulationTable(data.content);
-                        // Update command list when population data changes (for chief status)
-                        this.updateCommandList();
+                        // Membership / craft / chief can change visibility — re-fetch list
+                        this.requestCommandList();
                         this.updateWaitingStatusChip();
                         this.regenerateModalFormIfDataReady('population');
                         break;
@@ -2621,6 +2630,8 @@
                         if (this.currentPopulation) {
                             this.updatePopulationTable(this.currentPopulation);
                         }
+                        // Round / demand / violence / jerky affect which commands are listed
+                        this.requestCommandList();
                         this.updateWaitingStatusChip();
                         break;
                     case 'romance':
@@ -2944,57 +2955,46 @@
             updateCommandList() {
                 const container = document.getElementById('commandList');
                 container.innerHTML = '';
-                const playerIsChief = this.isCurrentPlayerChief();
-                const playerCanCraft = this.isCurrentPlayerCanCraft();
-                
-                // Commands that are not needed with the GUI.
-                // Romance-related direct commands are hidden in favor of the unified romance panel.
-                // Keep pass visible so players can still explicitly pass.
-                const hiddenCommands = ['children', 'inventory', 'invite', 'consent', 'decline'];
-                
-                // Add combat command if violence is active
+                // Server already filters by membership, chief, craft, conflict, etc.
+                // Only add UI combat helper when violence is active and player is a member.
                 const isViolenceActive = this.currentStatusData && this.currentStatusData.violence;
-                const combatCommand = isViolenceActive ? { 'combat': { description: 'Choose your combat action: attack, defend, or run away', category: 'conflict' } } : {};
-                
-                // Sort commands alphabetically by name and filter out hidden commands
+                const combatCommand =
+                    isViolenceActive && this.isMember !== false
+                        ? {
+                              combat: {
+                                  description:
+                                      'Choose your combat action: attack, defend, or run away',
+                                  category: 'conflict',
+                              },
+                          }
+                        : {};
+
                 const allCommands = { ...this.commands, ...combatCommand };
-                const sortedCommands = Object.entries(allCommands)
-                    .filter(([name, command]) => !hiddenCommands.includes(name) && (!this.isRefereeCommand(command.description) || this.isReferee))
-                    .sort(([a], [b]) => a.localeCompare(b));
-                
+                const sortedCommands = Object.entries(allCommands).sort(([a], [b]) =>
+                    a.localeCompare(b)
+                );
+
+                if (sortedCommands.length === 0) {
+                    container.innerHTML =
+                        '<div class="command-item">No commands available for your role in this tribe.</div>';
+                    return;
+                }
+
                 sortedCommands.forEach(([name, command]) => {
                     const item = document.createElement('div');
                     item.className = 'command-item';
                     item.dataset.command = name;
-                    item.dataset.category = command.category;
-                    
-                    const isChiefCommand = this.isChiefCommand(command.description);
-                    const isSecretsCommand = name.toLowerCase() === 'secrets';
-                    const secretsBlocked = isSecretsCommand && playerCanCraft === false;
-                    
-                    // Add disabled class if it's a chief command and player is not chief
-                    if ((isChiefCommand && !playerIsChief) || secretsBlocked) {
-                        item.classList.add('disabled');
-                    }
+                    item.dataset.category = command.category || '';
 
-                    const requirementLabel =
-                        (isChiefCommand && !playerIsChief)
-                            ? ' [Requires Chief]'
-                            : (secretsBlocked ? ' [Requires Craft Knowledge]' : '');
+                    const isChiefCommand =
+                        command.category === 'chief' ||
+                        this.isChiefCommand(command.description);
 
                     item.innerHTML = `
                         <div class="command-name">${name}${isChiefCommand ? ' 👑' : ''}</div>
-                        <div class="command-desc">${command.description}${requirementLabel}</div>
+                        <div class="command-desc">${command.description || ''}</div>
                     `;
                     item.onclick = () => {
-                        if (isChiefCommand && !playerIsChief) {
-                            this.addMessage('⚠️ This command requires chief privileges', 'error');
-                            return;
-                        }
-                        if (secretsBlocked) {
-                            this.addMessage('⚠️ Only players who know crafting can use secrets', 'error');
-                            return;
-                        }
                         const searchInput = document.getElementById('commandSearchInput');
                         const goBtn = document.getElementById('commandGoBtn');
                         const suggestions = document.getElementById('commandSuggestions');
@@ -5719,8 +5719,8 @@
                 if (!profession) return '👤';
                 const prof = profession.toLowerCase().replace(/[_-]/g, '');
                 const iconMap = {
-                    'hunter': '𓐬',
-                    'gatherer': '🧺',
+                    'hunter': '🏹',
+                    'gatherer': '🌾',
                     'crafter': '🛠️',
                     'tribemember': '👤'
                 };

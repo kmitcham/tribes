@@ -120,7 +120,7 @@ function itemIcon(item) {
     return '🧺';
   }
   if (item === 'spearhead') {
-    return '🔱';
+    return '𓐬';
   }
   return '';
 }

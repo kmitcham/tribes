@@ -84,7 +84,7 @@ describe('attack command', () => {
     attackCommand.execute(interaction, gameState);
 
     expect(gameState.messages.outsider).toBe(
-      'You are not a member of this tribe.'
+      'You are not a member of this tribe. Join if the tribe is open, or ask the chief to induct you.'
     );
     expect(gameState.population.bob.strategy).toBeNull();
     expect(gameState.saveRequired).toBe(false);

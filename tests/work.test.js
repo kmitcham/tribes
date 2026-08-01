@@ -167,7 +167,7 @@ describe('Work Module Tests', () => {
     test('should return message when player is null', () => {
       const result = canWork(mockGameState, null);
 
-      expect(result).toBe('You are not a member of this tribe.');
+      expect(result).toBe('You are not a member of this tribe. Join if the tribe is open, or ask the chief to induct you.');
     });
 
     test('should return message when player is injured', () => {
@@ -261,6 +261,11 @@ describe('Work Module Tests', () => {
       expect(mockPlayer.worked).toBe(true);
       expect(mockPlayer.activity).toBe('crafted');
       expect(mockGameState.saveRequired).toBe(true);
+      expect(text.addMessage).toHaveBeenCalledWith(
+        mockGameState,
+        'tribe',
+        expect.stringContaining('basket 🧺')
+      );
     });
 
     test('should successfully craft a spearhead', () => {
@@ -452,7 +457,7 @@ describe('Work Module Tests', () => {
       expect(text.addMessage).toHaveBeenCalledWith(
         mockGameState,
         'ghost',
-        'You are not a member of this tribe.'
+        'You are not a member of this tribe. Join if the tribe is open, or ask the chief to induct you.'
       );
     });
 
@@ -465,7 +470,7 @@ describe('Work Module Tests', () => {
       expect(text.addMessage).toHaveBeenCalledWith(
         mockGameState,
         'ghost',
-        'You are not a member of this tribe.'
+        'You are not a member of this tribe. Join if the tribe is open, or ask the chief to induct you.'
       );
     });
 

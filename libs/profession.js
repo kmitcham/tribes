@@ -21,9 +21,13 @@ function specialize(playerName, profession, gameState) {
     text.addMessage(
       gameState,
       person.name,
-      person.name + ', you are not in this tribe.'
+      person.name +
+        ', you are not in this tribe. Join if the tribe is open, or ask the chief to induct you.'
     );
-    return person.name + ', you are not in this tribe.';
+    return (
+      person.name +
+      ', you are not in this tribe. Join if the tribe is open, or ask the chief to induct you.'
+    );
   }
   console.log('person:' + person.name + ' profession' + person.profession);
   if ('profession' in person && person.profession) {

@@ -5,7 +5,9 @@ const { banishAdmin } = require('../../libs/banish.js');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('banish')
-    .setDescription('Remove a tribe member from the tribe. (Chief only)')
+    .setDescription(
+      'Remove a tribe member from the tribe (chief only). No return: they cannot rejoin this tribe for the rest of this game.'
+    )
     .addUserOption((option) =>
       option
         .setName('target')

@@ -821,7 +821,7 @@ test('pass when not in tribe', () => {
   };
   reproLib.pass(gameState, 'dummy');
   const message = gameState['messages']['dummy'];
-  expect(message).toContain('You are not a member of this tribe.');
+  expect(message).toContain('You are not a member of this tribe. Join if the tribe is open, or ask the chief to induct you.');
 });
 
 test('pass when not in reproduction', () => {

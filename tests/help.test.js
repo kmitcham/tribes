@@ -47,6 +47,14 @@ describe('Help Module', () => {
       expect(result).toContain('inventory');
     });
 
+    test('should include depart command', () => {
+      const result = help.playerHelpBasic();
+      expect(result).toContain('depart');
+      expect(result).toContain('voluntarily');
+      expect(result).toContain('no return');
+      expect(result).toContain('cannot rejoin');
+    });
+
     test('should include incarnations command', () => {
       const result = help.playerHelpBasic();
       expect(result).toContain('incarnations');
@@ -206,6 +214,8 @@ describe('Help Module', () => {
     test('should include banish command', () => {
       const result = help.chiefHelp();
       expect(result).toContain('banish');
+      expect(result).toContain('no return');
+      expect(result).toContain('cannot rejoin');
     });
 
     test('should include startwork command', () => {

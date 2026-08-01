@@ -442,6 +442,15 @@ function addToPopulation(gameState, sourceName, gender, profession, handle) {
     text.addMessage(gameState, sourceName, target + ' is already in the tribe.');
     return;
   }
+  // Banished and departed share gameState.banished; neither may rejoin.
+  if (deadOrBanishedByName(sourceName, gameState) || deadOrBanishedByName(target, gameState)) {
+    text.addMessage(
+      gameState,
+      sourceName,
+      'You cannot rejoin this tribe after leaving or being banished.'
+    );
+    return;
+  }
   if (gender.startsWith('m')) {
     gender = 'male';
   }

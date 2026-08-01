@@ -1,6 +1,22 @@
 var banishlib = require('../libs/banish.js');
 console.log = jest.fn();
 
+test('banish is blocked during violence', () => {
+  var gameState = {
+    population: {
+      Chief: { name: 'Chief', chief: true },
+      Target: { name: 'Target' },
+    },
+    violence: 'fight over grain',
+    messages: {},
+  };
+  banishlib.banishAdmin(gameState, 'Chief', 'Target', 'later');
+  expect(gameState.population.Target).toBeDefined();
+  expect(gameState.messages.Chief).toContain(
+    'Banish can not be used during a conflict'
+  );
+});
+
 test('banish person', () => {
   var gameState = {
     name: 'unitTest-tribe',

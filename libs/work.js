@@ -165,6 +165,8 @@ function craft(gameState, sourceName, item, forceRoll) {
   }
   if (rollValue > 1 && item == 'basket') {
     player.basket += 1;
+    message =
+      sourceName + ' crafts [roll ' + craftRoll + '] a basket 🧺.';
   } else if (rollValue > 2 && item == 'spearhead') {
     player.spearhead += 1;
   } else {

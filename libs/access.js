@@ -2,7 +2,8 @@ const referees = require('./referees.json');
 const pop = require('./population.js');
 const text = require('./textprocess.js');
 
-const NOT_IN_TRIBE_MESSAGE = 'You are not a member of this tribe.';
+const NOT_IN_TRIBE_MESSAGE =
+  'You are not a member of this tribe. Join if the tribe is open, or ask the chief to induct you.';
 
 function isReferee(actorName) {
   return !!(actorName && referees.includes(actorName));

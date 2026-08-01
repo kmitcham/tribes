@@ -1,4 +1,5 @@
 const access = require('../../libs/access.js');
+const commandVisibility = require('../../libs/commandVisibility.js');
 
 function handleInfoRequest(ws, data, gameState, deps) {
   const {
@@ -177,21 +178,37 @@ function handleListCommands(ws, data, gameState, deps) {
   const playerName = data.playerName;
 
   let isChief = false;
+  let isMember = false;
+  let canCraft = false;
+  let player = null;
   if (playerName && gameState && gameState.population) {
-    const player = pop.memberByName(playerName, gameState);
-    isChief = player && player.chief;
+    player = pop.memberByName(playerName, gameState);
+    isMember = !!player;
+    isChief = !!(player && player.chief);
+    canCraft = !!(player && player.canCraft);
   }
 
-  const isRef = playerName && referees.includes(playerName);
+  const isRef = !!(playerName && referees.includes(playerName));
   // Refs may run chief controls in any tribe they view (even non-members).
   // Work, guard, romance, and conflict stay member-bound in command handlers.
   const canUseChiefCommands = isChief || isRef;
+  const visibilityCtx = {
+    isMember,
+    isRef,
+    canUseChiefCommands,
+    canCraft,
+    canJerky: !!(gameState && gameState.canJerky),
+    hasDemand: !!(gameState && gameState.demand),
+    hasViolence: !!(gameState && gameState.violence),
+    gameEnded: !!(gameState && gameState.ended),
+  };
+
   const sortedCommands = Array.from(commands.entries()).sort(([a], [b]) =>
     a.localeCompare(b)
   );
 
   for (const [name, command] of sortedCommands) {
-    if (command.category === 'chief' && !canUseChiefCommands) {
+    if (!commandVisibility.isCommandVisible(name, command, visibilityCtx)) {
       continue;
     }
 
@@ -220,6 +237,8 @@ function handleListCommands(ws, data, gameState, deps) {
       commands: commandList,
       isReferee: isRef,
       isChief: isChief,
+      isMember: isMember,
+      canCraft: canCraft,
       // Client may use this to treat refs as having chief UI affordances.
       canActAsChief: canUseChiefCommands,
       tribes: tribesRegistry.getTribes(),

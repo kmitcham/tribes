@@ -20,11 +20,14 @@ Use these icons consistently when adding Unicode to player-facing messages. The 
 | Locusts | 🦗 |
 | Fire / no-game disaster | 🔥 |
 | No game | 🚫🦌 |
-| Spearhead breaks | 🔱💥 |
+| Spearhead item / breaks | 𓐬 / 𓐬💥 |
 | Basket breaks | 🧺💥 |
 | Give grain | 🌾 |
 | Give basket | 🧺 |
-| Give spearhead | 🔱 |
+| Give spearhead | 𓐬 |
+| Hunter profession | 🏹 |
+| Gatherer profession | 🌾 |
+| Crafter profession | 🛠️ |
 | Injury | 🤕 |
 | Sickness | 🤢 |
 
@@ -76,11 +79,14 @@ Use plant, grain, and food icons that match the gathered resource.
 - `Locusts! ...` -> 🦗
 - `FIRE! ...` -> 🔥
 - `No game.` -> 🚫🦌
-- `The spearhead broke!` -> 🔱💥
+- `The spearhead broke!` -> 𓐬💥
 - `basket breaks.` -> 🧺💥
 - `gives ... grain` -> 🌾
 - `gives ... basket` -> 🧺
-- `gives ... spearhead` -> 🔱
+- `gives ... spearhead` -> 𓐬
+- hunter profession badge -> 🏹
+- gatherer profession badge -> 🌾
+- crafter profession badge -> 🛠️
 
 ## Notes
 
