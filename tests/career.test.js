@@ -248,6 +248,65 @@ test('formatLastGameMessage shows stored recap or empty guidance', () => {
   expect(msg).toContain('full endgame body');
 });
 
+test('formatLastGameMessage puts personal score and children before full report', () => {
+  const user = {
+    name: 'Alice',
+    lastGame: {
+      tribe: 'bear',
+      tribeResult: 'Successful',
+      endedAt: '2026-07-18T00:00:00.000Z',
+      personalMessage:
+        'Your results:\n✨ Alice ♀️ (f) — 2 children • 🟢 living\n\nYour children:\n- KidA ♂️ (m) — mother: Alice, father: Bob • ✅ grew up',
+      message:
+        '### GAME OVER ###\n👶 Final children list...\n- KidA ...\n👨‍👩‍👧‍👦 Parent scores...\n- ✨ Alice ...',
+    },
+  };
+  const msg = career.formatLastGameMessage(user, 'Alice');
+  const personalIdx = msg.indexOf('Your results:');
+  const fullIdx = msg.indexOf('--- Full report ---');
+  const bodyIdx = msg.indexOf('### GAME OVER ###');
+  expect(personalIdx).toBeGreaterThan(-1);
+  expect(fullIdx).toBeGreaterThan(personalIdx);
+  expect(bodyIdx).toBeGreaterThan(fullIdx);
+  expect(msg).toContain('Your children:');
+  expect(msg).toContain('KidA');
+  // Full list still present after the personal section
+  expect(msg).toContain('Parent scores');
+});
+
+test('storeLastGameRecap stores personalMessage per player', () => {
+  const usersDict = {
+    Alice: { name: 'Alice', password: '' },
+    Bob: { name: 'Bob', password: '' },
+  };
+  const gameState = {
+    name: 'bear',
+    seasonCounter: 4,
+    tribeResult: 'Successful',
+    population: {
+      Alice: { name: 'Alice', profession: 'gatherer' },
+      Bob: { name: 'Bob', profession: 'hunter' },
+    },
+    banished: {},
+    graveyard: {},
+    children: {},
+  };
+
+  career.storeLastGameRecap(gameState, 'FULL RECAP', {
+    usersDict,
+    writeUsers: () => {},
+    personalSections: {
+      Alice: 'Your results:\nAlice score line\n\nYour children:\n- (none)',
+      Bob: 'Your results:\nBob score line\n\nYour children:\n- Kid',
+    },
+  });
+
+  expect(usersDict.Alice.lastGame.message).toBe('FULL RECAP');
+  expect(usersDict.Alice.lastGame.personalMessage).toContain('Alice score line');
+  expect(usersDict.Bob.lastGame.personalMessage).toContain('Bob score line');
+  expect(usersDict.Alice.lastGame.personalMessage).not.toContain('Bob score');
+});
+
 test('formatLifetimeChildrenBlurb includes this incarnation', () => {
   const user = { name: 'Alice' };
   const c = career.ensureCareer(user);

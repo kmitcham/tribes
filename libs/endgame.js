@@ -161,7 +161,17 @@ function endGame(gameState, _bot) {
   // Persist career summaries after child scoring so parent/grow-up counts match.
   try {
     career.recordEndedGame(gameState);
-    career.storeLastGameRecap(gameState, fullRecap);
+    const personalSections = {};
+    const adultsForRecap = career.collectAdultEntries(gameState);
+    for (const adult of adultsForRecap) {
+      personalSections[adult.name] = formatPersonalLastGameSection(
+        gameState,
+        adult.name
+      );
+    }
+    career.storeLastGameRecap(gameState, fullRecap, {
+      personalSections: personalSections,
+    });
     const blurbs = career.buildEndgameLifetimeBlurbs(gameState);
     for (const blurb of blurbs) {
       text.addMessage(gameState, blurb.playerName, blurb.message);
@@ -415,6 +425,94 @@ function buildChildOutcomeRows(gameState) {
   );
 }
 
+function formatParentScoreLine(row) {
+  return (
+    scoreIcon(row.score) +
+    ' ' +
+    row.name +
+    ' ' +
+    genderIcon(row.gender) +
+    ' (' +
+    row.gender +
+    ') — ' +
+    row.score +
+    ' child' +
+    (row.score === 1 ? '' : 'ren') +
+    ' • ' +
+    statusIcon(row.status) +
+    ' ' +
+    row.status
+  );
+}
+
+function formatChildOutcomeLine(row) {
+  return (
+    '- ' +
+    row.name +
+    ' ' +
+    genderIcon(row.gender) +
+    ' (' +
+    row.gender +
+    ') — mother: ' +
+    row.mother +
+    ', father: ' +
+    row.father +
+    ' • ' +
+    row.statusIcon +
+    ' ' +
+    row.status
+  );
+}
+
+/**
+ * Personal slice of endgame scoring for one player: their score line, then
+ * only their children's fates. Same wording as the full lists.
+ */
+module.exports.formatPersonalLastGameSection = formatPersonalLastGameSection;
+function formatPersonalLastGameSection(gameState, playerName) {
+  if (!gameState || !playerName) {
+    return '';
+  }
+  const children = gameState.children || {};
+  const parentRows = buildParentRows(gameState, children);
+  const childRows = buildChildOutcomeRows(gameState);
+  const lower = String(playerName).toLowerCase();
+
+  const parentRow = parentRows.find(
+    (row) => String(row.name).toLowerCase() === lower
+  );
+
+  const lines = [];
+  lines.push('Your results:');
+  if (parentRow) {
+    lines.push(formatParentScoreLine(parentRow));
+  } else {
+    lines.push(
+      scoreIcon(0) +
+        ' ' +
+        playerName +
+        ' — 0 children • ❔ unknown'
+    );
+  }
+
+  lines.push('');
+  lines.push('Your children:');
+  const myChildren = childRows.filter((row) => {
+    const mother = String(row.mother || '').toLowerCase();
+    const father = String(row.father || '').toLowerCase();
+    return mother === lower || father === lower;
+  });
+  if (myChildren.length === 0) {
+    lines.push('- (none)');
+  } else {
+    myChildren.forEach((row) => {
+      lines.push(formatChildOutcomeLine(row));
+    });
+  }
+
+  return lines.join('\n');
+}
+
 module.exports.scoreChildrenMessage = scoreChildrenMessage;
 function scoreChildrenMessage(gameState) {
   const children = gameState.children || {};
@@ -428,45 +526,13 @@ function scoreChildrenMessage(gameState) {
   const lines = [];
   lines.push('👶 Final children list (parentage + status):');
   childRows.forEach((row) => {
-    lines.push(
-      '- ' +
-        row.name +
-        ' ' +
-        genderIcon(row.gender) +
-        ' (' +
-        row.gender +
-        ') — mother: ' +
-        row.mother +
-        ', father: ' +
-        row.father +
-        ' • ' +
-        row.statusIcon +
-        ' ' +
-        row.status
-    );
+    lines.push(formatChildOutcomeLine(row));
   });
 
   lines.push('');
   lines.push('👨‍👩‍👧‍👦 Parent scores (women and men sorted together):');
   parentRows.forEach((row) => {
-    lines.push(
-      '- ' +
-        scoreIcon(row.score) +
-        ' ' +
-        row.name +
-        ' ' +
-        genderIcon(row.gender) +
-        ' (' +
-        row.gender +
-        ') — ' +
-        row.score +
-        ' child' +
-        (row.score === 1 ? '' : 'ren') +
-        ' • ' +
-        statusIcon(row.status) +
-        ' ' +
-        row.status
-    );
+    lines.push('- ' + formatParentScoreLine(row));
   });
 
   return lines.join('\n');

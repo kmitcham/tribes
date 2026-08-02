@@ -1193,3 +1193,56 @@ test('run scoreChildren trivial', () => {
   scoreMessage = endLib.scoreChildrenMessage(endGameState);
   expect(scoreMessage).toContain('BethMitcham ♂️ (m) — 2 children');
 });
+
+test('formatPersonalLastGameSection shows only that player score and their children', () => {
+  const gameState = {
+    population: {
+      Alice: { name: 'Alice', gender: 'female', profession: 'gatherer' },
+      Bob: { name: 'Bob', gender: 'male', profession: 'hunter' },
+      Carol: { name: 'Carol', gender: 'female', profession: 'gatherer' },
+    },
+    banished: {},
+    graveyard: {},
+    children: {
+      KidA: {
+        name: 'KidA',
+        mother: 'Alice',
+        father: 'Bob',
+        gender: 'male',
+        age: 10,
+        newAdult: true,
+      },
+      KidB: {
+        name: 'KidB',
+        mother: 'Carol',
+        father: 'Bob',
+        gender: 'female',
+        age: 4,
+        newAdult: false,
+      },
+    },
+  };
+
+  const aliceSection = endLib.formatPersonalLastGameSection(gameState, 'Alice');
+  expect(aliceSection).toContain('Your results:');
+  expect(aliceSection).toMatch(/Alice.*1 child/);
+  expect(aliceSection).toContain('Your children:');
+  expect(aliceSection).toContain('KidA');
+  expect(aliceSection).toContain('grew up');
+  expect(aliceSection).not.toContain('KidB');
+  expect(aliceSection).not.toContain('Carol');
+
+  const bobSection = endLib.formatPersonalLastGameSection(gameState, 'Bob');
+  expect(bobSection).toMatch(/Bob.*2 children/);
+  expect(bobSection).toContain('KidA');
+  expect(bobSection).toContain('KidB');
+  expect(bobSection).toContain('still a child');
+
+  // Full list still has everyone when scoring normally
+  const full = endLib.scoreChildrenMessage(gameState);
+  expect(full).toContain('Alice');
+  expect(full).toContain('Bob');
+  expect(full).toContain('Carol');
+  expect(full).toContain('KidA');
+  expect(full).toContain('KidB');
+});

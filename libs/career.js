@@ -480,6 +480,27 @@ function storeLastGameRecap(gameState, fullMessage, deps) {
     return { recorded: 0, skipped: 0 };
   }
 
+  const personalSections =
+    deps.personalSections && typeof deps.personalSections === 'object'
+      ? deps.personalSections
+      : {};
+
+  function personalFor(name) {
+    if (!name) {
+      return '';
+    }
+    if (personalSections[name]) {
+      return personalSections[name];
+    }
+    const lower = String(name).toLowerCase();
+    for (const sectionKey of Object.keys(personalSections)) {
+      if (String(sectionKey).toLowerCase() === lower) {
+        return personalSections[sectionKey];
+      }
+    }
+    return '';
+  }
+
   const recap = {
     endedAt: new Date().toISOString(),
     tribe: gameState && gameState.name ? gameState.name : '',
@@ -508,9 +529,11 @@ function storeLastGameRecap(gameState, fullMessage, deps) {
       skipped += 1;
       continue;
     }
+    const personalMessage = personalFor(adult.name);
     user.lastGame = Object.assign({}, recap, {
       survived: adult.status,
       profession: adult.profession || null,
+      personalMessage: personalMessage || null,
     });
     recorded += 1;
   }
@@ -561,6 +584,17 @@ function formatLastGameMessage(user, playerName) {
     headerParts.length > 0
       ? 'Last game recap (' + headerParts.join(' · ') + ')\n\n'
       : 'Last game recap\n\n';
+
+  // Personal score + own children first; full tribe report still included after.
+  const personal = g.personalMessage ? String(g.personalMessage).trim() : '';
+  if (personal) {
+    return (
+      header +
+      personal +
+      '\n\n--- Full report ---\n\n' +
+      g.message
+    );
+  }
   return header + g.message;
 }
 module.exports.formatLastGameMessage = formatLastGameMessage;
