@@ -2021,8 +2021,9 @@
                 this.orientationMessageShownThisRuntime = false;
                 // Dedupe live/replay/restored chat lines (fingerprint -> last seen ms).
                 this.messageFingerprints = new Map();
-                this.messageHistoryMaxAgeMs = 48 * 60 * 60 * 1000;
-                this.messageHistoryMaxStored = 200;
+                // Local persistence: keep a longer window so reload does not wipe the feed.
+                this.messageHistoryMaxAgeMs = 7 * 24 * 60 * 60 * 1000; // 7 days
+                this.messageHistoryMaxStored = 500;
                 // Live network double-delivery window (same text/type/label).
                 this.messageDedupeWindowMs = 60 * 1000;
                 // Population / children / graveyard column sort (default: name ascending).
@@ -2146,7 +2147,9 @@
                     }, 100);
                 }
                 
-                // Load message history after settings are loaded
+                // History load is deferred until tribe + player are known.
+                // Early load used the wrong localStorage key (default/anonymous) and
+                // never reloaded after the tribe dropdown filled in.
                 setTimeout(() => {
                     this.loadMessageHistory();
                 }, 300);
@@ -2508,12 +2511,18 @@
                 if (data.success) {
                     this.isLoggedIn = true;
                     this.currentPlayerName = data.playerName;
+                    // Ensure name field matches session so history key is correct
+                    const playerNameInput = document.getElementById('playerName');
+                    if (playerNameInput && data.playerName) {
+                        playerNameInput.value = data.playerName;
+                    }
                     this.showCommandsSection();
                     this.minimizeLoginArea();
                     this.addMessage(`Welcome back, ${data.playerName}!`, 'success');
                     this.showLoginOrientationMessage();
                     this.requestCommandList();
                     this.updateJoinPromptStatusChip();
+                    this.loadMessageHistory();
                     if (document.getElementById('tribeSelect').value) {
                         this.refreshGameData();
                     }
@@ -2617,6 +2626,9 @@
                         tribeSelect.value = tribeSelect.options[0].value;
                     }
                 }
+
+                // Tribe list often arrives after first paint; load history under the real key.
+                this.loadMessageHistory();
             }
 
             regenerateModalFormIfDataReady(dataLabel) {
@@ -2750,6 +2762,7 @@
                     this.minimizeLoginArea(); // Minimize login area after successful registration
                     this.showLoginOrientationMessage();
                     this.updateJoinPromptStatusChip();
+                    this.loadMessageHistory();
                     if (document.getElementById('tribeSelect').value) {
                         this.refreshGameData();
                     }
@@ -5172,8 +5185,9 @@
                     container.appendChild(message);
                 }
                 
-                // Store message in history (don't store restored/replay lines to avoid duplication)
-                if (!isRestored && !isReplay && this.shouldPersistMessage(text)) {
+                // Store live + offline-replay lines so reload keeps them.
+                // Skip only restored-from-localStorage lines (already in storage).
+                if (!isRestored && this.shouldPersistMessage(text)) {
                     this.storeMessage({
                         text: text,
                         type: type,
@@ -5260,7 +5274,7 @@
                     
                     messages.push(sanitizedMessage);
 
-                    const maxAge = this.messageHistoryMaxAgeMs || 48 * 60 * 60 * 1000;
+                    const maxAge = this.messageHistoryMaxAgeMs || 7 * 24 * 60 * 60 * 1000;
                     const now = Date.now();
                     messages = messages.filter(
                         (msg) =>
@@ -5269,7 +5283,7 @@
                             now - msg.timestamp < maxAge
                     );
                     
-                    const maxStored = this.messageHistoryMaxStored || 200;
+                    const maxStored = this.messageHistoryMaxStored || 500;
                     if (messages.length > maxStored) {
                         messages = messages.slice(-maxStored);
                     }
@@ -5285,16 +5299,38 @@
                 }
             }
 
+            /**
+             * Restore persisted messages for the current tribe+player from localStorage.
+             * Waits until tribe and player are known so the storage key matches storeMessage.
+             */
             loadMessageHistory() {
                 try {
+                    const tribeSelect = document.getElementById('tribeSelect');
+                    const playerInput = document.getElementById('playerName');
+                    const tribe = tribeSelect ? String(tribeSelect.value || '').trim() : '';
+                    const player = playerInput ? String(playerInput.value || '').trim() : '';
+
+                    // Tribe dropdown often starts as "Loading..." / empty until commandList.
+                    // Loading under default/anonymous writes the wrong key and looks like a wipe.
+                    if (!tribe || tribe.toLowerCase() === 'loading...') {
+                        return;
+                    }
+                    if (!player || player.toLowerCase() === 'anonymous') {
+                        return;
+                    }
+
                     const key = this.getMessageHistoryKey();
                     // Avoid re-painting the same local history (reconnect / double init).
                     if (this._loadedHistoryKey === key) {
                         return;
                     }
+
                     const messagesJson = window.TribesStorage.getItem(key);
-                    
-                    if (!messagesJson) return;
+                    if (!messagesJson) {
+                        // Mark as loaded so empty tribes don't re-scan every commandList.
+                        this._loadedHistoryKey = key;
+                        return;
+                    }
                     
                     let messages;
                     try {
@@ -5303,11 +5339,12 @@
                     } catch (parseError) {
                         console.warn('Corrupted message history found, clearing it:', parseError.message);
                         window.TribesStorage.setItem(key, '[]');
+                        this._loadedHistoryKey = key;
                         return;
                     }
                     
                     const currentTime = Date.now();
-                    const maxAge = this.messageHistoryMaxAgeMs || 48 * 60 * 60 * 1000;
+                    const maxAge = this.messageHistoryMaxAgeMs || 7 * 24 * 60 * 60 * 1000;
                     
                     const recentMessages = messages.filter(msg => 
                         msg && 
@@ -5318,7 +5355,7 @@
                         this.shouldPersistMessage(msg.text)
                     );
 
-                    // Prune expired entries on load so storage stays within 48h.
+                    // Prune expired entries on load so storage stays within retention window.
                     if (recentMessages.length !== messages.length) {
                         try {
                             window.TribesStorage.setItem(key, JSON.stringify(recentMessages));
@@ -5351,7 +5388,9 @@
                         separator.innerText = `--- Previous messages (${recentMessages.length}) ---`;
                         separator.dataset.historySeparator = '1';
                         const container = document.getElementById('messagesContainer');
-                        container.appendChild(separator);
+                        if (container) {
+                            container.appendChild(separator);
+                        }
                     }
                     this._loadedHistoryKey = key;
                 } catch (error) {

@@ -427,6 +427,104 @@ describe('Tribes Interface Client (real class)', () => {
     expect(joinChip.style.display).toBe('none');
   });
 
+  test('loadMessageHistory waits for tribe and player before reading storage', () => {
+    const key = 'tribesMessages_bug_TestPlayer';
+    env.localStorageMock.setItem(
+      key,
+      JSON.stringify([
+        {
+          text: 'Stored hunt result',
+          type: 'info',
+          typeLabel: '[HUNT]',
+          timestamp: Date.now() - 1000,
+        },
+      ])
+    );
+
+    env.elements.tribeSelect.value = '';
+    env.elements.playerName.value = 'TestPlayer';
+    client._loadedHistoryKey = null;
+    client.loadMessageHistory();
+    expect(client._loadedHistoryKey).toBeFalsy();
+    expect(env.elements.messagesContainer.children.length).toBe(0);
+
+    env.elements.tribeSelect.value = 'bug';
+    env.elements.playerName.value = '';
+    client.loadMessageHistory();
+    expect(client._loadedHistoryKey).toBeFalsy();
+    expect(env.elements.messagesContainer.children.length).toBe(0);
+
+    env.elements.playerName.value = 'TestPlayer';
+    client.loadMessageHistory();
+    expect(client._loadedHistoryKey).toBe(key);
+    // Restored message + separator
+    expect(env.elements.messagesContainer.children.length).toBeGreaterThanOrEqual(1);
+
+    function collectText(node) {
+      if (!node) return '';
+      let text = String(node.innerText || node.textContent || '');
+      if (node.children) {
+        for (const child of node.children) {
+          text += collectText(child);
+        }
+      }
+      return text;
+    }
+    const restoredTexts = env.elements.messagesContainer.children.map(collectText);
+    expect(restoredTexts.some((t) => String(t).includes('Stored hunt result'))).toBe(
+      true
+    );
+  });
+
+  test('replay messages are persisted for reload and restored messages are not re-stored', () => {
+    env.elements.tribeSelect.value = 'bug';
+    env.elements.playerName.value = 'TestPlayer';
+    const key = client.getMessageHistoryKey();
+    env.localStorageMock.removeItem(key);
+
+    // addMessage(text, type, typeLabel, isRestored, insertAtTop, isReplay)
+    client.addMessage('Offline catch-up line', 'info', '[TRIBE]', false, true, true);
+
+    const stored = JSON.parse(env.localStorageMock.getItem(key) || '[]');
+    expect(stored.some((m) => m.text === 'Offline catch-up line')).toBe(true);
+
+    const countAfterReplay = stored.length;
+    client.addMessage('Already in local history', 'info', null, true, false, false);
+    const afterRestore = JSON.parse(env.localStorageMock.getItem(key) || '[]');
+    expect(afterRestore.length).toBe(countAfterReplay);
+  });
+
+  test('updateTribeDropdown triggers history load for the selected tribe', () => {
+    env.elements.tribeSelect.value = 'bug';
+    env.elements.playerName.value = 'TestPlayer';
+    client._loadedHistoryKey = null;
+    client.isReferee = true;
+    env.elements.messagesContainer.children = [];
+
+    env.localStorageMock.setItem(
+      'tribesMessages_bug_TestPlayer',
+      JSON.stringify([
+        {
+          text: 'Bug tribe news',
+          type: 'info',
+          timestamp: Date.now() - 500,
+        },
+      ])
+    );
+
+    client.updateTribeDropdown({
+      bear: { name: 'bear', hidden: false },
+      bug: { name: 'bug', hidden: false },
+    });
+
+    expect(env.elements.tribeSelect.value).toBe('bug');
+    expect(client._loadedHistoryKey).toBe('tribesMessages_bug_TestPlayer');
+    const texts = env.elements.messagesContainer.children.map(
+      (el) => el.innerText || el.textContent || ''
+    );
+    expect(texts.some((t) => String(t).includes('Bug tribe news'))).toBe(true);
+  });
+
   test('send injects client and player metadata into websocket payload', () => {
     client.ws = new env.InterfaceMockWebSocket('ws://localhost:8000');
     client.ws.readyState = env.InterfaceMockWebSocket.OPEN;
