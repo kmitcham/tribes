@@ -43,13 +43,15 @@ function removeFromTribe(gameState, targetName, reason, mode) {
     text.addMessage(
       gameState,
       'tribe',
-      displayName + ' has departed the tribe.'
+      displayName +
+        ' has departed the tribe. They cannot rejoin this tribe for the rest of this game.'
     );
   } else {
     text.addMessage(
       gameState,
       'tribe',
-      displayName + ' is banished from the tribe.'
+      displayName +
+        ' is banished from the tribe. They cannot rejoin this tribe for the rest of this game.'
     );
   }
 
@@ -221,7 +223,7 @@ function depart(gameState, actorName) {
     text.addMessage(
       gameState,
       actorName,
-      'You have left this tribe voluntarily. You are no longer a member (not banished as punishment, not dead).'
+      'You have left this tribe voluntarily. You are no longer a member (not banished as punishment, not dead). You cannot rejoin this tribe for the rest of this game.'
     );
   }
 }

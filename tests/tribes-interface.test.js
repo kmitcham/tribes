@@ -583,6 +583,89 @@ describe('Tribes Interface Client (real class)', () => {
     expect(names).toContain('hunt');
   });
 
+  test('join form lists all tribes with the current tribe selected', () => {
+    env.elements.tribeSelect.value = 'bug';
+    // Mock options list for fallback path
+    env.elements.tribeSelect.options = [
+      { value: 'bear', textContent: 'Bear' },
+      { value: 'bug', textContent: 'Bug' },
+      { value: 'wolf', textContent: 'Wolf' },
+    ];
+    client.currentTribes = {
+      bear: { name: 'bear', hidden: false },
+      bug: { name: 'bug', hidden: false },
+      wolf: { name: 'wolf', hidden: false },
+      secret: { name: 'secret', hidden: true },
+    };
+    client.isReferee = false;
+
+    client.selectedCommand = {
+      name: 'join',
+      description: 'join a tribe with open enrollment',
+      options: [
+        {
+          name: 'gender',
+          required: true,
+          type: 'string',
+          choices: [
+            { name: 'male', value: 'm' },
+            { name: 'female', value: 'f' },
+          ],
+        },
+        {
+          name: 'profession',
+          required: false,
+          type: 'string',
+          choices: [
+            { name: 'hunter', value: 'hunter' },
+            { name: 'gatherer', value: 'gatherer' },
+          ],
+        },
+      ],
+    };
+
+    const container = createElement('div');
+    client.renderParametersInContainer(container);
+
+    function findById(root, id) {
+      if (root.id === id) return root;
+      if (!root.children) return null;
+      for (const child of root.children) {
+        const found = findById(child, id);
+        if (found) return found;
+      }
+      return null;
+    }
+
+    const tribeSelect = findById(container, 'join_tribe_select');
+    expect(tribeSelect).toBeTruthy();
+    expect(tribeSelect.tagName).toBe('SELECT');
+    expect(tribeSelect.value).toBe('bug');
+
+    const values = tribeSelect.children.map((opt) => opt.value);
+    expect(values).toContain('bear');
+    expect(values).toContain('bug');
+    expect(values).toContain('wolf');
+    // Hidden tribes hidden from non-referees
+    expect(values).not.toContain('secret');
+
+    const selectedOpt = tribeSelect.children.find((o) => o.value === 'bug');
+    expect(selectedOpt.textContent).toMatch(/selected/i);
+
+    const note = container.children[0].children.find(
+      (el) => el.className === 'helper-text'
+    );
+    expect(note).toBeTruthy();
+    expect(note.textContent).toMatch(/You will join:\s*bug/i);
+
+    // Changing join tribe updates the main tribe selector
+    tribeSelect.value = 'wolf';
+    if (typeof tribeSelect.onchange === 'function') {
+      tribeSelect.onchange();
+    }
+    expect(env.elements.tribeSelect.value).toBe('wolf');
+  });
+
   test('feed child dropdown includes all feed special options and mother shortcuts', () => {
     client.selectedCommand = {
       name: 'feed',

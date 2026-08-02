@@ -55,6 +55,14 @@ function join(actorName, gameState, gender, profession, handle) {
     );
     return;
   }
+  if (pop.isBlockedFromRejoining(actorName, gameState)) {
+    text.addMessage(
+      gameState,
+      actorName,
+      pop.REJOIN_BLOCKED_SELF_MESSAGE
+    );
+    return;
+  }
   if (gameState.open == false) {
     text.addMessage(
       gameState,
@@ -71,3 +79,5 @@ function join(actorName, gameState, gender, profession, handle) {
   gameState.saveRequired = true;
   return;
 }
+
+module.exports.join = join;

@@ -3642,6 +3642,8 @@
                         console.log('Preserving form value for', paramName, ':', preservedValues[paramName]);
                     } else if (input.id === 'invite_append_pass') {
                         preservedValues['invite_append_pass'] = input.checked;
+                    } else if (input.id === 'join_tribe_select') {
+                        preservedValues['join_tribe'] = input.value;
                     }
                 });
 
@@ -4005,6 +4007,156 @@
                 return playerName;
             }
 
+            /**
+             * Join form: list all known tribes with the active tribe pre-selected.
+             * Changing the selection updates the main tribe dropdown (command target).
+             */
+            appendJoinTribeSelector(container, preservedValues = {}) {
+                const group = document.createElement('div');
+                group.className = 'parameter-group join-tribe-selector';
+
+                const label = document.createElement('label');
+                label.setAttribute('for', 'join_tribe_select');
+                label.textContent = 'Tribe to join:';
+                group.appendChild(label);
+
+                const select = document.createElement('select');
+                select.id = 'join_tribe_select';
+                select.setAttribute('aria-label', 'Tribe to join');
+
+                const mainTribeSelect = document.getElementById('tribeSelect');
+                const currentTribe = mainTribeSelect
+                    ? String(mainTribeSelect.value || '').trim()
+                    : '';
+
+                const tribeEntries = [];
+                if (this.currentTribes && typeof this.currentTribes === 'object') {
+                    Object.values(this.currentTribes).forEach((tribe) => {
+                        if (!tribe || !tribe.name) {
+                            return;
+                        }
+                        if (!this.isReferee && tribe.hidden) {
+                            return;
+                        }
+                        tribeEntries.push({
+                            name: tribe.name,
+                            hidden: !!tribe.hidden,
+                        });
+                    });
+                }
+                if (tribeEntries.length === 0 && mainTribeSelect && mainTribeSelect.options) {
+                    Array.from(mainTribeSelect.options || []).forEach((opt) => {
+                        const value = String(opt.value || '').trim();
+                        if (!value || value.toLowerCase() === 'loading...') {
+                            return;
+                        }
+                        tribeEntries.push({ name: value, hidden: false });
+                    });
+                }
+
+                tribeEntries.sort((a, b) =>
+                    String(a.name).localeCompare(String(b.name))
+                );
+
+                if (tribeEntries.length === 0) {
+                    const emptyOpt = document.createElement('option');
+                    emptyOpt.value = currentTribe || '';
+                    emptyOpt.textContent = currentTribe
+                        ? currentTribe
+                        : 'No tribes loaded';
+                    select.appendChild(emptyOpt);
+                } else {
+                    tribeEntries.forEach((tribe) => {
+                        const opt = document.createElement('option');
+                        opt.value = tribe.name;
+                        let display =
+                            tribe.name.charAt(0).toUpperCase() + tribe.name.slice(1);
+                        if (tribe.hidden) {
+                            display += ' (Hidden)';
+                        }
+                        if (
+                            currentTribe &&
+                            String(tribe.name).toLowerCase() ===
+                                currentTribe.toLowerCase()
+                        ) {
+                            display += ' — selected';
+                        }
+                        opt.textContent = display;
+                        select.appendChild(opt);
+                    });
+                }
+
+                const preservedTribe =
+                    preservedValues && preservedValues.join_tribe
+                        ? preservedValues.join_tribe
+                        : null;
+                if (preservedTribe) {
+                    select.value = preservedTribe;
+                } else if (currentTribe) {
+                    select.value = currentTribe;
+                    // Case-insensitive match if exact value missing
+                    if (select.value !== currentTribe) {
+                        const match = Array.from(select.options || []).find(
+                            (opt) =>
+                                String(opt.value).toLowerCase() ===
+                                currentTribe.toLowerCase()
+                        );
+                        if (match) {
+                            select.value = match.value;
+                        }
+                    }
+                }
+
+                const note = document.createElement('div');
+                note.className = 'helper-text';
+                note.style.marginTop = '0.35rem';
+                const shown = select.value || currentTribe || '(none)';
+                note.textContent =
+                    'You will join: ' +
+                    shown +
+                    '. Change selection to switch tribes before joining.';
+
+                select.onchange = () => {
+                    const chosen = select.value;
+                    note.textContent =
+                        'You will join: ' +
+                        (chosen || '(none)') +
+                        '. Change selection to switch tribes before joining.';
+                    if (mainTribeSelect && chosen) {
+                        mainTribeSelect.value = chosen;
+                        if (typeof mainTribeSelect.onchange === 'function') {
+                            mainTribeSelect.onchange();
+                        }
+                    }
+                    // Refresh option labels so "— selected" tracks the choice
+                    Array.from(select.options || []).forEach((opt) => {
+                        const baseName = opt.value;
+                        let display =
+                            baseName.charAt(0).toUpperCase() + baseName.slice(1);
+                        const entry = tribeEntries.find(
+                            (t) =>
+                                String(t.name).toLowerCase() ===
+                                String(baseName).toLowerCase()
+                        );
+                        if (entry && entry.hidden) {
+                            display += ' (Hidden)';
+                        }
+                        if (
+                            chosen &&
+                            String(baseName).toLowerCase() ===
+                                String(chosen).toLowerCase()
+                        ) {
+                            display += ' — selected';
+                        }
+                        opt.textContent = display;
+                    });
+                };
+
+                group.appendChild(select);
+                group.appendChild(note);
+                container.appendChild(group);
+            }
+
             renderParametersInContainer(container, preservedValues = {}) {
                 // Special case for guard and ignore commands - create unified custom interface even without server options
                 const cmdName = this.selectedCommand.name.toLowerCase();
@@ -4016,6 +4168,11 @@
                 if (!this.selectedCommand.options || this.selectedCommand.options.length === 0) {
                     container.innerHTML = '<div style="color: #6c757d; font-style: italic;">This command has no parameters</div>';
                     return;
+                }
+
+                // Join: show tribe list with current tribe selected (not a server param)
+                if (cmdName === 'join') {
+                    this.appendJoinTribeSelector(container, preservedValues);
                 }
                 
                 const optionsToRender = this.getOptionsForRender();

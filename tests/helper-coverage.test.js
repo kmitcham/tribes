@@ -111,8 +111,14 @@ describe('Helper coverage tests', () => {
     expect(gameState.banished.Alice).toBeDefined();
     expect(gameState.banished.Alice[1]).toBe('left voluntarily');
     expect(gameState.messages.tribe).toContain('Alice has departed the tribe.');
+    expect(gameState.messages.tribe).toContain(
+      'cannot rejoin this tribe for the rest of this game'
+    );
     expect(gameState.messages.Alice).toContain(
       'You have left this tribe voluntarily'
+    );
+    expect(gameState.messages.Alice).toContain(
+      'cannot rejoin this tribe for the rest of this game'
     );
     expect(gameState.population.Bob.inviteList.indexOf('Alice')).toBe(-1);
     expect(gameState.saveRequired).toBe(true);
@@ -208,11 +214,95 @@ describe('Helper coverage tests', () => {
       messages: {},
     };
 
-    pop.addToPopulation(gameState, 'Alice', 'female', null, null);
+    const ok = pop.addToPopulation(gameState, 'Alice', 'female', null, null);
 
+    expect(ok).toBe(false);
     expect(gameState.population.Alice).toBeUndefined();
     expect(gameState.messages.Alice).toContain(
       'You cannot rejoin this tribe after leaving or being banished.'
     );
+    expect(gameState.messages.Alice).toContain(
+      'no return for the rest of this game'
+    );
+  });
+
+  test('banish tribe message says they cannot rejoin', () => {
+    const gameState = {
+      population: {
+        Alice: { name: 'Alice', chief: true },
+        Bob: { name: 'Bob' },
+      },
+      children: {},
+      messages: {},
+    };
+
+    banish.banishAdmin(gameState, 'Alice', 'Bob', 'trouble');
+
+    expect(gameState.population.Bob).toBeUndefined();
+    expect(gameState.banished.Bob).toBeDefined();
+    expect(gameState.messages.tribe).toContain(
+      'Bob is banished from the tribe.'
+    );
+    expect(gameState.messages.tribe).toContain(
+      'cannot rejoin this tribe for the rest of this game'
+    );
+  });
+
+  test('induct of banished player tells the chief why it failed', () => {
+    const chief = require('../libs/chief');
+    const fs = require('fs');
+    const gameState = {
+      population: {
+        Chief: { name: 'Chief', chief: true },
+      },
+      banished: {
+        Alice: [{ name: 'Alice', gender: 'female' }, 'banished'],
+      },
+      messages: {},
+      ended: false,
+    };
+
+    const originalRead = fs.readFileSync;
+    fs.readFileSync = jest.fn((filePath, encoding) => {
+      if (String(filePath).includes('users.json')) {
+        return JSON.stringify({
+          Alice: { name: 'Alice' },
+          Chief: { name: 'Chief' },
+        });
+      }
+      return originalRead.call(fs, filePath, encoding);
+    });
+
+    try {
+      chief.induct(gameState, 'Chief', 'Alice', 'female');
+    } finally {
+      fs.readFileSync = originalRead;
+    }
+
+    expect(gameState.population.Alice).toBeUndefined();
+    expect(gameState.messages.Chief).toContain('Cannot induct Alice');
+    expect(gameState.messages.Chief).toContain(
+      'cannot rejoin for the rest of this game'
+    );
+  });
+
+  test('join of banished player fails with a clear message', () => {
+    const joinCmd = require('../commands/admin/join');
+    const pop = require('../libs/population');
+    const gameState = {
+      population: {
+        Bob: { name: 'Bob' },
+      },
+      banished: {
+        Alice: [{ name: 'Alice', gender: 'female' }, 'left voluntarily'],
+      },
+      open: true,
+      messages: {},
+    };
+
+    joinCmd.join('Alice', gameState, 'female', null, null);
+
+    expect(gameState.population.Alice).toBeUndefined();
+    expect(gameState.messages.Alice).toBe(pop.REJOIN_BLOCKED_SELF_MESSAGE);
   });
 });

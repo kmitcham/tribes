@@ -217,6 +217,36 @@ function deadOrBanishedByName(name, gameState) {
 }
 module.exports.deadOrBanishedByName = deadOrBanishedByName;
 
+/** Shared copy for join / addToPopulation when the blocked player is the actor. */
+const REJOIN_BLOCKED_SELF_MESSAGE =
+  'You cannot rejoin this tribe after leaving or being banished. There is no return for the rest of this game.';
+module.exports.REJOIN_BLOCKED_SELF_MESSAGE = REJOIN_BLOCKED_SELF_MESSAGE;
+
+/** Message to the chief when induct targets someone who left or was banished. */
+function rejoinBlockedInductMessage(targetName) {
+  return (
+    'Cannot induct ' +
+    targetName +
+    ': they left or were banished from this tribe and cannot rejoin for the rest of this game.'
+  );
+}
+module.exports.rejoinBlockedInductMessage = rejoinBlockedInductMessage;
+
+function isBlockedFromRejoining(name, gameState) {
+  if (!name || !gameState) {
+    return false;
+  }
+  if (deadOrBanishedByName(name, gameState)) {
+    return true;
+  }
+  const cleaned = text.removeSpecialChars(String(name));
+  if (cleaned && cleaned !== name && deadOrBanishedByName(cleaned, gameState)) {
+    return true;
+  }
+  return false;
+}
+module.exports.isBlockedFromRejoining = isBlockedFromRejoining;
+
 // special handling for graveyard and banish
 function memberByNameFromDictionary(name, dictionary, gameState) {
   if (name == null) {
@@ -443,13 +473,9 @@ function addToPopulation(gameState, sourceName, gender, profession, handle) {
     return;
   }
   // Banished and departed share gameState.banished; neither may rejoin.
-  if (deadOrBanishedByName(sourceName, gameState) || deadOrBanishedByName(target, gameState)) {
-    text.addMessage(
-      gameState,
-      sourceName,
-      'You cannot rejoin this tribe after leaving or being banished.'
-    );
-    return;
+  if (isBlockedFromRejoining(sourceName, gameState) || isBlockedFromRejoining(target, gameState)) {
+    text.addMessage(gameState, sourceName, REJOIN_BLOCKED_SELF_MESSAGE);
+    return false;
   }
   if (gender.startsWith('m')) {
     gender = 'male';
@@ -489,7 +515,7 @@ function addToPopulation(gameState, sourceName, gender, profession, handle) {
   }
   history(person.name, response, gameState);
   gameState.saveRequired = true;
-  return;
+  return true;
 }
 module.exports.addToPopulation = addToPopulation;
 

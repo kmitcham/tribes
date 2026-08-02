@@ -110,6 +110,24 @@ function induct(gameState, sourceName, targetName, gender) {
     return;
   }
 
+  if (pop.memberByName(targetName, gameState)) {
+    text.addMessage(
+      gameState,
+      sourceName,
+      targetName + ' is already a member of this tribe.'
+    );
+    return;
+  }
+
+  if (pop.isBlockedFromRejoining(targetName, gameState)) {
+    text.addMessage(
+      gameState,
+      sourceName,
+      pop.rejoinBlockedInductMessage(targetName)
+    );
+    return;
+  }
+
   logger.accessLog.info('message b');
   const profession = null; // default to no profession
   pop.addToPopulation(gameState, targetName, gender, profession, null);
