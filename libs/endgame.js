@@ -321,6 +321,17 @@ function addAdultNamesFromDictionary(dictionary, includeRecordCheck, target) {
   }
 }
 
+function genderSortRank(genderCode) {
+  // Females first, then males, then unknown
+  if (genderCode === 'f') {
+    return 0;
+  }
+  if (genderCode === 'm') {
+    return 1;
+  }
+  return 2;
+}
+
 function buildParentRows(gameState, children) {
   const adultNames = new Set();
   addAdultNamesFromDictionary(gameState.population, false, adultNames);
@@ -342,6 +353,7 @@ function buildParentRows(gameState, children) {
       rowsByLowerName[key] = {
         name: displayName,
         gender: normalizeGender(lookup.record && lookup.record.gender),
+        // score = surviving children (still in children dict after endgame rolls)
         score: 0,
         status: lookup.status,
       };
@@ -353,8 +365,12 @@ function buildParentRows(gameState, children) {
     ensureRow(adultName);
   });
 
+  // Count surviving children only (dead kids are in the graveyard, not here).
   for (const childName in children) {
     const child = children[childName] || {};
+    if (child.dead) {
+      continue;
+    }
     const motherRow = ensureRow(child.mother);
     if (motherRow) {
       motherRow.score++;
@@ -365,7 +381,12 @@ function buildParentRows(gameState, children) {
     }
   }
 
+  // Gender first, then surviving children (desc), then name.
   return Object.values(rowsByLowerName).sort((a, b) => {
+    const genderCmp = genderSortRank(a.gender) - genderSortRank(b.gender);
+    if (genderCmp !== 0) {
+      return genderCmp;
+    }
     if (b.score !== a.score) {
       return b.score - a.score;
     }
@@ -530,7 +551,9 @@ function scoreChildrenMessage(gameState) {
   });
 
   lines.push('');
-  lines.push('👨‍👩‍👧‍👦 Parent scores (women and men sorted together):');
+  lines.push(
+    '👨‍👩‍👧‍👦 Parent scores (by gender, then surviving children):'
+  );
   parentRows.forEach((row) => {
     lines.push('- ' + formatParentScoreLine(row));
   });

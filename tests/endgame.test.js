@@ -1246,3 +1246,75 @@ test('formatPersonalLastGameSection shows only that player score and their child
   expect(full).toContain('KidA');
   expect(full).toContain('KidB');
 });
+
+test('parent scores sort by gender then surviving children', () => {
+  const gameState = {
+    population: {
+      Adam: { name: 'Adam', gender: 'male', profession: 'hunter' },
+      Alice: { name: 'Alice', gender: 'female', profession: 'gatherer' },
+      Bob: { name: 'Bob', gender: 'male', profession: 'hunter' },
+      Carol: { name: 'Carol', gender: 'female', profession: 'gatherer' },
+      Dana: { name: 'Dana', gender: 'female', profession: 'gatherer' },
+    },
+    banished: {},
+    graveyard: {
+      DeadKid: {
+        name: 'DeadKid',
+        age: 2,
+        gender: 'male',
+        mother: 'Alice',
+        father: 'Adam',
+      },
+    },
+    children: {
+      // Alice: 1 surviving (DeadKid does not count)
+      A1: {
+        name: 'A1',
+        mother: 'Alice',
+        father: 'Adam',
+        gender: 'f',
+        newAdult: true,
+      },
+      // Carol: 2 surviving
+      C1: {
+        name: 'C1',
+        mother: 'Carol',
+        father: 'Bob',
+        gender: 'm',
+        newAdult: true,
+      },
+      C2: {
+        name: 'C2',
+        mother: 'Carol',
+        father: 'Bob',
+        gender: 'f',
+        newAdult: true,
+      },
+      // Dana: 0 surviving
+      // Adam: 1 surviving (A1)
+      // Bob: 2 surviving (C1, C2)
+    },
+  };
+
+  const msg = endLib.scoreChildrenMessage(gameState);
+  expect(msg).toContain(
+    'Parent scores (by gender, then surviving children)'
+  );
+
+  // Extract only parent score lines after the header
+  const parentSection = msg.split('Parent scores')[1] || '';
+  const parentLines = parentSection
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line.startsWith('- '));
+
+  // Females first (Carol 2, Alice 1, Dana 0), then males (Bob 2, Adam 1)
+  const namesInOrder = parentLines.map((line) => {
+    const match = line.match(
+      /[-–]\s*(?:🏆|🌟|✨|🌱)?\s*([A-Za-z]+)/
+    );
+    return match ? match[1] : line;
+  });
+
+  expect(namesInOrder).toEqual(['Carol', 'Alice', 'Dana', 'Bob', 'Adam']);
+});
