@@ -583,6 +583,30 @@ describe('Tribes Interface Client (real class)', () => {
     expect(names).toContain('hunt');
   });
 
+  test('status bar shows current tribe name when a tribe is selected', () => {
+    const tribeChip = env.documentMock.getElementById('currentTribeStatus');
+    env.elements.tribeSelect.value = 'bug';
+    env.elements.tribeSelect.selectedOptions = [
+      { value: 'bug', textContent: 'Bug' },
+    ];
+
+    client.updateCurrentTribeStatusChip({});
+
+    expect(tribeChip.style.display).toBe('flex');
+    expect(tribeChip.innerHTML).toMatch(/Tribe:\s*Bug/i);
+    expect(tribeChip.innerHTML).toMatch(/🏕️|🔀/);
+
+    // Multi-tribe players get the switch icon
+    client.updateCurrentTribeStatusChip({ playerTribeCount: 3 });
+    expect(tribeChip.innerHTML).toContain('🔀');
+    expect(tribeChip.title).toMatch(/bug/i);
+
+    env.elements.tribeSelect.value = '';
+    env.elements.tribeSelect.selectedOptions = [];
+    client.updateCurrentTribeStatusChip({});
+    expect(tribeChip.style.display).toBe('none');
+  });
+
   test('join form lists all tribes with the current tribe selected', () => {
     env.elements.tribeSelect.value = 'bug';
     // Mock options list for fallback path

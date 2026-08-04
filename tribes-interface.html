@@ -1768,7 +1768,7 @@
             <span></span>
         </div>
         <div class="status-item current-tribe-indicator" id="currentTribeStatus" style="display: none;">
-            <span class="status-icon">🔀</span>
+            <span class="status-icon">🏕️</span>
             <span></span>
         </div>
         <div class="status-item connection-status-indicator connecting" id="connectionStatus">
@@ -2629,6 +2629,7 @@
 
                 // Tribe list often arrives after first paint; load history under the real key.
                 this.loadMessageHistory();
+                this.updateCurrentTribeStatusChip(this.currentStatusData || {});
             }
 
             regenerateModalFormIfDataReady(dataLabel) {
@@ -5977,7 +5978,7 @@
                 const prof = profession.toLowerCase().replace(/[_-]/g, '');
                 const iconMap = {
                     'hunter': '🏹',
-                    'gatherer': '🌾',
+                    'gatherer': '🍠',
                     'crafter': '🛠️',
                     'tribemember': '👤'
                 };
@@ -6995,28 +6996,49 @@
                     return;
                 }
 
-                const tribeCount = Number(gameState && gameState.playerTribeCount);
-                if (!Number.isFinite(tribeCount) || tribeCount <= 1) {
-                    currentTribeStatus.style.display = 'none';
-                    currentTribeStatus.title = '';
-                    return;
-                }
-
                 const tribeSelect = document.getElementById('tribeSelect');
-                const selectedTribe = tribeSelect ? tribeSelect.value : '';
-                const selectedLabel = tribeSelect && tribeSelect.selectedOptions && tribeSelect.selectedOptions[0]
-                    ? tribeSelect.selectedOptions[0].textContent.trim()
-                    : selectedTribe;
+                const selectedTribe = tribeSelect
+                    ? String(tribeSelect.value || '').trim()
+                    : '';
+                const selectedLabel =
+                    tribeSelect &&
+                    tribeSelect.selectedOptions &&
+                    tribeSelect.selectedOptions[0]
+                        ? tribeSelect.selectedOptions[0].textContent.trim()
+                        : selectedTribe;
 
-                if (!selectedTribe) {
+                if (
+                    !selectedTribe ||
+                    selectedTribe.toLowerCase() === 'loading...'
+                ) {
                     currentTribeStatus.style.display = 'none';
                     currentTribeStatus.title = '';
                     return;
                 }
+
+                // Prefer a clean display name from the option value if the
+                // option text has extra labels like "(Hidden)".
+                let displayName =
+                    selectedTribe.charAt(0).toUpperCase() +
+                    selectedTribe.slice(1);
+                if (selectedLabel) {
+                    // Use option text without trailing annotations when possible
+                    displayName = selectedLabel
+                        .replace(/\s*\(Hidden\)\s*$/i, '')
+                        .replace(/\s*—\s*selected\s*$/i, '')
+                        .trim() || displayName;
+                }
+
+                const tribeCount = Number(gameState && gameState.playerTribeCount);
+                const multiTribe =
+                    Number.isFinite(tribeCount) && tribeCount > 1;
+                const icon = multiTribe ? '🔀' : '🏕️';
 
                 currentTribeStatus.style.display = 'flex';
-                currentTribeStatus.innerHTML = `<span class="status-icon">🔀</span><span>Tribe: ${selectedLabel || selectedTribe}</span>`;
-                currentTribeStatus.title = `You are currently active in: ${selectedTribe}`;
+                currentTribeStatus.innerHTML = `<span class="status-icon">${icon}</span><span>Tribe: ${displayName}</span>`;
+                currentTribeStatus.title = multiTribe
+                    ? `Active tribe: ${selectedTribe} (${tribeCount} tribes available)`
+                    : `Active tribe: ${selectedTribe}`;
             }
 
             renderStatusItemChip(el, icon, text) {

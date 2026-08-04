@@ -492,6 +492,7 @@ function addToPopulation(gameState, sourceName, gender, profession, handle) {
   person.spearhead = 0;
   person.handle = handle;
   person.name = sourceName;
+  person.inviteList = ['!pass'];
   var strRoll = dice.roll(1);
   person.strength = 'average';
   if (strRoll == 1) {
