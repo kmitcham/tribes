@@ -51,5 +51,6 @@ RUN chown -R tribesuser:tribesuser /app
 # Switch to non-root user
 USER tribesuser
 
-# Command to run the application
-CMD ["node", "websocket-server.js"]
+# Prefer start wrapper so git metadata is hydrated when available in the image.
+# buildMeta also falls back to HTML mtime if env/git are empty.
+CMD ["node", "scripts/start-with-build-meta.js"]

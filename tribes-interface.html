@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="interface-version" content="2026-06-18T00:00:00.000Z">
+    <meta name="interface-version" content="">
     <title>Tribes Game Interface</title>
     <style>
         * {
@@ -7916,20 +7916,29 @@
                 if (!target) return;
 
                 const buildInfo = window.TRIBES_BUILD_INFO || {};
-                let sourceDate = buildInfo.lastCommitDate;
+                let sourceDate =
+                    buildInfo.lastCommitDate ||
+                    buildInfo.lastCommitDateShort ||
+                    null;
 
                 if (!sourceDate) {
-                    sourceDate = document.querySelector('meta[name="interface-version"]')?.content || null;
+                    const meta = document.querySelector(
+                        'meta[name="interface-version"]'
+                    );
+                    const metaContent = meta && meta.content ? meta.content.trim() : '';
+                    sourceDate = metaContent || null;
                 }
 
                 if (!sourceDate) {
                     target.textContent = 'Updated: unavailable';
+                    target.title = '';
                     return;
                 }
 
                 const parsedDate = new Date(sourceDate);
                 if (Number.isNaN(parsedDate.getTime())) {
                     target.textContent = `Updated: ${sourceDate}`;
+                    target.title = sourceDate;
                     return;
                 }
 
@@ -7939,7 +7948,11 @@
                     day: 'numeric',
                 });
 
-                target.textContent = `Updated: ${formattedDate}`;
+                const hash = buildInfo.lastCommitHash
+                    ? ` (${buildInfo.lastCommitHash})`
+                    : '';
+                target.textContent = `Updated: ${formattedDate}${hash}`;
+                target.title = sourceDate;
             };
 
             renderLastCommitDate();

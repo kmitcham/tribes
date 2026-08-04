@@ -48,22 +48,7 @@ const commandFlowService = require('./src/server/command-flow-service.js');
 const websocketMessageRouterService = require('./src/server/websocket-message-router-service.js');
 const PORT = process.env.PORT || 8000;
 const referees = require('./libs/referees.json');
-
-function getLastCommitInfo() {
-  const lastCommitDate =
-    process.env.TRIBES_LAST_COMMIT_DATE ||
-    process.env.SOURCE_COMMIT_DATE ||
-    null;
-
-  return {
-    lastCommitDate,
-    lastCommitDateShort: process.env.TRIBES_LAST_COMMIT_DATE_SHORT || null,
-    lastCommitHash:
-      process.env.TRIBES_LAST_COMMIT_HASH || process.env.SOURCE_COMMIT || null,
-  };
-}
-
-const LAST_COMMIT_INFO = getLastCommitInfo();
+const buildMeta = require('./libs/buildMeta.js');
 
 // Timestamped logging function
 function logWithTimestamp(message, ...args) {
@@ -314,7 +299,7 @@ function startServer() {
               res.writeHead(404, { 'Content-Type': 'text/plain' });
               res.end('Interface not found');
             } else {
-              // Inject WebSocket configuration into the HTML
+              // Inject WebSocket configuration + live build metadata into the HTML
               const wsConfig = {
                 port: PORT,
                 protocol:
@@ -323,12 +308,13 @@ function startServer() {
                 host: req.headers.host || req.headers['x-forwarded-host'],
               };
 
-              // Insert WebSocket config right after the <head> tag
-              const configScript = `<script>window.TRIBES_WS_CONFIG = ${JSON.stringify(wsConfig)};</script>`;
-              const buildInfoScript = `<script>window.TRIBES_BUILD_INFO = ${JSON.stringify(LAST_COMMIT_INFO)};</script>`;
-              const modifiedData = data.replace(
-                '<head>',
-                '<head>\n    ' + configScript + '\n    ' + buildInfoScript
+              // Re-resolve on each serve so the footer tracks the latest git/mtime
+              // when the process is long-lived and files are updated under it.
+              const buildInfo = buildMeta.getBuildInfo(__dirname);
+              const modifiedData = buildMeta.injectIntoHtml(
+                data,
+                buildInfo,
+                wsConfig
               );
 
               res.writeHead(200, { 'Content-Type': 'text/html' });
@@ -818,6 +804,10 @@ if (isMainModule && !isTesting) {
   loadCommands();
   startServer();
   logWithTimestamp('Tribes WebSocket Server starting...');
+  const buildInfo = buildMeta.getBuildInfo(__dirname);
+  logWithTimestamp(
+    'Build/update metadata for UI footer: ' + JSON.stringify(buildInfo)
+  );
   logWithTimestamp(
     `Available commands: ${Array.from(commands.keys()).join(', ')}`
   );
