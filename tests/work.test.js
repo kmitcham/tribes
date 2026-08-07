@@ -373,7 +373,7 @@ describe('Work Module Tests', () => {
       expect(text.addMessage).toHaveBeenCalledWith(
         mockGameState,
         'tribe',
-        expect.stringContaining('learns to craft')
+        expect.stringMatching(/🧠.*learns to craft/)
       );
     });
 
@@ -389,7 +389,7 @@ describe('Work Module Tests', () => {
       expect(text.addMessage).toHaveBeenCalledWith(
         mockGameState,
         'tribe',
-        expect.stringContaining('does not understand it yet')
+        expect.stringMatching(/👀.*does not understand it yet/)
       );
     });
   });

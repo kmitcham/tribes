@@ -235,7 +235,7 @@ function train(gameState, sourceName, forceRoll) {
       '🧠 ' + player.name + ' learns to craft. [roll ' + learnRoll + ']';
   } else {
     message =
-      '🧠 ' +
+      '👀 ' +
       player.name +
       ' studies crafting technique, but does not understand it yet. [roll ' +
       learnRoll +

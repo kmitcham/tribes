@@ -519,9 +519,17 @@ describe('Tribes Interface Client (real class)', () => {
 
     expect(env.elements.tribeSelect.value).toBe('bug');
     expect(client._loadedHistoryKey).toBe('tribesMessages_bug_TestPlayer');
-    const texts = env.elements.messagesContainer.children.map(
-      (el) => el.innerText || el.textContent || ''
-    );
+    function collectText(node) {
+      if (!node) return '';
+      let text = String(node.innerText || node.textContent || '');
+      if (node.children) {
+        for (const child of node.children) {
+          text += collectText(child);
+        }
+      }
+      return text;
+    }
+    const texts = env.elements.messagesContainer.children.map(collectText);
     expect(texts.some((t) => String(t).includes('Bug tribe news'))).toBe(true);
   });
 
@@ -564,8 +572,47 @@ describe('Tribes Interface Client (real class)', () => {
     client.addMessage('newer message', 'info');
 
     expect(container.children.length).toBe(2);
-    expect(container.children[0].innerText).toContain('newer message');
-    expect(container.children[1].innerText).toContain('older message');
+    // Content is in a .message-body child span
+    const topText =
+      container.children[0].children[0]?.textContent ||
+      container.children[0].innerText ||
+      '';
+    const bottomText =
+      container.children[1].children[0]?.textContent ||
+      container.children[1].innerText ||
+      '';
+    expect(topText).toContain('newer message');
+    expect(bottomText).toContain('older message');
+  });
+
+  test('addMessage and storeMessage preserve newlines in multi-line text', () => {
+    env.elements.tribeSelect.value = 'bug';
+    env.elements.playerName.value = 'TestPlayer';
+    const key = client.getMessageHistoryKey();
+    env.localStorageMock.removeItem(key);
+
+    const multi =
+      '### GAME OVER ###\n👶 The fate of the children:\n- KidA grows up\n- KidB dies young';
+    client.addMessage(multi, 'tribe', '[TRIBE]');
+
+    const msgEl = env.elements.messagesContainer.children[0];
+    expect(msgEl).toBeTruthy();
+    const body = msgEl.children.find(
+      (el) => el.className === 'message-body'
+    );
+    expect(body).toBeTruthy();
+    expect(body.textContent).toContain('\n');
+    expect(body.textContent).toContain('GAME OVER');
+    expect(body.textContent).toContain('KidA grows up');
+
+    const stored = JSON.parse(env.localStorageMock.getItem(key) || '[]');
+    expect(stored.length).toBeGreaterThan(0);
+    expect(stored[stored.length - 1].text).toContain('\n');
+    expect(stored[stored.length - 1].text).toContain(
+      'The fate of the children:'
+    );
+    // Control chars stripped, newlines kept
+    expect(stored[stored.length - 1].text).not.toMatch(/\u0000/);
   });
 
   test('command list rendering uses production updateCommandList implementation', () => {

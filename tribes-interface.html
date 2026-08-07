@@ -649,7 +649,18 @@
             margin-bottom: 0.5rem;
             padding: 0.5rem;
             border-radius: 4px;
-            white-space: pre-line;
+            /* Preserve intentional newlines from game messages (endgame, lists, etc.). */
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .message-body {
+            display: block;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            margin-top: 0.15rem;
         }
 
         .message.info {
@@ -5312,6 +5323,8 @@
                 }
                 
                 const timestamp = new Date().toLocaleTimeString();
+                // Normalize newlines so Windows \r\n and lone \r still wrap in the UI.
+                const displayText = String(text).replace(/\r\n/g, '\n').replace(/\r/g, '\n');
                 
                 if (typeLabel) {
                     const typeLabelSpan = document.createElement('span');
@@ -5319,8 +5332,8 @@
                     typeLabelSpan.textContent = typeLabel;
 
                     const contentSpan = document.createElement('span');
-                    contentSpan.style.whiteSpace = 'pre-wrap';
-                    contentSpan.textContent = `[${timestamp}] ${text}`;
+                    contentSpan.className = 'message-body';
+                    contentSpan.textContent = `[${timestamp}] ${displayText}`;
 
                     message.appendChild(typeLabelSpan);
                     message.appendChild(contentSpan);
@@ -5333,7 +5346,10 @@
                         message.appendChild(badge);
                     }
                 } else {
-                    message.innerText = `[${timestamp}] ${text}`;
+                    const contentSpan = document.createElement('span');
+                    contentSpan.className = 'message-body';
+                    contentSpan.textContent = `[${timestamp}] ${displayText}`;
+                    message.appendChild(contentSpan);
                 }
                 
                 if (insertAtTop) {
@@ -5407,8 +5423,13 @@
                         messages = [];
                     }
                     
+                    // Strip control chars but keep newlines/tabs so multi-line
+                    // game messages (endgame, children lists, etc.) survive reload.
                     const sanitizedMessage = {
-                        text: String(messageData.text || '').replace(/[\u0000-\u001f\u007f]/g, ''),
+                        text: String(messageData.text || '')
+                            .replace(/\r\n/g, '\n')
+                            .replace(/\r/g, '\n')
+                            .replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, ''),
                         type: String(messageData.type || 'info'),
                         typeLabel: messageData.typeLabel ? String(messageData.typeLabel) : null,
                         timestamp: Number(messageData.timestamp) || Date.now()
