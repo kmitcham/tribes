@@ -796,11 +796,26 @@ async function handleManageUsers(ws, data) {
   });
 }
 
-// Initialize only when run directly (not when imported as a module or testing)
-const isMainModule = require.main === module;
+// Initialize only when run as the process entry (or via start-with-build-meta),
+// not when imported as a module by tests.
 const isTesting =
   process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID !== undefined;
-if (isMainModule && !isTesting) {
+function shouldAutoStartServer() {
+  if (isTesting) {
+    return false;
+  }
+  if (require.main === module) {
+    return true;
+  }
+  // Docker/npm start: node scripts/start-with-build-meta.js then require()s this file.
+  // require.main is the wrapper, not this module — still start the server.
+  const mainFile =
+    require.main && require.main.filename
+      ? path.basename(require.main.filename)
+      : '';
+  return mainFile === 'start-with-build-meta.js';
+}
+if (shouldAutoStartServer()) {
   loadCommands();
   startServer();
   logWithTimestamp('Tribes WebSocket Server starting...');
