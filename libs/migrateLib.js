@@ -143,6 +143,7 @@ function migrate(sourceName, destination, force, gameState) {
       'The tribe migrates to the ' + destination + '.'
     );
     gameState.currentLocationName = destination;
+    gameState.saveRequired = true;
     return 0;
   } else {
     for (const personName in population) {

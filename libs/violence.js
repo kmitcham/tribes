@@ -656,6 +656,8 @@ const resolveViolence = (gameState) => {
     '\nA round of combat has ended.  Everyone who has not escaped needs to choose a strategy';
 
   text.addMessage(gameState, 'tribe', response);
+  // Combat progress (hits, deaths, escaped, violenceRounds) must persist.
+  gameState.saveRequired = true;
   if (moreFactionViolenceRequired(gameState)) {
     // this should stop recursing if nobody wants to fight anymore.  I hope.
     resolveViolence(gameState);

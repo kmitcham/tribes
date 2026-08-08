@@ -27,5 +27,7 @@ function defend(gameState, actorName) {
   player.strategy = 'run';
   delete player.attack_target;
   violence.resolveViolence(gameState);
+  gameState.saveRequired = true;
+
   return;
 }

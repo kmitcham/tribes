@@ -152,6 +152,8 @@ function endGame(gameState, _bot) {
 
   const response = responseLines.join('\n');
   gameState.ended = true;
+  gameState.saveRequired = true;
+  gameState.archiveRequired = true;
   text.addMessage(gameState, 'tribe', response);
   const childrenMessage = scoreChildrenMessage(gameState);
   text.addMessage(gameState, 'tribe', childrenMessage);

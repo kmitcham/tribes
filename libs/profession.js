@@ -96,7 +96,10 @@ function specialize(playerName, profession, gameState) {
 
   if (profession.startsWith('c')) {
     person.canCraft = true;
+    gameState.commandsNeedRefresh = true;
   }
+  // Persist even when called from paths that forget to set this themselves.
+  gameState.saveRequired = true;
   text.addMessage(gameState, playerName, helpMessage);
   return helpMessage;
 }

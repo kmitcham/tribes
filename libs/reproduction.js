@@ -1326,6 +1326,8 @@ function pass(gameState, actorName) {
     person.cannotInvite = true;
     const result = globalMatingCheck(gameState);
     text.addMessage(gameState, 'tribe', result);
+    // Persist cannotInvite even when mating is not yet complete.
+    gameState.saveRequired = true;
     return;
   } else {
     text.addMessage(
