@@ -71,6 +71,67 @@ function removeGameState(tribeName) {
   return false;
 }
 
+/**
+ * Persist every in-memory tribe to disk (shutdown / crash safety net).
+ * By default saves all loaded games, not only those with saveRequired,
+ * so any missed flag still gets written if we receive SIGTERM.
+ *
+ * @param {object} savelib - must provide saveTribe(gameState)
+ * @param {{ force?: boolean, logFn?: Function }=} options
+ * @returns {{ saved: number, skipped: number, failed: number, total: number, tribes: string[] }}
+ */
+function flushAllGamesToDisk(savelib, options) {
+  options = options || {};
+  const force = options.force !== false;
+  const logFn =
+    typeof options.logFn === 'function' ? options.logFn : console.log;
+  const names = Object.keys(allGames);
+  let saved = 0;
+  let skipped = 0;
+  let failed = 0;
+  const savedTribes = [];
+
+  for (const tribeName of names) {
+    const gameState = allGames[tribeName];
+    if (!gameState || typeof gameState !== 'object') {
+      skipped += 1;
+      continue;
+    }
+    if (!force && !gameState.saveRequired) {
+      skipped += 1;
+      continue;
+    }
+    if (!gameState.name) {
+      gameState.name = tribeName;
+    }
+    try {
+      if (!savelib || typeof savelib.saveTribe !== 'function') {
+        throw new Error('savelib.saveTribe is not available');
+      }
+      savelib.saveTribe(gameState);
+      gameState.saveRequired = false;
+      saved += 1;
+      savedTribes.push(tribeName);
+    } catch (err) {
+      failed += 1;
+      logFn(
+        '[SHUTDOWN] Failed to save tribe ' +
+          tribeName +
+          ': ' +
+          (err && err.message ? err.message : String(err))
+      );
+    }
+  }
+
+  return {
+    saved: saved,
+    skipped: skipped,
+    failed: failed,
+    total: names.length,
+    tribes: savedTribes,
+  };
+}
+
 module.exports = {
   getGameState,
   setGameState,
@@ -79,4 +140,5 @@ module.exports = {
   getAllGames,
   removeGameState,
   runExclusive,
+  flushAllGamesToDisk,
 };

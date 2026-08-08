@@ -815,9 +815,66 @@ function shouldAutoStartServer() {
       : '';
   return mainFile === 'start-with-build-meta.js';
 }
+
+/**
+ * Safety net for Koyeb/Docker redeploys: flush in-memory tribes + users on
+ * SIGTERM/SIGINT before the process exits. Hard SIGKILL still cannot run this.
+ */
+function installGracefulShutdownHandlers() {
+  let shuttingDown = false;
+
+  const flushAndExit = (signal) => {
+    if (shuttingDown) {
+      return;
+    }
+    shuttingDown = true;
+    logWithTimestamp(
+      `[SHUTDOWN] Received ${signal}; flushing in-memory game state to disk...`
+    );
+
+    try {
+      const result = gameStateStore.flushAllGamesToDisk(savelib, {
+        force: true,
+        logFn: logWithTimestamp,
+      });
+      logWithTimestamp(
+        `[SHUTDOWN] Tribe flush: saved=${result.saved} failed=${result.failed} total=${result.total}` +
+          (result.tribes.length
+            ? ' (' + result.tribes.join(', ') + ')'
+            : '')
+      );
+    } catch (err) {
+      logWithTimestamp(
+        '[SHUTDOWN] Tribe flush threw: ' +
+          (err && err.message ? err.message : String(err))
+      );
+    }
+
+    try {
+      actuallyWriteToDisk('./tribe-data/users.json', usersDict);
+      logWithTimestamp('[SHUTDOWN] users.json written');
+    } catch (err) {
+      logWithTimestamp(
+        '[SHUTDOWN] users.json write failed: ' +
+          (err && err.message ? err.message : String(err))
+      );
+    }
+
+    // Exit promptly so the platform does not need to SIGKILL.
+    process.exit(0);
+  };
+
+  process.on('SIGTERM', () => flushAndExit('SIGTERM'));
+  process.on('SIGINT', () => flushAndExit('SIGINT'));
+  logWithTimestamp(
+    'Graceful shutdown handlers installed (SIGTERM/SIGINT → flush tribes + users)'
+  );
+}
+
 if (shouldAutoStartServer()) {
   loadCommands();
   startServer();
+  installGracefulShutdownHandlers();
   logWithTimestamp('Tribes WebSocket Server starting...');
   const buildInfo = buildMeta.getBuildInfo(__dirname);
   logWithTimestamp(
