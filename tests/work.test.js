@@ -301,12 +301,14 @@ describe('Work Module Tests', () => {
 
   describe('train function', () => {
     beforeEach(() => {
-      pop.countByType = jest.fn();
-      pop.countByType.mockImplementation((population, key, value) => {
-        if (key === 'canCraft' && value === true) return 3;
-        if (key === 'noTeach' && value === true) return 1;
-        return 0;
-      });
+      // Real population shape: one willing teacher with canCraft
+      mockGameState.population = {
+        testPlayer: mockPlayer,
+        teacher: {
+          name: 'teacher',
+          canCraft: true,
+        },
+      };
     });
 
     test('should not allow training when player cannot work', () => {
@@ -346,11 +348,10 @@ describe('Work Module Tests', () => {
     });
 
     test('should not allow training when no teachers available', () => {
-      pop.countByType.mockImplementation((population, key, value) => {
-        if (key === 'canCraft' && value === true) return 2;
-        if (key === 'noTeach' && value === true) return 2;
-        return 0;
-      });
+      mockGameState.population = {
+        testPlayer: mockPlayer,
+        secretive: { name: 'secretive', canCraft: true, noTeach: true },
+      };
 
       train(mockGameState, 'testPlayer');
 
@@ -358,6 +359,24 @@ describe('Work Module Tests', () => {
         mockGameState,
         'testPlayer',
         'No one in the tribe is able and willing to teach you crafting.'
+      );
+    });
+
+    test('should allow training when at least one crafter is willing to teach', () => {
+      mockGameState.population = {
+        testPlayer: mockPlayer,
+        secretive: { name: 'secretive', canCraft: true, noTeach: true },
+        mentor: { name: 'mentor', canCraft: true },
+      };
+      dice.roll.mockReturnValue(8);
+
+      train(mockGameState, 'testPlayer');
+
+      expect(mockPlayer.worked).toBe(true);
+      expect(text.addMessage).toHaveBeenCalledWith(
+        mockGameState,
+        'tribe',
+        expect.stringMatching(/👀.*does not understand it yet/)
       );
     });
 
@@ -370,6 +389,8 @@ describe('Work Module Tests', () => {
       expect(mockPlayer.canCraft).toBe(true);
       expect(mockPlayer.worked).toBe(true);
       expect(mockPlayer.activity).toBe('trained');
+      expect(mockGameState.saveRequired).toBe(true);
+      expect(mockGameState.commandsNeedRefresh).toBe(true);
       expect(text.addMessage).toHaveBeenCalledWith(
         mockGameState,
         'tribe',
@@ -377,7 +398,7 @@ describe('Work Module Tests', () => {
       );
     });
 
-    test('should fail to learn crafting with low roll', () => {
+    test('should fail to learn crafting with low roll but still save', () => {
       dice.roll.mockReturnValue(8);
 
       train(mockGameState, 'testPlayer');
@@ -386,6 +407,7 @@ describe('Work Module Tests', () => {
       expect(mockPlayer.canCraft).toBeFalsy();
       expect(mockPlayer.worked).toBe(true);
       expect(mockPlayer.activity).toBe('trained');
+      expect(mockGameState.saveRequired).toBe(true);
       expect(text.addMessage).toHaveBeenCalledWith(
         mockGameState,
         'tribe',

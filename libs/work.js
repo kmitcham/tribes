@@ -187,6 +187,27 @@ function craft(gameState, sourceName, item, forceRoll) {
 }
 module.exports.craft = craft;
 
+/**
+ * Count adults who know craft and have not opted out of teaching (secrets).
+ */
+function countWillingCraftTeachers(population) {
+  let count = 0;
+  if (!population || typeof population !== 'object') {
+    return 0;
+  }
+  for (const memberName in population) {
+    const member = population[memberName];
+    if (!member || typeof member !== 'object') {
+      continue;
+    }
+    if (member.canCraft === true && !member.noTeach) {
+      count += 1;
+    }
+  }
+  return count;
+}
+module.exports.countWillingCraftTeachers = countWillingCraftTeachers;
+
 function train(gameState, sourceName, forceRoll) {
   var population = gameState.population;
   const player = pop.memberByName(sourceName, gameState);
@@ -210,9 +231,9 @@ function train(gameState, sourceName, forceRoll) {
     );
     return;
   }
-  var crafters = pop.countByType(population, 'canCraft', true);
-  var noTeachers = pop.countByType(population, 'noTeach', true);
-  if (crafters <= noTeachers) {
+  // Only people who can craft and have not set secrets/noTeach count as teachers.
+  // (Old logic compared raw canCraft vs noTeach counts and could mis-count.)
+  if (countWillingCraftTeachers(population) < 1) {
     text.addMessage(
       gameState,
       sourceName,
@@ -232,19 +253,23 @@ function train(gameState, sourceName, forceRoll) {
   if (learnRoll >= 10) {
     player.canCraft = true;
     message =
-      '🧠 ' + player.name + ' learns to craft. [roll ' + learnRoll + ']';
+      '🧠 ' + player.name + ' learns to craft. [roll ' + learnRoll + '].';
+    // Refresh command lists so craft appears and train drops for this player.
+    gameState.commandsNeedRefresh = true;
   } else {
     message =
       '👀 ' +
       player.name +
       ' studies crafting technique, but does not understand it yet. [roll ' +
       learnRoll +
-      ']';
+      '].';
   }
   player.activity = 'trained';
   player.worked = true;
   pop.history(sourceName, message, gameState);
-  gameState.required = true;
+  // Must be saveRequired — otherwise the train result is never written to disk
+  // and canCraft/worked are lost (and UI never refreshes).
+  gameState.saveRequired = true;
   text.addMessage(gameState, 'tribe', message);
   return;
 }
