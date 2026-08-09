@@ -91,14 +91,21 @@
             z-index: 1100;
         }
 
+        /* All status chips use white text; backgrounds stay dark enough to read. */
         .status-item {
             display: flex;
             align-items: center;
             gap: 6px;
             padding: 4px 12px;
-            background: rgba(52, 152, 219, 0.2);
+            background: #1a6a9a;
             border-radius: 15px;
-            border: 1px solid rgba(52, 152, 219, 0.3);
+            border: 1px solid #3498db;
+            color: #ffffff;
+        }
+
+        .status-item,
+        .status-item span {
+            color: #ffffff;
         }
 
         .status-icon {
@@ -106,45 +113,46 @@
         }
 
         .status-item.connection-status-indicator.connected {
-            background: rgba(40, 167, 69, 0.28);
-            border-color: rgba(40, 167, 69, 0.55);
+            background: #1e7e34;
+            border-color: #28a745;
         }
 
         .status-item.connection-status-indicator.connecting {
-            background: rgba(255, 193, 7, 0.28);
-            border-color: rgba(255, 193, 7, 0.55);
+            background: #a67c00;
+            border-color: #d4a017;
         }
 
         .status-item.connection-status-indicator.disconnected {
-            background: rgba(220, 53, 69, 0.25);
-            border-color: rgba(220, 53, 69, 0.5);
+            background: #a71d2a;
+            border-color: #dc3545;
         }
 
         .status-item.waiting-status-indicator {
-            background: rgba(255, 193, 7, 0.22);
-            border-color: rgba(255, 193, 7, 0.48);
+            background: #9a7200;
+            border-color: #c9a227;
         }
 
         .status-item.current-tribe-indicator {
-            background: rgba(255, 193, 7, 0.26);
-            border-color: rgba(191, 144, 0, 0.55);
-            color: #6b5100;
+            background: #8a6d00;
+            border-color: #c9a227;
+            color: #ffffff;
         }
 
-        /* Onboarding CTA: solid amber so non-members notice "join" */
+        /* Onboarding CTA: deeper amber so white text stays readable */
         .status-item.join-prompt-indicator {
-            background: #f39c12;
+            background: #c45f00;
             border: 2px solid #e67e22;
-            color: #2c1a00;
+            color: #ffffff;
             font-weight: 600;
             box-shadow:
-                0 0 0 1px rgba(230, 126, 34, 0.35),
-                0 2px 10px rgba(243, 156, 18, 0.55);
+                0 0 0 1px rgba(230, 126, 34, 0.45),
+                0 2px 10px rgba(196, 95, 0, 0.55);
             padding: 5px 14px;
         }
 
         .status-item.join-prompt-indicator strong {
             font-weight: 800;
+            color: #ffffff;
             text-decoration: underline;
             text-underline-offset: 2px;
         }
@@ -158,14 +166,14 @@
             100% {
                 transform: scale(1);
                 box-shadow:
-                    0 0 0 1px rgba(230, 126, 34, 0.35),
-                    0 2px 10px rgba(243, 156, 18, 0.55);
+                    0 0 0 1px rgba(230, 126, 34, 0.45),
+                    0 2px 10px rgba(196, 95, 0, 0.55);
             }
             50% {
                 transform: scale(1.06);
                 box-shadow:
-                    0 0 0 4px rgba(243, 156, 18, 0.45),
-                    0 4px 16px rgba(230, 126, 34, 0.7);
+                    0 0 0 4px rgba(230, 126, 34, 0.5),
+                    0 4px 16px rgba(196, 95, 0, 0.75);
             }
         }
 
