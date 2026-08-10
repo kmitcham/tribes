@@ -5270,13 +5270,43 @@
                 return false;
             }
 
+            /**
+             * Format a message clock label from an epoch ms value.
+             * Same calendar day → time only (matches live messages);
+             * older days → locale date + time so reloads stay unambiguous.
+             */
+            formatMessageTimestamp(epochMs) {
+                const ms = Number(epochMs);
+                const when = Number.isFinite(ms) && ms > 0 ? new Date(ms) : new Date();
+                if (Number.isNaN(when.getTime())) {
+                    return new Date().toLocaleTimeString();
+                }
+                const now = new Date();
+                const sameDay =
+                    when.getFullYear() === now.getFullYear() &&
+                    when.getMonth() === now.getMonth() &&
+                    when.getDate() === now.getDate();
+                if (sameDay) {
+                    return when.toLocaleTimeString();
+                }
+                return when.toLocaleString(undefined, {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    second: '2-digit',
+                });
+            }
+
             addMessage(
                 text,
                 type = 'info',
                 typeLabel = null,
                 isRestored = false,
                 insertAtTop = true,
-                isReplay = false
+                isReplay = false,
+                eventTimestampMs = null
             ) {
                 const container = document.getElementById('messagesContainer');
                 const message = document.createElement('div');
@@ -5301,11 +5331,15 @@
                 }
                 text = text.trim();
 
+                const eventMs = Number.isFinite(Number(eventTimestampMs))
+                    ? Number(eventTimestampMs)
+                    : Date.now();
+
                 if (
                     this.isDuplicateMessage(text, type, typeLabel, {
                         isRestored,
                         isReplay,
-                        timestamp: Date.now(),
+                        timestamp: eventMs,
                     })
                 ) {
                     console.log('Skipping duplicate message');
@@ -5330,7 +5364,7 @@
                     message.classList.add('replayed');
                 }
                 
-                const timestamp = new Date().toLocaleTimeString();
+                const timestamp = this.formatMessageTimestamp(eventMs);
                 // Normalize newlines so Windows \r\n and lone \r still wrap in the UI.
                 const displayText = String(text).replace(/\r\n/g, '\n').replace(/\r/g, '\n');
                 
@@ -5374,7 +5408,7 @@
                         text: text,
                         type: type,
                         typeLabel: typeLabel,
-                        timestamp: Date.now()
+                        timestamp: eventMs
                     });
                 }
 
@@ -5565,7 +5599,8 @@
                                 msg.typeLabel,
                                 true,
                                 false,
-                                false
+                                false,
+                                msg.timestamp
                             );
                         });
 

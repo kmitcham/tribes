@@ -585,6 +585,43 @@ describe('Tribes Interface Client (real class)', () => {
     expect(bottomText).toContain('older message');
   });
 
+  test('restored history messages keep their original stored timestamp', () => {
+    env.elements.tribeSelect.value = 'bug';
+    env.elements.playerName.value = 'TestPlayer';
+    client._loadedHistoryKey = null;
+    env.elements.messagesContainer.children = [];
+
+    // Within retention window, but not "right now"
+    const originalMs = Date.now() - 2 * 60 * 60 * 1000; // 2 hours ago
+    const key = 'tribesMessages_bug_TestPlayer';
+    env.localStorageMock.setItem(
+      key,
+      JSON.stringify([
+        {
+          text: 'Old hunt result',
+          type: 'tribe',
+          typeLabel: '[TRIBE]',
+          timestamp: originalMs,
+        },
+      ])
+    );
+
+    client.loadMessageHistory();
+
+    const msgEl = env.elements.messagesContainer.children[0];
+    expect(msgEl).toBeTruthy();
+    const body = msgEl.children.find((el) => el.className === 'message-body');
+    expect(body).toBeTruthy();
+    const expectedLabel = client.formatMessageTimestamp(originalMs);
+    expect(body.textContent).toContain(`[${expectedLabel}]`);
+    expect(body.textContent).toContain('Old hunt result');
+    // Should not stamp with the load-time clock
+    const loadTimeLabel = new Date().toLocaleTimeString();
+    if (expectedLabel !== loadTimeLabel) {
+      expect(body.textContent.startsWith(`[${loadTimeLabel}]`)).toBe(false);
+    }
+  });
+
   test('addMessage and storeMessage preserve newlines in multi-line text', () => {
     env.elements.tribeSelect.value = 'bug';
     env.elements.playerName.value = 'TestPlayer';
