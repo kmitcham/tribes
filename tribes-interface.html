@@ -2490,7 +2490,8 @@
                             '[TRIBE]',
                             false,
                             true,
-                            !!data.replay
+                            !!data.replay,
+                            data.timestamp || null
                         );
                         break;
                     case 'privateMessage':
@@ -2500,7 +2501,8 @@
                             '[PRIVATE]',
                             false,
                             true,
-                            !!data.replay
+                            !!data.replay,
+                            data.timestamp || null
                         );
                         break;
                     case 'registration':

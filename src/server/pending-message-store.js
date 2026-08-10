@@ -66,6 +66,8 @@ function replayPendingMessages(
         type: pending.type,
         message: pending.message,
         replay: true,
+        // Original event time (when queued), not delivery time.
+        timestamp: pending.timestamp || Date.now(),
         replayedAt: Date.now(),
         clientId,
       })

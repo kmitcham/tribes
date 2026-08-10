@@ -585,6 +585,32 @@ describe('Tribes Interface Client (real class)', () => {
     expect(bottomText).toContain('older message');
   });
 
+  test('replayed tribe messages use server event timestamp not delivery time', () => {
+    env.elements.messagesContainer.children = [];
+    const eventMs = Date.now() - 90 * 60 * 1000; // 90 minutes ago
+    const deliveryMs = Date.now();
+
+    client.handleMessage({
+      type: 'tribeMessage',
+      message: 'Something happened while offline',
+      replay: true,
+      timestamp: eventMs,
+      replayedAt: deliveryMs,
+    });
+
+    const msgEl = env.elements.messagesContainer.children[0];
+    expect(msgEl).toBeTruthy();
+    const body = msgEl.children.find((el) => el.className === 'message-body');
+    expect(body).toBeTruthy();
+    const expectedLabel = client.formatMessageTimestamp(eventMs);
+    expect(body.textContent).toContain(`[${expectedLabel}]`);
+    expect(body.textContent).toContain('Something happened while offline');
+    const deliveryLabel = client.formatMessageTimestamp(deliveryMs);
+    if (expectedLabel !== deliveryLabel) {
+      expect(body.textContent.startsWith(`[${deliveryLabel}]`)).toBe(false);
+    }
+  });
+
   test('restored history messages keep their original stored timestamp', () => {
     env.elements.tribeSelect.value = 'bug';
     env.elements.playerName.value = 'TestPlayer';
