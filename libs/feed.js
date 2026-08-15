@@ -456,7 +456,7 @@ function birth(gameState, childName, child, motherMember, birthRoll) {
   }
   delete motherMember.isPregnant;
   //Mothers start guarding their newborns
-  motherGuard(motherMember, childName);
+  motherGuard(motherMember, childName, gameState);
   if (birthRoll == 17) {
     const twin = reproLib.addChild(child.mother, child.father, gameState);
     const twinName = motherMember.isPregnant;
@@ -478,29 +478,43 @@ function birth(gameState, childName, child, motherMember, birthRoll) {
         '-child',
       gameState
     );
-    motherGuard(motherMember, twinName);
+    motherGuard(motherMember, twinName, gameState);
     twin.age = 0;
   }
 }
 module.exports.birth = birth;
 
-function motherGuard(motherMember, childName) {
+function motherGuard(motherMember, childName, gameState) {
+  if (!motherMember || !childName) {
+    return;
+  }
   if (!motherMember.guarding) {
     motherMember.guarding = [childName];
-  } else {
-    if (
-      motherMember.guarding.indexOf(childName) == -1 &&
-      motherMember.guarding.length < 5
-    ) {
-      motherMember.guarding.push(childName);
-    } else {
-      response +=
-        '\t' +
-        motherMember.name +
-        ' is guarding too many children, and ' +
-        childName +
-        ' is unwatched.\n';
+    return;
+  }
+  // Already watching this child — not a capacity failure.
+  if (motherMember.guarding.indexOf(childName) !== -1) {
+    const alreadyMsg =
+      motherMember.name + ' is already guarding ' + childName + '.';
+    response += '\t' + alreadyMsg + '\n';
+    // Also private so the mother sees it even if tribe chat is busy/offline.
+    if (gameState) {
+      text.addMessage(gameState, motherMember.name, alreadyMsg);
     }
+    return;
+  }
+  if (motherMember.guarding.length < 5) {
+    motherMember.guarding.push(childName);
+    return;
+  }
+  const fullMsg =
+    motherMember.name +
+    ' is guarding too many children, and ' +
+    childName +
+    ' is unwatched.';
+  response += '\t' + fullMsg + '\n';
+  if (gameState) {
+    text.addMessage(gameState, motherMember.name, fullMsg);
   }
 }
 module.exports.motherGuard = motherGuard;

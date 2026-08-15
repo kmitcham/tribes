@@ -4,6 +4,7 @@ const {
   consumeFood,
   consumeFoodChildren,
   birth,
+  motherGuard,
 } = require('../libs/feed.js');
 const diceLib = require('../libs/dice.js');
 console.log = jest.fn();
@@ -876,6 +877,38 @@ describe('consumeFoodChildren Function Tests', () => {
     expect(response).toContain('Child1');
     expect(response).toContain('Child2 has starved to death');
     expect(response).toContain('Child3 has reached adulthood');
+  });
+
+  it('motherGuard reports already-guarding instead of too-many when child is on list', () => {
+    const mother = {
+      name: 'sockpuppet',
+      guarding: ['Ivy', 'KidB'],
+    };
+    gameState.messages = {};
+
+    motherGuard(mother, 'Ivy', gameState);
+
+    expect(mother.guarding).toEqual(['Ivy', 'KidB']);
+    expect(gameState.messages.sockpuppet).toContain(
+      'sockpuppet is already guarding Ivy'
+    );
+    expect(gameState.messages.sockpuppet).not.toContain('too many children');
+  });
+
+  it('motherGuard reports too-many and notifies mother privately when at capacity', () => {
+    const mother = {
+      name: 'sockpuppet',
+      guarding: ['A', 'B', 'C', 'D', 'E'],
+    };
+    gameState.messages = {};
+
+    motherGuard(mother, 'Ivy', gameState);
+
+    expect(mother.guarding).toEqual(['A', 'B', 'C', 'D', 'E']);
+    expect(mother.guarding).not.toContain('Ivy');
+    expect(gameState.messages.sockpuppet).toContain(
+      'sockpuppet is guarding too many children, and Ivy is unwatched'
+    );
   });
 });
 
