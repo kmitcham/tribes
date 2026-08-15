@@ -3464,7 +3464,11 @@
                 // Current state from server
                 const rawInviteList = (this.currentRomanceLists && this.currentRomanceLists.inviteList) || [];
                 const cleanInviteList = rawInviteList.filter(n => n !== '!pass');
-                const appendPassChecked = rawInviteList.includes('!pass');
+                // Default !pass on when no saved invite list yet; honor server list when present.
+                const appendPassChecked =
+                    rawInviteList.length === 0
+                        ? true
+                        : rawInviteList.includes('!pass');
                 const consentDict = (this.currentRomanceLists && this.currentRomanceLists.consentDict) || {};
                 const invitedSet = new Set(cleanInviteList);
 
@@ -4397,12 +4401,24 @@
                             }
                         }
                         
-                        // Check if invite list ended with !pass in the original data to prepopulate checkbox
-                        let appendPassChecked = (option.name === 'invitelist' && preservedValues['invite_append_pass']);
-                        if (appendPassChecked === undefined && option.name === 'invitelist' && this.currentRomanceLists && this.currentRomanceLists.inviteList) {
-                            appendPassChecked = this.currentRomanceLists.inviteList.includes('!pass');
-                        } else if (appendPassChecked === undefined) {
-                            appendPassChecked = true; // Default
+                        // !pass checkbox: default checked; honor preserved form value or saved invite list.
+                        let appendPassChecked = true;
+                        if (
+                            option.name === 'invitelist' &&
+                            Object.prototype.hasOwnProperty.call(
+                                preservedValues,
+                                'invite_append_pass'
+                            )
+                        ) {
+                            appendPassChecked = !!preservedValues['invite_append_pass'];
+                        } else if (
+                            option.name === 'invitelist' &&
+                            this.currentRomanceLists &&
+                            Array.isArray(this.currentRomanceLists.inviteList) &&
+                            this.currentRomanceLists.inviteList.length > 0
+                        ) {
+                            appendPassChecked =
+                                this.currentRomanceLists.inviteList.includes('!pass');
                         }
                         
                         const orderingInterface = this.createOrderingInterface(option.name, initialValue, appendPassChecked);

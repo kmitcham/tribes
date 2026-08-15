@@ -5,6 +5,7 @@ const text = require('../../libs/textprocess.js');
 const roundTransitionAudit = require('../../libs/roundTransitionAudit.js');
 const access = require('../../libs/access.js');
 const pop = require('../../libs/population.js');
+const worklib = require('../../libs/work.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -14,7 +15,10 @@ module.exports = {
     var actorName = interaction.member.displayName;
 
     const response = startFoodFilter(actorName, gameState, bot);
-    gameState.saveRequired = true;
+    // Only persist when food round actually started (filter returns a message).
+    if (response !== undefined) {
+      gameState.saveRequired = true;
+    }
     return response;
   },
 };
@@ -56,6 +60,21 @@ function startFoodFilter(actorName, gameState, bot) {
     );
     return;
   }
+
+  // Everyone healthy must have worked (hunt/gather/craft/train/idle).
+  // Sick/injured count as recovering without worked=true (listReadyToWork skips them).
+  const stillNeedToWork = worklib.listReadyToWork(gameState.population || {});
+  if (stillNeedToWork.length > 0) {
+    text.addMessage(
+      gameState,
+      actorName,
+      'Cannot advance from work round: these players have not worked yet: ' +
+        stillNeedToWork.join(', ') +
+        '. Everyone must hunt, gather, craft, train, idle, or rest while sick/injured.'
+    );
+    return;
+  }
+
   return startFood(gameState, bot);
 }
 module.exports.startFoodFilter = startFoodFilter;

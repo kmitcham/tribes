@@ -1,4 +1,144 @@
 const startFood = require('../commands/chief/startfood.js');
+const advanceRound = require('../commands/chief/advanceround.js');
+
+describe('startfood / advanceround work-round completion gate', () => {
+  test('blocks food advance when a healthy player has not worked', () => {
+    const gameState = {
+      demand: null,
+      violence: null,
+      ended: false,
+      workRound: true,
+      foodRound: false,
+      reproductionRound: false,
+      population: {
+        Chief: {
+          name: 'Chief',
+          chief: true,
+          worked: true,
+          food: 4,
+          grain: 0,
+          gender: 'male',
+        },
+        Lazy: {
+          name: 'Lazy',
+          worked: false,
+          food: 4,
+          grain: 0,
+          gender: 'female',
+        },
+      },
+      children: {},
+      messages: {},
+      seasonCounter: 1,
+      gameTrack: { veldt: 1, marsh: 1, hills: 1, forest: 1 },
+    };
+
+    const result = startFood.startFoodFilter('Chief', gameState, {});
+
+    expect(result).toBeUndefined();
+    expect(gameState.workRound).toBe(true);
+    expect(gameState.foodRound).toBe(false);
+    expect(gameState.messages.Chief).toContain(
+      'these players have not worked yet'
+    );
+    expect(gameState.messages.Chief).toContain('Lazy');
+  });
+
+  test('allows food advance when unworked players are only sick or injured', () => {
+    const gameState = {
+      demand: null,
+      violence: null,
+      ended: false,
+      workRound: true,
+      foodRound: false,
+      reproductionRound: false,
+      population: {
+        Chief: {
+          name: 'Chief',
+          chief: true,
+          worked: true,
+          food: 4,
+          grain: 0,
+          gender: 'male',
+          isInjured: 0,
+          isSick: 0,
+        },
+        InjuredResting: {
+          name: 'InjuredResting',
+          worked: false,
+          food: 4,
+          grain: 0,
+          gender: 'female',
+          isInjured: 2,
+          isSick: 0,
+        },
+        SickResting: {
+          name: 'SickResting',
+          worked: false,
+          food: 4,
+          grain: 0,
+          gender: 'male',
+          isInjured: 0,
+          isSick: 1,
+        },
+      },
+      children: {},
+      messages: {},
+      seasonCounter: 1,
+      gameTrack: { veldt: 1, marsh: 1, hills: 1, forest: 1 },
+    };
+
+    const result = startFood.startFoodFilter('Chief', gameState, {});
+
+    expect(result).toBeDefined();
+    // Left work round (may land in food, or auto-advance to reproduction if fully fed).
+    expect(gameState.workRound).toBe(false);
+    expect(gameState.foodRound || gameState.reproductionRound).toBe(true);
+  });
+
+  test('advanceround from work round stays put when someone has not worked', async () => {
+    const gameState = {
+      demand: null,
+      violence: null,
+      ended: false,
+      workRound: true,
+      foodRound: false,
+      reproductionRound: false,
+      population: {
+        Chief: {
+          name: 'Chief',
+          chief: true,
+          worked: true,
+          food: 4,
+          grain: 0,
+          gender: 'male',
+        },
+        Slack: {
+          name: 'Slack',
+          worked: false,
+          food: 4,
+          grain: 0,
+          gender: 'female',
+        },
+      },
+      children: {},
+      messages: {},
+      seasonCounter: 1,
+      gameTrack: { veldt: 1, marsh: 1, hills: 1, forest: 1 },
+    };
+
+    await advanceRound.execute(
+      { member: { displayName: 'Chief' } },
+      gameState,
+      {}
+    );
+
+    expect(gameState.workRound).toBe(true);
+    expect(gameState.foodRound).toBe(false);
+    expect(gameState.saveRequired).toBeFalsy();
+    expect(gameState.messages.Chief).toContain('Slack');
+  });
+});
 
 describe('startfood clears stale activity status', () => {
   test('clears prior work activity when advancing to food round', () => {
