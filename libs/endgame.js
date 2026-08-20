@@ -106,7 +106,7 @@ function endGame(gameState, _bot) {
               roll +
               ' vs ' +
               survivalTarget +
-              '] grows up ✅'
+              '] grows up ✅.'
           );
         } else {
           responseLines.push(
@@ -116,12 +116,12 @@ function endGame(gameState, _bot) {
               roll +
               ' vs ' +
               survivalTarget +
-              '] dies young 💀'
+              '] dies young 💀.'
           );
           killlib.kill(childName, 'endgame scoring', gameState);
         }
       } else {
-        responseLines.push('- ' + childName + ' is already an adult ✅');
+        responseLines.push('- ' + childName + ' is already an adult ✅.');
       }
 
       if (child.newAdult) {
@@ -142,13 +142,15 @@ function endGame(gameState, _bot) {
   );
   responseLines.push(
     '🍖 Food acquired: ' +
-      (gameState.foodAcquired == null ? 0 : gameState.foodAcquired)
+      (gameState.foodAcquired == null ? 0 : gameState.foodAcquired) +
+      '.'
   );
   responseLines.push(
     '🪰 Food spoiled: at least ' +
-      (gameState.spoiled == null ? 0 : gameState.spoiled)
+      (gameState.spoiled == null ? 0 : gameState.spoiled) +
+      '.'
   );
-  responseLines.push('🏕️ Tribe result: ' + scoreTribe(gameState));
+  responseLines.push('🏕️ Tribe result: ' + scoreTribe(gameState) + '.');
 
   const response = responseLines.join('\n');
   gameState.ended = true;
@@ -514,7 +516,7 @@ function formatPersonalLastGameSection(gameState, playerName) {
       scoreIcon(0) +
         ' ' +
         playerName +
-        ' — 0 children • ❔ unknown'
+        ' — 0 children • ❔ unknown.'
     );
   }
 

@@ -126,6 +126,9 @@ module.exports.gather = (playername, player, rollValue, gameState) => {
   }
   player.activity = 'gathered';
   player.worked = true;
+  if (message && !/[.!?]$/.test(String(message).trim())) {
+    message += '.';
+  }
   text.addMessage(gameState, 'tribe', message);
   return message;
 };

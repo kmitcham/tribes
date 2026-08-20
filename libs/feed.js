@@ -416,6 +416,9 @@ function consumeFoodChildren(gameState) {
   ) {
     response += 'No children starved!';
   }
+  if (response && !/[.!?\n]$/.test(response)) {
+    response += '.';
+  }
   return response;
 }
 module.exports.consumeFoodChildren = consumeFoodChildren;
@@ -436,24 +439,34 @@ function birth(gameState, childName, child, motherMember, birthRoll) {
     child.gender +
     '-child, ' +
     childName;
+  if (birthRoll < 5) {
+    response += ', but the child did not survive.\n';
+    pop.history(
+      motherMember.name,
+      motherMember.name +
+        ' gives birth to a ' +
+        child.gender +
+        '-child, ' +
+        childName +
+        ', but the child did not survive.',
+      gameState
+    );
+    child.dead = true;
+    killlib.kill(childName, 'birth complications', gameState);
+    console.log('removing stillborn ' + childName);
+    return;
+  }
+  response += '.\n';
   pop.history(
     motherMember.name,
     motherMember.name +
       ' gives birth to a ' +
       child.gender +
       '-child, ' +
-      childName,
+      childName +
+      '.',
     gameState
   );
-  if (birthRoll < 5) {
-    response += ' but the child did not survive.\n';
-    child.dead = true;
-    killlib.kill(childName, 'birth complications', gameState);
-    console.log('removing stillborn ' + childName);
-    return;
-  } else {
-    response += '\n';
-  }
   delete motherMember.isPregnant;
   //Mothers start guarding their newborns
   motherGuard(motherMember, childName, gameState);
@@ -475,7 +488,7 @@ function birth(gameState, childName, child, motherMember, birthRoll) {
         twinName +
         ', a healthy young ' +
         twin.gender +
-        '-child',
+        '-child.',
       gameState
     );
     motherGuard(motherMember, twinName, gameState);

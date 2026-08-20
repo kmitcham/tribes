@@ -218,7 +218,7 @@ function doChance(rollValue, gameState) {
         '🍄 Fungus! All stored food in the whole tribe, except grain, spoils and is lost.';
       for (const name in population) {
         person = population[name];
-        pop.history(name, 'Lost ' + person.food + ' to fungus', gameState);
+        pop.history(name, 'Lost ' + person.food + ' to fungus.', gameState);
         gameState.spoiled += person.food;
         person.food = 0;
       }
@@ -286,7 +286,13 @@ function doChance(rollValue, gameState) {
               mother.food += gift;
               gameState.foodAcquired += gift;
               message +=
-                '\n  ' + mother.name + ' gets ' + gift + ' from ' + childName;
+                '\n  ' +
+                mother.name +
+                ' gets ' +
+                gift +
+                ' from ' +
+                childName +
+                '.';
             } else {
               const motherLabel = motherName || 'their mother';
               message +=
@@ -385,7 +391,7 @@ function doChance(rollValue, gameState) {
         message +=
           '(but they only had ' +
           person.food +
-          ' so they need to have two food or grain at the start of work round or die)';
+          ' so they need to have two food or grain at the start of work round or die).';
         person.payTwoOrDie = true;
       } else {
         person.food -= 2;

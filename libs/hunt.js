@@ -75,7 +75,7 @@ module.exports.hunt = (playername, player, rollValue, gameState) => {
     netRoll = 18;
   }
   let message =
-    playername + ' goes hunting.' + modifiers + ' [roll ' + rollValue + ']';
+    playername + ' goes hunting.' + modifiers + ' [roll ' + rollValue + '].';
   if (
     rollValue + strMod < 6 ||
     (rollValue + strMod < 7 && player.profession != 'hunter')
@@ -104,7 +104,7 @@ module.exports.hunt = (playername, player, rollValue, gameState) => {
       huntRow[2] +
       ' +' +
       huntRow[1] +
-      ' food';
+      ' food.';
     player.food += huntRow[1];
     gameState.foodAcquired += huntRow[1];
     career.addFoodProduced(player, huntRow[1]);
