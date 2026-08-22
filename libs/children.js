@@ -114,10 +114,12 @@ function showChildren(
         responseMessages.push('### -----> New Adults <----- ###');
         notPrintedNewAdultHeader = false;
       }
-      childMessage +=
-        (childName + ': ' + child.gender).padEnd(30, ' ') +
-        'age:' +
-        child.age / 2;
+      // Name and gender stay secret until birth (age >= 0).
+      const displayLabel =
+        child.age < 0
+          ? 'Unborn (unknown until birth)'
+          : childName + ': ' + child.gender;
+      childMessage += displayLabel.padEnd(30, ' ') + 'age:' + child.age / 2;
       if (child.newAdult) {
         childMessage += 'Full grown!'.padStart(16, ' ');
       } else {

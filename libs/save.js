@@ -133,6 +133,12 @@ function loadTribe(tribeName) {
       removeChildNameFields(gameState.children);
       populationLib.normalizePopulationResources(gameState);
       try {
+        const reproLib = require('./reproduction.js');
+        reproLib.migrateLegacyUnborn(gameState);
+      } catch (_err) {
+        // Legacy unborn migrate is best-effort on load.
+      }
+      try {
         const guardlib = require('./guardCode.js');
         guardlib.normalizeGuardAssignments(
           gameState.population,

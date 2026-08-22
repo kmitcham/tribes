@@ -203,7 +203,7 @@ function inventoryMessage(person) {
     message += '         ';
   }
   if (person.isPregnant && person.isPregnant != '') {
-    message += '\n\t\t is pregnant with ' + person.isPregnant + '.';
+    message += '\n\t\t is pregnant.';
   }
   if (person.nursing && person.nursing.length > 0) {
     message += '\n\t\t is nursing ' + person.nursing + '.';

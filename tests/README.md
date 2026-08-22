@@ -34,6 +34,36 @@ Tests the complete command flow from client to server:
 - Parameter preservation through the entire flow
 - Error scenarios and edge cases
 
+### 4. `harness/tribeEngine.js` — In-process multi-player integration engine
+
+Drives **real** command modules against an ephemeral `gameState` (no WebSocket, no disk writes). Use this to script multi-player seasons:
+
+```javascript
+const { TribeEngine } = require('./harness/tribeEngine');
+
+const engine = await TribeEngine.createOpenTribe({
+  tribeName: 'itest-four',
+  players: [
+    { name: 'Ada', gender: 'f', profession: 'gatherer' },
+    { name: 'Bea', gender: 'f', profession: 'hunter' },
+    { name: 'Cal', gender: 'm', profession: 'crafter' },
+    { name: 'Dan', gender: 'm', profession: 'gatherer' },
+  ],
+});
+
+await engine.electChief('Ada'); // needs ≥ 2/3 of tribe (3 of 4)
+await engine.as('Ada').gather({ force: 12 });
+await engine.everyone('gather', { force: 12 });
+await engine.advanceFromWork(); // chief startfood
+```
+
+Demo scenarios:
+
+- `tribe-engine.integration.test.js` — join → elect chief → gather → leave work round
+- `tribe-engine-naming.integration.test.js` — reproduction through delayed naming (`Unborn-*` at conception, real name/gender at birth, adjacent twin letter buckets)
+
+Harness helpers for seasons: `setupRomance`, `runWorkSeason`, `finishReproductionSeason`, `ensureChildrenFed`.
+
 ## Test Coverage
 
 The tests validate these critical aspects:
@@ -93,6 +123,9 @@ npm test websocket-server.test.js
 
 # End-to-end tests only
 npm test e2e-command-flow.test.js
+
+# In-process multi-player tribe engine
+npm test -- tribe-engine.integration
 ```
 
 ### Run with Coverage

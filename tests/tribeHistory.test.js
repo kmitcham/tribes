@@ -467,7 +467,7 @@ describe('tribeHistory.js', () => {
     gameState.seasonCounter = 20;
     gameState.tribeHistory = [
       '9: Food round results: eggplant eats extra food due to multiple children under 2. No adults starved! No children starved!==> Starting the Reproduction round; invite other tribe members to reproduce.<==After chance, the tribe can decide to move.',
-      '9: ursa has been blessed with a child: Karoo',
+      '9: ursa has been blessed with a child. 👶',
     ];
     pop.memberByName.mockReturnValue({
       name: playerName,
@@ -479,7 +479,7 @@ describe('tribeHistory.js', () => {
     expect(text.addMessage).toHaveBeenCalledWith(
       gameState,
       playerName,
-      '[Tribe history] 9: ursa has been blessed with a child: Karoo'
+      '[Tribe history] 9: ursa has been blessed with a child. 👶'
     );
     expect(text.addMessage).not.toHaveBeenCalledWith(
       gameState,
@@ -522,8 +522,8 @@ describe('tribeHistory.js', () => {
   test('showCombinedHistory reproduction filter should ignore messages containing food or starved', () => {
     gameState.seasonCounter = 20;
     gameState.tribeHistory = [
-      '9: ursa has been blessed with a child: Karoo',
-      '9: ursa has been blessed with a child: Karoo and got food',
+      '9: ursa has been blessed with a child. 👶',
+      '9: ursa has been blessed with a child. 👶 and got food',
       '9: no adults starved in the food round',
     ];
     pop.memberByName.mockReturnValue({
@@ -536,12 +536,12 @@ describe('tribeHistory.js', () => {
     expect(text.addMessage).toHaveBeenCalledWith(
       gameState,
       playerName,
-      '[Tribe history] 9: ursa has been blessed with a child: Karoo'
+      '[Tribe history] 9: ursa has been blessed with a child. 👶'
     );
     expect(text.addMessage).not.toHaveBeenCalledWith(
       gameState,
       playerName,
-      '[Tribe history] 9: ursa has been blessed with a child: Karoo and got food'
+      '[Tribe history] 9: ursa has been blessed with a child. 👶 and got food'
     );
     expect(text.addMessage).not.toHaveBeenCalledWith(
       gameState,

@@ -312,11 +312,18 @@ function consumeFoodChildren(gameState) {
   response = '';
   const perishedChildren = [];
   const population = gameState.population;
+  reproLib.migrateLegacyUnborn(gameState);
   const children = gameState.children;
 
   console.log('children are eating');
-  for (const childName in children) {
+  // Snapshot keys so birth rekey (Unborn-* → real name) does not double-age a newborn.
+  const childKeys = Object.keys(children);
+  for (var keyIndex = 0; keyIndex < childKeys.length; keyIndex++) {
+    var childName = childKeys[keyIndex];
     var child = children[childName];
+    if (!child) {
+      continue;
+    }
     const motherMember = pop.memberByName(child.mother, gameState);
     if (child.dead) {
       continue;
@@ -338,7 +345,20 @@ function consumeFoodChildren(gameState) {
       }
       if (child.age == 0) {
         const birthRoll = dice.roll(3);
+        const priorKey = childName;
         birth(gameState, childName, child, motherMember, birthRoll);
+        // Birth may rekey Unborn-* → real name, or remove a stillbirth.
+        if (!gameState.children[priorKey]) {
+          const renamed = Object.keys(gameState.children).find(
+            (k) => gameState.children[k] === child
+          );
+          if (renamed) {
+            childName = renamed;
+          } else {
+            // Stillborn / removed from children — skip nursing and further care.
+            continue;
+          }
+        }
       }
       // Sometimes we get bugs where pregnancy doesn't clear; this will fix it eventually
       if (child.age >= 0) {
@@ -432,6 +452,11 @@ function birth(gameState, childName, child, motherMember, birthRoll) {
     childName =
       motherMember && motherMember.isPregnant ? motherMember.isPregnant : '';
   }
+  // Assign real name + gender at birth (twins get adjacent letter buckets).
+  const namedKey = reproLib.nameUnbornAtBirth(gameState, childName);
+  child = gameState.children[namedKey] || child;
+  childName = namedKey;
+
   response +=
     '\t' +
     motherMember.name +
@@ -468,12 +493,21 @@ function birth(gameState, childName, child, motherMember, birthRoll) {
     gameState
   );
   delete motherMember.isPregnant;
-  //Mothers start guarding their newborns
-  motherGuard(motherMember, childName, gameState);
+  // Mothers start guarding newborns (skip noisy "already" if prenatal guard was rekeyed).
+  if (
+    !motherMember.guarding ||
+    motherMember.guarding.indexOf(childName) === -1
+  ) {
+    motherGuard(motherMember, childName, gameState);
+  }
   if (birthRoll == 17) {
-    const twin = reproLib.addChild(child.mother, child.father, gameState);
-    const twinName = motherMember.isPregnant;
-    delete motherMember.isPregnant; // this gets set by addChild, but the child was just born.
+    const twinResult = reproLib.addTwin(
+      child.mother,
+      child.father,
+      gameState
+    );
+    const twin = twinResult.child;
+    const twinName = twinResult.name;
     response +=
       motherMember.name +
       ' gives birth to a twin! Meet ' +
@@ -492,7 +526,6 @@ function birth(gameState, childName, child, motherMember, birthRoll) {
       gameState
     );
     motherGuard(motherMember, twinName, gameState);
-    twin.age = 0;
   }
 }
 module.exports.birth = birth;

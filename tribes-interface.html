@@ -5806,7 +5806,8 @@
                 }
 
                 if (key === 'isPregnant') {
-                    return value ? `Pregnant with ${value}` : '';
+                    // Child name/gender stay secret until birth.
+                    return value ? 'Pregnant' : '';
                 }
 
                 if (key === 'guarding') {
@@ -6092,11 +6093,19 @@
             }
 
             formatChildNameList(value) {
+                const labelFor = (childName) => {
+                    if (!childName) return '';
+                    const child = (this.currentChildren || {})[childName];
+                    if (child && typeof child.age === 'number' && child.age < 0) {
+                        return 'Unborn';
+                    }
+                    return childName;
+                };
                 if (Array.isArray(value)) {
-                    return value.filter(Boolean).join(', ');
+                    return value.map(labelFor).filter(Boolean).join(', ');
                 }
                 if (value && typeof value === 'string') {
-                    return value;
+                    return labelFor(value);
                 }
                 return '';
             }
@@ -6329,8 +6338,8 @@
                         labels.push({ text: `Sick (${person.isSick})`, class: 'illness' });
                     }
                     if (person.isPregnant) {
-                        const pregnantWith = this.formatChildNameList(person.isPregnant);
-                        labels.push({ text: pregnantWith ? `Pregnant with ${pregnantWith}` : 'Pregnant', class: 'pregnant' });
+                        // Do not reveal unborn name/gender in the roster.
+                        labels.push({ text: 'Pregnant', class: 'pregnant' });
                     }
                     if (person.canCraft) {
                         labels.push({ text: 'Can Craft', class: 'craft' });
@@ -6505,22 +6514,35 @@
                 entries.forEach(({ name, data }) => {
 
                     const row = document.createElement('tr');
-                    row.className = this.getGenderRowClass(data && data.gender);
                     const childAge = typeof data['age'] === 'number' ? data['age'] : 0;
+                    const isUnborn = childAge < 0;
                     const isYoungAdult = childAge >= 23;
+                    // Unborn name/gender stay hidden until birth.
+                    const displayGender = isUnborn ? null : data && data.gender;
+                    row.className = this.getGenderRowClass(displayGender);
                     
                     const nameCell = document.createElement('td');
-                    nameCell.className = `person-name-cell ${this.getGenderClass(data && data.gender)}`;
+                    nameCell.className = `person-name-cell ${this.getGenderClass(displayGender)}`;
 
-                    const genderMeta = this.getGenderSymbol(data && data.gender);
+                    const genderMeta = this.getGenderSymbol(displayGender);
                     const genderIcon = document.createElement('span');
                     genderIcon.className = `gender-icon ${genderMeta.className}`;
                     genderIcon.textContent = genderMeta.symbol;
-                    genderIcon.title = genderMeta.label;
+                    genderIcon.title = isUnborn
+                        ? 'Unknown until birth'
+                        : genderMeta.label;
                     nameCell.appendChild(genderIcon);
 
                     const nameText = document.createElement('span');
-                    nameText.textContent = name;
+                    nameText.textContent = isUnborn
+                        ? data && data.mother
+                            ? `Unborn (${data.mother})`
+                            : 'Unborn'
+                        : name;
+                    if (isUnborn) {
+                        nameText.title =
+                            'Name and gender are revealed when the child is born.';
+                    }
                     nameCell.appendChild(nameText);
                     row.appendChild(nameCell);
                     

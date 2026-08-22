@@ -3,6 +3,7 @@ const text = require('../../libs/textprocess.js');
 const pop = require('../../libs/population.js');
 const guardValidation = require('../../libs/guardValidation.js');
 const guardlib = require('../../libs/guardCode.js');
+const reproLib = require('../../libs/reproduction.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -99,13 +100,16 @@ function formatChildList(names) {
   if (!names || names.length === 0) {
     return '';
   }
-  if (names.length === 1) {
-    return names[0];
+  const labels = names.map(function (name) {
+    return reproLib.formatChildRef(name, null);
+  });
+  if (labels.length === 1) {
+    return labels[0];
   }
-  if (names.length === 2) {
-    return names[0] + ' and ' + names[1];
+  if (labels.length === 2) {
+    return labels[0] + ' and ' + labels[1];
   }
-  return names.slice(0, -1).join(', ') + ', and ' + names[names.length - 1];
+  return labels.slice(0, -1).join(', ') + ', and ' + labels[labels.length - 1];
 }
 
 /**
@@ -169,24 +173,25 @@ function guardChild(actorName, gameState, cName) {
   if (person.isSick && person.isSick > 0) {
     return 'FAIL You are too sick to watch children.';
   }
-  const childName = text.capitalizeFirstLetter(cName);
+  const childName = resolveGuardChildKey(cName, children, gameState);
   console.log('checking ' + childName);
   const child = children[childName];
+  const displayRef = reproLib.formatChildRef(childName, children);
   if (!child) {
-    return 'FAIL Could not find child: ' + childName + '.';
+    return 'FAIL Could not find child: ' + (childName || cName) + '.';
   } else if (!guardlib.isChildGuardAssignable(child)) {
     // Work-round assignment: years -0.5..11.5 (seasons -1..23). Food ages +1
     // before reproduction threats.
     return (
       'FAIL ' +
-      childName +
+      displayRef +
       ' is age ' +
       Number(child.age || 0) / 2 +
       ' and cannot be guarded this work round (only ages -0.5 to 11.5)'
     );
   } else if (person.guarding && person.guarding.indexOf(childName) != -1) {
     console.log(person.guarding);
-    return 'FAIL You are already guarding ' + childName + '.';
+    return 'FAIL You are already guarding ' + displayRef + '.';
   } else {
     console.log('valid guard ' + childName);
     if (person.guarding) {
@@ -194,6 +199,52 @@ function guardChild(actorName, gameState, cName) {
     } else {
       person.guarding = [childName];
     }
-    return 'You start guarding ' + childName + '.';
+    return 'You start guarding ' + displayRef + '.';
   }
+}
+
+/** Resolve guard target: exact key, capitalized name, Unborn-Mom, or pregnant mother name. */
+function resolveGuardChildKey(cName, children, gameState) {
+  if (!cName || !children) {
+    return text.capitalizeFirstLetter(cName || '');
+  }
+  if (children[cName]) {
+    return cName;
+  }
+  const capped = text.capitalizeFirstLetter(cName);
+  if (children[capped]) {
+    return capped;
+  }
+  const lower = String(cName).toLowerCase();
+  for (const key in children) {
+    if (String(key).toLowerCase() === lower) {
+      return key;
+    }
+  }
+  // Mother name → her Unborn-<Mother> slot when pregnant.
+  const population = gameState && gameState.population;
+  if (population) {
+    var motherKey = null;
+    if (population[capped]) {
+      motherKey = capped;
+    } else if (population[cName]) {
+      motherKey = cName;
+    } else {
+      motherKey =
+        Object.keys(population).find(function (n) {
+          return String(n).toLowerCase() === lower;
+        }) || null;
+    }
+    if (motherKey) {
+      const mom = population[motherKey];
+      if (mom && mom.isPregnant && children[mom.isPregnant]) {
+        return mom.isPregnant;
+      }
+      const unbornKey = reproLib.unbornKeyFor(motherKey);
+      if (children[unbornKey]) {
+        return unbornKey;
+      }
+    }
+  }
+  return capped;
 }

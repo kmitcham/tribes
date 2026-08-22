@@ -889,20 +889,19 @@ function globalMatingCheck(gameState) {
       );
       if (invitingMember && invitingMember.hiddenPregnant) {
         const fatherName = invitingMember.hiddenPregnant;
+        // Unborn slot only; name and gender assigned at birth (see feed.birth).
         addChild(invitingMember.name, fatherName, gameState);
         delete invitingMember.hiddenPregnant;
         pregnancyCount += 1;
         text.addMessage(
           gameState,
           'tribe',
-          invitingMember.name +
-            ' has been blessed with a child: 👶 ' +
-            invitingMember.isPregnant
+          invitingMember.name + ' has been blessed with a child. 👶'
         );
         text.addMessage(
           gameState,
           personName,
-          'You have been blessed with the child 👶 ' + invitingMember.isPregnant
+          'You have been blessed with a child. 👶'
         );
       }
     }
@@ -1125,8 +1124,52 @@ function detection(mother, father, reproRoll, gameState) {
   return false;
 }
 
+function unbornKeyFor(motherName) {
+  return 'Unborn-' + motherName;
+}
+module.exports.unbornKeyFor = unbornKeyFor;
+
+function isUnbornKey(key) {
+  return typeof key === 'string' && /^unborn-/i.test(key);
+}
+module.exports.isUnbornKey = isUnbornKey;
+
+/** Display label for messages/UI: Unborn (Mom) vs real name. */
+function formatChildRef(key, children) {
+  if (!key) {
+    return '';
+  }
+  const child = children && children[key];
+  if (isUnbornKey(key) || (child && typeof child.age === 'number' && child.age < 0)) {
+    const mother =
+      (child && child.mother) ||
+      (isUnbornKey(key) ? key.replace(/^unborn-/i, '') : '');
+    return mother ? 'Unborn (' + mother + ')' : 'Unborn';
+  }
+  return key;
+}
+module.exports.formatChildRef = formatChildRef;
+
+function takenRealChildNames(children) {
+  const names = [];
+  if (!children) {
+    return names;
+  }
+  for (const key in children) {
+    if (isUnbornKey(key)) {
+      continue;
+    }
+    const child = children[key];
+    if (child && typeof child.age === 'number' && child.age < 0) {
+      continue;
+    }
+    names.push(key);
+  }
+  return names;
+}
+
 function getNextChildName(children, childNames, nextIndex, gameState) {
-  var currentNames = Object.keys(children);
+  var currentNames = takenRealChildNames(children);
   if (!nextIndex === null) {
     nextIndex = gameState.conceptionCounter % 26;
     console.log('getNextChild with default index ' + nextIndex);
@@ -1164,19 +1207,173 @@ function getNextChildName(children, childNames, nextIndex, gameState) {
 }
 module.exports.getNextChildName = getNextChildName;
 
+function allocateChildName(gameState) {
+  if (typeof gameState.conceptionCounter !== 'number') {
+    gameState.conceptionCounter = 0;
+  }
+  const nextIndex = gameState.conceptionCounter % 26;
+  const childName = getNextChildName(
+    gameState.children,
+    allNames,
+    nextIndex,
+    gameState
+  );
+  gameState.conceptionCounter++;
+  return childName;
+}
+module.exports.allocateChildName = allocateChildName;
+
+function replaceNameInArray(list, oldKey, newName) {
+  if (!list || !Array.isArray(list)) {
+    return;
+  }
+  for (var i = 0; i < list.length; i++) {
+    if (list[i] === oldKey) {
+      list[i] = newName;
+    }
+  }
+}
+
+/**
+ * Move a children[] entry to a new key and rewrite watch/pregnancy refs.
+ */
+function rekeyChild(gameState, oldKey, newName) {
+  if (!gameState || !oldKey || !newName || oldKey === newName) {
+    return newName || oldKey;
+  }
+  const children = gameState.children || {};
+  const child = children[oldKey];
+  if (!child) {
+    return oldKey;
+  }
+  if (children[newName] && children[newName] !== child) {
+    console.log(
+      'rekeyChild: target name already occupied: ' + newName + ' (keeping ' + oldKey + ')'
+    );
+    return oldKey;
+  }
+  children[newName] = child;
+  delete children[oldKey];
+
+  const population = gameState.population || {};
+  for (const personName in population) {
+    const person = population[personName];
+    if (!person) {
+      continue;
+    }
+    replaceNameInArray(person.guarding, oldKey, newName);
+    replaceNameInArray(person.nursing, oldKey, newName);
+    if (person.isPregnant === oldKey) {
+      person.isPregnant = newName;
+    }
+  }
+  for (const otherName in children) {
+    const other = children[otherName];
+    if (!other) {
+      continue;
+    }
+    if (other.babysitting === oldKey) {
+      other.babysitting = newName;
+    }
+    if (other.guardians && typeof other.guardians === 'object') {
+      // guardians map is adultName → true; keys are adults, values unused for child id.
+      // Nothing to rewrite unless some code keyed guardians by child (it does not).
+    }
+  }
+  return newName;
+}
+module.exports.rekeyChild = rekeyChild;
+
+function nameUnbornAtBirth(gameState, tempKey) {
+  const children = gameState.children || {};
+  const child = children[tempKey];
+  if (!child) {
+    return tempKey;
+  }
+  // Already a real (legacy) name — keep it, ensure gender.
+  if (!isUnbornKey(tempKey)) {
+    if (!child.gender) {
+      child.gender = genders[Math.trunc(Math.random() * genders.length)];
+    }
+    return tempKey;
+  }
+  child.gender = genders[Math.trunc(Math.random() * genders.length)];
+  const realName = allocateChildName(gameState);
+  return rekeyChild(gameState, tempKey, realName);
+}
+module.exports.nameUnbornAtBirth = nameUnbornAtBirth;
+
+/** Born twin only — does not set pregnancy or create an unborn slot. */
+function addTwin(mother, father, gameState) {
+  var child = Object();
+  child.mother = mother;
+  child.father = father;
+  child.age = 0;
+  child.food = 0;
+  child.gender = genders[Math.trunc(Math.random() * genders.length)];
+  const twinName = allocateChildName(gameState);
+  gameState.children[twinName] = child;
+  console.log('added twin ' + twinName);
+  return { child: child, name: twinName };
+}
+module.exports.addTwin = addTwin;
+
+/**
+ * Legacy mid-pregnancy saves: named unborn → Unborn-<mother>, clear gender,
+ * rewrite guard lists via rekeyChild.
+ */
+function migrateLegacyUnborn(gameState) {
+  if (!gameState || !gameState.children) {
+    return;
+  }
+  const children = gameState.children;
+  const keys = Object.keys(children);
+  for (var i = 0; i < keys.length; i++) {
+    const oldKey = keys[i];
+    const child = children[oldKey];
+    if (!child || typeof child.age !== 'number' || child.age >= 0) {
+      continue;
+    }
+    if (isUnbornKey(oldKey)) {
+      if (child.gender) {
+        delete child.gender;
+      }
+      continue;
+    }
+    const motherName = child.mother;
+    if (!motherName) {
+      continue;
+    }
+    const tempKey = unbornKeyFor(motherName);
+    if (children[tempKey] && children[tempKey] !== child) {
+      console.log(
+        'migrateLegacyUnborn: ' + tempKey + ' already exists; skipping ' + oldKey
+      );
+      continue;
+    }
+    rekeyChild(gameState, oldKey, tempKey);
+    if (children[tempKey] && children[tempKey].gender) {
+      delete children[tempKey].gender;
+    }
+  }
+}
+module.exports.migrateLegacyUnborn = migrateLegacyUnborn;
+
 function addChild(mother, father, gameState) {
   var child = Object();
   child.mother = mother;
   child.father = father;
   child.age = -2;
   child.food = 0;
-  child.gender = genders[Math.trunc(Math.random() * genders.length)];
-  const nextIndex = gameState.conceptionCounter % 26;
-  const childName = getNextChildName(gameState.children, allNames, nextIndex);
-  gameState.children[childName] = child;
-  console.log('added child ' + childName);
+  // Name and gender are assigned at birth (see nameUnbornAtBirth / feed.birth).
+  const childKey = unbornKeyFor(mother);
+  if (gameState.children[childKey]) {
+    console.log('addChild: replacing existing unborn slot ' + childKey);
+  }
+  gameState.children[childKey] = child;
+  console.log('added unborn child ' + childKey);
   const motherAsMember = pop.memberByName(mother, gameState);
-  motherAsMember.isPregnant = childName;
+  motherAsMember.isPregnant = childKey;
   if (gameState.reproductionList) {
     const indexOfPreggers = gameState.reproductionList.indexOf(mother);
     if (indexOfPreggers > -1) {
@@ -1184,7 +1381,7 @@ function addChild(mother, father, gameState) {
       console.log('attempting to remove pregnant woman from reproduction list');
     }
   }
-  gameState.conceptionCounter++;
+  // conceptionCounter advances only when real names are allocated at birth.
   return child;
 }
 module.exports.addChild = addChild;

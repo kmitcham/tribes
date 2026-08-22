@@ -587,11 +587,12 @@ describe('consumeFoodChildren Function Tests', () => {
     // Set up a fresh gameState before each test
     gameState = {
       messages: {},
+      conceptionCounter: 0,
       population: {
         Mother1: {
           name: 'Mother1',
-          isPregnant: 'Child1',
-          guarding: ['Child1'],
+          isPregnant: 'Unborn-Mother1',
+          guarding: ['Unborn-Mother1'],
         },
         Mother2: {
           name: 'Mother2',
@@ -604,11 +605,9 @@ describe('consumeFoodChildren Function Tests', () => {
         Father1: { name: 'Father1' },
       },
       children: {
-        Child1: {
-          name: 'Child1',
+        'Unborn-Mother1': {
           mother: 'Mother1',
           father: 'Father1',
-          gender: 'male',
           age: -1,
           food: 5,
         },
@@ -667,14 +666,29 @@ describe('consumeFoodChildren Function Tests', () => {
     });
   });
 
+  function bornChildOfMother(state, motherName) {
+    return Object.keys(state.children).find((key) => {
+      const c = state.children[key];
+      return (
+        c &&
+        !c.dead &&
+        c.mother === motherName &&
+        typeof c.age === 'number' &&
+        c.age >= 0 &&
+        !state.children[key].newAdult
+      );
+    });
+  }
+
   it('should age all living children by 1', () => {
-    // Child1 hits age 0 (birth). Stub roll so stillbirth (roll < 5) cannot flake the test.
+    // Unborn hits age 0 (birth). Stub roll so stillbirth (roll < 5) cannot flake the test.
     const rollSpy = jest.spyOn(diceLib, 'roll').mockReturnValue(10);
     consumeFoodChildren(gameState);
     rollSpy.mockRestore();
 
-    // Check all living children aged by 1
-    expect(gameState.children['Child1'].age).toBe(0);
+    const newborn = bornChildOfMother(gameState, 'Mother1');
+    expect(newborn).toBeTruthy();
+    expect(gameState.children[newborn].age).toBe(0);
     expect(gameState.children['Child2'].age).toBe(4);
     expect(gameState.children['Child3'].age).toBe(24);
 
@@ -683,13 +697,13 @@ describe('consumeFoodChildren Function Tests', () => {
   });
 
   it("should reduce each child's food by 2", () => {
-    // Child1 hits age 0 (birth). Stub roll so stillbirth (roll < 5) cannot flake the test.
+    // Unborn hits age 0 (birth). Stub roll so stillbirth (roll < 5) cannot flake the test.
     const rollSpy = jest.spyOn(diceLib, 'roll').mockReturnValue(10);
     consumeFoodChildren(gameState);
     rollSpy.mockRestore();
 
-    // Check food reduction
-    expect(gameState.children['Child1'].food).toBe(3);
+    const newborn = bornChildOfMother(gameState, 'Mother1');
+    expect(gameState.children[newborn].food).toBe(3);
     expect(gameState.children['Child2'].food).toBe(0);
     expect(gameState.children['Child3'].food).toBe(2); // young adult does not eat anymore
   });
@@ -716,65 +730,60 @@ describe('consumeFoodChildren Function Tests', () => {
 
     rollSpy.mockRestore();
 
-    // Check birth-related actions
-    expect(response).toContain('Mother1 gives birth to a male-child');
-    // this can fail when  (birthRoll < 5 )
-    // Mother should be guarding the child
-    expect(gameState.population['Mother1'].guarding).toContain('Child1');
-
-    // Mother should be nursing
-    expect(gameState.population['Mother1'].nursing).toContain('Child1');
+    const newborn = bornChildOfMother(gameState, 'Mother1');
+    expect(newborn).toBeTruthy();
+    expect(response).toMatch(/Mother1 gives birth to a (male|female)-child, /);
+    expect(response).toContain(newborn);
+    // Mother should be guarding / nursing the named newborn (rekeyed from Unborn-*)
+    expect(gameState.population['Mother1'].guarding).toContain(newborn);
+    expect(gameState.population['Mother1'].nursing).toContain(newborn);
+    expect(gameState.children['Unborn-Mother1']).toBeUndefined();
   });
 
   it('should handle stillbirth when birth roll is low', () => {
     birthRoll = 4;
+    const beforeKeys = Object.keys(gameState.children);
 
     birth(
       gameState,
-      gameState.children['Child1'],
+      'Unborn-Mother1',
+      gameState.children['Unborn-Mother1'],
       gameState.population['Mother1'],
       birthRoll
     );
 
-    // Child should be marked as dead
-    expect(gameState.graveyard['Child1'].dead).toBe(true);
-
-    // Kill function should be called with birth complications
-    expect(gameState.graveyard['Child1'].deathMessage).toContain(
-      'complications'
+    // Named at birth then killed — graveyard has a real name, not Unborn-*
+    const stillbornName = Object.keys(gameState.graveyard || {}).find((k) =>
+      String(gameState.graveyard[k].deathMessage || '').includes('complications')
     );
+    expect(stillbornName).toBeTruthy();
+    expect(stillbornName).not.toMatch(/^Unborn-/i);
+    expect(gameState.graveyard[stillbornName].dead).toBe(true);
+    expect(gameState.children['Unborn-Mother1']).toBeUndefined();
+    // One name allocated then removed from children.
+    expect(beforeKeys).toContain('Unborn-Mother1');
   });
 
   it('should handle twin birth when roll is 17', () => {
-    // Mock dice roll for twin birth
     birthRoll = 17;
-
-    // Create a fake twin
-    const fakeTwin = {
-      name: 'TwinTest',
-      mother: 'Mother1',
-      father: 'Father1',
-      gender: 'female',
-      age: 0,
-      food: 5,
-    };
-    mockReproLib.addChild.mockReturnValue(fakeTwin);
+    const counterBefore = gameState.conceptionCounter;
 
     birth(
       gameState,
-      gameState.children['Child1'],
+      'Unborn-Mother1',
+      gameState.children['Unborn-Mother1'],
       gameState.population['Mother1'],
       birthRoll
     );
 
-    // Should have called addChild to create twin
-    //expect(gameState.childre).toHaveBeenCalledWith('Mother1', 'Father1', gameState);
-
-    // Base fixtures (4 living + DeadChild + OtherChild) plus one twin.
+    // Primary + twin named; unborn slot gone. Base had 5 children keys.
+    expect(gameState.children['Unborn-Mother1']).toBeUndefined();
     expect(Object.keys(gameState.children).length).toEqual(6);
+    expect(gameState.conceptionCounter).toBe(counterBefore + 2);
 
     // Twin should be included in mother's guarding list
     expect(gameState.population['Mother1'].guarding.length).toEqual(2);
+    expect(gameState.population['Mother1'].isPregnant).toBeUndefined();
   });
 
   it('should handle weaning when child reaches age 4', () => {
@@ -853,8 +862,8 @@ describe('consumeFoodChildren Function Tests', () => {
 
     rollSpy.mockRestore();
 
-    // Mother1 should be nursing Child1
-    expect(gameState.population['Mother1'].nursing).toContain('Child1');
+    const newborn = bornChildOfMother(gameState, 'Mother1');
+    expect(gameState.population['Mother1'].nursing).toContain(newborn);
   });
 
   it('should fix bugged pregnancies when child ages', () => {
@@ -870,13 +879,28 @@ describe('consumeFoodChildren Function Tests', () => {
 
   it('should return a descriptive response string', () => {
     gameState.children['Child2'].food = 1;
+    const rollSpy = jest.spyOn(diceLib, 'roll').mockReturnValue(10);
 
     const response = consumeFoodChildren(gameState);
+    rollSpy.mockRestore();
 
-    // Check that the response contains expected text
-    expect(response).toContain('Child1');
+    const newborn = bornChildOfMother(gameState, 'Mother1');
+    expect(response).toContain(newborn);
     expect(response).toContain('Child2 has starved to death');
     expect(response).toContain('Child3 has reached adulthood');
+  });
+
+  it('rekeys prenatal guards from Unborn-* to the real name at birth', () => {
+    gameState.population.Father1.guarding = ['Unborn-Mother1'];
+    const rollSpy = jest.spyOn(diceLib, 'roll').mockReturnValue(10);
+    consumeFoodChildren(gameState);
+    rollSpy.mockRestore();
+
+    const newborn = bornChildOfMother(gameState, 'Mother1');
+    expect(gameState.population.Father1.guarding).toContain(newborn);
+    expect(gameState.population.Father1.guarding).not.toContain(
+      'Unborn-Mother1'
+    );
   });
 
   it('motherGuard reports already-guarding instead of too-many when child is on list', () => {

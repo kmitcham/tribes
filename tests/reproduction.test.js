@@ -931,12 +931,22 @@ test('globalMatingCheck does not re-announce pregnancies after completion', () =
   expect(gameState.matingComplete).toBeTruthy();
   expect(first).toBe('Reproduction complete. 1 new pregnancy.');
   expect(gameState.messages['tribe']).toContain(
-    'Featherfin has been blessed with a child'
+    'Featherfin has been blessed with a child. 👶'
   );
+  // Unborn slot only — name/gender assigned at birth.
+  const childName = gameState.population.Featherfin.isPregnant;
+  expect(childName).toBe('Unborn-Featherfin');
+  expect(gameState.children[childName]).toBeTruthy();
+  expect(gameState.children[childName].gender).toBeUndefined();
+  expect(gameState.conceptionCounter).toBe(0);
+  expect(gameState.messages['tribe']).not.toContain(childName + '');
+  expect(gameState.messages['Featherfin']).toContain(
+    'You have been blessed with a child. 👶'
+  );
+  expect(gameState.messages['Featherfin']).not.toContain(String(childName));
   expect(gameState.messages['tribe']).not.toContain(
     'No one has become pregnant this season.'
   );
-  expect(gameState.population.Featherfin.isPregnant).toBeTruthy();
   expect(gameState.population.Featherfin.hiddenPregnant).toBeUndefined();
 
   // Clear messages so we only assert second-pass side effects.
@@ -1874,5 +1884,93 @@ test('startReproductionChecks reports active demand details when blocked', () =>
 
   expect(gameState.messages.Chief).toBe(
     'You cannot start a new round while there is an active demand. Active demand: share all food now.'
+  );
+});
+
+test('addChild creates Unborn-Mother key without naming or advancing counter', () => {
+  var gameState = {
+    population: {
+      Mom: { name: 'Mom', gender: 'female' },
+      Dad: { name: 'Dad', gender: 'male' },
+    },
+    children: {},
+    conceptionCounter: 5,
+  };
+  reproLib.addChild('Mom', 'Dad', gameState);
+  expect(gameState.population.Mom.isPregnant).toBe('Unborn-Mom');
+  expect(gameState.children['Unborn-Mom']).toBeTruthy();
+  expect(gameState.children['Unborn-Mom'].age).toBe(-2);
+  expect(gameState.children['Unborn-Mom'].gender).toBeUndefined();
+  expect(gameState.conceptionCounter).toBe(5);
+});
+
+test('nameUnbornAtBirth and addTwin allocate adjacent letter names', () => {
+  var gameState = {
+    population: {
+      Mom: {
+        name: 'Mom',
+        gender: 'female',
+        isPregnant: 'Unborn-Mom',
+        guarding: ['Unborn-Mom'],
+      },
+      Dad: { name: 'Dad', gender: 'male' },
+    },
+    children: {
+      'Unborn-Mom': { mother: 'Mom', father: 'Dad', age: 0, food: 2 },
+    },
+    conceptionCounter: 0,
+  };
+  const first = reproLib.nameUnbornAtBirth(gameState, 'Unborn-Mom');
+  expect(first).toBeTruthy();
+  expect(first).not.toMatch(/^Unborn-/i);
+  expect(gameState.children[first].gender).toMatch(/^(male|female)$/);
+  expect(gameState.population.Mom.guarding).toContain(first);
+  expect(gameState.conceptionCounter).toBe(1);
+
+  const twin = reproLib.addTwin('Mom', 'Dad', gameState);
+  expect(twin.name).toBeTruthy();
+  expect(twin.name).not.toBe(first);
+  expect(gameState.conceptionCounter).toBe(2);
+  // Letter buckets 0 then 1 (A-names then B-names) for counter 0→1→2
+  const allNames = require('../libs/names.json');
+  expect(allNames.names[0]).toContain(first);
+  expect(allNames.names[1]).toContain(twin.name);
+});
+
+test('migrateLegacyUnborn rekeys named unborn and clears gender', () => {
+  var gameState = {
+    population: {
+      Mom: {
+        name: 'Mom',
+        isPregnant: 'SecretName',
+        guarding: ['SecretName'],
+      },
+    },
+    children: {
+      SecretName: {
+        mother: 'Mom',
+        father: 'Dad',
+        age: -1,
+        gender: 'female',
+        food: 2,
+      },
+    },
+  };
+  reproLib.migrateLegacyUnborn(gameState);
+  expect(gameState.children.SecretName).toBeUndefined();
+  expect(gameState.children['Unborn-Mom']).toBeTruthy();
+  expect(gameState.children['Unborn-Mom'].gender).toBeUndefined();
+  expect(gameState.population.Mom.isPregnant).toBe('Unborn-Mom');
+  expect(gameState.population.Mom.guarding).toEqual(['Unborn-Mom']);
+});
+
+test('formatChildRef labels unborn keys for display', () => {
+  expect(
+    reproLib.formatChildRef('Unborn-Mom', {
+      'Unborn-Mom': { mother: 'Mom', age: -1 },
+    })
+  ).toBe('Unborn (Mom)');
+  expect(reproLib.formatChildRef('Ayo', { Ayo: { age: 2, gender: 'male' } })).toBe(
+    'Ayo'
   );
 });
