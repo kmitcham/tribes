@@ -23,7 +23,14 @@ module.exports = {
   },
 };
 
-function startFoodFilter(actorName, gameState, bot) {
+/**
+ * @param {object} [options]
+ * @param {boolean} [options.requireAllWorked] — when true (advanceround), block if
+ *   healthy players still need to work. startfood omits this so the chief can
+ *   intentionally skip ahead; advanceround keeps the guard against double-taps.
+ */
+function startFoodFilter(actorName, gameState, bot, options) {
+  const opts = options || {};
   if (gameState.demand || gameState.violence) {
     text.addMessage(
       gameState,
@@ -61,18 +68,21 @@ function startFoodFilter(actorName, gameState, bot) {
     return;
   }
 
-  // Everyone healthy must have worked (hunt/gather/craft/train/idle).
-  // Sick/injured count as recovering without worked=true (listReadyToWork skips them).
-  const stillNeedToWork = worklib.listReadyToWork(gameState.population || {});
-  if (stillNeedToWork.length > 0) {
-    text.addMessage(
-      gameState,
-      actorName,
-      'Cannot advance from work round: these players have not worked yet: ' +
-        stillNeedToWork.join(', ') +
-        '. Everyone must hunt, gather, craft, train, idle, or rest while sick/injured.'
-    );
-    return;
+  // Only advanceround requires everyone healthy to have worked (easy to
+  // double-tap). Explicit startfood may proceed with people still idle.
+  if (opts.requireAllWorked) {
+    // Sick/injured count as recovering without worked=true.
+    const stillNeedToWork = worklib.listReadyToWork(gameState.population || {});
+    if (stillNeedToWork.length > 0) {
+      text.addMessage(
+        gameState,
+        actorName,
+        'Cannot advance from work round: these players have not worked yet: ' +
+          stillNeedToWork.join(', ') +
+          '. Everyone must hunt, gather, craft, train, idle, or rest while sick/injured. (Or use startfood to skip ahead.)'
+      );
+      return;
+    }
   }
 
   return startFood(gameState, bot);

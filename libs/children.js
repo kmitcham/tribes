@@ -114,10 +114,12 @@ function showChildren(
         responseMessages.push('### -----> New Adults <----- ###');
         notPrintedNewAdultHeader = false;
       }
-      // Name and gender stay secret until birth (age >= 0).
+      // Real name and gender stay secret until birth (age >= 0).
+      // Prefer "<Mother>'s unborn" over the raw children[] key (covers legacy keys).
       const displayLabel =
         child.age < 0
-          ? 'Unborn (unknown until birth)'
+          ? (child.mother ? child.mother + "'s unborn" : 'Unborn') +
+            ' (unknown until birth)'
           : childName + ': ' + child.gender;
       childMessage += displayLabel.padEnd(30, ' ') + 'age:' + child.age / 2;
       if (child.newAdult) {

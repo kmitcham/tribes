@@ -316,7 +316,7 @@ function consumeFoodChildren(gameState) {
   const children = gameState.children;
 
   console.log('children are eating');
-  // Snapshot keys so birth rekey (Unborn-* → real name) does not double-age a newborn.
+  // Snapshot keys so birth rekey (Mother's unborn → real name) does not double-age a newborn.
   const childKeys = Object.keys(children);
   for (var keyIndex = 0; keyIndex < childKeys.length; keyIndex++) {
     var childName = childKeys[keyIndex];
@@ -347,7 +347,7 @@ function consumeFoodChildren(gameState) {
         const birthRoll = dice.roll(3);
         const priorKey = childName;
         birth(gameState, childName, child, motherMember, birthRoll);
-        // Birth may rekey Unborn-* → real name, or remove a stillbirth.
+        // Birth may rekey Mother's unborn → real name, or remove a stillbirth.
         if (!gameState.children[priorKey]) {
           const renamed = Object.keys(gameState.children).find(
             (k) => gameState.children[k] === child

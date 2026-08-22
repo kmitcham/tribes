@@ -60,7 +60,7 @@ await engine.advanceFromWork(); // chief startfood
 Demo scenarios:
 
 - `tribe-engine.integration.test.js` — join → elect chief → gather → leave work round
-- `tribe-engine-naming.integration.test.js` — reproduction through delayed naming (`Unborn-*` at conception, real name/gender at birth, adjacent twin letter buckets)
+- `tribe-engine-naming.integration.test.js` — reproduction through delayed naming (`Mother's unborn` at conception, real name/gender at birth, adjacent twin letter buckets)
 
 Harness helpers for seasons: `setupRomance`, `runWorkSeason`, `finishReproductionSeason`, `ensureChildrenFed`.
 

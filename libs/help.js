@@ -83,11 +83,11 @@ function chiefHelp() {
   text +=
     ' startwork begins the work round, enabling work attempts and rolls\n';
   text +=
-    ' startfood starts the food round (ends work): food/grain use, births, and child aging\n';
+    ' startfood starts the food round (ends work): food/grain use, births, and child aging. May be used even if some players have not worked yet\n';
   text +=
     ' startreproduction starts the reproduction round (mating); migration also happens here\n';
   text +=
-    ' advanceround advances to the next legal round when the current one is ready (work→food→reproduction→work)\n';
+    ' advanceround advances to the next legal round when ready (work→food→reproduction→work). From work, requires everyone healthy to have worked (use startfood to skip that gate)\n';
   text += ' chance after mating, chance is required to end the season\n';
   //text+=' command <target> <command>  (order a tribe member.  They might obey)\n'
   text +=

@@ -1124,27 +1124,52 @@ function detection(mother, father, reproRoll, gameState) {
   return false;
 }
 
+/** Temp children[] key while in utero — shown in UI dropdowns as-is. */
 function unbornKeyFor(motherName) {
-  return 'Unborn-' + motherName;
+  return motherName + "'s unborn";
 }
 module.exports.unbornKeyFor = unbornKeyFor;
 
+const UNBORN_KEY_RE = /^(.+)'s unborn$/i;
+const LEGACY_UNBORN_KEY_RE = /^unborn-(.+)$/i;
+
 function isUnbornKey(key) {
-  return typeof key === 'string' && /^unborn-/i.test(key);
+  return (
+    typeof key === 'string' &&
+    (UNBORN_KEY_RE.test(key) || LEGACY_UNBORN_KEY_RE.test(key))
+  );
 }
 module.exports.isUnbornKey = isUnbornKey;
 
-/** Display label for messages/UI: Unborn (Mom) vs real name. */
+function motherFromUnbornKey(key) {
+  if (typeof key !== 'string') {
+    return '';
+  }
+  var match = key.match(UNBORN_KEY_RE);
+  if (match) {
+    return match[1];
+  }
+  match = key.match(LEGACY_UNBORN_KEY_RE);
+  if (match) {
+    return match[1];
+  }
+  return '';
+}
+module.exports.motherFromUnbornKey = motherFromUnbornKey;
+
+/** Display label for messages/UI. Possessive keys are already readable. */
 function formatChildRef(key, children) {
   if (!key) {
     return '';
   }
   const child = children && children[key];
+  if (UNBORN_KEY_RE.test(key)) {
+    return key;
+  }
   if (isUnbornKey(key) || (child && typeof child.age === 'number' && child.age < 0)) {
     const mother =
-      (child && child.mother) ||
-      (isUnbornKey(key) ? key.replace(/^unborn-/i, '') : '');
-    return mother ? 'Unborn (' + mother + ')' : 'Unborn';
+      (child && child.mother) || motherFromUnbornKey(key);
+    return mother ? mother + "'s unborn" : 'Unborn';
   }
   return key;
 }
@@ -1319,7 +1344,7 @@ function addTwin(mother, father, gameState) {
 module.exports.addTwin = addTwin;
 
 /**
- * Legacy mid-pregnancy saves: named unborn → Unborn-<mother>, clear gender,
+ * Legacy mid-pregnancy saves: named / Unborn-Mom → Mom's unborn, clear gender,
  * rewrite guard lists via rekeyChild.
  */
 function migrateLegacyUnborn(gameState) {
@@ -1334,17 +1359,23 @@ function migrateLegacyUnborn(gameState) {
     if (!child || typeof child.age !== 'number' || child.age >= 0) {
       continue;
     }
-    if (isUnbornKey(oldKey)) {
+    if (UNBORN_KEY_RE.test(oldKey)) {
       if (child.gender) {
         delete child.gender;
       }
       continue;
     }
-    const motherName = child.mother;
+    const motherName = child.mother || motherFromUnbornKey(oldKey);
     if (!motherName) {
       continue;
     }
     const tempKey = unbornKeyFor(motherName);
+    if (oldKey === tempKey) {
+      if (child.gender) {
+        delete child.gender;
+      }
+      continue;
+    }
     if (children[tempKey] && children[tempKey] !== child) {
       console.log(
         'migrateLegacyUnborn: ' + tempKey + ' already exists; skipping ' + oldKey

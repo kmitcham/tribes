@@ -203,7 +203,7 @@ function guardChild(actorName, gameState, cName) {
   }
 }
 
-/** Resolve guard target: exact key, capitalized name, Unborn-Mom, or pregnant mother name. */
+/** Resolve guard target: exact key, capitalized name, Mom's unborn, or pregnant mother name. */
 function resolveGuardChildKey(cName, children, gameState) {
   if (!cName || !children) {
     return text.capitalizeFirstLetter(cName || '');
@@ -221,7 +221,7 @@ function resolveGuardChildKey(cName, children, gameState) {
       return key;
     }
   }
-  // Mother name → her Unborn-<Mother> slot when pregnant.
+  // Mother name → her "<Mother>'s unborn" slot when pregnant.
   const population = gameState && gameState.population;
   if (population) {
     var motherKey = null;

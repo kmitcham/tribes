@@ -935,7 +935,7 @@ test('globalMatingCheck does not re-announce pregnancies after completion', () =
   );
   // Unborn slot only — name/gender assigned at birth.
   const childName = gameState.population.Featherfin.isPregnant;
-  expect(childName).toBe('Unborn-Featherfin');
+  expect(childName).toBe("Featherfin's unborn");
   expect(gameState.children[childName]).toBeTruthy();
   expect(gameState.children[childName].gender).toBeUndefined();
   expect(gameState.conceptionCounter).toBe(0);
@@ -1887,7 +1887,7 @@ test('startReproductionChecks reports active demand details when blocked', () =>
   );
 });
 
-test('addChild creates Unborn-Mother key without naming or advancing counter', () => {
+test("addChild creates Mother's unborn key without naming or advancing counter", () => {
   var gameState = {
     population: {
       Mom: { name: 'Mom', gender: 'female' },
@@ -1897,10 +1897,10 @@ test('addChild creates Unborn-Mother key without naming or advancing counter', (
     conceptionCounter: 5,
   };
   reproLib.addChild('Mom', 'Dad', gameState);
-  expect(gameState.population.Mom.isPregnant).toBe('Unborn-Mom');
-  expect(gameState.children['Unborn-Mom']).toBeTruthy();
-  expect(gameState.children['Unborn-Mom'].age).toBe(-2);
-  expect(gameState.children['Unborn-Mom'].gender).toBeUndefined();
+  expect(gameState.population.Mom.isPregnant).toBe("Mom's unborn");
+  expect(gameState.children["Mom's unborn"]).toBeTruthy();
+  expect(gameState.children["Mom's unborn"].age).toBe(-2);
+  expect(gameState.children["Mom's unborn"].gender).toBeUndefined();
   expect(gameState.conceptionCounter).toBe(5);
 });
 
@@ -1910,19 +1910,19 @@ test('nameUnbornAtBirth and addTwin allocate adjacent letter names', () => {
       Mom: {
         name: 'Mom',
         gender: 'female',
-        isPregnant: 'Unborn-Mom',
-        guarding: ['Unborn-Mom'],
+        isPregnant: "Mom's unborn",
+        guarding: ["Mom's unborn"],
       },
       Dad: { name: 'Dad', gender: 'male' },
     },
     children: {
-      'Unborn-Mom': { mother: 'Mom', father: 'Dad', age: 0, food: 2 },
+      "Mom's unborn": { mother: 'Mom', father: 'Dad', age: 0, food: 2 },
     },
     conceptionCounter: 0,
   };
-  const first = reproLib.nameUnbornAtBirth(gameState, 'Unborn-Mom');
+  const first = reproLib.nameUnbornAtBirth(gameState, "Mom's unborn");
   expect(first).toBeTruthy();
-  expect(first).not.toMatch(/^Unborn-/i);
+  expect(first).not.toMatch(/'s unborn$/i);
   expect(gameState.children[first].gender).toMatch(/^(male|female)$/);
   expect(gameState.population.Mom.guarding).toContain(first);
   expect(gameState.conceptionCounter).toBe(1);
@@ -1958,19 +1958,51 @@ test('migrateLegacyUnborn rekeys named unborn and clears gender', () => {
   };
   reproLib.migrateLegacyUnborn(gameState);
   expect(gameState.children.SecretName).toBeUndefined();
-  expect(gameState.children['Unborn-Mom']).toBeTruthy();
-  expect(gameState.children['Unborn-Mom'].gender).toBeUndefined();
-  expect(gameState.population.Mom.isPregnant).toBe('Unborn-Mom');
-  expect(gameState.population.Mom.guarding).toEqual(['Unborn-Mom']);
+  expect(gameState.children["Mom's unborn"]).toBeTruthy();
+  expect(gameState.children["Mom's unborn"].gender).toBeUndefined();
+  expect(gameState.population.Mom.isPregnant).toBe("Mom's unborn");
+  expect(gameState.population.Mom.guarding).toEqual(["Mom's unborn"]);
 });
 
 test('formatChildRef labels unborn keys for display', () => {
   expect(
+    reproLib.formatChildRef("Mom's unborn", {
+      "Mom's unborn": { mother: 'Mom', age: -1 },
+    })
+  ).toBe("Mom's unborn");
+  expect(
     reproLib.formatChildRef('Unborn-Mom', {
       'Unborn-Mom': { mother: 'Mom', age: -1 },
     })
-  ).toBe('Unborn (Mom)');
+  ).toBe("Mom's unborn");
   expect(reproLib.formatChildRef('Ayo', { Ayo: { age: 2, gender: 'male' } })).toBe(
     'Ayo'
   );
+});
+
+test('migrateLegacyUnborn converts Unborn-Mom prefix to possessive key', () => {
+  var gameState = {
+    population: {
+      Mom: {
+        name: 'Mom',
+        isPregnant: 'Unborn-Mom',
+        guarding: ['Unborn-Mom'],
+      },
+    },
+    children: {
+      'Unborn-Mom': {
+        mother: 'Mom',
+        father: 'Dad',
+        age: -1,
+        gender: 'male',
+        food: 2,
+      },
+    },
+  };
+  reproLib.migrateLegacyUnborn(gameState);
+  expect(gameState.children['Unborn-Mom']).toBeUndefined();
+  expect(gameState.children["Mom's unborn"]).toBeTruthy();
+  expect(gameState.children["Mom's unborn"].gender).toBeUndefined();
+  expect(gameState.population.Mom.isPregnant).toBe("Mom's unborn");
+  expect(gameState.population.Mom.guarding).toEqual(["Mom's unborn"]);
 });

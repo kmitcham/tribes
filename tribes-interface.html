@@ -6097,7 +6097,12 @@
                     if (!childName) return '';
                     const child = (this.currentChildren || {})[childName];
                     if (child && typeof child.age === 'number' && child.age < 0) {
-                        return 'Unborn';
+                        if (typeof childName === 'string' && /'s unborn$/i.test(childName)) {
+                            return childName;
+                        }
+                        return child && child.mother
+                            ? child.mother + "'s unborn"
+                            : 'Unborn';
                     }
                     return childName;
                 };
@@ -6534,14 +6539,17 @@
                     nameCell.appendChild(genderIcon);
 
                     const nameText = document.createElement('span');
+                    // Temp key is "<Mother>'s unborn"; fall back if mother known but key is legacy.
                     nameText.textContent = isUnborn
-                        ? data && data.mother
-                            ? `Unborn (${data.mother})`
-                            : 'Unborn'
+                        ? (typeof name === 'string' && /'s unborn$/i.test(name)
+                            ? name
+                            : data && data.mother
+                              ? data.mother + "'s unborn"
+                              : 'Unborn')
                         : name;
                     if (isUnborn) {
                         nameText.title =
-                            'Name and gender are revealed when the child is born.';
+                            'Real name and gender are revealed when the child is born.';
                     }
                     nameCell.appendChild(nameText);
                     row.appendChild(nameCell);

@@ -591,8 +591,8 @@ describe('consumeFoodChildren Function Tests', () => {
       population: {
         Mother1: {
           name: 'Mother1',
-          isPregnant: 'Unborn-Mother1',
-          guarding: ['Unborn-Mother1'],
+          isPregnant: "Mother1's unborn",
+          guarding: ["Mother1's unborn"],
         },
         Mother2: {
           name: 'Mother2',
@@ -605,7 +605,7 @@ describe('consumeFoodChildren Function Tests', () => {
         Father1: { name: 'Father1' },
       },
       children: {
-        'Unborn-Mother1': {
+        "Mother1's unborn": {
           mother: 'Mother1',
           father: 'Father1',
           age: -1,
@@ -734,10 +734,10 @@ describe('consumeFoodChildren Function Tests', () => {
     expect(newborn).toBeTruthy();
     expect(response).toMatch(/Mother1 gives birth to a (male|female)-child, /);
     expect(response).toContain(newborn);
-    // Mother should be guarding / nursing the named newborn (rekeyed from Unborn-*)
+    // Mother should be guarding / nursing the named newborn (rekeyed from Mother's unborn)
     expect(gameState.population['Mother1'].guarding).toContain(newborn);
     expect(gameState.population['Mother1'].nursing).toContain(newborn);
-    expect(gameState.children['Unborn-Mother1']).toBeUndefined();
+    expect(gameState.children["Mother1's unborn"]).toBeUndefined();
   });
 
   it('should handle stillbirth when birth roll is low', () => {
@@ -746,22 +746,22 @@ describe('consumeFoodChildren Function Tests', () => {
 
     birth(
       gameState,
-      'Unborn-Mother1',
-      gameState.children['Unborn-Mother1'],
+      "Mother1's unborn",
+      gameState.children["Mother1's unborn"],
       gameState.population['Mother1'],
       birthRoll
     );
 
-    // Named at birth then killed — graveyard has a real name, not Unborn-*
+    // Named at birth then killed — graveyard has a real name, not Mother's unborn
     const stillbornName = Object.keys(gameState.graveyard || {}).find((k) =>
       String(gameState.graveyard[k].deathMessage || '').includes('complications')
     );
     expect(stillbornName).toBeTruthy();
-    expect(stillbornName).not.toMatch(/^Unborn-/i);
+    expect(stillbornName).not.toMatch(/'s unborn$/i);
     expect(gameState.graveyard[stillbornName].dead).toBe(true);
-    expect(gameState.children['Unborn-Mother1']).toBeUndefined();
+    expect(gameState.children["Mother1's unborn"]).toBeUndefined();
     // One name allocated then removed from children.
-    expect(beforeKeys).toContain('Unborn-Mother1');
+    expect(beforeKeys).toContain("Mother1's unborn");
   });
 
   it('should handle twin birth when roll is 17', () => {
@@ -770,14 +770,14 @@ describe('consumeFoodChildren Function Tests', () => {
 
     birth(
       gameState,
-      'Unborn-Mother1',
-      gameState.children['Unborn-Mother1'],
+      "Mother1's unborn",
+      gameState.children["Mother1's unborn"],
       gameState.population['Mother1'],
       birthRoll
     );
 
     // Primary + twin named; unborn slot gone. Base had 5 children keys.
-    expect(gameState.children['Unborn-Mother1']).toBeUndefined();
+    expect(gameState.children["Mother1's unborn"]).toBeUndefined();
     expect(Object.keys(gameState.children).length).toEqual(6);
     expect(gameState.conceptionCounter).toBe(counterBefore + 2);
 
@@ -890,8 +890,8 @@ describe('consumeFoodChildren Function Tests', () => {
     expect(response).toContain('Child3 has reached adulthood');
   });
 
-  it('rekeys prenatal guards from Unborn-* to the real name at birth', () => {
-    gameState.population.Father1.guarding = ['Unborn-Mother1'];
+  it("rekeys prenatal guards from Mother's unborn to the real name at birth", () => {
+    gameState.population.Father1.guarding = ["Mother1's unborn"];
     const rollSpy = jest.spyOn(diceLib, 'roll').mockReturnValue(10);
     consumeFoodChildren(gameState);
     rollSpy.mockRestore();
@@ -899,7 +899,7 @@ describe('consumeFoodChildren Function Tests', () => {
     const newborn = bornChildOfMother(gameState, 'Mother1');
     expect(gameState.population.Father1.guarding).toContain(newborn);
     expect(gameState.population.Father1.guarding).not.toContain(
-      'Unborn-Mother1'
+      "Mother1's unborn"
     );
   });
 

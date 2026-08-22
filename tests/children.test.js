@@ -97,7 +97,7 @@ test('filter mixed ages', () => {
   expect(actualMessage.indexOf('c2')).toBe(-1);
   // Unborn names stay hidden until birth.
   expect(actualMessage.indexOf('c3')).toBe(-1);
-  expect(actualMessage).toContain('Unborn (unknown until birth)');
+  expect(actualMessage).toContain("m1's unborn (unknown until birth)");
 });
 
 test('Check sorting', () => {
@@ -139,8 +139,8 @@ test('Check sorting', () => {
   actualMessage = childlib.showChildren(children, gameState).join();
   alocation = actualMessage.indexOf('Achild');
   blocation = actualMessage.indexOf('Bchild');
-  // Unborn Cchild is anonymized; still listed under Unborn section first (younger).
-  clocation = actualMessage.indexOf('Unborn (unknown until birth)');
+  // Unborn Cchild is shown as mother's unborn; still listed under Unborn first.
+  clocation = actualMessage.indexOf("m1's unborn (unknown until birth)");
   expect(alocation).toBeGreaterThan(-1);
   expect(blocation).toBeGreaterThan(-1);
   expect(clocation).toBeGreaterThan(-1);
@@ -190,8 +190,8 @@ test('prep with hungry', () => {
   //function showChildrenPrep(gameState, displayName, onlyHungry, filterParentName ){
   childlib.showChildrenPrep(gameState, 'm1', 'hungry', null);
   actualMessages = gameState.messages['m1'];
-  expect(actualMessages).toContain('Unborn (unknown until birth)');
-  expect(actualMessages).not.toContain('c3');
+  expect(actualMessages).toContain("m1's unborn (unknown until birth)");
+  expect(actualMessages).not.toContain('c3:');
   expect(actualMessages).not.toContain('c1');
 });
 
@@ -324,6 +324,6 @@ test('prep with no filter', () => {
   actualMessages = gameState.messages['m1'];
   expect(actualMessages).toContain('c1');
   expect(actualMessages).toContain('c2');
-  expect(actualMessages).toContain('Unborn (unknown until birth)');
-  expect(actualMessages).not.toContain('c3');
+  expect(actualMessages).toContain("m1's unborn (unknown until birth)");
+  expect(actualMessages).not.toContain('c3:');
 });

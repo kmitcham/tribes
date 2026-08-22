@@ -24,7 +24,11 @@ module.exports = {
     }
 
     if (gameState.workRound) {
-      const startedFood = startFood.startFoodFilter(actorName, gameState, bot);
+      // Keep the "everyone worked" gate here — advanceround is easy to double-tap.
+      // Explicit startfood may skip ahead without this check.
+      const startedFood = startFood.startFoodFilter(actorName, gameState, bot, {
+        requireAllWorked: true,
+      });
       if (startedFood !== undefined) {
         gameState.saveRequired = true;
       }
