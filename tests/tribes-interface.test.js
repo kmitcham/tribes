@@ -565,6 +565,19 @@ describe('Tribes Interface Client (real class)', () => {
     expect(targetsForBob).toEqual(['Alice', 'Carol']);
   });
 
+  test('romance targets resolve current player case-insensitively', () => {
+    client.currentPopulation = {
+      Nopwd: { name: 'Nopwd', gender: 'female' },
+      Bob: { name: 'Bob', gender: 'male' },
+      Carol: { name: 'Carol', gender: 'female' },
+    };
+
+    // Login field casing differs from population key — must not dump whole roster.
+    expect(client.getValidTargetsForReproduction('nopwd')).toEqual(['Bob']);
+    expect(client.getValidTargetsForReproduction('NOPWD')).toEqual(['Bob']);
+    expect(client.getValidTargetsForReproduction('missing')).toEqual([]);
+  });
+
   test('addMessage prepends newest message to top of container', () => {
     const container = env.elements.messagesContainer;
 

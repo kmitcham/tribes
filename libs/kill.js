@@ -17,7 +17,11 @@ function kill(name, message, gameState) {
   );
   const population = gameState.population;
   const children = gameState.children;
-  const childName = textLib.capitalizeFirstLetter(name);
+  const childLib = require('./children.js');
+  const resolvedChild =
+    childLib.resolveChildKey(name, children, gameState) ||
+    textLib.capitalizeFirstLetter(name);
+  const childName = resolvedChild;
   if (!message || message == '') {
     message = 'unknown causes';
   }

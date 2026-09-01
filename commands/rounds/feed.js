@@ -38,7 +38,7 @@ function feed(interaction, gameState) {
   var rawList = interaction.options.getString('child');
   const player = pop.memberByName(sourceName, gameState);
 
-  if (amount < 0 && !referees.includes(sourceName)) {
+  if (amount < 0 && !access.isReferee(sourceName)) {
     text.addMessage(
       gameState,
       sourceName,

@@ -11,7 +11,26 @@ const roundTransitionAudit = require('./roundTransitionAudit.js');
 const access = require('./access.js');
 
 function eligibleMates(name, population, debug = false) {
-  const matcher = population[name];
+  // Resolve case-insensitively when population is a gameState.population map.
+  let matcher = population[name];
+  if (!matcher && population) {
+    const lower = String(name || '').toLowerCase();
+    for (const key in population) {
+      if (String(key).toLowerCase() === lower) {
+        matcher = population[key];
+        break;
+      }
+      const person = population[key];
+      if (
+        person &&
+        typeof person.name === 'string' &&
+        person.name.toLowerCase() === lower
+      ) {
+        matcher = person;
+        break;
+      }
+    }
+  }
   const cleanName = name;
   var potentialMatches = [];
   var response = '';
@@ -743,10 +762,18 @@ function globalMatingCheck(gameState) {
 
         let targetResponse;
         if (targetMember.consentDict) {
-          if (targetMember.consentDict[invitingMemberKey]) {
-            targetResponse = targetMember.consentDict[invitingMemberKey];
-          } else if (targetMember.consentDict[invitingMember.name]) {
-            targetResponse = targetMember.consentDict[invitingMember.name];
+          const consentKeys = Object.keys(targetMember.consentDict);
+          const matchConsent = (wanted) =>
+            consentKeys.find(
+              (k) =>
+                String(k).toLowerCase() === String(wanted || '').toLowerCase()
+            );
+          const byKey = matchConsent(invitingMemberKey);
+          const byName = matchConsent(invitingMember.name);
+          if (byKey) {
+            targetResponse = targetMember.consentDict[byKey];
+          } else if (byName) {
+            targetResponse = targetMember.consentDict[byName];
           } else if (targetMember.consentDict['!all']) {
             targetResponse = targetMember.consentDict['!all'];
           }
@@ -1254,7 +1281,7 @@ function replaceNameInArray(list, oldKey, newName) {
     return;
   }
   for (var i = 0; i < list.length; i++) {
-    if (list[i] === oldKey) {
+    if (text.namesMatch(list[i], oldKey)) {
       list[i] = newName;
     }
   }
@@ -1437,7 +1464,7 @@ module.exports.addChild = addChild;
 function validateDrone(gameState, actorName, args) {
   const population = gameState.population;
   // is actorname Chief
-  const player = population[actorName];
+  const player = pop.memberByName(actorName, gameState);
   if (!player || !player.chief) {
     text.addMessage(
       gameState,
@@ -1677,10 +1704,7 @@ function handleRomanceResponse(
   targetNameRaw,
   responseType
 ) {
-  let actingMember =
-    gameState.population && gameState.population[actorName]
-      ? gameState.population[actorName]
-      : null;
+  let actingMember = pop.memberByName(actorName, gameState);
   if (!actingMember) return 'No such member';
   migrateToConsentDict(actingMember);
 
@@ -1688,11 +1712,29 @@ function handleRomanceResponse(
     return 'No target provided.';
 
   let targetName = targetNameRaw.trim();
-  if (actorName === targetName) {
+  const targetMember = pop.memberByName(targetName, gameState);
+  // Prefer population key when the target is in-tribe; otherwise keep raw trim.
+  const canonicalTarget = targetMember
+    ? pop.getPopulationKey(targetMember, gameState) ||
+      targetMember.name ||
+      targetName
+    : targetName;
+  if (
+    String(actorName).toLowerCase() === String(canonicalTarget).toLowerCase()
+  ) {
     return 'You cannot choose yourself.';
   }
-  actingMember.consentDict[targetName] = responseType;
-  return 'Set ' + targetName + ' to ' + responseType;
+  // Drop any prior case-variant keys for the same person.
+  for (const key of Object.keys(actingMember.consentDict || {})) {
+    if (
+      key !== canonicalTarget &&
+      String(key).toLowerCase() === String(canonicalTarget).toLowerCase()
+    ) {
+      delete actingMember.consentDict[key];
+    }
+  }
+  actingMember.consentDict[canonicalTarget] = responseType;
+  return 'Set ' + canonicalTarget + ' to ' + responseType;
 }
 
 module.exports.startReproduction = startReproduction;

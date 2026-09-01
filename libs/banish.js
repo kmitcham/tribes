@@ -58,9 +58,10 @@ function removeFromTribe(gameState, targetName, reason, mode) {
   for (const childName in gameState.children) {
     const child = gameState.children[childName];
     console.log(childName + ' is getting checked');
-    // remove the unborn children
+    // remove the unborn / young children of this mother
     if (
-      (child.mother == targetName || child.mother == displayName) &&
+      (text.namesMatch(child.mother, targetName) ||
+        text.namesMatch(child.mother, displayName)) &&
       child.age < 4
     ) {
       const childReason = isDepart
@@ -71,9 +72,9 @@ function removeFromTribe(gameState, targetName, reason, mode) {
     }
     if (
       banishTarget.guarding &&
-      banishTarget.guarding.indexOf(childName) > -1
+      text.includesName(banishTarget.guarding, childName)
     ) {
-      const childIndex = banishTarget.guarding.indexOf(childName);
+      const childIndex = text.indexOfName(banishTarget.guarding, childName);
       if (childIndex > -1) {
         banishTarget.guarding.splice(childIndex, 1);
       }
@@ -84,20 +85,20 @@ function removeFromTribe(gameState, targetName, reason, mode) {
       );
     }
   }
-  // clean up inviteLists
+  // clean up inviteLists (case-insensitive)
   for (const memberName in population) {
-    if (memberName == targetName) {
+    if (text.namesMatch(memberName, targetName)) {
       continue;
     }
     const member = population[memberName];
     if (member.inviteList) {
-      const targetIndex = member.inviteList.indexOf(targetName);
-      if (targetIndex > -1) {
-        member.inviteList.splice(targetIndex, 1);
-      }
-      const displayIndex = member.inviteList.indexOf(displayName);
-      if (displayIndex > -1) {
-        member.inviteList.splice(displayIndex, 1);
+      for (var i = member.inviteList.length - 1; i >= 0; i--) {
+        if (
+          text.namesMatch(member.inviteList[i], targetName) ||
+          text.namesMatch(member.inviteList[i], displayName)
+        ) {
+          member.inviteList.splice(i, 1);
+        }
       }
     }
   }

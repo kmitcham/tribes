@@ -43,7 +43,10 @@ function feed(unused, player, amount, inputChildList, gameState) {
 
   let feedAtLeastOneChild = false;
   for (const cName of inputChildList) {
-    const childName = text.capitalizeFirstLetter(cName);
+    const resolvedChildName =
+      childLib.resolveChildKey(cName, children, gameState) ||
+      text.capitalizeFirstLetter(cName);
+    const childName = resolvedChildName;
     amount = Number(amount);
     if (!children[childName]) {
       if (cName.toLowerCase() == '!all') {
@@ -380,7 +383,7 @@ function consumeFoodChildren(gameState) {
         if (!motherMember.nursing) {
           motherMember.nursing = [];
         }
-        if (motherMember.nursing.indexOf(childName) == -1) {
+        if (!text.includesName(motherMember.nursing, childName)) {
           motherMember.nursing.push(childName);
         }
       }
@@ -388,9 +391,9 @@ function consumeFoodChildren(gameState) {
         child.age >= 4 && // 2 years in SEASONS
         motherMember &&
         motherMember.nursing &&
-        motherMember.nursing.indexOf(childName) > -1
+        text.includesName(motherMember.nursing, childName)
       ) {
-        const childIndex = motherMember.nursing.indexOf(childName);
+        const childIndex = text.indexOfName(motherMember.nursing, childName);
         motherMember.nursing.splice(childIndex, 1);
         response += childName + ' is weaned.\n';
         if (motherMember.nursing && motherMember.nursing.length == 0) {
@@ -408,7 +411,7 @@ function consumeFoodChildren(gameState) {
         return (
           player &&
           Array.isArray(player.guarding) &&
-          player.guarding.indexOf(childName) !== -1
+          text.includesName(player.guarding, childName)
         );
       });
       guardlib.releaseChildFromAllGuards(childName, population);
@@ -501,7 +504,7 @@ function birth(gameState, childName, child, motherMember, birthRoll) {
   // Mothers start guarding newborns (skip noisy "already" if prenatal guard was rekeyed).
   if (
     !motherMember.guarding ||
-    motherMember.guarding.indexOf(childName) === -1
+    !text.includesName(motherMember.guarding, childName)
   ) {
     motherGuard(motherMember, childName, gameState);
   }
@@ -544,7 +547,7 @@ function motherGuard(motherMember, childName, gameState) {
     return;
   }
   // Already watching this child — not a capacity failure.
-  if (motherMember.guarding.indexOf(childName) !== -1) {
+  if (text.includesName(motherMember.guarding, childName)) {
     const alreadyMsg =
       motherMember.name + ' is already guarding ' + childName + '.';
     response += '\t' + alreadyMsg + '\n';

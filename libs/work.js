@@ -38,7 +38,7 @@ function gather(gameState, sourceName, forceRoll) {
     return;
   }
   var gatherRoll = dice.roll(3);
-  if (referees.includes(sourceName) && forceRoll) {
+  if (access.isReferee(sourceName) && forceRoll) {
     gatherRoll = forceRoll;
     if (gatherRoll < 3 || 18 < gatherRoll) {
       text.addMessage(gameState, sourceName, 'Roll must be 3-18.');
@@ -149,7 +149,7 @@ function craft(gameState, sourceName, item, forceRoll) {
   }
 
   var craftRoll = dice.roll(1);
-  if (referees.includes(sourceName) && forceRoll) {
+  if (access.isReferee(sourceName) && forceRoll) {
     craftRoll = forceRoll;
     if (craftRoll < 1 || 6 < craftRoll) {
       text.addMessage(gameState, sourceName, 'forceRoll must be 1-6.');
@@ -242,7 +242,7 @@ function train(gameState, sourceName, forceRoll) {
     return;
   }
   let learnRoll = dice.roll(2);
-  if (referees.includes(sourceName) && forceRoll) {
+  if (access.isReferee(sourceName) && forceRoll) {
     learnRoll = forceRoll;
     if (learnRoll < 2 || 12 < learnRoll) {
       text.addMessage(gameState, sourceName, 'Roll must be 2-12.');

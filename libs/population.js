@@ -121,7 +121,6 @@ function memberByName(name, gameState) {
     for (var possibleMatch in population) {
       if (String(possibleMatch).toLowerCase() === lookupNameLower) {
         person = population[possibleMatch];
-        console.log('Name match on population key case: ' + name);
         break;
       }
       var possiblePerson = population[possibleMatch];
@@ -131,7 +130,6 @@ function memberByName(name, gameState) {
           : null;
       if (possibleName && possibleName.toLowerCase() === lookupNameLower) {
         person = possiblePerson;
-        console.log('Name match on removing case: ' + name);
         break;
       }
       if (possiblePerson && possiblePerson['handle']) {
@@ -142,7 +140,6 @@ function memberByName(name, gameState) {
           possiblePerson['handle']['nickname'] === name
         ) {
           person = possiblePerson;
-          console.log('Name match on handle with case: ' + name);
           break;
         }
         if (
@@ -152,12 +149,10 @@ function memberByName(name, gameState) {
           possiblePerson['handle']['nickname'] === name.toLowerCase()
         ) {
           person = possiblePerson;
-          console.log('Name match handle toLowerCase: ' + name);
           break;
         }
         if (possiblePerson.handle.id == name) {
           person = possiblePerson;
-          console.log('Name match on id: ' + name);
           break;
         }
       }
@@ -546,12 +541,40 @@ module.exports.addToPopulation = addToPopulation;
 /**
  * Rekey population entries to init-cap form; patch child mother/father and
  * watch/pregnancy refs. Safe to run repeatedly.
+ *
+ * If two keys collide only by capitalization (ada / Ada / ADA), keep the first
+ * record encountered and delete the later duplicate(s), rewriting refs to the keeper.
  */
 function migratePopulationNameCase(gameState) {
   if (!gameState || !gameState.population) {
     return;
   }
   const population = gameState.population;
+
+  // Pass 1: collapse case-insensitive duplicates — keep first, drop the rest.
+  const seenLower = {};
+  for (const key of Object.keys(population)) {
+    if (!population[key]) {
+      continue;
+    }
+    const lower = String(key).toLowerCase();
+    if (seenLower[lower]) {
+      const keepKey = seenLower[lower];
+      console.log(
+        'migratePopulationNameCase: deleting capitalization duplicate ' +
+          key +
+          ' (keeping ' +
+          keepKey +
+          ')'
+      );
+      rewriteNameRefs(gameState, key, keepKey);
+      delete population[key];
+      continue;
+    }
+    seenLower[lower] = key;
+  }
+
+  // Pass 2: init-cap rename (ada → Ada).
   const renames = [];
   for (const oldKey of Object.keys(population)) {
     const canonical = text.normalizePlayerName(oldKey);
@@ -566,18 +589,24 @@ function migratePopulationNameCase(gameState) {
       continue;
     }
     if (population[canonical] && population[canonical] !== population[oldKey]) {
+      // Should be rare after pass 1; still prefer deleting the mover (second).
       console.log(
-        'migratePopulationNameCase: cannot rekey ' +
+        'migratePopulationNameCase: deleting ' +
           oldKey +
-          ' → ' +
+          ' (canonical ' +
           canonical +
-          ' (target occupied)'
+          ' already occupied)'
       );
+      rewriteNameRefs(gameState, oldKey, canonical);
+      delete population[oldKey];
       continue;
     }
     renames.push({ oldKey: oldKey, newKey: canonical });
   }
   for (const { oldKey, newKey } of renames) {
+    if (!population[oldKey]) {
+      continue;
+    }
     const person = population[oldKey];
     population[newKey] = person;
     delete population[oldKey];

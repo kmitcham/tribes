@@ -80,9 +80,13 @@ function showChildren(
   for (const childName of sortedChildrenNames) {
     var child = children[childName];
     if (filterName) {
-      if (filterName == child.mother) {
+      const filterLower = String(filterName).toLowerCase();
+      if (String(child.mother || '').toLowerCase() === filterLower) {
         // do nothing
-      } else if (filterName == child.father && !hideFathers) {
+      } else if (
+        String(child.father || '').toLowerCase() === filterLower &&
+        !hideFathers
+      ) {
         // also do nothing
       } else if (filterName == 'hungry') {
         if (child.food >= 2) {
@@ -164,9 +168,13 @@ module.exports.showChildren = showChildren;
 
 function countChildrenOfParentUnderAge(children, parentName, age) {
   var count = 0;
+  const parentLower = String(parentName || '').toLowerCase();
   for (var childName in children) {
     var child = children[childName];
-    if (child.mother == parentName || child.father == parentName) {
+    if (
+      String(child.mother || '').toLowerCase() === parentLower ||
+      String(child.father || '').toLowerCase() === parentLower
+    ) {
       if (child.age < age) {
         count++;
       }
@@ -175,3 +183,47 @@ function countChildrenOfParentUnderAge(children, parentName, age) {
   return count;
 }
 module.exports.countChildrenOfParentUnderAge = countChildrenOfParentUnderAge;
+
+/**
+ * Resolve a child dict key case-insensitively (and via Unborn / mother aliases).
+ * @returns {string|null} existing children[] key, or null if not found
+ */
+function resolveChildKey(cName, children, gameState) {
+  if (!cName || !children) {
+    return null;
+  }
+  if (children[cName]) {
+    return cName;
+  }
+  const text = require('./textprocess.js');
+  const capped = text.capitalizeFirstLetter(String(cName));
+  if (children[capped]) {
+    return capped;
+  }
+  const lower = String(cName).toLowerCase();
+  for (const key in children) {
+    if (String(key).toLowerCase() === lower) {
+      return key;
+    }
+  }
+  try {
+    const repro = require('./reproduction.js');
+    if (typeof repro.unbornKeyFor === 'function') {
+      const unbornKey = repro.unbornKeyFor(cName);
+      if (children[unbornKey]) {
+        return unbornKey;
+      }
+    }
+  } catch (_err) {
+    // ignore circular/load issues
+  }
+  if (gameState && gameState.population) {
+    const pop = require('./population.js');
+    const mom = pop.memberByName(cName, gameState);
+    if (mom && mom.isPregnant && children[mom.isPregnant]) {
+      return mom.isPregnant;
+    }
+  }
+  return null;
+}
+module.exports.resolveChildKey = resolveChildKey;

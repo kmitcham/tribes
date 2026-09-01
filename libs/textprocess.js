@@ -54,10 +54,45 @@ module.exports.capitalizeFirstLetter = capitalizeFirstLetter;
  * Case variants still collide via case-insensitive memberByName / join checks.
  */
 function normalizePlayerName(name) {
-  const cleaned = removeSpecialChars(name);
+  if (typeof name !== 'string') {
+    return '';
+  }
+  const cleaned = removeSpecialChars(name.trim());
   if (!cleaned) {
     return '';
   }
   return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
 }
 module.exports.normalizePlayerName = normalizePlayerName;
+
+function namesMatch(a, b) {
+  return (
+    String(a || '')
+      .trim()
+      .toLowerCase() ===
+    String(b || '')
+      .trim()
+      .toLowerCase()
+  );
+}
+module.exports.namesMatch = namesMatch;
+
+/** Case-insensitive indexOf for name arrays (guarding, inviteList, etc.). */
+function indexOfName(list, name) {
+  if (!list || !Array.isArray(list) || name == null) {
+    return -1;
+  }
+  const lower = String(name).trim().toLowerCase();
+  for (var i = 0; i < list.length; i++) {
+    if (String(list[i]).trim().toLowerCase() === lower) {
+      return i;
+    }
+  }
+  return -1;
+}
+module.exports.indexOfName = indexOfName;
+
+function includesName(list, name) {
+  return indexOfName(list, name) !== -1;
+}
+module.exports.includesName = includesName;

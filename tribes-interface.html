@@ -3111,17 +3111,19 @@
             }
 
             isCurrentPlayerCanCraft() {
-                const playerName = document.getElementById('playerName').value;
-                if (!playerName || !this.currentPopulation) {
+                if (!this.currentPopulation) {
                     // Unknown state: do not block the command list yet.
                     return null;
                 }
 
-                const player = this.currentPopulation[playerName];
-                if (!player) {
+                const resolved = this.resolvePopulationEntry(
+                    document.getElementById('playerName').value
+                );
+                if (!resolved || !resolved.person) {
                     return null;
                 }
 
+                const player = resolved.person;
                 return player.canCraft === true || player.profession === 'crafter';
             }
 
@@ -3345,7 +3347,8 @@
                 const playerNameInput = document.getElementById('playerName');
                 if (!playerNameInput) return;
                 const currentPlayerName = playerNameInput.value.trim();
-                const currentPlayer = this.currentPopulation ? this.currentPopulation[currentPlayerName] : null;
+                const resolved = this.resolvePopulationEntry(currentPlayerName);
+                const currentPlayer = resolved && resolved.person;
                 if (currentPlayer && currentPlayer.isPregnant) {
                     const warning = document.createElement('div');
                     warning.style.color = '#721c24';
@@ -3396,7 +3399,11 @@
                     const row = document.createElement('tr');
                     row.style.borderBottom = '1px solid #ddd';
                     
-                    const existingRes = consentDict[nameStr] || 'maybe';
+                    const consentKey =
+                        Object.keys(consentDict).find((k) =>
+                            this.namesMatch(k, nameStr)
+                        ) || nameStr;
+                    const existingRes = consentDict[consentKey] || 'maybe';
                     
                     row.innerHTML = `
                         <td style="padding: 8px;">${displayName}</td>
@@ -3472,10 +3479,32 @@
                 const consentDict = (this.currentRomanceLists && this.currentRomanceLists.consentDict) || {};
                 const invitedSet = new Set(cleanInviteList);
 
-                // Order: invited first (preserve invite-list order), then non-invited alphabetically
+                // Order: invited first (preserve invite-list order), then non-invited alphabetically.
+                // Match invite names case-insensitively against population person.name / keys.
+                const findTarget = (name) => {
+                    const lower = String(name).toLowerCase();
+                    return allTargets.find((p) => {
+                        const display = (p && p.name) || '';
+                        return (
+                            String(display).toLowerCase() === lower ||
+                            Object.keys(this.currentPopulation || {}).some(
+                                (k) =>
+                                    this.currentPopulation[k] === p &&
+                                    String(k).toLowerCase() === lower
+                            )
+                        );
+                    });
+                };
                 const orderedTargets = [
-                    ...cleanInviteList.map(name => allTargets.find(p => p.name === name)).filter(Boolean),
-                    ...allTargets.filter(p => !invitedSet.has(p.name)).sort((a, b) => a.name.localeCompare(b.name))
+                    ...cleanInviteList.map((name) => findTarget(name)).filter(Boolean),
+                    ...allTargets
+                        .filter((p) => {
+                            const n = (p && p.name) || '';
+                            return ![...invitedSet].some(
+                                (inv) => String(inv).toLowerCase() === String(n).toLowerCase()
+                            );
+                        })
+                        .sort((a, b) => a.name.localeCompare(b.name)),
                 ];
 
                 // List container
@@ -3491,8 +3520,26 @@
                 // Rows container
                 const rowsEl = document.createElement('div');
                 rowsEl.id = 'romanceRows';
-                orderedTargets.forEach(p => {
-                    rowsEl.appendChild(this._buildRomanceRow(p.name, invitedSet.has(p.name), consentDict[p.name] || 'maybe'));
+                orderedTargets.forEach((p) => {
+                    const displayName = p.name;
+                    const invited = [...invitedSet].some(
+                        (inv) =>
+                            String(inv).toLowerCase() ===
+                            String(displayName).toLowerCase()
+                    );
+                    const consentKey =
+                        Object.keys(consentDict).find(
+                            (k) =>
+                                String(k).toLowerCase() ===
+                                String(displayName).toLowerCase()
+                        ) || displayName;
+                    rowsEl.appendChild(
+                        this._buildRomanceRow(
+                            displayName,
+                            invited,
+                            consentDict[consentKey] || 'maybe'
+                        )
+                    );
                 });
                 listWrap.appendChild(rowsEl);
                 container.appendChild(listWrap);
@@ -3924,32 +3971,91 @@
                 return isMigrateChancePhase || isPostReproductionStep;
             }
 
+            /** Case-insensitive children[] lookup. */
+            resolveChildEntry(childName) {
+                if (!this.currentChildren || !childName) {
+                    return null;
+                }
+                if (this.currentChildren[childName]) {
+                    return {
+                        key: childName,
+                        child: this.currentChildren[childName],
+                    };
+                }
+                const lower = String(childName).toLowerCase();
+                for (const key of Object.keys(this.currentChildren)) {
+                    if (String(key).toLowerCase() === lower) {
+                        return { key: key, child: this.currentChildren[key] };
+                    }
+                }
+                return null;
+            }
+
+            /** Case-insensitive population lookup (login casing may differ from tribe key). */
+            resolvePopulationEntry(playerName) {
+                if (!this.currentPopulation || !playerName) {
+                    return null;
+                }
+                if (this.currentPopulation[playerName]) {
+                    return {
+                        key: playerName,
+                        person: this.currentPopulation[playerName],
+                    };
+                }
+                const lower = String(playerName).toLowerCase();
+                for (const key of Object.keys(this.currentPopulation)) {
+                    if (String(key).toLowerCase() === lower) {
+                        return { key: key, person: this.currentPopulation[key] };
+                    }
+                    const person = this.currentPopulation[key];
+                    if (
+                        person &&
+                        typeof person.name === 'string' &&
+                        person.name.toLowerCase() === lower
+                    ) {
+                        return { key: key, person: person };
+                    }
+                }
+                return null;
+            }
+
             getValidTargetsForReproduction(currentPlayerName) {
                 if (!this.currentPopulation || !currentPlayerName) {
-                    return Object.keys(this.currentPopulation || {});
+                    return [];
                 }
-                
-                const currentPlayer = this.currentPopulation[currentPlayerName];
-                if (!currentPlayer) {
-                    // Current player not in tribe yet - show warning and return all players (except self not applicable)
+
+                const resolved = this.resolvePopulationEntry(currentPlayerName);
+                if (!resolved || !resolved.person) {
+                    // Current player not in tribe yet — do not dump the whole roster.
                     console.warn('Current player not found in tribe population');
-                    return Object.keys(this.currentPopulation);
+                    return [];
                 }
-                
+
+                const currentPlayer = resolved.person;
+                const selfKey = resolved.key;
+                const selfLower = String(selfKey).toLowerCase();
+
                 if (!currentPlayer.gender) {
-                    // If we can't determine current player's gender, allow all other tribe members
-                    return Object.keys(this.currentPopulation).filter(name => name !== currentPlayerName);
+                    // Gender unknown: still exclude self, but cannot filter by sex.
+                    return Object.keys(this.currentPopulation).filter(
+                        (name) => String(name).toLowerCase() !== selfLower
+                    );
                 }
-                
-                const currentPlayerGender = (currentPlayer.gender || '').toString().toLowerCase();
-                const oppositeGender = currentPlayerGender === 'male' ? 'female' : 'male';
-                
-                // All tribe members of the opposite sex (exclude self). Use case-insensitive gender.
-                return Object.keys(this.currentPopulation).filter(playerName => {
-                    if (playerName === currentPlayerName) return false;
+
+                const currentPlayerGender = String(currentPlayer.gender).toLowerCase();
+                const oppositeGender =
+                    currentPlayerGender === 'male' ? 'female' : 'male';
+
+                // Opposite sex only (exclude self). Case-insensitive gender + name.
+                return Object.keys(this.currentPopulation).filter((playerName) => {
+                    if (String(playerName).toLowerCase() === selfLower) {
+                        return false;
+                    }
                     const player = this.currentPopulation[playerName];
-                    if (!player) return false;
-                    const g = (player.gender || '').toString().toLowerCase();
+                    if (!player) {
+                        return false;
+                    }
+                    const g = String(player.gender || '').toLowerCase();
                     return g === oppositeGender;
                 });
             }
@@ -3969,7 +4075,8 @@
 
                 if (isAttackTargetOption) {
                     availablePlayers = availablePlayers.filter(
-                        (playerName) => playerName !== currentPlayerName
+                        (playerName) =>
+                            !this.namesMatch(playerName, currentPlayerName)
                     );
                 }
 
@@ -4239,8 +4346,10 @@
                         
                         // Pre-populate secrets command with current willTrain value
                         if (this.selectedCommand.name.toLowerCase() === 'secrets' && option.name === 'willtrain') {
-                            const currentPlayerName = document.getElementById('playerName').value;
-                            const currentPlayer = this.currentPopulation && this.currentPopulation[currentPlayerName];
+                            const resolved = this.resolvePopulationEntry(
+                                document.getElementById('playerName').value
+                            );
+                            const currentPlayer = resolved && resolved.person;
                             
                             if (currentPlayer) {
                                 // If noTeach exists and is true, willTrain is false; otherwise it's true
@@ -4269,7 +4378,10 @@
                                         const mother = child.mother;
                                         console.log(`Checking child ${childName}: age ${age}, mother ${mother}`);
                                         // Check eligibility: age > 22 and mother is current player
-                                        if (age > 22 && mother === currentPlayerName) {
+                                        if (
+                                            age > 22 &&
+                                            this.namesMatch(mother, currentPlayerName)
+                                        ) {
                                             const opt = document.createElement('option');
                                             opt.value = childName;
                                             opt.textContent = `${childName} (age ${age / 2})`;
@@ -4342,12 +4454,17 @@
                                         separator.textContent = '--- Mothers (feed all their children) ---';
                                         input.appendChild(separator);
                                         
-                                        parentsWithChildren.forEach(parentName => {
-                                            if (this.currentPopulation[parentName]) {
-                                                const gender = this.currentPopulation[parentName].gender;
+                                        parentsWithChildren.forEach((parentName) => {
+                                            const parentEntry =
+                                                this.findPopulationEntryByName(parentName) ||
+                                                this.resolvePopulationEntry(parentName);
+                                            const parentPerson =
+                                                (parentEntry && parentEntry.member) ||
+                                                (parentEntry && parentEntry.person);
+                                            if (parentEntry && parentPerson) {
                                                 const opt = document.createElement('option');
-                                                opt.value = parentName;
-                                                opt.textContent = `${parentName}`;
+                                                opt.value = parentEntry.key || parentName;
+                                                opt.textContent = parentEntry.key || parentName;
                                                 input.appendChild(opt);
                                             }
                                         });
@@ -4450,8 +4567,10 @@
                             console.log('Restored checkbox value for', option.name, ':', preservedValues[option.name]);
                         } else if (this.selectedCommand.name.toLowerCase() === 'secrets' && option.name === 'willtrain') {
                             // Prefill secrets toggle from player's current teaching flag.
-                            const currentPlayerName = document.getElementById('playerName').value;
-                            const currentPlayer = this.currentPopulation && this.currentPopulation[currentPlayerName];
+                            const resolved = this.resolvePopulationEntry(
+                                document.getElementById('playerName').value
+                            );
+                            const currentPlayer = resolved && resolved.person;
                             if (currentPlayer) {
                                 input.checked = !(currentPlayer.noTeach === true);
                             }
@@ -4632,21 +4751,32 @@
 
                 const eligibleChildren = [];
                 const guardedNames = (currentPlayer && currentPlayer.guarding) ? currentPlayer.guarding : [];
+                const listHasChild = (list, childName) =>
+                    Array.isArray(list) &&
+                    list.some((n) => this.namesMatch(n, childName));
+
                 const findCurrentGuardValue = (childName) => {
-                    const child = this.currentChildren[childName] || {};
+                    const child =
+                        this.resolveChildEntry(childName)?.child ||
+                        this.currentChildren[childName] ||
+                        {};
                     if (typeof child.guardValue === 'number' && Number.isFinite(child.guardValue)) {
                         return child.guardValue;
                     }
 
                     let guardValue = 0;
                     Object.values(this.currentPopulation || {}).forEach(person => {
-                        if (Array.isArray(person.guarding) && person.guarding.length > 0 && person.guarding.includes(childName)) {
+                        if (listHasChild(person.guarding, childName)) {
                             guardValue += 1 / person.guarding.length;
                         }
                     });
 
                     Object.entries(this.currentChildren || {}).forEach(([name, candidate]) => {
-                        if (candidate && candidate.age >= 23 && candidate.babysitting === childName) {
+                        if (
+                            candidate &&
+                            candidate.age >= 23 &&
+                            this.namesMatch(candidate.babysitting, childName)
+                        ) {
                             guardValue += 1;
                         }
                     });
@@ -4663,7 +4793,7 @@
                         eligibleChildren.push({
                             childName: childName,
                             age: age,
-                            isGuarded: guardedNames.includes(childName),
+                            isGuarded: listHasChild(guardedNames, childName),
                             currentGuardValue: findCurrentGuardValue(childName),
                         });
                     }
@@ -4777,35 +4907,25 @@
             }
 
             isCurrentPlayerChief() {
-                // Prefer live population data when available.
-                const playerName = document.getElementById('playerName').value;
-                console.log('Checking chief status for player:', playerName);
-                console.log('Current population:', this.currentPopulation);
-                
-                if (!playerName || !this.currentPopulation) {
-                    // Fall back to server-provided status when population is unavailable.
+                // Prefer live population data when available (case-insensitive).
+                if (!this.currentPopulation) {
                     if (typeof this.chiefStatus === 'boolean') {
                         return this.chiefStatus;
                     }
-                    console.log('Missing player name or population data - defaulting to non-chief');
                     return false;
                 }
-                
-                const player = this.currentPopulation[playerName];
-                console.log('Player object:', player);
-                
-                if (!player) {
+
+                const resolved = this.resolvePopulationEntry(
+                    document.getElementById('playerName').value
+                );
+                if (!resolved || !resolved.person) {
                     if (typeof this.chiefStatus === 'boolean') {
                         return this.chiefStatus;
                     }
-                    console.log('Player not found in population - defaulting to non-chief');
                     return false;
                 }
-                
-                const isChief = player && player.chief === true;
-                console.log('Player is chief:', isChief);
-                
-                return isChief;
+
+                return resolved.person.chief === true;
             }
 
             collectParametersFromContainer(container) {
@@ -5057,8 +5177,12 @@
                 
                 console.log('Current list before adding:', currentList);
                 
-                // Don't add duplicates
-                if (currentList.includes(playerName)) {
+                // Don't add duplicates (case-insensitive)
+                if (
+                    currentList.some((existing) =>
+                        this.namesMatch(existing, playerName)
+                    )
+                ) {
                     this.addMessage(`${playerName} is already in the list`, 'error');
                     return;
                 }
@@ -6095,16 +6219,18 @@
             formatChildNameList(value) {
                 const labelFor = (childName) => {
                     if (!childName) return '';
-                    const child = (this.currentChildren || {})[childName];
+                    const resolved = this.resolveChildEntry(childName);
+                    const child = resolved && resolved.child;
+                    const key = (resolved && resolved.key) || childName;
                     if (child && typeof child.age === 'number' && child.age < 0) {
-                        if (typeof childName === 'string' && /'s unborn$/i.test(childName)) {
-                            return childName;
+                        if (typeof key === 'string' && /'s unborn$/i.test(key)) {
+                            return key;
                         }
                         return child && child.mother
                             ? child.mother + "'s unborn"
                             : 'Unborn';
                     }
-                    return childName;
+                    return key;
                 };
                 if (Array.isArray(value)) {
                     return value.map(labelFor).filter(Boolean).join(', ');
@@ -6360,11 +6486,19 @@
                         labels.push({ text: `Nursing ${this.formatChildNameList(person.nursing)}`, class: 'nursing' });
                     }
                     if (Array.isArray(person.guarding) && person.guarding.length > 0) {
-                        const visibleGuarding = person.guarding.filter(childName => {
+                        const visibleGuarding = person.guarding.filter((childName) => {
                             if (guardableChildNames.size === 0) {
                                 return true;
                             }
-                            return guardableChildNames.has(childName);
+                            if (guardableChildNames.has(childName)) {
+                                return true;
+                            }
+                            for (const known of guardableChildNames) {
+                                if (this.namesMatch(known, childName)) {
+                                    return true;
+                                }
+                            }
+                            return false;
                         });
                         if (visibleGuarding.length > 0) {
                             labels.push({ text: `Guarding ${this.formatChildNameList(visibleGuarding)}`, class: 'guarding' });
@@ -6937,11 +7071,18 @@
                     Object.assign(consentDict, this.currentRomanceLists.consentDict);
                 }
 
-                if (consentDict[inviterKey] !== undefined) {
-                    return consentDict[inviterKey];
+                const matchKey = (wanted) =>
+                    Object.keys(consentDict).find((k) => this.namesMatch(k, wanted));
+
+                const byKey = matchKey(inviterKey);
+                if (byKey !== undefined && consentDict[byKey] !== undefined) {
+                    return consentDict[byKey];
                 }
-                if (inviterDisplayName && consentDict[inviterDisplayName] !== undefined) {
-                    return consentDict[inviterDisplayName];
+                if (inviterDisplayName) {
+                    const byDisplay = matchKey(inviterDisplayName);
+                    if (byDisplay !== undefined && consentDict[byDisplay] !== undefined) {
+                        return consentDict[byDisplay];
+                    }
                 }
                 if (consentDict['!all'] !== undefined) {
                     return consentDict['!all'];

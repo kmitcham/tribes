@@ -7,7 +7,7 @@ function give(gameState, sourceName, targetName, amount, item) {
   let response = '';
   const sourceDisplayName = text.capitalizeFirstLetter(sourceName || '');
   const targetDisplayName = text.capitalizeFirstLetter(targetName || '');
-  const isRef = referees.includes(sourceName);
+  const isRef = access.isReferee(sourceName);
   if (gameState.ended) {
     text.addMessage(
       gameState,

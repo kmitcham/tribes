@@ -1,6 +1,7 @@
 const locations = require('./locations.json');
 const dice = require('./dice.js');
 const killlib = require('./kill.js');
+const text = require('./textprocess.js');
 
 // Age is in seasons; years shown as age/2.
 // Adulthood / newAdult at age 24 (12 years).
@@ -70,7 +71,7 @@ function getEligibleGuardTargets(person, children) {
     // Keep anyone still assignable/list-eligible (includes unborn through 11.5y).
     if (
       isChildGuardListMember(child) &&
-      eligibleTargets.indexOf(childName) === -1
+      !text.includesName(eligibleTargets, childName)
     ) {
       eligibleTargets.push(childName);
     }
@@ -119,9 +120,11 @@ module.exports.releaseChildFromAllGuards = (childName, population) => {
     if (!person || !Array.isArray(person.guarding)) {
       continue;
     }
-    var index = person.guarding.indexOf(childName);
-    if (index > -1) {
-      person.guarding.splice(index, 1);
+    // Remove every case-variant of the child name.
+    for (var i = person.guarding.length - 1; i >= 0; i--) {
+      if (text.namesMatch(person.guarding[i], childName)) {
+        person.guarding.splice(i, 1);
+      }
     }
     if (person.guarding.length === 0) {
       delete person.guarding;
@@ -151,7 +154,7 @@ module.exports.findGuardValueForChild = (childName, population, children) => {
     var scoreTargets = guardTargets.filter(function (name) {
       return isChildGuardThreatEligible(children[name]);
     });
-    if (scoreTargets.includes(childName) && scoreTargets.length > 0) {
+    if (text.includesName(scoreTargets, childName) && scoreTargets.length > 0) {
       var watchValue = 1 / scoreTargets.length;
       guardValue = guardValue + watchValue;
       child.guardians[person.name] = scoreTargets.length;
@@ -160,7 +163,10 @@ module.exports.findGuardValueForChild = (childName, population, children) => {
   // Near-adults / new adults can babysit (age >= 23 seasons).
   for (var name in children) {
     var babysitter = children[name];
-    if (babysitter.age >= 23 && babysitter.babysitting == childName) {
+    if (
+      babysitter.age >= 23 &&
+      text.namesMatch(babysitter.babysitting, childName)
+    ) {
       guardValue = guardValue + 1;
       child.guardians[name] = 1;
     }

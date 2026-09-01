@@ -1,5 +1,7 @@
 const { SlashCommandBuilder } = require('../../libs/command-builders.js');
 const text = require('../../libs/textprocess.js');
+const childLib = require('../../libs/children.js');
+const pop = require('../../libs/population.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -26,16 +28,15 @@ module.exports = {
 };
 
 function babysit(gameState, actorName, babysitterName, childName) {
-  babysitterName =
-    babysitterName.charAt(0).toUpperCase() + babysitterName.slice(1);
-  childName = childName.charAt(0).toUpperCase() + childName.slice(1);
-
   var children = gameState.children;
-  var babysitter, child;
+  const sitterKey = childLib.resolveChildKey(
+    babysitterName,
+    children,
+    gameState
+  );
+  const wardKey = childLib.resolveChildKey(childName, children, gameState);
 
-  if (babysitterName in children) {
-    babysitter = children[babysitterName];
-  } else {
+  if (!sitterKey || !children[sitterKey]) {
     text.addMessage(
       gameState,
       actorName,
@@ -43,9 +44,7 @@ function babysit(gameState, actorName, babysitterName, childName) {
     );
     return;
   }
-  if (childName in children && childName in children) {
-    child = children[childName];
-  } else {
+  if (!wardKey || !children[wardKey]) {
     text.addMessage(
       gameState,
       actorName,
@@ -53,7 +52,21 @@ function babysit(gameState, actorName, babysitterName, childName) {
     );
     return;
   }
-  if (babysitter.mother != actorName) {
+
+  var babysitter = children[sitterKey];
+  var child = children[wardKey];
+  babysitterName = sitterKey;
+  childName = wardKey;
+
+  const actorMember = pop.memberByName(actorName, gameState);
+  const actorKey =
+    (actorMember &&
+      (pop.getPopulationKey(actorMember, gameState) || actorMember.name)) ||
+    actorName;
+  if (
+    String(babysitter.mother || '').toLowerCase() !==
+    String(actorKey).toLowerCase()
+  ) {
     text.addMessage(
       gameState,
       actorName,

@@ -1,7 +1,14 @@
 const pathSafety = require('../../libs/pathSafety.js');
 
 function isReferee(playerName, referees) {
-  return playerName && referees.includes(playerName);
+  if (!playerName || !referees) {
+    return false;
+  }
+  if (referees.includes(playerName)) {
+    return true;
+  }
+  const lower = String(playerName).toLowerCase();
+  return referees.some((name) => String(name).toLowerCase() === lower);
 }
 
 function broadcastTribeUpdate(connectedClients, tribesRegistry, openState) {

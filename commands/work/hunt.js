@@ -4,6 +4,7 @@ const text = require('../../libs/textprocess.js');
 const pop = require('../../libs/population.js');
 const dice = require('../../libs/dice.js');
 const referees = require('../../libs/referees.json');
+const access = require('../../libs/access.js');
 const huntlib = require('../../libs/hunt.js');
 
 module.exports = {
@@ -53,7 +54,7 @@ function hunt(gameState, sourceName, forceRoll) {
     return;
   }
   var huntRoll = dice.roll(3);
-  if (referees.includes(sourceName) && forceRoll) {
+  if (access.isReferee(sourceName) && forceRoll) {
     huntRoll = forceRoll;
     if (huntRoll < 3 || 18 < huntRoll) {
       text.addMessage(gameState, sourceName, 'Roll must be 3-18.');

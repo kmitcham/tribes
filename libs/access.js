@@ -6,7 +6,16 @@ const NOT_IN_TRIBE_MESSAGE =
   'You are not a member of this tribe. Join if the tribe is open, or ask the chief to induct you.';
 
 function isReferee(actorName) {
-  return !!(actorName && referees.includes(actorName));
+  if (!actorName) {
+    return false;
+  }
+  if (referees.includes(actorName)) {
+    return true;
+  }
+  const lower = String(actorName).toLowerCase();
+  return referees.some(
+    (name) => String(name).toLowerCase() === lower
+  );
 }
 
 /**

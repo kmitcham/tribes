@@ -189,7 +189,10 @@ function guardChild(actorName, gameState, cName) {
       Number(child.age || 0) / 2 +
       ' and cannot be guarded this work round (only ages -0.5 to 11.5)'
     );
-  } else if (person.guarding && person.guarding.indexOf(childName) != -1) {
+  } else if (
+    person.guarding &&
+    text.includesName(person.guarding, childName)
+  ) {
     console.log(person.guarding);
     return 'FAIL You are already guarding ' + displayRef + '.';
   } else {

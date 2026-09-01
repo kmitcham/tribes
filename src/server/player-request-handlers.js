@@ -1,5 +1,6 @@
 const access = require('../../libs/access.js');
 const commandVisibility = require('../../libs/commandVisibility.js');
+const pop = require('../../libs/population.js');
 
 function handleInfoRequest(ws, data, gameState, deps) {
   const {
@@ -81,8 +82,7 @@ function handleInfoRequest(ws, data, gameState, deps) {
 
     case 'romance':
       const romancePlayerName = data.playerName;
-      const userData =
-        gameState.population && gameState.population[romancePlayerName];
+      const userData = pop.memberByName(romancePlayerName, gameState);
 
       let conList = [];
       let decList = [];
@@ -188,7 +188,7 @@ function handleListCommands(ws, data, gameState, deps) {
     canCraft = !!(player && player.canCraft);
   }
 
-  const isRef = !!(playerName && referees.includes(playerName));
+  const isRef = access.isReferee(playerName);
   // Refs may run chief controls in any tribe they view (even non-members).
   // Work, guard, romance, and conflict stay member-bound in command handlers.
   const canUseChiefCommands = isChief || isRef;
@@ -255,10 +255,21 @@ function processRomance(data, gameState) {
   const declineList = data.declineList;
   const consentList = data.consentList;
 
-  const userData = gameState.population[name];
+  const userData = pop.memberByName(name, gameState);
   if (userData) {
     if (inviteList) {
-      userData.inviteList = inviteList;
+      // Canonicalize invite names to population keys when possible.
+      userData.inviteList = inviteList.map((entry) => {
+        if (!entry || String(entry).startsWith('!')) {
+          return entry;
+        }
+        const member = pop.memberByName(entry, gameState);
+        return (
+          (member &&
+            (pop.getPopulationKey(member, gameState) || member.name)) ||
+          entry
+        );
+      });
     }
 
     if (!userData.consentDict) {
@@ -266,16 +277,39 @@ function processRomance(data, gameState) {
     }
 
     if (consentDict) {
-      userData.consentDict = consentDict;
+      const canonicalConsent = {};
+      for (const [rawName, response] of Object.entries(consentDict)) {
+        if (rawName === '!all') {
+          canonicalConsent['!all'] = response;
+          continue;
+        }
+        const member = pop.memberByName(rawName, gameState);
+        const key =
+          (member &&
+            (pop.getPopulationKey(member, gameState) || member.name)) ||
+          rawName;
+        canonicalConsent[key] = response;
+      }
+      userData.consentDict = canonicalConsent;
     } else if (consentList || declineList) {
       if (consentList) {
         for (const n of consentList) {
-          userData.consentDict[n] = 'consent';
+          const member = pop.memberByName(n, gameState);
+          const key =
+            (member &&
+              (pop.getPopulationKey(member, gameState) || member.name)) ||
+            n;
+          userData.consentDict[key] = 'consent';
         }
       }
       if (declineList) {
         for (const n of declineList) {
-          userData.consentDict[n] = 'decline';
+          const member = pop.memberByName(n, gameState);
+          const key =
+            (member &&
+              (pop.getPopulationKey(member, gameState) || member.name)) ||
+            n;
+          userData.consentDict[key] = 'decline';
         }
       }
     }

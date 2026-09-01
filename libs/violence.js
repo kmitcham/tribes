@@ -6,13 +6,21 @@ const dice = require('./dice.js');
 module.exports.demand = (playerName, demandText, gameState) => {
   // fail if already has a demand in place
   // fail if player not in tribe
-  const player = gameState['population'][playerName];
-  const response = player;
+  const player = pop.memberByName(playerName, gameState);
+  if (!player) {
+    text.addMessage(
+      gameState,
+      playerName,
+      'You are not a member of this tribe.'
+    );
+    return null;
+  }
   gameState['demand'] = demandText;
   player['faction'] = 'for';
-  text.addMessage(gameState, 'tribe', playerName + ' DEMANDS: ' + demandText + '.');
+  const display = player.name || playerName;
+  text.addMessage(gameState, 'tribe', display + ' DEMANDS: ' + demandText + '.');
   gameState.saveRequired = true;
-  return response;
+  return player;
 };
 
 function getGameFactions(gameState) {

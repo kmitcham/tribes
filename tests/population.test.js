@@ -703,3 +703,35 @@ test('migratePopulationNameCase rekeys lowercase players and unborn slots', () =
   expect(gameState.children["Ada's unborn"].mother).toBe('Ada');
   expect(gameState.children["Ada's unborn"].father).toBe('Cal');
 });
+
+test('migratePopulationNameCase deletes later capitalization duplicates', () => {
+  var gameState = {
+    population: {
+      Ada: {
+        name: 'Ada',
+        gender: 'female',
+        food: 10,
+        vote: 'ADA',
+      },
+      ADA: {
+        name: 'ADA',
+        gender: 'female',
+        food: 99,
+      },
+      bob: {
+        name: 'bob',
+        gender: 'male',
+        guarding: ['ADA'],
+      },
+    },
+    children: {},
+  };
+  pop.migratePopulationNameCase(gameState);
+  expect(gameState.population.ADA).toBeUndefined();
+  expect(gameState.population.Ada).toBeTruthy();
+  expect(gameState.population.Ada.food).toBe(10);
+  expect(gameState.population.Bob).toBeTruthy();
+  // Refs to the deleted duplicate point at the kept record.
+  expect(gameState.population.Bob.guarding).toEqual(['Ada']);
+  expect(gameState.population.Ada.vote).toBe('Ada');
+});

@@ -112,20 +112,21 @@ function ignoreChild(gameState, actorName, cName) {
       return actorName + ' is not guarding anyone.\n';
     }
   }
-  const childName = text.capitalizeFirstLetter(cName);
-  const child = children[childName];
+  const childLib = require('../../libs/children.js');
+  const childName = childLib.resolveChildKey(cName, children, gameState);
+  const child = childName ? children[childName] : null;
   if (!child) {
-    return 'FAIL: Could not find child: ' + childName + '.';
-  } else if (!person.guarding || person.guarding.indexOf(childName) == -1) {
-    return 'FAIL: You are not guarding ' + childName + '.';
-  } else {
-    const childIndex = person.guarding.indexOf(childName);
-    if (childIndex > -1) {
-      person.guarding.splice(childIndex, 1);
-      if (person.guarding.length === 0) {
-        delete person.guarding;
-      }
-    }
-    return actorName + ' stops guarding ' + childName + '.\n';
+    return 'FAIL: Could not find child: ' + cName + '.';
   }
+  const guardingIndex = (person.guarding || []).findIndex(
+    (n) => String(n).toLowerCase() === String(childName).toLowerCase()
+  );
+  if (guardingIndex === -1) {
+    return 'FAIL: You are not guarding ' + childName + '.';
+  }
+  person.guarding.splice(guardingIndex, 1);
+  if (person.guarding.length === 0) {
+    delete person.guarding;
+  }
+  return actorName + ' stops guarding ' + childName + '.\n';
 }

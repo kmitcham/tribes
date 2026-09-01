@@ -102,6 +102,22 @@ try {
       loaded && typeof loaded === 'object' && !Array.isArray(loaded)
         ? loaded
         : {};
+    const usersDictLib = require('./libs/usersDict.js');
+    const collapse = usersDictLib.collapseUsersCaseDuplicates(usersDict);
+    if (collapse.changed) {
+      logWithTimestamp(
+        'Collapsed capitalization-duplicate users (kept first): deleted ' +
+          collapse.deleted.join(', ')
+      );
+      try {
+        actuallyWriteToDisk(USERS_JSON_PATH, usersDict);
+      } catch (writeErr) {
+        logWithTimestamp(
+          'WARN: could not persist collapsed users.json: ' +
+            (writeErr && writeErr.message ? writeErr.message : String(writeErr))
+        );
+      }
+    }
     logWithTimestamp(
       `Loaded ${Object.keys(usersDict).length} user(s) from users.json`
     );
@@ -158,20 +174,15 @@ function getClientIP(ws, req) {
 }
 
 function normalizePlayerName(name) {
-  if (typeof name !== 'string') return '';
-  return name.trim();
+  // Same canonical form as tribe population keys (init-cap, strip junk).
+  return require('./libs/textprocess.js').normalizePlayerName(name);
 }
 
 function findStoredUserName(name) {
-  const normalized = normalizePlayerName(name);
-  if (!normalized) return null;
-  if (usersDict[normalized]) return normalized;
-
-  const lowered = normalized.toLowerCase();
-  return (
-    Object.keys(usersDict).find(
-      (existingName) => existingName.toLowerCase() === lowered
-    ) || null
+  // First case-insensitive match in usersDict (post-collapse: only one remains).
+  return require('./libs/usersDict.js').findStoredUserNameInDict(
+    usersDict,
+    normalizePlayerName(name)
   );
 }
 
