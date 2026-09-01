@@ -1126,7 +1126,8 @@ function detection(mother, father, reproRoll, gameState) {
 
 /** Temp children[] key while in utero — shown in UI dropdowns as-is. */
 function unbornKeyFor(motherName) {
-  return motherName + "'s unborn";
+  const canonical = text.normalizePlayerName(motherName) || motherName;
+  return canonical + "'s unborn";
 }
 module.exports.unbornKeyFor = unbornKeyFor;
 
@@ -1391,24 +1392,40 @@ function migrateLegacyUnborn(gameState) {
 module.exports.migrateLegacyUnborn = migrateLegacyUnborn;
 
 function addChild(mother, father, gameState) {
+  const motherAsMember = pop.memberByName(mother, gameState);
+  const fatherAsMember = pop.memberByName(father, gameState);
+  const motherRaw =
+    pop.getPopulationKey(motherAsMember, gameState) ||
+    text.normalizePlayerName(mother) ||
+    mother;
+  const fatherRaw =
+    pop.getPopulationKey(fatherAsMember, gameState) ||
+    text.normalizePlayerName(father) ||
+    father;
+  // Always store init-cap parent refs so unborn keys and lookups stay consistent.
+  const motherKey = text.normalizePlayerName(motherRaw) || motherRaw;
+  const fatherKey = text.normalizePlayerName(fatherRaw) || fatherRaw;
   var child = Object();
-  child.mother = mother;
-  child.father = father;
+  child.mother = motherKey;
+  child.father = fatherKey;
   child.age = -2;
   child.food = 0;
   // Name and gender are assigned at birth (see nameUnbornAtBirth / feed.birth).
-  const childKey = unbornKeyFor(mother);
+  const childKey = unbornKeyFor(motherKey);
   if (gameState.children[childKey]) {
     console.log('addChild: replacing existing unborn slot ' + childKey);
   }
   gameState.children[childKey] = child;
   console.log('added unborn child ' + childKey);
-  const motherAsMember = pop.memberByName(mother, gameState);
-  motherAsMember.isPregnant = childKey;
+  if (motherAsMember) {
+    motherAsMember.isPregnant = childKey;
+  }
   if (gameState.reproductionList) {
     const indexOfPreggers = gameState.reproductionList.indexOf(mother);
-    if (indexOfPreggers > -1) {
-      gameState.reproductionList.splice(indexOfPreggers, 1);
+    const indexOfKey = gameState.reproductionList.indexOf(motherKey);
+    const removeAt = indexOfPreggers > -1 ? indexOfPreggers : indexOfKey;
+    if (removeAt > -1) {
+      gameState.reproductionList.splice(removeAt, 1);
       console.log('attempting to remove pregnant woman from reproduction list');
     }
   }

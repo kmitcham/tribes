@@ -312,6 +312,11 @@ function consumeFoodChildren(gameState) {
   response = '';
   const perishedChildren = [];
   const population = gameState.population;
+  try {
+    pop.migratePopulationNameCase(gameState);
+  } catch (_err) {
+    // best-effort
+  }
   reproLib.migrateLegacyUnborn(gameState);
   const children = gameState.children;
 

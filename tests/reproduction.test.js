@@ -2006,3 +2006,23 @@ test('migrateLegacyUnborn converts Unborn-Mom prefix to possessive key', () => {
   expect(gameState.population.Mom.isPregnant).toBe("Mom's unborn");
   expect(gameState.population.Mom.guarding).toEqual(["Mom's unborn"]);
 });
+
+test("addChild with lowercase mother still uses Ada's unborn key", () => {
+  var gameState = {
+    population: {
+      ada: { name: 'ada', gender: 'female' },
+      Cal: { name: 'Cal', gender: 'male' },
+    },
+    children: {},
+    conceptionCounter: 0,
+  };
+  // Legacy lowercase population key still in memory before migrate.
+  reproLib.addChild('ada', 'Cal', gameState);
+  expect(gameState.population.ada.isPregnant).toBe("Ada's unborn");
+  expect(gameState.children["Ada's unborn"]).toBeTruthy();
+  expect(gameState.children["Ada's unborn"].mother).toBe('Ada');
+  const text = require('../libs/textprocess.js');
+  expect(
+    gameState.children[text.capitalizeFirstLetter("Ada's unborn")]
+  ).toBeTruthy();
+});

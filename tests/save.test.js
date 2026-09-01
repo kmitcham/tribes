@@ -128,10 +128,13 @@ describe('Save Module', () => {
 
       const result = savelib.loadTribe('test-tribe');
 
-      expect(result.population.player1.food).toBe(0);
-      expect(result.population.player1.grain).toBe(0);
-      expect(result.population.player1.basket).toBe(0);
-      expect(result.population.player1.spearhead).toBe(0);
+      // loadTribe init-caps population keys (player1 → Player1).
+      expect(result.population.player1).toBeUndefined();
+      expect(result.population.Player1.food).toBe(0);
+      expect(result.population.Player1.grain).toBe(0);
+      expect(result.population.Player1.basket).toBe(0);
+      expect(result.population.Player1.spearhead).toBe(0);
+      expect(result.population.Player1.name).toBe('Player1');
       expect(fs.existsSync).toHaveBeenCalledWith(
         pathSafety.tribeMainFile('test-tribe')
       );

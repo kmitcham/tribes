@@ -133,6 +133,11 @@ function loadTribe(tribeName) {
       removeChildNameFields(gameState.children);
       populationLib.normalizePopulationResources(gameState);
       try {
+        populationLib.migratePopulationNameCase(gameState);
+      } catch (_err) {
+        // Player name init-cap migrate is best-effort on load.
+      }
+      try {
         const reproLib = require('./reproduction.js');
         reproLib.migrateLegacyUnborn(gameState);
       } catch (_err) {

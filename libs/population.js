@@ -119,6 +119,11 @@ function memberByName(name, gameState) {
     person = population[name.toLowerCase()];
   } else {
     for (var possibleMatch in population) {
+      if (String(possibleMatch).toLowerCase() === lookupNameLower) {
+        person = population[possibleMatch];
+        console.log('Name match on population key case: ' + name);
+        break;
+      }
       var possiblePerson = population[possibleMatch];
       var possibleName =
         possiblePerson && typeof possiblePerson.name === 'string'
@@ -459,8 +464,17 @@ module.exports.showHistory = showHistory;
 // possibly could just grab the id or something and find them in the channel for messaging
 function addToPopulation(gameState, sourceName, gender, profession, handle) {
   console.log('joining tribe with sourceName:' + sourceName);
-  const target = text.removeSpecialChars(sourceName);
-  if (sourceName != target) {
+  const cleaned = text.removeSpecialChars(sourceName);
+  const target = text.normalizePlayerName(sourceName);
+  if (!target) {
+    text.addMessage(
+      gameState,
+      sourceName || 'tribe',
+      'That name is not usable.'
+    );
+    return false;
+  }
+  if (sourceName != cleaned) {
     text.addMessage(
       gameState,
       target,
@@ -468,12 +482,21 @@ function addToPopulation(gameState, sourceName, gender, profession, handle) {
     );
   }
 
-  if (gameState.population[target]) {
-    text.addMessage(gameState, sourceName, target + ' is already in the tribe.');
-    return;
+  // Case-insensitive collision: ada / Ada / ADA are the same player slot.
+  if (memberByName(target, gameState) || gameState.population[target]) {
+    text.addMessage(
+      gameState,
+      sourceName,
+      target + ' is already in the tribe.'
+    );
+    return false;
   }
   // Banished and departed share gameState.banished; neither may rejoin.
-  if (isBlockedFromRejoining(sourceName, gameState) || isBlockedFromRejoining(target, gameState)) {
+  if (
+    isBlockedFromRejoining(sourceName, gameState) ||
+    isBlockedFromRejoining(cleaned, gameState) ||
+    isBlockedFromRejoining(target, gameState)
+  ) {
     text.addMessage(gameState, sourceName, REJOIN_BLOCKED_SELF_MESSAGE);
     return false;
   }
@@ -491,7 +514,7 @@ function addToPopulation(gameState, sourceName, gender, profession, handle) {
   person.basket = 0;
   person.spearhead = 0;
   person.handle = handle;
-  person.name = sourceName;
+  person.name = target;
   person.inviteList = ['!pass'];
   var strRoll = dice.roll(1);
   person.strength = 'average';
@@ -508,10 +531,10 @@ function addToPopulation(gameState, sourceName, gender, profession, handle) {
   );
   text.addMessage(gameState, 'tribe', response);
   if (!person.strength) {
-    text.addMessage(gameState, sourceName, 'You are of average strength.');
+    text.addMessage(gameState, target, 'You are of average strength.');
   }
   if (profession) {
-    prof.specialize(sourceName, profession, gameState);
+    prof.specialize(target, profession, gameState);
     person.profession = profession;
   }
   history(person.name, response, gameState);
@@ -519,6 +542,145 @@ function addToPopulation(gameState, sourceName, gender, profession, handle) {
   return true;
 }
 module.exports.addToPopulation = addToPopulation;
+
+/**
+ * Rekey population entries to init-cap form; patch child mother/father and
+ * watch/pregnancy refs. Safe to run repeatedly.
+ */
+function migratePopulationNameCase(gameState) {
+  if (!gameState || !gameState.population) {
+    return;
+  }
+  const population = gameState.population;
+  const renames = [];
+  for (const oldKey of Object.keys(population)) {
+    const canonical = text.normalizePlayerName(oldKey);
+    if (!canonical || canonical === oldKey) {
+      const person = population[oldKey];
+      if (person && person.name && person.name !== oldKey) {
+        // Keep person.name aligned with the population key when already canonical.
+        if (text.normalizePlayerName(person.name) === oldKey) {
+          person.name = oldKey;
+        }
+      }
+      continue;
+    }
+    if (population[canonical] && population[canonical] !== population[oldKey]) {
+      console.log(
+        'migratePopulationNameCase: cannot rekey ' +
+          oldKey +
+          ' → ' +
+          canonical +
+          ' (target occupied)'
+      );
+      continue;
+    }
+    renames.push({ oldKey: oldKey, newKey: canonical });
+  }
+  for (const { oldKey, newKey } of renames) {
+    const person = population[oldKey];
+    population[newKey] = person;
+    delete population[oldKey];
+    if (person) {
+      person.name = newKey;
+    }
+    rewriteNameRefs(gameState, oldKey, newKey);
+  }
+}
+module.exports.migratePopulationNameCase = migratePopulationNameCase;
+
+function rewriteNameInArray(list, oldKey, newKey) {
+  if (!list || !Array.isArray(list)) {
+    return;
+  }
+  const oldLower = String(oldKey).toLowerCase();
+  for (var i = 0; i < list.length; i++) {
+    if (String(list[i]).toLowerCase() === oldLower) {
+      list[i] = newKey;
+    }
+  }
+}
+
+function rewriteNameRefs(gameState, oldKey, newKey) {
+  const population = gameState.population || {};
+  for (const personName in population) {
+    const person = population[personName];
+    if (!person) {
+      continue;
+    }
+    rewriteNameInArray(person.guarding, oldKey, newKey);
+    rewriteNameInArray(person.nursing, oldKey, newKey);
+    rewriteNameInArray(person.inviteList, oldKey, newKey);
+    if (person.isPregnant) {
+      const preg = String(person.isPregnant);
+      if (preg.toLowerCase() === String(oldKey).toLowerCase()) {
+        person.isPregnant = newKey;
+      } else if (preg.toLowerCase() === String(oldKey).toLowerCase() + "'s unborn") {
+        person.isPregnant = newKey + "'s unborn";
+      }
+    }
+    if (person.vote && String(person.vote).toLowerCase() === String(oldKey).toLowerCase()) {
+      person.vote = newKey;
+    }
+    if (person.consentDict && typeof person.consentDict === 'object') {
+      if (Object.prototype.hasOwnProperty.call(person.consentDict, oldKey)) {
+        person.consentDict[newKey] = person.consentDict[oldKey];
+        delete person.consentDict[oldKey];
+      }
+      // Also fold case-variant keys.
+      for (const ck of Object.keys(person.consentDict)) {
+        if (
+          ck !== newKey &&
+          String(ck).toLowerCase() === String(oldKey).toLowerCase()
+        ) {
+          person.consentDict[newKey] = person.consentDict[ck];
+          delete person.consentDict[ck];
+        }
+      }
+    }
+  }
+  const children = gameState.children || {};
+  const oldUnborn = String(oldKey) + "'s unborn";
+  const newUnborn = newKey + "'s unborn";
+  for (const childName of Object.keys(children)) {
+    const child = children[childName];
+    if (!child) {
+      continue;
+    }
+    if (
+      child.mother &&
+      String(child.mother).toLowerCase() === String(oldKey).toLowerCase()
+    ) {
+      child.mother = newKey;
+    }
+    if (
+      child.father &&
+      String(child.father).toLowerCase() === String(oldKey).toLowerCase()
+    ) {
+      child.father = newKey;
+    }
+    if (String(childName).toLowerCase() === oldUnborn.toLowerCase()) {
+      if (!children[newUnborn] || children[newUnborn] === child) {
+        children[newUnborn] = child;
+        if (childName !== newUnborn) {
+          delete children[childName];
+        }
+      }
+    }
+  }
+  rewriteNameInArrayOnAllGuarding(population, oldUnborn, newUnborn);
+}
+
+function rewriteNameInArrayOnAllGuarding(population, oldKey, newKey) {
+  for (const personName in population) {
+    const person = population[personName];
+    if (!person) {
+      continue;
+    }
+    rewriteNameInArray(person.guarding, oldKey, newKey);
+    rewriteNameInArray(person.nursing, oldKey, newKey);
+  }
+}
 
 function vote(gameState, actorName, candidateName) {
   var player = memberByName(actorName, gameState);

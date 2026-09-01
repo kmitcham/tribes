@@ -221,6 +221,11 @@ function resolveGuardChildKey(cName, children, gameState) {
       return key;
     }
   }
+  // Init-cap mother → "Ada's unborn" even if typed "ada's unborn".
+  const normalizedUnborn = reproLib.unbornKeyFor(cName);
+  if (children[normalizedUnborn]) {
+    return normalizedUnborn;
+  }
   // Mother name → her "<Mother>'s unborn" slot when pregnant.
   const population = gameState && gameState.population;
   if (population) {

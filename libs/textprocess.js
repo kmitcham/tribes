@@ -40,6 +40,24 @@ function addMessage(gameState, address, message) {
 module.exports.addMessage = addMessage;
 
 function capitalizeFirstLetter(string) {
-  return string.charAt(0).toUpperCase() + string.slice(1);
+  if (string == null || string === '') {
+    return string;
+  }
+  return String(string).charAt(0).toUpperCase() + String(string).slice(1);
 }
 module.exports.capitalizeFirstLetter = capitalizeFirstLetter;
+
+/**
+ * Canonical player name for population keys / person.name:
+ * strip special chars, capitalize first letter only (preserve the rest).
+ * "ada" → "Ada"; "InjuredResting" stays "InjuredResting".
+ * Case variants still collide via case-insensitive memberByName / join checks.
+ */
+function normalizePlayerName(name) {
+  const cleaned = removeSpecialChars(name);
+  if (!cleaned) {
+    return '';
+  }
+  return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+}
+module.exports.normalizePlayerName = normalizePlayerName;

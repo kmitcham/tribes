@@ -655,3 +655,51 @@ describe('phase-aware injury recovery', () => {
     expect(gameState.population.Legacy.isInjured).toBeUndefined();
   });
 });
+
+test('normalizePlayerName init-caps for storage', () => {
+  const text = require('../libs/textprocess.js');
+  expect(text.normalizePlayerName('ada')).toBe('Ada');
+  expect(text.normalizePlayerName('ADA')).toBe('ADA');
+  expect(text.normalizePlayerName('Ada')).toBe('Ada');
+  expect(text.normalizePlayerName('aDa')).toBe('ADa');
+  // Preserve internal capitalization (do not force-rest-lowercase).
+  expect(text.normalizePlayerName('InjuredResting')).toBe('InjuredResting');
+});
+
+test('join stores init-cap name and rejects case variants as collisions', () => {
+  var gameState = { population: {}, messages: {} };
+  expect(pop.addToPopulation(gameState, 'ada', 'female', null, null)).toBe(true);
+  expect(Object.keys(gameState.population)).toEqual(['Ada']);
+  expect(gameState.population.Ada.name).toBe('Ada');
+  expect(pop.memberByName('ADA', gameState)).toBe(gameState.population.Ada);
+  expect(pop.memberByName('ada', gameState)).toBe(gameState.population.Ada);
+  expect(pop.addToPopulation(gameState, 'ADA', 'female', null, null)).toBe(false);
+  expect(Object.keys(gameState.population)).toEqual(['Ada']);
+});
+
+test('migratePopulationNameCase rekeys lowercase players and unborn slots', () => {
+  var gameState = {
+    population: {
+      ada: {
+        name: 'ada',
+        gender: 'female',
+        isPregnant: "ada's unborn",
+        guarding: ["ada's unborn"],
+      },
+      cal: { name: 'cal', gender: 'male' },
+    },
+    children: {
+      "ada's unborn": { mother: 'ada', father: 'cal', age: -1, food: 2 },
+    },
+  };
+  pop.migratePopulationNameCase(gameState);
+  expect(gameState.population.ada).toBeUndefined();
+  expect(gameState.population.Ada).toBeTruthy();
+  expect(gameState.population.Ada.name).toBe('Ada');
+  expect(gameState.population.Cal).toBeTruthy();
+  expect(gameState.population.Ada.isPregnant).toBe("Ada's unborn");
+  expect(gameState.population.Ada.guarding).toEqual(["Ada's unborn"]);
+  expect(gameState.children["ada's unborn"]).toBeUndefined();
+  expect(gameState.children["Ada's unborn"].mother).toBe('Ada');
+  expect(gameState.children["Ada's unborn"].father).toBe('Cal');
+});
