@@ -49,7 +49,8 @@ If the message is about a generic animal attack, use the predator that matches t
 Use animal icons that match the actual hunt result text when practical.
 
 - Small game / rabbit / hare: 🐇
-- Rodent / squirrel / small animal: 🐿️
+- Rodent / squirrel / small animal: 🐿️ / 🐁
+- Elk: 🫎
 - Fish: 🐟
 - Deer / antelope / gazelle / buck / doe: 🦌
 - Buffalo / large herd animal: 🦬
@@ -66,6 +67,10 @@ Use plant, grain, and food icons that match the gathered resource.
 - Mushrooms: 🍄
 - Wild vegetables: 🌿 or 🥬
 - Berries / fruit: 🫐 or 🍓
+- Wild cucumber: 🥒
+- Horned melon: 🍈
+- Grapes / veldt grapes: 🍇
+- Small rodents (gather): 🐁
 - Nuts: 🌰
 - Grubs: 🐛
 - Eggs: 🥚

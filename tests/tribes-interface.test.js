@@ -565,6 +565,50 @@ describe('Tribes Interface Client (real class)', () => {
     expect(targetsForBob).toEqual(['Alice', 'Carol']);
   });
 
+  test('waiting chip skips work prompt when current player is injured or sick', () => {
+    client.currentStatusData = { workRound: true };
+    client.currentPopulation = {
+      Ada: { name: 'Ada', gender: 'female', worked: false, isInjured: 2 },
+      Bob: { name: 'Bob', gender: 'male', worked: true },
+    };
+    env.elements.playerName.value = 'Ada';
+    expect(client.getWaitingStatusInfo()).toBeNull();
+
+    client.currentPopulation.Ada = {
+      name: 'Ada',
+      gender: 'female',
+      worked: false,
+      isInjured: 0,
+      isSick: 1,
+    };
+    expect(client.getWaitingStatusInfo()).toBeNull();
+
+    client.currentPopulation.Ada = {
+      name: 'Ada',
+      gender: 'female',
+      worked: false,
+      isInjured: 0,
+      isSick: 0,
+    };
+    expect(client.getWaitingStatusInfo()?.text).toMatch(/work-round action/i);
+  });
+
+  test('guardian chip kinds: male blue, female pink, young adult purple', () => {
+    client.currentPopulation = {
+      Ada: { name: 'Ada', gender: 'female' },
+      Bob: { name: 'Bob', gender: 'male' },
+    };
+    client.currentChildren = {
+      Kid: { name: 'Kid', age: 2, mother: 'Ada' },
+      Teen: { name: 'Teen', age: 23, mother: 'Ada', babysitting: 'Kid' },
+    };
+
+    expect(client.getGuardianChipKind('Bob')).toBe('male');
+    expect(client.getGuardianChipKind('Ada')).toBe('female');
+    expect(client.getGuardianChipKind('Teen')).toBe('babysitter');
+    expect(client.getGuardianChipKind('Nobody')).toBe('unknown');
+  });
+
   test('romance targets resolve current player case-insensitively', () => {
     client.currentPopulation = {
       Nopwd: { name: 'Nopwd', gender: 'female' },

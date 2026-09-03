@@ -1238,17 +1238,29 @@ test('formatPersonalLastGameSection shows only that player score and their child
   expect(bobSection).toContain('KidB');
   expect(bobSection).toContain('still a child');
 
-  // Full list still has everyone when scoring normally
-  const full = endLib.scoreChildrenMessage(gameState);
+  // Mid-game scorechildren hides fathers (#207)
+  const midGame = endLib.scoreChildrenMessage(gameState);
+  expect(midGame).toContain('Alice');
+  expect(midGame).toContain('Carol');
+  expect(midGame).toContain('KidA');
+  expect(midGame).not.toContain('father:');
+  expect(midGame).toContain('Mother scores');
+
+  // Ended game reveals fathers and full parent scores
+  const full = endLib.scoreChildrenMessage(
+    Object.assign({}, gameState, { ended: true })
+  );
   expect(full).toContain('Alice');
   expect(full).toContain('Bob');
   expect(full).toContain('Carol');
   expect(full).toContain('KidA');
   expect(full).toContain('KidB');
+  expect(full).toContain('father:');
 });
 
 test('parent scores sort by gender then surviving children', () => {
   const gameState = {
+    ended: true,
     population: {
       Adam: { name: 'Adam', gender: 'male', profession: 'hunter' },
       Alice: { name: 'Alice', gender: 'female', profession: 'gatherer' },

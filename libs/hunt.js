@@ -159,6 +159,9 @@ function huntResultIcon(resultText) {
   ) {
     return '🐿️';
   }
+  if (normalized.includes('elk')) {
+    return '🫎';
+  }
   if (normalized.includes('fish') || normalized.includes('sturgeon')) {
     return '🐟';
   }

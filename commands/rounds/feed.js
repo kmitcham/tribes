@@ -63,7 +63,9 @@ function feed(interaction, gameState) {
     );
     return;
   }
-  const childList = rawList.split(' ');
+  // Comma separates multiple targets; do NOT split on spaces — unborn keys
+  // are like "Ursa's unborn" and must stay one name.
+  const childList = parseFeedChildArgument(rawList);
   const message = feedlib.feed(
     interaction,
     player,
@@ -75,3 +77,32 @@ function feed(interaction, gameState) {
   gameState.saveRequired = true;
   return;
 }
+
+/**
+ * Parse the feed `child` parameter into one or more target names.
+ * - Arrays (from UI) are used as-is
+ * - Comma-separated strings → multiple targets
+ * - Otherwise the whole string is one target (supports "Mother's unborn")
+ */
+function parseFeedChildArgument(rawList) {
+  if (rawList == null) {
+    return [];
+  }
+  if (Array.isArray(rawList)) {
+    return rawList
+      .map((entry) => String(entry == null ? '' : entry).trim())
+      .filter((entry) => entry.length > 0);
+  }
+  const asString = String(rawList).trim();
+  if (!asString) {
+    return [];
+  }
+  if (asString.includes(',')) {
+    return asString
+      .split(',')
+      .map((entry) => entry.trim())
+      .filter((entry) => entry.length > 0);
+  }
+  return [asString];
+}
+module.exports.parseFeedChildArgument = parseFeedChildArgument;

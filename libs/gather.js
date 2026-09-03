@@ -81,7 +81,9 @@ module.exports.gather = (playername, player, rollValue, gameState) => {
     }
   }
   const gatherIcon = gatherResultIcon(get_message);
-  message += (gatherIcon ? ' ' + gatherIcon : '') + get_message;
+  // Always put a space after [roll N] before the result (#196).
+  message +=
+    ' ' + (gatherIcon ? gatherIcon + ' ' : '') + get_message;
   player.food += getFood;
   player.grain += getGrain;
   gameState.foodAcquired += getFood + getGrain;
@@ -138,6 +140,18 @@ function gatherResultIcon(resultText) {
   if (normalized.includes('grain')) {
     return '🌾';
   }
+  if (normalized.includes('cucumber')) {
+    return '🥒';
+  }
+  if (normalized.includes('horned melon') || normalized.includes('melon')) {
+    return '🍈';
+  }
+  if (
+    normalized.includes('grape') ||
+    normalized.includes('veldt grape')
+  ) {
+    return '🍇';
+  }
   if (
     normalized.includes('roots') ||
     normalized.includes('tubers') ||
@@ -149,6 +163,13 @@ function gatherResultIcon(resultText) {
   }
   if (normalized.includes('mushroom')) {
     return '🍄';
+  }
+  if (
+    normalized.includes('rodent') ||
+    normalized.includes('squirrel') ||
+    normalized.includes('mouse')
+  ) {
+    return '🐁';
   }
   if (normalized.includes('berries') || normalized.includes('fruit')) {
     return '🫐';

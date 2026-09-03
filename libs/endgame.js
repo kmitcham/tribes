@@ -336,7 +336,9 @@ function genderSortRank(genderCode) {
   return 2;
 }
 
-function buildParentRows(gameState, children) {
+function buildParentRows(gameState, children, options) {
+  const opts = options || {};
+  const countFathers = opts.countFathers !== false;
   const adultNames = new Set();
   addAdultNamesFromDictionary(gameState.population, false, adultNames);
   addAdultNamesFromDictionary(gameState.banished, false, adultNames);
@@ -379,9 +381,11 @@ function buildParentRows(gameState, children) {
     if (motherRow) {
       motherRow.score++;
     }
-    const fatherRow = ensureRow(child.father);
-    if (fatherRow) {
-      fatherRow.score++;
+    if (countFathers) {
+      const fatherRow = ensureRow(child.father);
+      if (fatherRow) {
+        fatherRow.score++;
+      }
     }
   }
 
@@ -470,8 +474,10 @@ function formatParentScoreLine(row) {
   );
 }
 
-function formatChildOutcomeLine(row) {
-  return (
+function formatChildOutcomeLine(row, options) {
+  const opts = options || {};
+  const showFathers = opts.showFathers !== false;
+  let line =
     '- ' +
     row.name +
     ' ' +
@@ -479,14 +485,12 @@ function formatChildOutcomeLine(row) {
     ' (' +
     row.gender +
     ') — mother: ' +
-    row.mother +
-    ', father: ' +
-    row.father +
-    ' • ' +
-    row.statusIcon +
-    ' ' +
-    row.status
-  );
+    row.mother;
+  if (showFathers) {
+    line += ', father: ' + row.father;
+  }
+  line += ' • ' + row.statusIcon + ' ' + row.status;
+  return line;
 }
 
 /**
@@ -542,25 +546,42 @@ module.exports.scoreChildrenMessage = scoreChildrenMessage;
 function scoreChildrenMessage(gameState) {
   const children = gameState.children || {};
   const childRows = buildChildOutcomeRows(gameState);
-  const parentRows = buildParentRows(gameState, children);
+  // Fathers stay secret until the game ends (#207).
+  const showFathers = !!gameState.ended;
+  const parentRows = buildParentRows(gameState, children, {
+    countFathers: showFathers,
+  });
 
   if (childRows.length === 0) {
     return '👶 No children were found, so all individual scores are zero.';
   }
 
   const lines = [];
-  lines.push('👶 Final children list (parentage + status):');
+  lines.push(
+    showFathers
+      ? '👶 Final children list (parentage + status):'
+      : '👶 Children list (mothers + status; fathers revealed at endgame):'
+  );
   childRows.forEach((row) => {
-    lines.push(formatChildOutcomeLine(row));
+    lines.push(formatChildOutcomeLine(row, { showFathers: showFathers }));
   });
 
   lines.push('');
-  lines.push(
-    '👨‍👩‍👧‍👦 Parent scores (by gender, then surviving children):'
-  );
-  parentRows.forEach((row) => {
-    lines.push('- ' + formatParentScoreLine(row));
-  });
+  if (showFathers) {
+    lines.push(
+      '👨‍👩‍👧‍👦 Parent scores (by gender, then surviving children):'
+    );
+    parentRows.forEach((row) => {
+      lines.push('- ' + formatParentScoreLine(row));
+    });
+  } else {
+    lines.push('👩 Mother scores (surviving children):');
+    parentRows
+      .filter((row) => row.gender === 'f')
+      .forEach((row) => {
+        lines.push('- ' + formatParentScoreLine(row));
+      });
+  }
 
   return lines.join('\n');
 }

@@ -1017,3 +1017,50 @@ describe('consumeFood death summary integration', () => {
     expect(response).not.toContain('Clawtooth has starved to death');
   });
 });
+
+describe('parseFeedChildArgument', () => {
+  const { parseFeedChildArgument } = require('../commands/rounds/feed.js');
+
+  test('keeps Mother\'s unborn as a single name', () => {
+    expect(parseFeedChildArgument("Ursa's unborn")).toEqual(["Ursa's unborn"]);
+  });
+
+  test('splits comma-separated targets only', () => {
+    expect(parseFeedChildArgument("Akkz, Ursa's unborn")).toEqual([
+      'Akkz',
+      "Ursa's unborn",
+    ]);
+  });
+
+  test('preserves array entries from the UI', () => {
+    expect(parseFeedChildArgument(["Ursa's unborn"])).toEqual(["Ursa's unborn"]);
+  });
+
+  test('supports !all without splitting', () => {
+    expect(parseFeedChildArgument('!all')).toEqual(['!all']);
+  });
+});
+
+test('feed accepts an unborn child key with a space', () => {
+  const gameState = {
+    messages: {},
+    population: {
+      Ursa: { name: 'Ursa', gender: 'female', food: 10, grain: 0 },
+      Feeder: { name: 'Feeder', gender: 'male', food: 10, grain: 0 },
+    },
+    children: {
+      "Ursa's unborn": {
+        mother: 'Ursa',
+        father: 'Feeder',
+        age: -1,
+        food: 0,
+      },
+    },
+  };
+  feed(null, gameState.population.Feeder, 2, ["Ursa's unborn"], gameState);
+  expect(gameState.children["Ursa's unborn"].food).toBe(2);
+  expect(gameState.population.Feeder.food).toBe(8);
+  const tribeMsg = String(gameState.messages.tribe || '');
+  expect(tribeMsg).toMatch(/Ursa's unborn/);
+  expect(tribeMsg).not.toMatch(/Could not find/);
+});
