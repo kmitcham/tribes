@@ -1,4 +1,5 @@
 const { SlashCommandBuilder } = require('../../libs/command-builders.js');
+const worklib = require('../../libs/work.js');
 const text = require('../../libs/textprocess.js');
 const pop = require('../../libs/population.js');
 const dice = require('../../libs/dice.js');
