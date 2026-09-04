@@ -1,7 +1,7 @@
 const text = require('./textprocess.js');
 const pop = require('./population.js');
-const referees = require('./referees.json');
 const access = require('./access.js');
+const logger = require('./logger.js');
 
 function give(gameState, sourceName, targetName, amount, item) {
   let response = '';
@@ -50,7 +50,7 @@ function give(gameState, sourceName, targetName, amount, item) {
   if (targetName == sourceName && !isRef) {
     response =
       'Giving things to yourself is useful self-care. Nobody loves you like you love you.';
-    console.log('self give: ' + targetName + ' ' + sourceName);
+    logger.accessLog.info('self give: ' + targetName + ' ' + sourceName);
     text.addMessage(gameState, sourceName, response);
     return;
   }
@@ -81,7 +81,7 @@ function give(gameState, sourceName, targetName, amount, item) {
   }
   sourcePerson = pop.memberByName(sourceName, gameState);
   const isLegal = legalGive(gameState, sourceName, item, amount);
-  console.log('isRef:' + isRef + ' isLegalgive:' + isLegal);
+  logger.accessLog.info('isRef:' + isRef + ' isLegalgive:' + isLegal);
   if (isLegal) {
     sourcePerson[item] -= amount;
     targetPerson[item] += amount;
@@ -108,7 +108,7 @@ function give(gameState, sourceName, targetName, amount, item) {
   // ref might not be in tribe, but console error thrown by history is OK
   pop.history(sourceName, response, gameState);
   pop.history(targetName, response, gameState);
-  console.log('give is complete.');
+  logger.accessLog.info('give is complete.');
 }
 module.exports.give = give;
 
@@ -351,7 +351,7 @@ function sacrifice(gameState, sourceName, item, amount, rollOf2dice) {
   if (sourcePerson[item] >= amount) {
     // avg
     net = rollOf2dice - 2 + Math.trunc(Math.log2(amount));
-    console.log(
+    logger.accessLog.info(
       sourcePerson.name +
         ' sacrifice roll was ' +
         rollOf2dice +

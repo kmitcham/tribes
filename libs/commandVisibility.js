@@ -126,6 +126,4 @@ function isCommandVisible(name, command, ctx) {
 module.exports = {
   isCommandVisible,
   NON_MEMBER_COMMANDS,
-  ALWAYS_HIDDEN_COMMANDS,
-  REFEREE_ONLY_COMMANDS,
 };

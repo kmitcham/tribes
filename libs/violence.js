@@ -19,6 +19,20 @@ module.exports.demand = (playerName, demandText, gameState) => {
   player['faction'] = 'for';
   const display = player.name || playerName;
   text.addMessage(gameState, 'tribe', display + ' DEMANDS: ' + demandText + '.');
+  // Tell the demander their contribution so it matches later side scores (#194).
+  const breakdown = getMemberFactionValueBreakdown(player, gameState, 'for');
+  const scores = getFactionScores(gameState);
+  text.addMessage(
+    gameState,
+    display,
+    'You start the FOR faction with ' +
+      scores.for +
+      ' point' +
+      (scores.for === 1 ? '' : 's') +
+      ' (' +
+      breakdown.parts.join(', ') +
+      ').'
+  );
   gameState.saveRequired = true;
   return player;
 };
@@ -151,6 +165,7 @@ function getFactionBaseScore(faction) {
     if (person.gender == 'male') {
       score += 4;
     } else {
+      // Historical default: non-male (including unset) counts as female.
       score += 2;
     }
     if (person.chief) {
@@ -162,7 +177,8 @@ function getFactionBaseScore(faction) {
     if (person.strength) {
       if (person.strength == 'weak') {
         score -= 1;
-      } else {
+      } else if (person.strength == 'strong') {
+        // Match personal breakdown: average is no modifier (#194).
         score += 1;
       }
     }
@@ -177,7 +193,7 @@ function getFactionBaseScore(faction) {
 }
 module.exports.getFactionBaseScore = getFactionBaseScore;
 
-function getMemberFactionValueBreakdown(person) {
+function getMemberFactionValueBreakdown(person, gameState, side) {
   const parts = [];
   let score = 0;
 
@@ -185,6 +201,7 @@ function getMemberFactionValueBreakdown(person) {
     parts.push('male (+4)');
     score += 4;
   } else {
+    // Historical default: non-male (including unset) counts as female.
     parts.push('female (+2)');
     score += 2;
   }
@@ -200,13 +217,12 @@ function getMemberFactionValueBreakdown(person) {
     if (person.strength == 'weak') {
       parts.push('weak (-1)');
       score -= 1;
-    } else {
-      parts.push(person.strength + ' (+1)');
+    } else if (person.strength == 'strong') {
+      // Only strong gets the +1; average is no modifier (#194 confusion).
+      parts.push('strong (+1)');
       score += 1;
     }
-  }
-  if (person.canCraft) {
-    parts.push('crafter (may add +2 if unique)');
+    // average / other: no change
   }
   if (person.isInjured && person.isInjured > 0) {
     parts.push('injured (-1)');
@@ -217,7 +233,35 @@ function getMemberFactionValueBreakdown(person) {
     score -= 1;
   }
 
-  return { score, parts };
+  // Sole-crafter +2 is a side bonus; include it in the personal total when it
+  // applies so "you bring X" matches the side score contribution (#194).
+  let sideSoleCrafterBonus = 0;
+  if (
+    gameState &&
+    (side === 'for' || side === 'against') &&
+    person.canCraft
+  ) {
+    const factions = getGameFactions(gameState);
+    const forCraft = factionHasCrafter(factions.for);
+    const againstCraft = factionHasCrafter(factions.against);
+    const neutralCraft = factionHasCrafter(factions.neutral);
+    const undeclaredCraft = factionHasCrafter(factions.undeclared);
+    const sideHasUnique =
+      side === 'for'
+        ? forCraft && !againstCraft && !neutralCraft && !undeclaredCraft
+        : againstCraft && !forCraft && !neutralCraft && !undeclaredCraft;
+    if (sideHasUnique) {
+      sideSoleCrafterBonus = 2;
+      parts.push('sole crafter on side (+2)');
+      score += 2;
+    } else if (person.canCraft) {
+      parts.push('crafter (no sole-crafter bonus)');
+    }
+  } else if (person.canCraft) {
+    parts.push('crafter (may add +2 if unique on side)');
+  }
+
+  return { score, parts, sideSoleCrafterBonus };
 }
 module.exports.getMemberFactionValueBreakdown = getMemberFactionValueBreakdown;
 
@@ -319,7 +363,7 @@ const getFactionResult = (gameState) => {
     clearDemandPhase(gameState);
   } else if (againstScore >= 2 * (forScore + undeclaredScore)) {
     response =
-      'The Oppostion faction has overwhelming support (' +
+      'The Opposition faction has overwhelming support (' +
       againstScore +
       '). The demand to ' +
       gameState.demand +
@@ -357,7 +401,7 @@ const getFactionResult = (gameState) => {
       clearDemandPhase(gameState);
     } else if (againstScore >= 2 * forScore) {
       response =
-        'The Oppostion faction has enough support (' +
+        'The Opposition faction has enough support (' +
         againstScore +
         '). The demand to ' +
         gameState.demand +

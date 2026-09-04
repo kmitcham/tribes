@@ -240,12 +240,6 @@ class TribeEngine {
     return this.messages('tribe');
   }
 
-  drainMessages() {
-    const snapshot = Object.assign({}, this.gameState.messages || {});
-    this.gameState.messages = {};
-    return snapshot;
-  }
-
   /**
    * Run a real command as playerName.
    * @returns {Promise<{ ws: object, command: string, playerName: string }>}
@@ -561,8 +555,4 @@ class TribeEngine {
 
 module.exports = {
   TribeEngine,
-  Actor,
-  loadCommandMap,
-  createEphemeralGame,
-  createCapturingWs,
 };

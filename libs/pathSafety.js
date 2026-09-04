@@ -112,7 +112,6 @@ function resolveSafeImagePath(appRoot, requestUrl) {
 }
 
 module.exports = {
-  TRIBE_NAME_RE,
   isSafeTribeName,
   assertSafeTribeName,
   tribeDataRoot,
@@ -120,6 +119,5 @@ module.exports = {
   tribeMainFile,
   tribeSnapshotFile,
   archiveDirForTribe,
-  assertPathInsideRoot,
   resolveSafeImagePath,
 };

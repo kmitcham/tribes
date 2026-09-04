@@ -1064,3 +1064,34 @@ test('feed accepts an unborn child key with a space', () => {
   expect(tribeMsg).toMatch(/Ursa's unborn/);
   expect(tribeMsg).not.toMatch(/Could not find/);
 });
+
+test('clearGhostPregnancies removes stuck isPregnant without a living unborn (#201)', () => {
+  const { clearGhostPregnancies, checkFood } = require('../libs/feed.js');
+  const gameState = {
+    foodRound: true,
+    population: {
+      Sockpuppet: {
+        name: 'Sockpuppet',
+        gender: 'female',
+        food: 10,
+        grain: 0,
+        isPregnant: 'GhostKid',
+      },
+      Dad: { name: 'Dad', gender: 'male', food: 10, grain: 0 },
+    },
+    children: {},
+    messages: {},
+    seasonCounter: 30,
+    gameTrack: { veldt: 1, marsh: 1, hills: 1, forest: 1 },
+    currentLocationName: 'veldt',
+  };
+
+  expect(clearGhostPregnancies(gameState)).toBe(1);
+  expect(gameState.population.Sockpuppet.isPregnant).toBeUndefined();
+
+  // With ghost cleared and everyone fed, auto-repro can proceed cleanly.
+  gameState.population.Sockpuppet.isPregnant = 'GhostKid';
+  checkFood(gameState, {});
+  expect(gameState.population.Sockpuppet.isPregnant).toBeUndefined();
+  expect(gameState.reproductionRound).toBe(true);
+});

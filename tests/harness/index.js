@@ -1,3 +1,5 @@
 'use strict';
 
-module.exports = require('./tribeEngine.js');
+module.exports = {
+  TribeEngine: require('./tribeEngine.js').TribeEngine,
+};

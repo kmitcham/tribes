@@ -5,6 +5,7 @@ const text = require('./textprocess.js');
 const reproLib = require('./reproduction.js');
 const killlib = require('./kill.js');
 const guardlib = require('./guardCode.js');
+const logger = require('./logger.js');
 
 let response = '';
 
@@ -58,11 +59,11 @@ function feed(unused, player, amount, inputChildList, gameState) {
         for (var allChildName in children) {
           var child = children[allChildName];
           if (
-            !('newAdult' in child && child.newAdult == true) ||
-            child.food >= 2
+            child &&
+            !(child.newAdult && child.newAdult == true) &&
+            Number(child.food || 0) < 2
           ) {
             inputChildList.push(allChildName);
-            console.log('adding to inputChildList:' + allChildName);
           }
         }
         continue;
@@ -83,7 +84,7 @@ function feed(unused, player, amount, inputChildList, gameState) {
             Number(underTwoChild.food || 0) < 2
           ) {
             inputChildList.push(underTwoChildName);
-            console.log('adding to inputChildList:' + underTwoChildName);
+            logger.accessLog.info('adding to inputChildList:' + underTwoChildName);
           }
         }
         continue;
@@ -104,8 +105,9 @@ function feed(unused, player, amount, inputChildList, gameState) {
               String(motherName).toLowerCase()
           ) {
             if (
-              !(filterChild.newAdult && filterChild.newAdult == true) ||
-              filterChild.food < 2
+              filterChild &&
+              !(filterChild.newAdult && filterChild.newAdult == true) &&
+              Number(filterChild.food || 0) < 2
             ) {
               inputChildList.push(filterChildName);
             }
@@ -113,7 +115,7 @@ function feed(unused, player, amount, inputChildList, gameState) {
         }
         continue;
       }
-      console.log('Feed did not find child ' + childName);
+      logger.accessLog.info('Feed did not find child ' + childName);
       text.addMessage(gameState, player.name, 'No such child as ' + childName + '.');
       continue;
     }
@@ -193,6 +195,47 @@ function feed(unused, player, amount, inputChildList, gameState) {
 }
 module.exports.feed = feed;
 
+/**
+ * Clear stuck isPregnant flags when the unborn child is missing, dead, or
+ * already born under a non-unborn key. Living unborn keys are left alone so
+ * birth/naming can still run (even if age was stuck at >= 0).
+ */
+function clearGhostPregnancies(gameState) {
+  const population = gameState.population || {};
+  const children = gameState.children || {};
+  let cleared = 0;
+  for (const personName in population) {
+    const person = population[personName];
+    if (!person || !person.isPregnant) {
+      continue;
+    }
+    const key = person.isPregnant;
+    const child = children[key];
+    const isLivingUnborn =
+      child && !child.dead && reproLib.isUnbornKey(key);
+    if (isLivingUnborn) {
+      continue;
+    }
+    if (
+      !child ||
+      child.dead ||
+      (typeof child.age === 'number' && child.age >= 0)
+    ) {
+      delete person.isPregnant;
+      cleared += 1;
+      logger.accessLog.info(
+        'Cleared ghost pregnancy for ' +
+          (person.name || personName) +
+          ' (was ' +
+          key +
+          ')'
+      );
+    }
+  }
+  return cleared;
+}
+module.exports.clearGhostPregnancies = clearGhostPregnancies;
+
 // Side effect: if everyone has enough food, and it is foodRound, start reproduction round.
 function checkFood(gameState, _bot) {
   var message = '';
@@ -201,6 +244,7 @@ function checkFood(gameState, _bot) {
   const worriedAdults = [];
   const hungryChildren = [];
   const satedChildren = [];
+  clearGhostPregnancies(gameState);
   const children = gameState.children;
   const population = gameState.population;
   for (var targetName in population) {
@@ -261,6 +305,7 @@ function getFoodRoundRisk(gameState) {
   var adultsStarve = [];
   var childrenStarve = [];
   var prenatalStarve = [];
+  clearGhostPregnancies(gameState);
   var population = gameState.population || {};
   var children = gameState.children || {};
 
@@ -321,9 +366,10 @@ function consumeFoodChildren(gameState) {
     // best-effort
   }
   reproLib.migrateLegacyUnborn(gameState);
+  clearGhostPregnancies(gameState);
   const children = gameState.children;
 
-  console.log('children are eating');
+  logger.accessLog.info('children are eating');
   // Snapshot keys so birth rekey (Mother's unborn → real name) does not double-age a newborn.
   const childKeys = Object.keys(children);
   for (var keyIndex = 0; keyIndex < childKeys.length; keyIndex++) {
@@ -336,7 +382,13 @@ function consumeFoodChildren(gameState) {
     if (child.dead) {
       continue;
     }
-    console.log(childName + ' object ' + child);
+    logger.accessLog.info(childName + ' object ' + child);
+    const priorAge = child.age;
+    // Stuck unborn at age >= 0 never hits the normal age==-0 birth gate after +1.
+    const needsCatchUpBirth =
+      reproLib.isUnbornKey(childName) &&
+      typeof priorAge === 'number' &&
+      priorAge >= 0;
     child.age += 1;
     if (child.age < 24) {
       child.food -= 2;
@@ -351,7 +403,7 @@ function consumeFoodChildren(gameState) {
         perishedChildren.push(childName);
         continue;
       }
-      if (child.age == 0) {
+      if (child.age == 0 || needsCatchUpBirth) {
         const birthRoll = dice.roll(3);
         const priorKey = childName;
         birth(gameState, childName, child, motherMember, birthRoll);
@@ -376,7 +428,9 @@ function consumeFoodChildren(gameState) {
           motherMember.isPregnant == childName
         ) {
           delete motherMember.isPregnant;
-          console.log('Deleting extended pregnancy for ' + motherMember.name);
+          logger.accessLog.info(
+            'Deleting extended pregnancy for ' + motherMember.name
+          );
         }
       }
       if (4 > child.age && child.age >= 0 && motherMember) {
@@ -436,7 +490,7 @@ function consumeFoodChildren(gameState) {
   for (var i = 0; i < perishedCount; i++) {
     const corpse = perishedChildren[i];
     killlib.kill(perishedChildren[i], 'starvation', gameState);
-    console.log('removing child corpse ' + corpse);
+    logger.accessLog.info('removing child corpse ' + corpse);
   }
   if (
     perishedChildren.length == 0 &&
@@ -486,7 +540,7 @@ function birth(gameState, childName, child, motherMember, birthRoll) {
     );
     child.dead = true;
     killlib.kill(childName, 'birth complications', gameState);
-    console.log('removing stillborn ' + childName);
+    logger.accessLog.info('removing stillborn ' + childName);
     return;
   }
   response += '.\n';
@@ -575,19 +629,19 @@ module.exports.motherGuard = motherGuard;
 
 function consumeFood(gameState) {
   if (!gameState) {
-    console.log('no game state; ERROR');
+    logger.accessLog.info('no game state; ERROR');
     return;
   }
-  console.log('adults are eating');
+  logger.accessLog.info('adults are eating');
   gameState._foodRoundDeathEvents = [];
   gameState._suppressImmediateDeathMessages = true;
   response = 'Food round results:\n';
-  //console.log('food response is '+response)
+  //logger.accessLog.info('food response is '+response)
   response += consumeFoodPlayers(gameState);
-  //console.log('food response is '+response)
+  //logger.accessLog.info('food response is '+response)
   response += consumeFoodChildren(gameState);
   response += summarizeFoodRoundDeaths(gameState);
-  //console.log('food response is '+response)
+  //logger.accessLog.info('food response is '+response)
   delete gameState._suppressImmediateDeathMessages;
   delete gameState._foodRoundDeathEvents;
   return response;
@@ -660,7 +714,7 @@ function consumeFoodPlayers(gameState) {
   for (var target in population) {
     var hunger = 4;
     const person = pop.memberByName(target, gameState);
-    console.log(target + ' f:' + person.food + ' g:' + person.grain);
+    logger.accessLog.info(target + ' f:' + person.food + ' g:' + person.grain);
     person.food = person.food - hunger;
     if (person.food < 0) {
       // food is negative, so just add it to grain here
@@ -680,7 +734,7 @@ function consumeFoodPlayers(gameState) {
     ) {
       // extra food issues here; mom needs 2 more food, or the child will die.
       const mom = person;
-      console.log(
+      logger.accessLog.info(
         mom.name + ' eats extra food due to multiple children under 2.  '
       );
       response +=
@@ -700,14 +754,14 @@ function consumeFoodPlayers(gameState) {
         }
       }
     }
-    console.log(
+    logger.accessLog.info(
       target + ' ' + person.name + ' f:' + person.food + ' g:' + person.grain
     );
   }
   var perishedCount = perished.length;
   for (var i = 0; i < perishedCount; i++) {
     const corpse = perished[i];
-    console.log('removing corpse ' + corpse);
+    logger.accessLog.info('removing corpse ' + corpse);
     killlib.kill(perished[i], 'starvation', gameState);
   }
   if (perished.length == 0 && !gameState._suppressImmediateDeathMessages) {

@@ -306,7 +306,7 @@ test('Faction Voting -> against', () => {
     demand: 'some demand',
   };
   var message =
-    'The Oppostion faction has overwhelming support (6). The demand to some demand should be ignored.';
+    'The Opposition faction has overwhelming support (6). The demand to some demand should be ignored.';
   result = violencelib.getFactionResult(gameState);
   result = gameState.messages['tribe'];
 

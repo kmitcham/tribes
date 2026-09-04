@@ -1,5 +1,6 @@
 const pop = require('./population.js');
 const text = require('./textprocess.js');
+const logger = require('./logger.js');
 
 const professionList = ['hunter', 'gatherer', 'crafter'];
 
@@ -10,7 +11,7 @@ function specialize(playerName, profession, gameState) {
       playerName,
       'Usage: specialize [hunter|gatherer|crafter].'
     );
-    console.log(
+    logger.accessLog.info(
       ' did not find profession:' + profession + ' in ' + professionList
     );
     return 'Usage: specialize [hunter|gatherer|crafter].';
@@ -29,9 +30,9 @@ function specialize(playerName, profession, gameState) {
       ', you are not in this tribe. Join if the tribe is open, or ask the chief to induct you.'
     );
   }
-  console.log('person:' + person.name + ' profession' + person.profession);
+  logger.accessLog.info('person:' + person.name + ' profession' + person.profession);
   if ('profession' in person && person.profession) {
-    console.log('trying to repeat specializion');
+    logger.accessLog.info('trying to repeat specializion');
     text.addMessage(
       gameState,
       person.name,

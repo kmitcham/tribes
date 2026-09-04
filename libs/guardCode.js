@@ -2,6 +2,7 @@ const locations = require('./locations.json');
 const dice = require('./dice.js');
 const killlib = require('./kill.js');
 const text = require('./textprocess.js');
+const logger = require('./logger.js');
 
 // Age is in seasons; years shown as age/2.
 // Adulthood / newAdult at age 24 (12 years).
@@ -51,13 +52,6 @@ module.exports.isChildGuardThreatEligible = isChildGuardThreatEligible;
 function isChildGuardListMember(child) {
   return isChildGuardAssignable(child);
 }
-module.exports.isChildGuardListMember = isChildGuardListMember;
-
-/** @deprecated Use isChildGuardThreatEligible or isChildGuardAssignable */
-function isChildGuardEligible(child) {
-  return isChildGuardThreatEligible(child);
-}
-module.exports.isChildGuardEligible = isChildGuardEligible;
 
 function getEligibleGuardTargets(person, children) {
   if (!person || !Array.isArray(person.guarding)) {
@@ -178,7 +172,7 @@ function findLeastGuarded(children, population) {
   var guardChildSort = [];
   var leastGuarded = [];
   if (Object.keys(children).length == 0) {
-    console.log(
+    logger.accessLog.info(
       Object.keys(children).length + ' count.  No children found: ' + children
     );
     return 'No children to sort';
@@ -198,7 +192,7 @@ function findLeastGuarded(children, population) {
   }
   guardChildSort.sort((a, b) => parseFloat(a.score) - parseFloat(b.score));
   if (guardChildSort.length == 0) {
-    console.log(' ERROR EMPTY LIST OF GUARD CHULDREN');
+    logger.accessLog.info(' ERROR EMPTY LIST OF GUARD CHULDREN');
     return 'No children need guarding';
   }
   var lowGuardValue = guardChildSort[0].score;
@@ -250,7 +244,7 @@ module.exports.hyenaAttack = (children, gameState) => {
     predatorEmoji + ' A ' + predator + ' attacks ' + leastGuardedName;
   var child = children[leastGuardedName];
   if (!child) {
-    console.log(
+    logger.accessLog.info(
       predator + ' did not find the child somehow ' + leastGuardedName
     );
     return response + ' but a bug saved the child.';
@@ -306,6 +300,4 @@ function predatorIcon(predator) {
   return '🐾';
 }
 
-module.exports.GUARD_ASSIGN_MIN_AGE = GUARD_ASSIGN_MIN_AGE;
-module.exports.GUARD_ASSIGN_MAX_AGE = GUARD_ASSIGN_MAX_AGE;
-module.exports.GUARD_THREAT_MAX_EXCLUSIVE = GUARD_THREAT_MAX_EXCLUSIVE;
+

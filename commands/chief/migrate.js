@@ -2,6 +2,7 @@ const { SlashCommandBuilder } = require('../../libs/command-builders.js');
 const migrate = require('../../libs/migrateLib.js');
 const locations = require('../../libs/locations.json');
 const text = require('../../libs/textprocess.js');
+const logger = require('../../libs/logger.js');
 const legalLocations = Object.keys(locations);
 
 module.exports = {
@@ -41,7 +42,7 @@ module.exports = {
         'You lead the tribe to ' + destination + '.'
       );
     }
-    console.log('response to migrate was ' + value);
+    logger.accessLog.info('response to migrate was ' + value);
     gameState.saveRequired = true;
   },
 };

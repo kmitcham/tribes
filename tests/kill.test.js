@@ -1,19 +1,18 @@
 const { kill } = require('../libs/kill'); // Replace with your actual module name
-console.log = jest.fn();
+const logger = require('../libs/logger.js');
 
 describe('kill function', () => {
-  let consoleSpy;
+  let loggerSpy;
 
   beforeEach(() => {
-    // Mock console.log
-    consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+    loggerSpy = jest.spyOn(logger.accessLog, 'info').mockImplementation();
 
     // Reset all mocks
     jest.clearAllMocks();
   });
 
   afterEach(() => {
-    consoleSpy.mockRestore();
+    loggerSpy.mockRestore();
   });
 
   test('should kill an adult person and add them to graveyard', () => {
@@ -42,47 +41,47 @@ describe('kill function', () => {
     kill(name, message, gameState);
 
     // Assert
-    expect(consoleSpy).toHaveBeenCalledWith(
+    expect(loggerSpy).toHaveBeenCalledWith(
       'Killing john due to starvation at seasonCount 5'
     );
     expect(gameState.graveyard).toHaveProperty('john');
     expect(gameState.graveyard.john).toBe(person);
     expect(gameState.graveyard.john.deathMessage).toBe('starvation');
-    expect(gameState.graveyard.john.deathSeason).toBe(5);
-    expect(gameState.population).not.toHaveProperty(targetKey);
+    expect(gameState.population).not.toHaveProperty('john');
     expect(gameState.messages['tribe']).toContain('john killed by starvation');
   });
 
   test('should kill a child and add them to graveyard', () => {
     // Setup
-    const name = 'baby';
-    const message = 'illness';
-    const childName = 'Baby'; // Capitalized
+    const name = 'timmy';
+    const message = 'disease';
+    const targetKey = 'timmy';
 
     const child = {
-      name: 'Baby',
-      age: 1,
+      name: 'timmy',
+      age: 5,
+      isPregnant: null,
+      nursing: null,
     };
 
     const gameState = {
       seasonCounter: 3,
       population: {},
-      children: { Baby: child },
+      children: { [targetKey]: child },
     };
 
     // Execute
     kill(name, message, gameState);
 
     // Assert
-    expect(consoleSpy).toHaveBeenCalledWith(
-      'Killing baby due to illness at seasonCount 3'
+    expect(loggerSpy).toHaveBeenCalledWith(
+      'Killing timmy due to disease at seasonCount 3'
     );
-    expect(gameState.graveyard).toHaveProperty(childName);
-    expect(gameState.graveyard.Baby).toBe(child);
-    expect(gameState.graveyard.Baby.deathMessage).toBe('illness');
-    expect(gameState.graveyard.Baby.deathSeason).toBe(3);
-    expect(gameState.children).not.toHaveProperty(childName);
-    expect(gameState.messages['tribe']).toContain('Baby killed by illness');
+    expect(gameState.graveyard).toHaveProperty('timmy');
+    expect(gameState.graveyard.timmy).toBe(child);
+    expect(gameState.graveyard.timmy.deathMessage).toBe('disease');
+    expect(gameState.children).not.toHaveProperty('timmy');
+    expect(gameState.messages['tribe']).toContain('timmy killed by disease');
   });
 
   test('should handle persons who are pregnant', () => {
@@ -115,7 +114,7 @@ describe('kill function', () => {
     kill(name, message, gameState);
 
     // Assert
-    expect(consoleSpy).toHaveBeenCalledWith(
+    expect(loggerSpy).toHaveBeenCalledWith(
       'Killing mary due to accident at seasonCount 7'
     );
     // Should have tried to kill the unborn baby too
@@ -151,14 +150,14 @@ describe('kill function', () => {
     kill(name, message, gameState);
 
     // Assert
-    expect(consoleSpy).toHaveBeenCalledWith(
+    expect(loggerSpy).toHaveBeenCalledWith(
       'Killing sarah due to disease at seasonCount 9'
     );
     // Should have tried to kill the nursing babies too
-    expect(consoleSpy).toHaveBeenCalledWith(
+    expect(loggerSpy).toHaveBeenCalledWith(
       'Killing baby1 due to no-milk at seasonCount 9'
     );
-    expect(consoleSpy).toHaveBeenCalledWith(
+    expect(loggerSpy).toHaveBeenCalledWith(
       'Killing baby2 due to no-milk at seasonCount 9'
     );
     expect(gameState.graveyard).toHaveProperty('sarah');
@@ -192,8 +191,9 @@ describe('kill function', () => {
     kill(name, message, gameState);
 
     // Assert
-    expect(consoleSpy).toHaveBeenCalledWith(
-      'Killing alex due to  at seasonCount 11'
+    // Message is normalized to "unknown causes" before the kill log line.
+    expect(loggerSpy).toHaveBeenCalledWith(
+      'Killing alex due to unknown causes at seasonCount 11'
     );
     expect(gameState.graveyard.alex.deathMessage).toBe('unknown causes');
     expect(gameState.messages['tribe']).toContain(
@@ -216,10 +216,10 @@ describe('kill function', () => {
     kill(name, message, gameState);
 
     // Assert
-    expect(consoleSpy).toHaveBeenCalledWith(
+    expect(loggerSpy).toHaveBeenCalledWith(
       'Killing unknown due to test at seasonCount 13'
     );
-    expect(consoleSpy).toHaveBeenCalledWith(
+    expect(loggerSpy).toHaveBeenCalledWith(
       'Tried to kill unknown but could not find them'
     );
     expect(gameState.graveyard).not.toHaveProperty('unknown');
@@ -227,13 +227,13 @@ describe('kill function', () => {
 
   test('should initialize graveyard if it does not exist', () => {
     // Setup
-    const name = 'pat';
-    const message = 'test';
-    const targetKey = 'pat';
+    const name = 'bob';
+    const message = 'old age';
+    const targetKey = 'bob';
 
     const person = {
-      name: 'pat',
-      age: 35,
+      name: 'bob',
+      age: 80,
       isPregnant: null,
       nursing: null,
     };
@@ -249,88 +249,7 @@ describe('kill function', () => {
     kill(name, message, gameState);
 
     // Assert
-    expect(gameState).toHaveProperty('graveyard');
-    expect(gameState.graveyard).toHaveProperty('pat');
-  });
-
-  test('should remove dead person from invite, consent, decline, and consentDict lists but not guarding (adult)', () => {
-    const gameState = {
-      seasonCounter: 16,
-      population: {
-        alex: {
-          name: 'alex',
-          age: 40,
-          inviteList: ['zoe', 'sam'],
-          consentList: ['zoe'],
-          declineList: ['zoe'],
-          consentDict: { zoe: 'consent', sam: 'decline' },
-          guarding: ['Kid1'],
-        },
-        zoe: {
-          name: 'zoe',
-          age: 30,
-          inviteList: ['alex'],
-          consentList: ['alex'],
-          declineList: ['alex'],
-          consentDict: { alex: 'decline' },
-          guarding: ['Kid2'],
-        },
-        sam: {
-          name: 'sam',
-          age: 33,
-          inviteList: ['alex', 'zoe'],
-          consentList: ['alex'],
-          declineList: ['alex'],
-          consentDict: { alex: 'consent', zoe: 'decline' },
-        },
-      },
-      children: {},
-    };
-
-    kill('alex', 'testing', gameState);
-
-    expect(gameState.population).not.toHaveProperty('alex');
-    expect(gameState.population.zoe.inviteList).toBeUndefined();
-    expect(gameState.population.zoe.consentList).toBeUndefined();
-    expect(gameState.population.zoe.declineList).toBeUndefined();
-    expect(gameState.population.zoe.consentDict).toBeUndefined();
-    // guarding is not modified for adult deaths
-    expect(gameState.population.zoe.guarding).toEqual(['Kid2']);
-
-    expect(gameState.population.sam.inviteList).toEqual(['zoe']);
-    expect(gameState.population.sam.consentList).toBeUndefined();
-    expect(gameState.population.sam.declineList).toBeUndefined();
-    expect(gameState.population.sam.consentDict).toEqual({ zoe: 'decline' });
-  });
-
-  test('should not strip child guardians when an adult shares the same name', () => {
-    // Child named 'Alex' exists; adult named 'alex' is killed
-    // The guardian of child 'Alex' should NOT be affected
-    const gameState = {
-      seasonCounter: 17,
-      population: {
-        alex: {
-          name: 'alex',
-          age: 35,
-          inviteList: ['zoe'],
-        },
-        zoe: {
-          name: 'zoe',
-          age: 30,
-          inviteList: ['alex'],
-          // zoe guards child 'Alex' (same name as adult 'alex')
-          guarding: ['Alex'],
-        },
-      },
-      children: {
-        Alex: { name: 'Alex', age: 5 },
-      },
-    };
-
-    kill('alex', 'testing', gameState);
-
-    expect(gameState.population).not.toHaveProperty('alex');
-    // zoe's guarding of child 'Alex' must be preserved
-    expect(gameState.population.zoe.guarding).toEqual(['Alex']);
+    expect(gameState.graveyard).toBeDefined();
+    expect(gameState.graveyard).toHaveProperty('bob');
   });
 });

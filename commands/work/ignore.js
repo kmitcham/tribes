@@ -3,6 +3,7 @@ const { SlashCommandBuilder } = require('../../libs/command-builders.js');
 const text = require('../../libs/textprocess.js');
 const pop = require('../../libs/population.js');
 const guardValidation = require('../../libs/guardValidation.js');
+const logger = require('../../libs/logger.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -97,7 +98,7 @@ function ignoreChild(gameState, actorName, cName) {
   if (!person) {
     return require('../../libs/access.js').NOT_IN_TRIBE_MESSAGE;
   }
-  console.log(
+  logger.accessLog.info(
     'inside ignore cName ' +
       text.capitalizeFirstLetter(cName) +
       ' actorName ' +

@@ -1,15 +1,5 @@
 const pathSafety = require('../../libs/pathSafety.js');
-
-function isReferee(playerName, referees) {
-  if (!playerName || !referees) {
-    return false;
-  }
-  if (referees.includes(playerName)) {
-    return true;
-  }
-  const lower = String(playerName).toLowerCase();
-  return referees.some((name) => String(name).toLowerCase() === lower);
-}
+const access = require('../../libs/access.js');
 
 function broadcastTribeUpdate(connectedClients, tribesRegistry, openState) {
   const tribesList = tribesRegistry.getTribes();
@@ -33,7 +23,7 @@ function broadcastTribeUpdate(connectedClients, tribesRegistry, openState) {
  * On success, binds ws.playerName to the authenticated identity.
  */
 async function requireAuthenticatedReferee(ws, data, deps) {
-  const { validateUser, referees, connectionStore } = deps;
+  const { validateUser, connectionStore } = deps;
 
   if (typeof validateUser !== 'function') {
     ws.send(
@@ -67,7 +57,7 @@ async function requireAuthenticatedReferee(ws, data, deps) {
 
   // validateUser rewrites data.playerName to the canonical stored name.
   const authenticatedName = data.playerName;
-  if (!isReferee(authenticatedName, referees)) {
+  if (!access.isReferee(authenticatedName)) {
     ws.send(
       JSON.stringify({ type: 'error', message: 'You are not a referee.' })
     );
@@ -251,7 +241,6 @@ async function handleManageUsers(ws, data, deps) {
 async function handleExportGame(ws, data, deps) {
   const {
     validateUser,
-    referees,
     getGameState,
     logWithTimestamp,
     serverVersion,
@@ -270,7 +259,7 @@ async function handleExportGame(ws, data, deps) {
       return;
     }
 
-    if (!isReferee(data.playerName, referees)) {
+    if (!access.isReferee(data.playerName)) {
       ws.send(
         JSON.stringify({
           type: 'exportGameResponse',
@@ -365,7 +354,6 @@ async function handleExportGame(ws, data, deps) {
 async function handleImportGame(ws, data, currentGameState, deps) {
   const {
     validateUser,
-    referees,
     logWithTimestamp,
     path,
     fs,
@@ -391,7 +379,7 @@ async function handleImportGame(ws, data, currentGameState, deps) {
       return;
     }
 
-    if (!isReferee(data.playerName, referees)) {
+    if (!access.isReferee(data.playerName)) {
       ws.send(
         JSON.stringify({
           type: 'importGameResponse',

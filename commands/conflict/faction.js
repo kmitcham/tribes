@@ -2,6 +2,7 @@ const { SlashCommandBuilder } = require('../../libs/command-builders.js');
 const violencelib = require('../../libs/violence.js');
 const text = require('../../libs/textprocess.js');
 const access = require('../../libs/access.js');
+const logger = require('../../libs/logger.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -23,7 +24,7 @@ module.exports = {
   async execute(interaction, gameState) {
     var actorName = interaction.member.displayName;
     var faction = interaction.options.getString('faction');
-    console.log(actorName + ' faction ' + faction);
+    logger.accessLog.info(actorName + ' faction ' + faction);
     setFaction(gameState, actorName, faction);
   },
 };
@@ -69,7 +70,11 @@ function setFaction(gameState, actorName, side) {
   const previousSide = player.faction;
   player.faction = side;
   if (side !== 'neutral') {
-    const breakdown = violencelib.getMemberFactionValueBreakdown(player);
+    const breakdown = violencelib.getMemberFactionValueBreakdown(
+      player,
+      gameState,
+      side
+    );
     const detail = breakdown.parts.join(', ');
     text.addMessage(
       gameState,

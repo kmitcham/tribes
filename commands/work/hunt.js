@@ -1,9 +1,7 @@
 const { SlashCommandBuilder } = require('../../libs/command-builders.js');
-const worklib = require('../../libs/work.js');
 const text = require('../../libs/textprocess.js');
 const pop = require('../../libs/population.js');
 const dice = require('../../libs/dice.js');
-const referees = require('../../libs/referees.json');
 const access = require('../../libs/access.js');
 const huntlib = require('../../libs/hunt.js');
 
@@ -49,7 +47,7 @@ function hunt(gameState, sourceName, forceRoll) {
     );
     return;
   }
-  if (player.isPregnant && player.isPregnant != 'false') {
+  if (player.isPregnant) {
     text.addMessage(gameState, sourceName, 'You can not hunt while pregnant.');
     return;
   }

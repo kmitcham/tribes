@@ -2102,7 +2102,6 @@
                 this.chiefStatus = false; // Track chief status
                 this.orientationMessageSessionKey = 'tribesOrientationShown';
                 this.orientationMessageShownFallback = false;
-                this.orientationMessageShownThisRuntime = false;
                 // Dedupe live/replay/restored chat lines (fingerprint -> last seen ms).
                 this.messageFingerprints = new Map();
                 // Local persistence: keep a longer window so reload does not wipe the feed.
@@ -2128,7 +2127,6 @@
                 this.currentSessionToken = token;
                 this.currentPlayerName = playerName;
                 window.TribesStorage.setSession(token, playerName);
-                console.log('Session stored:', playerName);
             }
             
             restoreSession() {
@@ -2146,7 +2144,6 @@
                         playerNameInput.value = playerName;
                     }
                     
-                    console.log('Session restored for:', playerName);
                     return true;
                 }
                 return false;
@@ -2288,7 +2285,6 @@
                     // Check if server provided WebSocket configuration
                     const serverConfig = window.TRIBES_WS_CONFIG;
                     if (serverConfig) {
-                        logWithTimestamp('Using server-provided WebSocket configuration:', serverConfig);
                         const wsProtocol = serverConfig.protocol === 'https' ? 'wss' : 'ws';
                         const wsHost = serverConfig.host.split(':')[0]; // Remove port from host if present
                         
@@ -2309,10 +2305,8 @@
                         
                         const wsUrl = `${wsProtocol}://${wsHost}${wsPort}`;
                         
-                        logWithTimestamp(`Attempting WebSocket connection: ${wsUrl}`);
                         this.ws = new WebSocket(wsUrl);
                         this.setupWebSocketHandlers(() => {
-                            logWithTimestamp('Server-configured WebSocket failed, falling back to auto-detection');
                             this.connectWithFallback();
                         });
                         return;
@@ -2321,7 +2315,6 @@
                     this.connectWithFallback();
                 } catch (error) {
                     console.error('Error connecting:', error);
-                    logWithTimestamp('WebSocket connection failed with error');
                     this.updateConnectionStatus('disconnected');
                     this.scheduleReconnect();
                 }
@@ -2331,7 +2324,6 @@
                 if (!socket) return;
 
                 socket.onopen = () => {
-                    logWithTimestamp('WebSocket connected');
                     this.updateConnectionStatus('connected');
                     this.reconnectAttempts = 0;
                     this.requestCommandList();
@@ -2346,7 +2338,6 @@
                 };
                 
                 socket.onclose = () => {
-                    logWithTimestamp('WebSocket closed');
                     this.updateConnectionStatus('disconnected');
                     if (onCloseCallback) onCloseCallback();
                 };
@@ -2369,7 +2360,6 @@
                 }
 
                 const wsUrl = candidates[index];
-                logWithTimestamp(`Trying to connect to ${wsUrl}`);
 
                 const socket = new WebSocket(wsUrl);
                 this.ws = socket;
@@ -2424,13 +2414,11 @@
                         }
                         port = portToTry;
                         protocol = isSecure ? 'wss' : 'ws';
-                        logWithTimestamp(`Cloud deployment detected, connecting to ${protocol}://${currentHost}${port}`);
                     } else {
                         // Local development - try multiple local addresses
                         hosts = [currentHost, 'localhost', '127.0.0.1', '192.168.1.20'];
                         port = ':8000';
                         protocol = 'ws';
-                        logWithTimestamp(`Local development detected, trying multiple hosts`);
                     }
 
                     const hostCandidates = hosts.map((host) => `${protocol}://${host}${port}`);
@@ -2472,7 +2460,6 @@
             }
 
             scheduleReconnect() {
-                logWithTimestamp('Scheduled reconnect');
                 if (this.reconnectAttempts < this.maxReconnectAttempts) {
                     this.reconnectAttempts++;
                     setTimeout(() => this.connect(), this.reconnectInterval);
@@ -2524,7 +2511,6 @@
             }
 
             handleMessage(data) {
-                logWithTimestamp('Received:', data);
 
                 switch (data.type) {
                     case 'sessionAuthResponse':
@@ -2589,7 +2575,6 @@
                         this.addMessage(data.message, 'error');
                         break;
                     default:
-                        logWithTimestamp('Unknown message type:', data.type);
                 }
             }
 
@@ -2649,9 +2634,6 @@
                 }
                 if (data.isMember !== undefined) {
                     this.isMember = data.isMember;
-                }
-                if (data.canCraft !== undefined) {
-                    this.serverCanCraft = data.canCraft;
                 }
                 if (data.canActAsChief !== undefined) {
                     this.canActAsChief = data.canActAsChief;
@@ -2856,27 +2838,54 @@
                 }
             }
 
+            getOrientationStorageKey(playerName) {
+                const normalized = String(
+                    playerName ||
+                        document.getElementById('playerName')?.value ||
+                        ''
+                )
+                    .trim()
+                    .toLowerCase();
+                if (normalized) {
+                    return this.orientationMessageSessionKey + ':' + normalized;
+                }
+                return this.orientationMessageSessionKey;
+            }
+
+            hasSeenOrientationMessage(playerName) {
+                const key = this.getOrientationStorageKey(playerName);
+                try {
+                    return window.TribesStorage.getItem(key) === '1';
+                } catch (_error) {
+                    return !!this.orientationMessageShownFallback;
+                }
+            }
+
+            markOrientationMessageSeen(playerName) {
+                const key = this.getOrientationStorageKey(playerName);
+                try {
+                    window.TribesStorage.setItem(key, '1');
+                } catch (_error) {
+                    this.orientationMessageShownFallback = true;
+                }
+            }
+
             showLoginOrientationMessage() {
-                // Show this onboarding message once per browser session.
-                if (this.orientationMessageShownThisRuntime) {
+                // Once per player per browser (localStorage), not once per tab session.
+                // Mobile reloads were re-showing the welcome because sessionStorage reset.
+                // Do not gate on a process-wide runtime flag — a second login in the same
+                // SPA session (different player) must still get their own welcome.
+                const playerName =
+                    document.getElementById('playerName')?.value ||
+                    window.TribesStorage.getSession().playerName ||
+                    '';
+
+                if (this.hasSeenOrientationMessage(playerName)) {
                     return;
                 }
 
-                try {
-                    if (sessionStorage.getItem(this.orientationMessageSessionKey) === '1') {
-                        this.orientationMessageShownThisRuntime = true;
-                        return;
-                    }
-                    // Set before rendering so parallel auth callbacks cannot double-show.
-                    sessionStorage.setItem(this.orientationMessageSessionKey, '1');
-                } catch (error) {
-                    if (this.orientationMessageShownFallback) {
-                        return;
-                    }
-                }
-
-                this.orientationMessageShownThisRuntime = true;
-                this.orientationMessageShownFallback = true;
+                // Mark before rendering so parallel auth callbacks cannot double-show.
+                this.markOrientationMessageSeen(playerName);
 
                 const orientationMessage =
                     'Start here: choose a tribe from the Tribe menu, then use Join to enter that tribe. ' +
@@ -2900,6 +2909,11 @@
                 if (modal) {
                     modal.classList.remove('active');
                 }
+                const playerName =
+                    document.getElementById('playerName')?.value ||
+                    window.TribesStorage.getSession().playerName ||
+                    '';
+                this.markOrientationMessageSeen(playerName);
             }
 
             syncMobileLayoutState() {
@@ -3175,23 +3189,6 @@
                 });
             }
 
-            isCurrentPlayerCanCraft() {
-                if (!this.currentPopulation) {
-                    // Unknown state: do not block the command list yet.
-                    return null;
-                }
-
-                const resolved = this.resolvePopulationEntry(
-                    document.getElementById('playerName').value
-                );
-                if (!resolved || !resolved.person) {
-                    return null;
-                }
-
-                const player = resolved.person;
-                return player.canCraft === true || player.profession === 'crafter';
-            }
-
             selectCommand(commandName) {
                 // Update selected command visual state
                 document.querySelectorAll('.command-item').forEach(item => {
@@ -3231,7 +3228,6 @@
                     if (commandName.toLowerCase() === 'ignore') {
                         this.showCommandModal();
                     } else {
-                        logWithTimestamp('Auto-executing command with no parameters:', commandName);
                         this.send({
                             type: 'command',
                             command: commandName,
@@ -3392,7 +3388,6 @@
                 const parameters = this.collectParametersFromContainer(parametersContainer);
                 
                 if (parameters !== null) {
-                    logWithTimestamp('Executing modal command:', this.selectedCommand.name, 'with parameters:', parameters);
                     this.send({
                         type: 'command',
                         command: this.selectedCommand.name,
@@ -3777,7 +3772,6 @@
                         } else {
                             preservedValues[paramName] = input.value;
                         }
-                        console.log('Preserving form value for', paramName, ':', preservedValues[paramName]);
                     } else if (input.id === 'invite_append_pass') {
                         preservedValues['invite_append_pass'] = input.checked;
                     } else if (input.id === 'join_tribe_select') {
@@ -4441,7 +4435,6 @@
                                         const child = this.currentChildren[childName];
                                         const age = child.age || 0;
                                         const mother = child.mother;
-                                        console.log(`Checking child ${childName}: age ${age}, mother ${mother}`);
                                         // Check eligibility: age > 22 and mother is current player
                                         if (
                                             age > 22 &&
@@ -4490,7 +4483,6 @@
                                         
                                         input.appendChild(opt);
                                     } else {
-                                        console.log(`Skipping adult: ${childName} (age ${child.age})`);
                                     }
                                 });
                             }
@@ -4521,11 +4513,9 @@
                                         
                                         parentsWithChildren.forEach((parentName) => {
                                             const parentEntry =
-                                                this.findPopulationEntryByName(parentName) ||
                                                 this.resolvePopulationEntry(parentName);
                                             const parentPerson =
-                                                (parentEntry && parentEntry.member) ||
-                                                (parentEntry && parentEntry.person);
+                                                parentEntry && parentEntry.person;
                                             if (parentEntry && parentPerson) {
                                                 const opt = document.createElement('option');
                                                 opt.value = parentEntry.key || parentName;
@@ -4629,7 +4619,6 @@
                         // Restore preserved value for checkbox first.
                         if (preservedValues.hasOwnProperty(option.name)) {
                             input.checked = preservedValues[option.name];
-                            console.log('Restored checkbox value for', option.name, ':', preservedValues[option.name]);
                         } else if (this.selectedCommand.name.toLowerCase() === 'secrets' && option.name === 'willtrain') {
                             // Prefill secrets toggle from player's current teaching flag.
                             const resolved = this.resolvePopulationEntry(
@@ -4679,7 +4668,6 @@
                             } else {
                                 input.value = preservedValues[option.name];
                             }
-                            console.log('Restored value for', option.name, ':', preservedValues[option.name]);
                         } else if (this.isHistoryYearsBackOption(option)) {
                             input.value = '1';
                         }
@@ -4997,7 +4985,6 @@
                 const parameters = {};
                 const inputs = container.querySelectorAll('input, select');
                 
-                console.log('Found', inputs.length, 'total inputs in container');
                 
                 // Handle unified guard command interface
                 const unifiedGuardContainer = container.querySelector('.unified-guard-container');
@@ -5022,20 +5009,16 @@
                         parameters[paramKey] = childName;
                     });
                     
-                    console.log('Unified guard parameters matched:', parameters);
                 }
                 
                 inputs.forEach(input => {
-                    console.log('Processing input:', input.id, 'type:', input.type, 'value:', input.value);
                     
                     // Only process inputs with parameter IDs (starting with 'param_')
                     if (!input.id || !input.id.startsWith('param_')) {
-                        console.log('Skipping input without param_ ID:', input.id);
                         return;
                     }
                     
                     const paramName = input.id.replace('param_', '');
-                    console.log('Parameter name:', paramName, 'isOrdering:', this.isOrderingOption(paramName));
                     
                     // Skip if this is the unified guard container (already handled above)
                     if (input.classList && input.classList.contains('unified-guard-container')) {
@@ -5053,12 +5036,10 @@
                                 orderList = orderList.concat('!pass');
                             }
                         }
-                        console.log('Ordering parameter', paramName, 'raw value:', input.value, 'as array:', orderList);
                         parameters[paramName] = orderList;
                     } else if (input.type === 'checkbox') {
                         // Handle checkbox (boolean) inputs
                         parameters[paramName] = input.checked;
-                        console.log('Checkbox parameter', paramName, 'checked:', input.checked);
                     } else {
                         parameters[paramName] = input.value;
                     }
@@ -5093,7 +5074,6 @@
                 const container = document.createElement('div');
                 container.className = 'ordering-container';
                 
-                console.log('createOrderingInterface for', paramName, 'preserved value:', preservedValue);
                 
                 // Hidden input to store the final ordered list
                 const hiddenInput = document.createElement('input');
@@ -5203,13 +5183,10 @@
             addPlayerToOrder(paramName, playerName) {
                 if (!playerName) return;
                 
-                console.log('addPlayerToOrder called with paramName:', paramName, 'playerName:', playerName);
                 
                 const orderList = document.getElementById(`order-list-${paramName}`);
                 const hiddenInput = document.getElementById(`param_${paramName}`);
                 
-                console.log('Found orderList:', !!orderList, 'Found hiddenInput:', !!hiddenInput);
-                console.log('Hidden input current value:', hiddenInput ? hiddenInput.value : 'NOT FOUND');
                 
                 // Handle special options
                 if (playerName === '!none') {
@@ -5240,7 +5217,6 @@
                 // Get current list
                 let currentList = this.parseOrderingListValue(hiddenInput.value);
                 
-                console.log('Current list before adding:', currentList);
                 
                 // Don't add duplicates (case-insensitive)
                 if (
@@ -5255,7 +5231,6 @@
                 currentList.push(playerName);
                 hiddenInput.value = currentList.join(',');
                 
-                console.log('Updated hidden input value to:', hiddenInput.value);
                 
                 this.updateOrderDisplay(paramName, currentList);
                 
@@ -5393,32 +5368,26 @@
                 const form = document.getElementById('commandParameters');
                 const inputs = form.querySelectorAll('input, select');
                 
-                console.log('Found', inputs.length, 'total inputs');
                 
                 inputs.forEach(input => {
-                    console.log('Processing input:', input.id, 'type:', input.type, 'value:', input.value);
                     
                     // Only process inputs with parameter IDs (starting with 'param_')
                     if (!input.id || !input.id.startsWith('param_')) {
-                        console.log('Skipping input without param_ ID:', input.id);
                         return;
                     }
                     
                     const paramName = input.id.replace('param_', '');
-                    console.log('Parameter name:', paramName, 'isOrdering:', this.isOrderingOption(paramName));
                     
                     // Handle ordering parameters (comma-separated lists)
                     if (input.type === 'hidden' && this.isOrderingOption(paramName)) {
                         // Send as array for ordering parameters
                         const orderList = input.value ? input.value.split(',') : [];
-                        console.log('Ordering parameter', paramName, 'raw value:', input.value, 'as array:', orderList);
                         parameters[paramName] = orderList;
                     } else {
                         parameters[paramName] = input.value;
                     }
                 });
                 
-                console.log('executeCommand called - this function is deprecated, commands now use modals');
                 this.addMessage('Please select a command from the sidebar to open the command modal', 'info');
             }
 
@@ -5518,22 +5487,9 @@
                 const container = document.getElementById('messagesContainer');
                 const message = document.createElement('div');
                 message.className = `message ${type}`;
-                console.log(
-                    'Adding message:',
-                    text,
-                    'Type:',
-                    type,
-                    'TypeLabel:',
-                    typeLabel,
-                    'IsRestored:',
-                    isRestored,
-                    'IsReplay:',
-                    isReplay
-                );
                 
                 // Skip empty or whitespace-only messages
                 if (!text || text === '') {
-                    console.log('Skipping empty message');
                     return;
                 }
                 text = text.trim();
@@ -5549,7 +5505,6 @@
                         timestamp: eventMs,
                     })
                 ) {
-                    console.log('Skipping duplicate message');
                     return;
                 }
 
@@ -7086,7 +7041,7 @@
                     
                     // Show combat modal if current player needs to make a choice
                     const currentPlayer = this.getCurrentPlayerPopulationEntry();
-                    if (currentPlayer && currentPlayer.member && !currentPlayer.member.strategy && !currentPlayer.member.escaped) {
+                    if (currentPlayer && currentPlayer.person && !currentPlayer.person.strategy && !currentPlayer.person.escaped) {
                         this.showCombatModal();
                     }
                 } else {
@@ -7107,49 +7062,12 @@
             }
 
             getCurrentPlayerPopulationEntry() {
-                const population = this.currentPopulation || {};
                 const playerName = String(document.getElementById('playerName')?.value || '').trim();
-                if (!playerName) {
-                    return null;
-                }
-
-                if (population[playerName]) {
-                    return { key: playerName, member: population[playerName] };
-                }
-
-                const playerLower = playerName.toLowerCase();
-                for (const [key, member] of Object.entries(population)) {
-                    if (!member) {
-                        continue;
-                    }
-                    if (String(key).toLowerCase() === playerLower) {
-                        return { key, member };
-                    }
-                    if (member.name && String(member.name).toLowerCase() === playerLower) {
-                        return { key, member };
-                    }
-                }
-                return null;
+                return this.resolvePopulationEntry(playerName);
             }
 
             findPopulationEntryByName(name) {
-                if (!name || !this.currentPopulation) {
-                    return null;
-                }
-
-                const targetLower = String(name).trim().toLowerCase();
-                for (const [key, member] of Object.entries(this.currentPopulation)) {
-                    if (!member) {
-                        continue;
-                    }
-                    if (String(key).toLowerCase() === targetLower) {
-                        return { key, member };
-                    }
-                    if (member.name && String(member.name).toLowerCase() === targetLower) {
-                        return { key, member };
-                    }
-                }
-                return null;
+                return this.resolvePopulationEntry(name);
             }
 
             namesMatch(a, b) {
@@ -7173,8 +7091,8 @@
                     return 'babysitter';
                 }
                 const adult = this.findPopulationEntryByName(guardianName);
-                if (adult && adult.member) {
-                    const g = String(adult.member.gender || '').toLowerCase();
+                if (adult && adult.person) {
+                    const g = String(adult.person.gender || '').toLowerCase();
                     if (g === 'male') return 'male';
                     if (g === 'female') return 'female';
                 }
@@ -7271,7 +7189,7 @@
                 }
 
                 const currentPlayerKey = playerEntry.key;
-                const currentPlayer = playerEntry.member;
+                const currentPlayer = playerEntry.person;
                 const currentPlayerName = currentPlayer?.name || currentPlayerKey;
                 const isChief = this.isCurrentPlayerChief() || !!currentPlayer?.chief;
                 const populationMembers = Object.values(this.currentPopulation).filter((m) => m && typeof m === 'object');
@@ -7348,7 +7266,7 @@
                             needsInviteRevision = true;
                         } else {
                             const targetResponse = this.getConsentResponse(
-                                targetEntry.member,
+                                targetEntry.person,
                                 currentPlayerKey,
                                 currentPlayerName
                             );
@@ -8124,7 +8042,7 @@
                     .filter(player => {
                         // Filter out: current player, escaped players, dead players
                         if (!player || !player.name) return false;
-                        if (player.name.toLowerCase() === currentPlayer.member.name.toLowerCase()) return false;
+                        if (player.name.toLowerCase() === currentPlayer.person.name.toLowerCase()) return false;
                         if (player.escaped) return false;
                         if (player.dead) return false;
                         return true;
@@ -8236,7 +8154,7 @@
                         return;
                     }
 
-                    if (target.member.name.toLowerCase() === currentPlayer.member.name.toLowerCase()) {
+                    if (target.person.name.toLowerCase() === currentPlayer.person.name.toLowerCase()) {
                         this.addMessage('You cannot attack yourself.', 'error');
                         return;
                     }
@@ -8416,12 +8334,6 @@
             };
 
             renderLastCommitDate();
-
-            // Add timestamped logging function
-            window.logWithTimestamp = function(message, ...args) {
-                const timestamp = new Date().toLocaleString();
-                console.log(`[${timestamp}]`, message, ...args);
-            };
             
             window.tribesClient = new TribesClient();
             

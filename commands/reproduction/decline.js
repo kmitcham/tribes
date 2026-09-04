@@ -1,5 +1,6 @@
 const { SlashCommandBuilder } = require('../../libs/command-builders.js');
 const reproLib = require('../../libs/reproduction.js');
+const logger = require('../../libs/logger.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -25,7 +26,7 @@ module.exports = {
       }
 
       const response = reproLib.declinePrep(gameState, sourceName, rawList);
-      console.log('decline updated: ' + response);
+      logger.accessLog.info('decline updated: ' + response);
       gameState.saveRequired = true;
     } catch (error) {
       console.error('decline error ' + error);

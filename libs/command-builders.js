@@ -1,4 +1,4 @@
-// Lightweight internal replacements for Discord's SlashCommandBuilder and EmbedBuilder.
+// Lightweight internal replacement for Discord's SlashCommandBuilder.
 // These are used by command modules and the web UI but have no external API dependencies.
 
 class CommandOptionBuilder {
@@ -94,18 +94,6 @@ class SlashCommandBuilder {
   }
 }
 
-class EmbedBuilder {
-  constructor() {
-    this.description = '';
-  }
-
-  setDescription(description) {
-    this.description = description;
-    return this;
-  }
-}
-
 module.exports = {
   SlashCommandBuilder,
-  EmbedBuilder,
 };

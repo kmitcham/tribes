@@ -172,7 +172,7 @@ Players can use this interface to send commands to the bot and receive messages 
 }
 
 function handleListCommands(ws, data, gameState, deps) {
-  const { commands, pop, referees, tribesRegistry } = deps;
+  const { commands, pop, tribesRegistry } = deps;
 
   const commandList = {};
   const playerName = data.playerName;

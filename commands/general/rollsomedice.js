@@ -1,6 +1,7 @@
 const { SlashCommandBuilder } = require('../../libs/command-builders.js');
 const dice = require('../../libs/dice.js');
 const text = require('../../libs/textprocess.js');
+const logger = require('../../libs/logger.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -14,7 +15,7 @@ module.exports = {
     ),
   async execute(interaction, gameState, _bot) {
     var count = interaction.options.getInteger('number') || 1;
-    console.log('number of dice = ' + count);
+    logger.accessLog.info('number of dice = ' + count);
     const message =
       'the result of rolling ' + count + ' dice was ' + dice.roll(count);
     text.addMessage(gameState, interaction.member.displayName, message);

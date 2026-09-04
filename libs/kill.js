@@ -1,13 +1,17 @@
 const guardlib = require('./guardCode.js');
 const textLib = require('./textprocess.js');
 const populationLib = require('./population.js');
+const logger = require('./logger.js');
 
 function getKeyByValue(object, value) {
   return Object.keys(object).find((key) => object[key] === value);
 }
 
 function kill(name, message, gameState) {
-  console.log(
+  if (!message || message == '') {
+    message = 'unknown causes';
+  }
+  logger.accessLog.info(
     'Killing ' +
       name +
       ' due to ' +
@@ -22,9 +26,6 @@ function kill(name, message, gameState) {
     childLib.resolveChildKey(name, children, gameState) ||
     textLib.capitalizeFirstLetter(name);
   const childName = resolvedChild;
-  if (!message || message == '') {
-    message = 'unknown causes';
-  }
   if (!('graveyard' in gameState)) {
     gameState.graveyard = {};
   }
@@ -68,7 +69,7 @@ function kill(name, message, gameState) {
     delete children[childName];
     removeNameFromAllRelationshipLists(childName, gameState.population, true);
   } else {
-    console.log('Tried to kill ' + name + ' but could not find them');
+    logger.accessLog.info('Tried to kill ' + name + ' but could not find them');
     return;
   }
 

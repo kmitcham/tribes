@@ -4,6 +4,7 @@ const locations = require('./locations.json');
 const jsonUtils = require('./jsonUtils.js');
 const populationLib = require('./population.js');
 const pathSafety = require('./pathSafety.js');
+const logger = require('./logger.js');
 
 // NOTE: Removed unused WebSocket server creation that was causing test failures
 // const server = new WebSocket.Server({ port: 8383 });
@@ -11,7 +12,7 @@ const pathSafety = require('./pathSafety.js');
 function initGame(gameName) {
   const gameState = {};
   if (!gameName) {
-    console.log('init game without a name');
+    logger.accessLog.info('init game without a name');
     gameName = '';
   }
   gameState.seasonCounter = 1;
@@ -172,7 +173,7 @@ function loadTribe(tribeName) {
     }
   }
 
-  console.log(
+  logger.accessLog.info(
     'No file found for ' + fileName + ', initializing new tribe: ' + tribeName
   );
 
@@ -180,7 +181,7 @@ function loadTribe(tribeName) {
   const dir = pathSafety.tribeDir(tribeName);
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
-    console.log('Created directory: ' + dir);
+    logger.accessLog.info('Created directory: ' + dir);
   }
 
   // Initialize new tribe using existing initGame function
@@ -204,12 +205,12 @@ function actuallyWriteToDisk(fileName, jsonData) {
           ': on-disk JSON does not match in-memory state'
       );
     }
-    console.log('checked data match');
+    logger.accessLog.info('checked data match');
   } catch (err) {
-    console.log('save failed. ' + err);
+    logger.accessLog.info('save failed. ' + err);
     throw err;
   }
-  console.log(fileName + ' saved!');
+  logger.accessLog.info(fileName + ' saved!');
 }
 
 function saveGameState(gameState, tribeName) {
@@ -218,11 +219,11 @@ function saveGameState(gameState, tribeName) {
   let saveTime = d.toISOString();
   saveTime = saveTime.replace(/\//g, '-');
   gameState.lastSaved = saveTime;
-  console.log('trying to save ' + tribeName);
+  logger.accessLog.info('trying to save ' + tribeName);
   const saveFileName = pathSafety.tribeMainFile(tribeName);
-  console.log('trying to save ' + tribeName + ' as ' + saveFileName);
+  logger.accessLog.info('trying to save ' + tribeName + ' as ' + saveFileName);
   actuallyWriteToDisk(saveFileName, gameState);
-  console.log('saved file :' + saveFileName + ' at ' + saveTime);
+  logger.accessLog.info('saved file :' + saveFileName + ' at ' + saveTime);
 }
 function saveTribe(gameState) {
   const tribeName = gameState.name;
@@ -272,7 +273,7 @@ function saveFinalGameState(gameState) {
   gameState.finalSaveDate = dateStr;
 
   actuallyWriteToDisk(finalFileName, gameState);
-  console.log(`Saved final game state: ${finalFileName}`);
+  logger.accessLog.info(`Saved final game state: ${finalFileName}`);
 }
 module.exports.saveFinalGameState = saveFinalGameState;
 
@@ -283,7 +284,7 @@ function clearMainGameFile(tribeName) {
   if (fs.existsSync(mainGameFile)) {
     try {
       fs.unlinkSync(mainGameFile);
-      console.log(`Cleared main game file for ${tribeName} - ready for new game`);
+      logger.accessLog.info(`Cleared main game file for ${tribeName} - ready for new game`);
     } catch (err) {
       console.error(`Failed to clear main game file for ${tribeName}: ${err.message}`);
       throw new Error(`Failed to clear game file: ${err.message}`);
@@ -327,7 +328,7 @@ function manageSnapshots(tribeName) {
     const filesToDelete = files.slice(3);
     filesToDelete.forEach((file) => {
       fs.unlinkSync(file.path);
-      console.log(`Deleted old snapshot: ${file.name}`);
+      logger.accessLog.info(`Deleted old snapshot: ${file.name}`);
     });
   }
 }

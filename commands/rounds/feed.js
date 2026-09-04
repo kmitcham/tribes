@@ -2,8 +2,8 @@ const { SlashCommandBuilder } = require('../../libs/command-builders.js');
 const pop = require('../../libs/population.js');
 const feedlib = require('../../libs/feed.js');
 const text = require('../../libs/textprocess.js');
-const referees = require('../../libs/referees.json');
 const access = require('../../libs/access.js');
+const logger = require('../../libs/logger.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -34,7 +34,7 @@ module.exports = {
 
 function feed(interaction, gameState) {
   var sourceName = interaction.member.displayName;
-  var amount = interaction.options.getInteger('amount') || 2;
+  var amount = interaction.options.getInteger('amount') ?? 2;
   var rawList = interaction.options.getString('child');
   const player = pop.memberByName(sourceName, gameState);
 
@@ -73,7 +73,7 @@ function feed(interaction, gameState) {
     childList,
     gameState
   );
-  console.log('return ' + message);
+  logger.accessLog.info('return ' + message);
   gameState.saveRequired = true;
   return;
 }

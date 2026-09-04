@@ -2,9 +2,9 @@ const pop = require('./population.js');
 const text = require('./textprocess.js');
 const dice = require('./dice.js');
 const gatherlib = require('./gather.js');
-const referees = require('./referees.json');
 const locations = require('./locations.json');
 const access = require('./access.js');
+const logger = require('./logger.js');
 
 //////////////////////////////////////////////////////////
 /////  WORK SECTION
@@ -66,7 +66,7 @@ function gatherDataFor(locationName, roll) {
       return resourceData[i];
     }
   }
-  console.log('error looking up resourceData for ' + locationName + ' ' + roll);
+  logger.accessLog.info('error looking up resourceData for ' + locationName + ' ' + roll);
 }
 module.exports.gatherDataFor = gatherDataFor;
 
@@ -157,7 +157,7 @@ function craft(gameState, sourceName, item, forceRoll) {
     }
   }
   var rollValue = craftRoll;
-  console.log('craft type ' + item + ' roll ' + craftRoll);
+  logger.accessLog.info('craft type ' + item + ' roll ' + craftRoll);
   player.worked = true;
   var message = sourceName + ' crafts [roll ' + craftRoll + '] a ' + item + '.';
   if (player.profession != 'crafter') {

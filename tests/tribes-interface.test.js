@@ -565,6 +565,37 @@ describe('Tribes Interface Client (real class)', () => {
     expect(targetsForBob).toEqual(['Alice', 'Carol']);
   });
 
+  test('welcome orientation shows once per player across reloads', () => {
+    env.elements.playerName.value = 'Ada';
+    expect(client.hasSeenOrientationMessage('Ada')).toBe(false);
+    client.showLoginOrientationMessage();
+    expect(client.hasSeenOrientationMessage('Ada')).toBe(true);
+
+    // New client instance, same browser storage (simulates mobile reload).
+    const client2 = new TribesClient();
+    env.elements.playerName.value = 'Ada';
+    const modal = env.documentMock.getElementById('orientationModal');
+    modal.classList.remove('active');
+    client2.showLoginOrientationMessage();
+    expect(client2.hasSeenOrientationMessage('Ada')).toBe(true);
+    expect(modal.classList.contains('active')).toBe(false);
+  });
+
+  test('welcome orientation still shows for a second player in the same SPA session', () => {
+    env.elements.playerName.value = 'Ada';
+    client.showLoginOrientationMessage();
+    expect(client.hasSeenOrientationMessage('Ada')).toBe(true);
+
+    const modal = env.documentMock.getElementById('orientationModal');
+    modal.classList.remove('active');
+
+    env.elements.playerName.value = 'Bob';
+    expect(client.hasSeenOrientationMessage('Bob')).toBe(false);
+    client.showLoginOrientationMessage();
+    expect(client.hasSeenOrientationMessage('Bob')).toBe(true);
+    expect(modal.classList.contains('active')).toBe(true);
+  });
+
   test('waiting chip skips work prompt when current player is injured or sick', () => {
     client.currentStatusData = { workRound: true };
     client.currentPopulation = {

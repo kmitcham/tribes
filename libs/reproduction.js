@@ -9,6 +9,7 @@ const feed = require('./feed.js');
 const end = require('./endgame.js');
 const roundTransitionAudit = require('./roundTransitionAudit.js');
 const access = require('./access.js');
+const logger = require('./logger.js');
 
 function eligibleMates(name, population, debug = false) {
   // Resolve case-insensitively when population is a gameState.population map.
@@ -39,42 +40,42 @@ function eligibleMates(name, population, debug = false) {
   }
   for (var matchName in population) {
     if (debug) {
-      console.log('checking ' + matchName);
+      logger.accessLog.info('checking ' + matchName);
     }
     const potentialMatch = population[matchName];
     if (!potentialMatch) {
-      console.log('no record for ' + matchName);
+      logger.accessLog.info('no record for ' + matchName);
       continue;
     }
     if (potentialMatch.gender == matcher.gender) {
       if (debug) {
-        console.log('gender fail ');
+        logger.accessLog.info('gender fail ');
       }
       continue;
     }
     if (potentialMatch.isPregnant) {
       if (debug) {
-        console.log('pregnant ');
+        logger.accessLog.info('pregnant ');
       }
       continue;
     }
     if (potentialMatch.isSick && potentialMatch.isSick > 0) {
       if (debug) {
-        console.log('sick ');
+        logger.accessLog.info('sick ');
       }
     }
     if (potentialMatch.isInjured && potentialMatch.isInjured > 0) {
       if (debug) {
-        console.log('injured ');
+        logger.accessLog.info('injured ');
       }
     }
     if (debug) {
-      console.log('possible match!');
+      logger.accessLog.info('possible match!');
     }
     potentialMatches.push(matchName);
   }
   if (debug) {
-    console.log('matched =' + potentialMatches);
+    logger.accessLog.info('matched =' + potentialMatches);
   }
   if (potentialMatches.length > 0) {
     response = potentialMatches.join(' ');
@@ -82,7 +83,7 @@ function eligibleMates(name, population, debug = false) {
     response = 'No eligible partners-' + name + ' should pass.';
   }
   if (debug) {
-    console.log('response:' + response);
+    logger.accessLog.info('response:' + response);
   }
   return response;
 }
@@ -223,14 +224,14 @@ function formatRomanceListForDisplay(list) {
 }
 
 function handleReproductionList(actorName, arrayOfNames, listName, gameState) {
-  console.log(
+  logger.accessLog.info(
     'Building ' + listName + ' for ' + actorName + ' args ' + arrayOfNames
   );
   var actingMember = pop.memberByName(actorName, gameState);
   if (!arrayOfNames || arrayOfNames.length == 0) {
     delete actingMember[listName];
     // this may be dead code with the new discord API.
-    console.log('DELETE in handle list actually called.  SURPRISE!');
+    logger.accessLog.info('DELETE in handle list actually called.  SURPRISE!');
     return 'Deleting your empty ' + listName;
   }
   const population = gameState.population;
@@ -238,7 +239,7 @@ function handleReproductionList(actorName, arrayOfNames, listName, gameState) {
   let list = [];
   let save = false;
   for (const rawTargetName of arrayOfNames) {
-    console.log('arg: ' + rawTargetName);
+    logger.accessLog.info('arg: ' + rawTargetName);
     let localErrors = '';
     let targetName = text.removeSpecialChars(rawTargetName);
     targetName = targetName.trim();
@@ -280,7 +281,7 @@ function handleReproductionList(actorName, arrayOfNames, listName, gameState) {
         errors.push(localErrors);
       } else {
         list.push(targetMember.name.trim());
-        console.log(
+        logger.accessLog.info(
           '\t\t adding ' +
             targetMember.name +
             ' to consent for ' +
@@ -291,7 +292,7 @@ function handleReproductionList(actorName, arrayOfNames, listName, gameState) {
   }
   let returnMessage = '';
   if (errors.length > 0) {
-    console.log(actorName + ' ' + listName + ' has errors:' + errors);
+    logger.accessLog.info(actorName + ' ' + listName + ' has errors:' + errors);
     for (const error of errors) {
       returnMessage += error + '\n';
     }
@@ -325,7 +326,7 @@ function handleReproductionList(actorName, arrayOfNames, listName, gameState) {
 module.exports.handleReproductionList = handleReproductionList;
 
 function invite(gameState, rawActorName, rawList) {
-  console.log('invite raw actorName: ' + rawActorName);
+  logger.accessLog.info('invite raw actorName: ' + rawActorName);
   var player = pop.memberByName(rawActorName, gameState);
   var message = 'error in invite, message not set';
   if (!player) {
@@ -351,7 +352,7 @@ function invite(gameState, rawActorName, rawList) {
       typeof value === 'string' ? value.trim() : String(value || '').trim()
     )
     .filter((value) => value.length > 0);
-  console.log(
+  logger.accessLog.info(
     player.name +
       ' raw invitelist:' +
       rawList +
@@ -359,7 +360,7 @@ function invite(gameState, rawActorName, rawList) {
       inviteNamesAsArray
   );
   if (gameState.reproductionRound == true && player.inviteIndex) {
-    console.log(
+    logger.accessLog.info(
       'Updateing inviteIndex for ' +
         player.name +
         ' since list updated during the round'
@@ -374,9 +375,9 @@ function invite(gameState, rawActorName, rawList) {
     gameState
   );
   globalMatingCheck(gameState);
-  console.log('message at end of reprolib invite:' + message);
+  logger.accessLog.info('message at end of reprolib invite:' + message);
   if (player.inviteList) {
-    console.log('after update Invitelist: ' + player.inviteList.join(' '));
+    logger.accessLog.info('after update Invitelist: ' + player.inviteList.join(' '));
   }
   text.addMessage(gameState, player.name, message);
   gameState.saveRequired = true;
@@ -442,7 +443,7 @@ function applyRomanceResponseUpdates(
 ) {
   const member = pop.memberByName(actorName, gameState);
   if (!member) {
-    console.log(actorName + ' not found in tribe for ' + defaultResponseType);
+    logger.accessLog.info(actorName + ' not found in tribe for ' + defaultResponseType);
     text.addMessage(gameState, actorName, access.NOT_IN_TRIBE_MESSAGE);
     return [];
   }
@@ -487,7 +488,7 @@ function consentPrep(gameState, sourceName, rawList) {
   var member = pop.memberByName(sourceName, gameState);
 
   if (!rawList) {
-    console.log('no rawList for consent');
+    logger.accessLog.info('no rawList for consent');
     const currentConsentTargets = getRomanceTargetsByResponse(
       member,
       'consent'
@@ -514,7 +515,7 @@ function consentPrep(gameState, sourceName, rawList) {
     );
     return 'No values parsed from that consentList: ' + rawList;
   }
-  console.log('updating consentlist: ' + messageArray);
+  logger.accessLog.info('updating consentlist: ' + messageArray);
   consent(sourceName, messageArray, gameState);
   return getRomanceTargetsByResponse(member, 'consent');
 }
@@ -523,7 +524,7 @@ module.exports.consentPrep = consentPrep;
 function consent(actorName, arrayOfNames, gameState) {
   var member = pop.memberByName(actorName, gameState);
   if (!member) {
-    console.log(actorName + ' not found in tribe for consent');
+    logger.accessLog.info(actorName + ' not found in tribe for consent');
     text.addMessage(gameState, actorName, access.NOT_IN_TRIBE_MESSAGE);
     return;
   }
@@ -593,7 +594,7 @@ function declinePrep(gameState, sourceName, rawList) {
     return 'No values parsed from that declinelist: ' + rawList;
   }
 
-  console.log('applying decline list to mating for ' + sourceName);
+  logger.accessLog.info('applying decline list to mating for ' + sourceName);
   decline(sourceName, listAsArray, gameState);
   return getRomanceTargetsByResponse(member, 'decline');
 }
@@ -646,7 +647,7 @@ function _sortCommitFirst(a, b) {
 }
 
 function globalMatingCheck(gameState) {
-  console.log('In the global mating check');
+  logger.accessLog.info('In the global mating check');
   var infinite_loop_count = 0;
   if (!gameState.reproductionRound) {
     return 'It is not the mating round';
@@ -668,11 +669,11 @@ function globalMatingCheck(gameState) {
   while (actionableInvites) {
     infinite_loop_count += 1;
     if (infinite_loop_count > 10) {
-      console.log(
+      logger.accessLog.info(
         '----------------------------infinite loop count error: ' +
           infinite_loop_count
       );
-      console.log('gameState:\n' + gameState);
+      logger.accessLog.info('gameState:\n' + gameState);
       return 'Infinite loop error.  oops.';
     }
     actionableInvites = false;
@@ -682,11 +683,11 @@ function globalMatingCheck(gameState) {
     });
     doneMating = [];
     whoNeedsToGiveAnAnswer = [];
-    console.log('a sexlist ' + randomOrderForProcessingInvites);
+    logger.accessLog.info('a sexlist ' + randomOrderForProcessingInvites);
     for (const invitingMemberKey of randomOrderForProcessingInvites) {
       const invitingMember = pop.memberByName(invitingMemberKey, gameState);
       const inviterDisplayName = invitingMember.name;
-      console.log(
+      logger.accessLog.info(
         'working ' + invitingMemberKey + ' named ' + invitingMember.name
       );
       let index = randomOrderForProcessingInvites.indexOf(invitingMemberKey);
@@ -704,7 +705,7 @@ function globalMatingCheck(gameState) {
           index = invitingMember.inviteIndex;
         }
         if (index + 1 > invitingMember.inviteList.length) {
-          console.log(
+          logger.accessLog.info(
             '\t inviteIndex is longer than invite list. index:' +
               index +
               ' list:' +
@@ -712,9 +713,9 @@ function globalMatingCheck(gameState) {
           );
         }
         let targetName = invitingMember.inviteList[index];
-        console.log(' inviting ' + targetName + ' index ' + index);
+        logger.accessLog.info(' inviting ' + targetName + ' index ' + index);
         if (!targetName) {
-          console.log(
+          logger.accessLog.info(
             'member ' +
               invitingMember.name +
               ' had a false value for target ' +
@@ -739,13 +740,13 @@ function globalMatingCheck(gameState) {
         }
         if (targetName.trim() == '!save') {
           // this is legacy code since it used to be a valid option
-          console.log(' skipping save for ' + inviterDisplayName);
+          logger.accessLog.info(' skipping save for ' + inviterDisplayName);
           continue;
         }
         var attemptFailed = false;
         const targetMember = pop.memberByName(targetName, gameState);
         if (!targetMember) {
-          console.log(
+          logger.accessLog.info(
             'Could not find ' +
               targetName +
               ' in tribe for ' +
@@ -790,7 +791,7 @@ function globalMatingCheck(gameState) {
             targetPopulationKey,
             inviterDisplayName + ' flirts with you, but you decline.'
           );
-          console.log('\t declines  ');
+          logger.accessLog.info('\t declines  ');
           attemptFailed = true;
         } else if (targetMember.isPregnant) {
           text.addMessage(
@@ -803,7 +804,7 @@ function globalMatingCheck(gameState) {
             targetPopulationKey,
             inviterDisplayName + ' flirts with you, but you are pregnant.'
           );
-          console.log('\t is pregnant  ');
+          logger.accessLog.info('\t is pregnant  ');
           attemptFailed = true;
         } else if (targetMember.isSick || targetMember.isInjured) {
           text.addMessage(
@@ -818,14 +819,14 @@ function globalMatingCheck(gameState) {
             targetDisplayName +
               ' is not healthy enough to enjoy your attention.'
           );
-          console.log('\t sick or injured');
+          logger.accessLog.info('\t sick or injured');
           attemptFailed = true;
         } else if (targetResponse === 'consent') {
           // Success copy is one role-aware line each (with roll) inside makeLove.
           makeLove(targetName, inviterDisplayName, gameState);
           invitingMember.cannotInvite = true;
           doneMating.push(invitingMemberKey);
-          console.log('\t consents ');
+          logger.accessLog.info('\t consents ');
           continue;
         } else {
           // this will get spammy, if the function is called every time anyone updates.
@@ -842,7 +843,7 @@ function globalMatingCheck(gameState) {
           );
           whoNeedsToGiveAnAnswer.push(targetPopulationKey);
           doneMating.push(invitingMemberKey);
-          console.log(
+          logger.accessLog.info(
             '\t no response found with ' +
               targetDisplayName +
               ' so allDone is false'
@@ -857,16 +858,16 @@ function globalMatingCheck(gameState) {
           // can't lose your invite power just because of rejection
           if (invitingMember.inviteList.length > invitingMember.inviteIndex) {
             actionableInvites = true;
-            console.log('\t more invitations exist');
+            logger.accessLog.info('\t more invitations exist');
           } else {
-            console.log(
+            logger.accessLog.info(
               'allDone is false, since no invites to try, and no resolution.'
             );
           }
         }
       } else {
         // person has no invites pending
-        console.log(
+        logger.accessLog.info(
           '\t No invites found for ' +
             invitingMemberKey.name +
             ' so allDone is false'
@@ -885,7 +886,7 @@ function globalMatingCheck(gameState) {
   }
   inviteCheck = canStillMate ? canStillInvite(gameState) : '';
   const inviteCount = canStillMate ? canStillInviteCount(gameState) : 0;
-  console.log('After mating checks, inviteCheck is: ' + inviteCheck);
+  logger.accessLog.info('After mating checks, inviteCheck is: ' + inviteCheck);
   if (inviteCount > 0) {
     text.addMessage(
       gameState,
@@ -981,17 +982,17 @@ module.exports.globalMatingCheck = globalMatingCheck;
 
 function hasReasontoNotInvite(gameState, invitingMember) {
   if (!invitingMember) {
-    console.log('\t NULL person may not invite anyone');
+    logger.accessLog.info('\t NULL person may not invite anyone');
     return true;
   } else if (invitingMember.cannotInvite) {
-    console.log('\t cannotInvite. ' + invitingMember.name);
+    logger.accessLog.info('\t cannotInvite. ' + invitingMember.name);
     return true;
   } else if (invitingMember.golem) {
     invitingMember.cannotInvite = true;
-    console.log('\t Skipping golem ' + invitingMember.name);
+    logger.accessLog.info('\t Skipping golem ' + invitingMember.name);
     return true;
   } else if (invitingMember.isPregnant) {
-    console.log('\t inviter was pregnant');
+    logger.accessLog.info('\t inviter was pregnant');
     const inviterKey =
       pop.getPopulationKey(invitingMember, gameState) || invitingMember.name;
     text.addMessage(
@@ -1007,7 +1008,7 @@ function hasReasontoNotInvite(gameState, invitingMember) {
     invitingMember.cannotInvite = true;
     return true;
   } else if (invitingMember.isInjured && invitingMember.isInjured > 0) {
-    console.log('\t inviter is injured');
+    logger.accessLog.info('\t inviter is injured');
     const inviterKey =
       pop.getPopulationKey(invitingMember, gameState) || invitingMember.name;
     text.addMessage(
@@ -1023,7 +1024,7 @@ function hasReasontoNotInvite(gameState, invitingMember) {
     invitingMember.cannotInvite = true;
     return true;
   } else if (invitingMember.isSick && invitingMember.isSick > 0) {
-    console.log('\t inviter is sick');
+    logger.accessLog.info('\t inviter is sick');
     const inviterKey =
       pop.getPopulationKey(invitingMember, gameState) || invitingMember.name;
     text.addMessage(
@@ -1053,17 +1054,17 @@ function makeLove(targetName, inviterName, gameState, force = false) {
   }
   const motherName = mother.name;
   const fatherName = father.name;
-  console.log('mother:' + motherName + ' father:' + fatherName);
+  logger.accessLog.info('mother:' + motherName + ' father:' + fatherName);
   let spawnChance = 9;
   if (mother.nursing && mother.nursing.length > 0) {
     spawnChance = 10;
   }
   const roll1 = dice.roll(1);
   const roll2 = dice.roll(1);
-  console.log('secret mating rolls [' + roll1 + '][' + roll2 + ']');
+  logger.accessLog.info('secret mating rolls [' + roll1 + '][' + roll2 + ']');
   if (force != false || roll1 + roll2 >= spawnChance) {
     if (mother.hiddenPregnant) {
-      console.log(
+      logger.accessLog.info(
         motherName + ' is secretly already pregnant by ' + mother.hiddenPregnant
       );
     } else {
@@ -1118,7 +1119,7 @@ function detection(mother, father, reproRoll, gameState) {
     observerName.toLowerCase() === mName ||
     observerName.toLowerCase() === fName
   ) {
-    console.log('self observation is discarded');
+    logger.accessLog.info('self observation is discarded');
     return false;
   }
   var netRoll;
@@ -1131,11 +1132,11 @@ function detection(mother, father, reproRoll, gameState) {
   ) {
     netRoll = netRoll + 1;
   }
-  console.log(
+  logger.accessLog.info(
     'Detection: obv:' + observerName + ' base:' + baseRoll + ' net:' + netRoll
   );
   if (netRoll >= OBSERVER_THRESHOLD) {
-    console.log('should send a message to ' + observerName);
+    logger.accessLog.info('should send a message to ' + observerName);
 
     text.addMessage(
       gameState,
@@ -1225,11 +1226,11 @@ function getNextChildName(children, childNames, nextIndex, gameState) {
   var currentNames = takenRealChildNames(children);
   if (!nextIndex === null) {
     nextIndex = gameState.conceptionCounter % 26;
-    console.log('getNextChild with default index ' + nextIndex);
+    logger.accessLog.info('getNextChild with default index ' + nextIndex);
   }
   var possibles = childNames['names'][nextIndex];
   if (!possibles || possibles.lenght < 1) {
-    console.log('Unpossible name  possibles:' + possibles);
+    logger.accessLog.info('Unpossible name  possibles:' + possibles);
     return 'Unpossible';
   }
   var counter = 0;
@@ -1239,7 +1240,7 @@ function getNextChildName(children, childNames, nextIndex, gameState) {
     counter = counter + 1;
   }
   if (counter == 10) {
-    console.log(
+    logger.accessLog.info(
       'could not get a unique child name. ' +
         currentNames.join() +
         ' last tried:' +
@@ -1248,7 +1249,7 @@ function getNextChildName(children, childNames, nextIndex, gameState) {
     possibleName = 'Overfull' + nextIndex;
   }
   if (!possibleName) {
-    console.log(
+    logger.accessLog.info(
       'Failed to get a possible name.  counter:' +
         counter +
         ' nextIndex=' +
@@ -1300,7 +1301,7 @@ function rekeyChild(gameState, oldKey, newName) {
     return oldKey;
   }
   if (children[newName] && children[newName] !== child) {
-    console.log(
+    logger.accessLog.info(
       'rekeyChild: target name already occupied: ' + newName + ' (keeping ' + oldKey + ')'
     );
     return oldKey;
@@ -1366,7 +1367,7 @@ function addTwin(mother, father, gameState) {
   child.gender = genders[Math.trunc(Math.random() * genders.length)];
   const twinName = allocateChildName(gameState);
   gameState.children[twinName] = child;
-  console.log('added twin ' + twinName);
+  logger.accessLog.info('added twin ' + twinName);
   return { child: child, name: twinName };
 }
 module.exports.addTwin = addTwin;
@@ -1405,7 +1406,7 @@ function migrateLegacyUnborn(gameState) {
       continue;
     }
     if (children[tempKey] && children[tempKey] !== child) {
-      console.log(
+      logger.accessLog.info(
         'migrateLegacyUnborn: ' + tempKey + ' already exists; skipping ' + oldKey
       );
       continue;
@@ -1440,10 +1441,10 @@ function addChild(mother, father, gameState) {
   // Name and gender are assigned at birth (see nameUnbornAtBirth / feed.birth).
   const childKey = unbornKeyFor(motherKey);
   if (gameState.children[childKey]) {
-    console.log('addChild: replacing existing unborn slot ' + childKey);
+    logger.accessLog.info('addChild: replacing existing unborn slot ' + childKey);
   }
   gameState.children[childKey] = child;
-  console.log('added unborn child ' + childKey);
+  logger.accessLog.info('added unborn child ' + childKey);
   if (motherAsMember) {
     motherAsMember.isPregnant = childKey;
   }
@@ -1453,7 +1454,7 @@ function addChild(mother, father, gameState) {
     const removeAt = indexOfPreggers > -1 ? indexOfPreggers : indexOfKey;
     if (removeAt > -1) {
       gameState.reproductionList.splice(removeAt, 1);
-      console.log('attempting to remove pregnant woman from reproduction list');
+      logger.accessLog.info('attempting to remove pregnant woman from reproduction list');
     }
   }
   // conceptionCounter advances only when real names are allocated at birth.
@@ -1656,7 +1657,7 @@ function startReproductionChecks(gameState, actorName) {
   var d = new Date();
   var saveTime = d.toISOString();
   saveTime = saveTime.replace(/\//g, '-');
-  console.log(
+  logger.accessLog.info(
     saveTime + ' start reproduction round  season:' + gameState.seasonCounter
   );
 }

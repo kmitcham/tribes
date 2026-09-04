@@ -1,8 +1,10 @@
 const { SlashCommandBuilder } = require('../../libs/command-builders.js');
 const huntlib = require('../../libs/hunt.js');
+const worklib = require('../../libs/work.js');
 const text = require('../../libs/textprocess.js');
 const dice = require('../../libs/dice.js');
 const locations = require('../../libs/locations.json');
+const logger = require('../../libs/logger.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -68,7 +70,7 @@ function onCommand(interaction, gameState) {
       return;
     }
   }
-  console.log(
+  logger.accessLog.info(
     'scouting.  location:' + targetLocation + ' nerdOption:' + nerdOption
   );
 
@@ -124,7 +126,7 @@ function getNerdData(gameTrackValue, nerdOption) {
         }
         for (const locationName in totals) {
           const locationData = locations[locationName];
-          const data = gatherDataFor(locationName, droll);
+          const data = worklib.gatherDataFor(locationName, droll);
           totals[locationName][GATHER] += data[1];
           totals[locationName][GRAIN] += data[2];
           totals[locationName][HUNT] += huntlib.huntDataFor(
@@ -139,7 +141,7 @@ function getNerdData(gameTrackValue, nerdOption) {
             locationData['hunt'],
             sval
           )[1];
-          const dataStrong = gatherDataFor(locationName, droll + 1);
+          const dataStrong = worklib.gatherDataFor(locationName, droll + 1);
           totals[locationName][GATHER_STRONG] += dataStrong[1];
           totals[locationName][GRAIN_STRONG] += dataStrong[2];
         }
@@ -175,7 +177,7 @@ function getNerdData(gameTrackValue, nerdOption) {
       }
       for (const locationName in totals) {
         const locationData = locations[locationName];
-        const data = gatherDataFor(locationName, val);
+        const data = worklib.gatherDataFor(locationName, val);
         totals[locationName][GATHER] += data[1];
         totals[locationName][GRAIN] += data[2];
         totals[locationName][HUNT] += huntlib.huntDataFor(
@@ -188,7 +190,7 @@ function getNerdData(gameTrackValue, nerdOption) {
         }
         const foo = huntlib.huntDataFor(locationData['hunt'], sval);
         totals[locationName][SPEAR] += foo[1];
-        const dataStrong = gatherDataFor(locationName, val + 1);
+        const dataStrong = worklib.gatherDataFor(locationName, val + 1);
         totals[locationName][GATHER_STRONG] += dataStrong[1];
         totals[locationName][GRAIN_STRONG] += dataStrong[2];
       }
@@ -213,29 +215,4 @@ function getNerdData(gameTrackValue, nerdOption) {
     }
   }
   return response;
-}
-// helper function for the nerdOption function
-function gatherDataFor(locationName, roll) {
-  const resourceData = locations[locationName]['gather'];
-  const maxRoll = resourceData[resourceData.length - 1][0];
-  const minRoll = resourceData[0][0];
-  if (roll > maxRoll) {
-    roll = maxRoll;
-  }
-  if (roll < minRoll) {
-    roll = minRoll;
-  }
-  for (var i = 0; i < resourceData.length; i++) {
-    if (resourceData[i][0] == roll) {
-      return resourceData[i];
-    }
-  }
-  console.log(
-    'error looking up resourceData for ' +
-      locationName +
-      ' ' +
-      'gather' +
-      ' ' +
-      roll
-  );
 }

@@ -106,6 +106,4 @@ function injectIntoHtml(html, buildInfo, wsConfig) {
 module.exports = {
   getBuildInfo,
   injectIntoHtml,
-  nonEmpty,
-  runGit,
 };
