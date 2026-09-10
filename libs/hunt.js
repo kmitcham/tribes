@@ -152,6 +152,13 @@ function huntResultIcon(resultText) {
   ) {
     return '🐇';
   }
+  // #211 marsh rat (and any hunt result naming a rat)
+  if (normalized.includes('rat')) {
+    return '🐀';
+  }
+  if (normalized.includes('otter')) {
+    return '🦦';
+  }
   if (
     normalized.includes('rodent') ||
     normalized.includes('squirrel') ||
@@ -159,11 +166,22 @@ function huntResultIcon(resultText) {
   ) {
     return '🐿️';
   }
+  // #208 hills elk
   if (normalized.includes('elk')) {
     return '🫎';
   }
   if (normalized.includes('fish') || normalized.includes('sturgeon')) {
     return '🐟';
+  }
+  // #209 marsh waterfowl (and hills wildfowl)
+  if (
+    normalized.includes('waterfowl') ||
+    normalized.includes('wildfowl') ||
+    normalized.includes('duck') ||
+    normalized.includes('goose') ||
+    normalized.includes('swan')
+  ) {
+    return '🦆';
   }
   if (
     normalized.includes('deer') ||
@@ -195,6 +213,7 @@ function huntResultIcon(resultText) {
   return '';
 }
 module.exports.huntDataFor = huntDataFor;
+module.exports.huntResultIcon = huntResultIcon;
 
 function getScoutMessage(otherLocation, gameState) {
   let locationName = gameState.currentLocationName;

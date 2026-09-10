@@ -239,6 +239,7 @@ test('threshold, no spear', () => {
   var player = gameState['population'][playername];
   output = lib.hunt(playername, player, 9, gameState);
   expect(output).toMatch('marsh rat');
+  expect(output).toContain('🐀');
   expect(gameState['population'][playername]['food']).toBe(2);
   expect(gameState['population'][playername]['worked']).toBeTruthy();
   expect(gameState['gameTrack']['marsh']).toBe(2);
@@ -413,4 +414,62 @@ test('scout alt location, capped', () => {
   expect(output).toMatch('antelope');
   expect(output).toMatch('capped');
   expect(output).not.toMatch('zebra');
+});
+
+describe('huntResultIcon', () => {
+  test('maps marsh rat, waterfowl, elk, and forest rodents (#211 #209 #208 #203)', () => {
+    expect(lib.huntResultIcon('marsh rat')).toBe('🐀');
+    expect(lib.huntResultIcon('waterfowl')).toBe('🦆');
+    expect(lib.huntResultIcon('wildfowl')).toBe('🦆');
+    expect(lib.huntResultIcon('elk')).toBe('🫎');
+    expect(lib.huntResultIcon('rodent')).toBe('🐿️');
+    expect(lib.huntResultIcon('squirrel')).toBe('🐿️');
+    expect(lib.huntResultIcon('otter')).toBe('🦦');
+  });
+});
+
+test('hills elk hunt includes moose emoji (#208)', () => {
+  var gameState = {
+    seasonCounter: 1,
+    gameTrack: { veldt: 1, forest: 1, marsh: 1, hills: 1 },
+    name: 'flounder-tribe',
+    population: {
+      Hunter1: {
+        gender: 'female',
+        spearhead: 0,
+        food: 0,
+        name: 'Hunter1',
+        profession: 'hunter',
+      },
+    },
+    currentLocationName: 'hills',
+    round: 'work',
+    messages: {},
+  };
+  var output = lib.hunt('Hunter1', gameState.population.Hunter1, 17, gameState);
+  expect(output).toMatch(/elk/i);
+  expect(output).toContain('🫎');
+});
+
+test('marsh waterfowl hunt includes duck emoji (#209)', () => {
+  var gameState = {
+    seasonCounter: 1,
+    gameTrack: { veldt: 1, forest: 1, marsh: 1, hills: 1 },
+    name: 'flounder-tribe',
+    population: {
+      Hunter1: {
+        gender: 'female',
+        spearhead: 0,
+        food: 0,
+        name: 'Hunter1',
+        profession: 'hunter',
+      },
+    },
+    currentLocationName: 'marsh',
+    round: 'work',
+    messages: {},
+  };
+  var output = lib.hunt('Hunter1', gameState.population.Hunter1, 13, gameState);
+  expect(output).toMatch(/waterfowl/i);
+  expect(output).toContain('🦆');
 });

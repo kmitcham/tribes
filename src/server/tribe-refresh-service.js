@@ -89,7 +89,15 @@ function refreshTribeGameData(gameState, tribeName, deps) {
             matingComplete: gameState.matingComplete === true,
             seasonCounter: gameState.seasonCounter,
             currentLocationName: gameState.currentLocationName,
-            year: Math.floor(gameState.seasonCounter / 2),
+            year: Math.floor(Number(gameState.seasonCounter) / 2),
+            gameTrackValue: (() => {
+              const loc = gameState.currentLocationName;
+              const track =
+                gameState.gameTrack && loc
+                  ? Number(gameState.gameTrack[loc])
+                  : NaN;
+              return Number.isFinite(track) ? track : undefined;
+            })(),
             demand: gameState.demand,
             violence: gameState.violence,
             combatRounds: Number.isFinite(gameState.violenceRounds)

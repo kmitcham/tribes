@@ -1835,13 +1835,13 @@
             <span class="status-icon">⚙️</span>
             <span>Work Round</span>
         </div>
-        <div class="status-item" id="seasonStatus">
+        <div class="status-item" id="seasonStatus" style="display: none;">
             <span class="status-icon">☀️</span>
-            <span>Warm Season</span>
+            <span></span>
         </div>
-        <div class="status-item" id="locationStatus">
+        <div class="status-item" id="locationStatus" style="display: none;">
             <span class="status-icon">🌍</span>
-            <span>Unknown: Track ?</span>
+            <span></span>
         </div>
         <div class="status-item" id="conflictStatus" style="display: none;">
             <span class="status-icon">⚖️</span>
@@ -2102,6 +2102,10 @@
                 this.chiefStatus = false; // Track chief status
                 this.orientationMessageSessionKey = 'tribesOrientationShown';
                 this.orientationMessageShownFallback = false;
+                // Snapshot BEFORE login can mark "has logged in" in this page load.
+                // Used so returning desktop/mobile users don't see the welcome again,
+                // without suppressing the popup on a true first login.
+                this.hadPriorBrowserVisit = false;
                 // Dedupe live/replay/restored chat lines (fingerprint -> last seen ms).
                 this.messageFingerprints = new Map();
                 // Local persistence: keep a longer window so reload does not wipe the feed.
@@ -2115,7 +2119,8 @@
                     children: { key: 'name', dir: 'asc' },
                     graveyard: { key: 'name', dir: 'asc' },
                 };
-                
+
+                this.hadPriorBrowserVisit = this.detectPriorBrowserVisit();
                 this.loadSavedSettings();
                 this.initializeEventListeners();
                 this.hideCommandsSection(); // Initially hide commands until login
@@ -2127,6 +2132,7 @@
                 this.currentSessionToken = token;
                 this.currentPlayerName = playerName;
                 window.TribesStorage.setSession(token, playerName);
+                this.markBrowserLoggedIn();
             }
             
             restoreSession() {
@@ -2197,6 +2203,40 @@
                     if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
                 }
                 return null;
+            }
+
+            // Dual-persist helpers: localStorage (desktop) + cookies (mobile).
+            // Mobile browsers often drop or isolate localStorage across reloads;
+            // first-party cookies already remember tribe/player name reliably.
+            static get BROWSER_LOGGED_IN_KEY() {
+                return 'tribesHasLoggedIn';
+            }
+
+            markBrowserLoggedIn() {
+                window.TribesStorage.setItem(
+                    TribesClient.BROWSER_LOGGED_IN_KEY,
+                    '1'
+                );
+                this.setCookie(TribesClient.BROWSER_LOGGED_IN_KEY, '1', 730);
+            }
+
+            hasBrowserLoggedIn() {
+                if (
+                    window.TribesStorage.getItem(
+                        TribesClient.BROWSER_LOGGED_IN_KEY
+                    ) === '1'
+                ) {
+                    return true;
+                }
+                if (this.getCookie(TribesClient.BROWSER_LOGGED_IN_KEY) === '1') {
+                    // Heal localStorage if only the cookie survived (common on mobile).
+                    window.TribesStorage.setItem(
+                        TribesClient.BROWSER_LOGGED_IN_KEY,
+                        '1'
+                    );
+                    return true;
+                }
+                return false;
             }
 
             loadSavedSettings() {
@@ -2582,6 +2622,7 @@
                 if (data.success) {
                     this.isLoggedIn = true;
                     this.currentPlayerName = data.playerName;
+                    this.markBrowserLoggedIn();
                     // Ensure name field matches session so history key is correct
                     const playerNameInput = document.getElementById('playerName');
                     if (playerNameInput && data.playerName) {
@@ -2698,6 +2739,29 @@
                 // Tribe list often arrives after first paint; load history under the real key.
                 this.loadMessageHistory();
                 this.updateCurrentTribeStatusChip(this.currentStatusData || {});
+
+                // Programmatic select does not fire onchange. Observers (not logged in)
+                // should still see season/year/location for the selected tribe.
+                this.ensureTribeStatusLoaded();
+            }
+
+            ensureTribeStatusLoaded() {
+                const tribeSelect = document.getElementById('tribeSelect');
+                const selected = tribeSelect
+                    ? String(tribeSelect.value || '').trim()
+                    : '';
+                if (!selected || selected.toLowerCase() === 'loading...') {
+                    return;
+                }
+
+                const tribeChanged = selected !== this._lastStatusTribe;
+                const missingStatus = !this.currentStatusData;
+                if (!tribeChanged && !missingStatus) {
+                    return;
+                }
+
+                this._lastStatusTribe = selected;
+                this.refreshGameData();
             }
 
             regenerateModalFormIfDataReady(dataLabel) {
@@ -2826,6 +2890,7 @@
                     }
                     
                     this.isLoggedIn = true; // Set logged in state
+                    this.markBrowserLoggedIn();
                     this.showCommandsSection(); // Show commands after successful login
                     this.requestCommandList(); // Refresh command list in case chief status changed
                     this.minimizeLoginArea(); // Minimize login area after successful registration
@@ -2852,35 +2917,128 @@
                 return this.orientationMessageSessionKey;
             }
 
-            hasSeenOrientationMessage(playerName) {
-                const key = this.getOrientationStorageKey(playerName);
-                try {
-                    return window.TribesStorage.getItem(key) === '1';
-                } catch (_error) {
-                    return !!this.orientationMessageShownFallback;
-                }
+            /** Cookie-safe form of a storage key (no colon). */
+            toCookieKey(storageKey) {
+                return String(storageKey || '').replace(/[^a-zA-Z0-9_-]/g, '_');
             }
 
-            markOrientationMessageSeen(playerName) {
-                const key = this.getOrientationStorageKey(playerName);
+            getOrientationCookieKey(playerName) {
+                return this.toCookieKey(this.getOrientationStorageKey(playerName));
+            }
+
+            /**
+             * True if this browser already visited/logged in before this page load.
+             * Checks both localStorage (desktop) and cookies (mobile), plus legacy keys.
+             */
+            detectPriorBrowserVisit() {
+                const browserKey = this.orientationMessageSessionKey;
+                if (window.TribesStorage.getItem(browserKey) === '1') {
+                    return true;
+                }
+                if (this.getCookie(this.toCookieKey(browserKey)) === '1') {
+                    return true;
+                }
+                if (this.hasBrowserLoggedIn()) {
+                    return true;
+                }
+                // Remembered name/tribe cookies were the reliable mobile signal.
+                if (this.getCookie('tribesLastPlayerName') || this.getCookie('tribesLastTribe')) {
+                    return true;
+                }
                 try {
-                    window.TribesStorage.setItem(key, '1');
+                    if (
+                        typeof sessionStorage !== 'undefined' &&
+                        sessionStorage.getItem(browserKey) === '1'
+                    ) {
+                        return true;
+                    }
+                } catch (_error) {
+                    // ignore
+                }
+                return false;
+            }
+
+            readPersistedFlag(storageKey) {
+                if (window.TribesStorage.getItem(storageKey) === '1') {
+                    return true;
+                }
+                if (this.getCookie(this.toCookieKey(storageKey)) === '1') {
+                    return true;
+                }
+                try {
+                    if (
+                        typeof sessionStorage !== 'undefined' &&
+                        sessionStorage.getItem(storageKey) === '1'
+                    ) {
+                        return true;
+                    }
+                } catch (_error) {
+                    // ignore
+                }
+                return false;
+            }
+
+            writePersistedFlag(storageKey) {
+                try {
+                    window.TribesStorage.setItem(storageKey, '1');
                 } catch (_error) {
                     this.orientationMessageShownFallback = true;
                 }
+                this.setCookie(this.toCookieKey(storageKey), '1', 730);
+                try {
+                    if (typeof sessionStorage !== 'undefined') {
+                        sessionStorage.setItem(storageKey, '1');
+                    }
+                } catch (_error) {
+                    // ignore
+                }
+            }
+
+            hasSeenOrientationMessage(playerName) {
+                if (this.orientationMessageShownFallback) {
+                    return true;
+                }
+                const browserKey = this.orientationMessageSessionKey;
+                const playerKey = this.getOrientationStorageKey(playerName);
+                // Browser-wide OR per-player, in localStorage or cookie (or legacy sessionStorage).
+                if (this.readPersistedFlag(browserKey)) {
+                    return true;
+                }
+                if (playerKey !== browserKey && this.readPersistedFlag(playerKey)) {
+                    return true;
+                }
+                return false;
+            }
+
+            markOrientationMessageSeen(playerName) {
+                const browserKey = this.orientationMessageSessionKey;
+                const playerKey = this.getOrientationStorageKey(playerName);
+                // Write both stores + browser-wide and per-player so desktop and mobile agree.
+                this.writePersistedFlag(browserKey);
+                if (playerKey !== browserKey) {
+                    this.writePersistedFlag(playerKey);
+                }
+                this.markBrowserLoggedIn();
             }
 
             showLoginOrientationMessage() {
-                // Once per player per browser (localStorage), not once per tab session.
-                // Mobile reloads were re-showing the welcome because sessionStorage reset.
-                // Do not gate on a process-wide runtime flag — a second login in the same
-                // SPA session (different player) must still get their own welcome.
+                // Once per browser. Dual-persist to localStorage (desktop) and cookies
+                // (mobile) — same pattern as remembered tribe/player name. Also honor
+                // prior-visit signals captured at page load so returning users who only
+                // have those cookies don't see the popup again after storage migrations.
                 const playerName =
                     document.getElementById('playerName')?.value ||
                     window.TribesStorage.getSession().playerName ||
                     '';
 
                 if (this.hasSeenOrientationMessage(playerName)) {
+                    // Heal any missing half of the dual-write.
+                    this.markOrientationMessageSeen(playerName);
+                    return;
+                }
+
+                if (this.hadPriorBrowserVisit) {
+                    this.markOrientationMessageSeen(playerName);
                     return;
                 }
 
@@ -7402,8 +7560,14 @@
                     return;
                 }
 
-                const content = String(text ?? '');
-                const shouldHide = content.includes('?') || content.toLowerCase().includes('unknown');
+                if (text === null || text === undefined || text === '') {
+                    el.style.display = 'none';
+                    return;
+                }
+
+                const content = String(text);
+                const shouldHide =
+                    content.includes('?') || content.toLowerCase().includes('unknown');
                 el.style.display = shouldHide ? 'none' : 'flex';
                 if (!shouldHide) {
                     el.innerHTML = `<span class="status-icon">${icon}</span><span>${content}</span>`;
@@ -7507,8 +7671,10 @@
             getSeasonStatusFromGameState(gameState) {
                 let seasonIcon = '☀️';
                 let seasonText = 'Warm Season';
+                const seasonCounter = Number(gameState && gameState.seasonCounter);
 
-                if (gameState.seasonCounter && gameState.seasonCounter % 2 === 0) {
+                // seasonCounter 0 is cold; do not treat 0 as falsy/missing.
+                if (Number.isFinite(seasonCounter) && seasonCounter % 2 === 0) {
                     seasonIcon = '❄️';
                     seasonText = 'Cold Season';
                 }
@@ -7517,19 +7683,17 @@
             }
 
             getSeasonStatusFromText(status) {
-                let seasonIcon = '☀️';
-                let seasonText = 'Warm Season';
                 const statusLower = String(status || '').toLowerCase();
 
                 if (statusLower.includes('winter') || statusLower.includes('cold')) {
-                    seasonIcon = '❄️';
-                    seasonText = 'Cold Season';
-                } else if (statusLower.includes('summer') || statusLower.includes('warm')) {
-                    seasonIcon = '☀️';
-                    seasonText = 'Warm Season';
+                    return { seasonIcon: '❄️', seasonText: 'Cold Season' };
+                }
+                if (statusLower.includes('summer') || statusLower.includes('warm')) {
+                    return { seasonIcon: '☀️', seasonText: 'Warm Season' };
                 }
 
-                return { seasonIcon, seasonText };
+                // No season in this status string (e.g. pre-login welcome).
+                return { seasonIcon: '☀️', seasonText: null };
             }
 
             getLocationStatusFromGameState(gameState) {
@@ -7593,12 +7757,14 @@
             }
 
             getYearValueFromGameState(gameState) {
-                if (Number.isFinite(gameState.year)) {
-                    return gameState.year;
+                const yearNumber = Number(gameState && gameState.year);
+                if (Number.isFinite(yearNumber)) {
+                    return yearNumber;
                 }
 
-                if (Number.isFinite(gameState.seasonCounter)) {
-                    return Math.floor(gameState.seasonCounter / 2);
+                const seasonCounter = Number(gameState && gameState.seasonCounter);
+                if (Number.isFinite(seasonCounter)) {
+                    return Math.floor(seasonCounter / 2);
                 }
 
                 return '?';
@@ -7616,7 +7782,15 @@
             }
 
             buildSeasonYearText(seasonText, yearValue) {
-                return yearValue === '?' ? seasonText : `${seasonText} • Year ${yearValue}`;
+                if (!seasonText) {
+                    return null;
+                }
+                // Year first so mobile ellipsis does not clip it off the end.
+                // Omit the chip until we know the year (needs tribe game state).
+                if (yearValue === '?' || yearValue === null || yearValue === undefined) {
+                    return null;
+                }
+                return `Year ${yearValue} · ${seasonText}`;
             }
 
             buildLocationTrackText(locationText, gameTrackValue) {
@@ -7680,8 +7854,22 @@
                 const yearValue = this.getYearValueFromGameState(gameState);
                 const seasonYearText = this.buildSeasonYearText(seasonText, yearValue);
 
-                const currentTrack = this.currentStatusData && this.currentStatusData.gameTrack;
-                const gameTrackValue = Number.isFinite(currentTrack) ? currentTrack : '?';
+                const trackFromPayload = Number(gameState && gameState.gameTrackValue);
+                const trackFromCache =
+                    this.currentStatusData &&
+                    Number(this.currentStatusData.gameTrackValue ?? this.currentStatusData.gameTrack);
+                const gameTrackValue = Number.isFinite(trackFromPayload)
+                    ? trackFromPayload
+                    : Number.isFinite(trackFromCache)
+                      ? trackFromCache
+                      : '?';
+                if (
+                    this.currentStatusData &&
+                    Number.isFinite(Number(gameTrackValue))
+                ) {
+                    this.currentStatusData.gameTrackValue = Number(gameTrackValue);
+                    this.currentStatusData.gameTrack = Number(gameTrackValue);
+                }
                 const locationTrackText = this.buildLocationTrackText(locationText, gameTrackValue);
 
                 this.applyGameStatusChips(
@@ -7750,10 +7938,17 @@
                 // Tribe dropdown change - clear cached data when switching tribes and save setting
                 document.getElementById('tribeSelect').onchange = () => {
                     this.currentPopulation = null;
+                    this.currentChildren = null;
+                    this.currentGraveyard = null;
+                    this.currentStatusData = null;
                     this.saveSettings(); // Save the new tribe selection
-                    this.updateCurrentTribeStatusChip(this.currentStatusData || {});
+                    this.updateCurrentTribeStatusChip({});
                     
-                    // Refresh game data for the new tribe (population, children, status)
+                    // Refresh game data for the new tribe (population, children, status).
+                    // Works without login so people can observe a tribe's game state.
+                    this._lastStatusTribe = String(
+                        document.getElementById('tribeSelect').value || ''
+                    ).trim();
                     this.refreshGameData();
                     
                     // Clear message display when switching tribes  

@@ -171,8 +171,37 @@ function createMockEnvironment() {
   const commandsSection = createElement('section');
   const userInfo = createElement('section');
 
+  const cookieJar = {};
   const documentMock = {
-    cookie: '',
+    get cookie() {
+      return Object.entries(cookieJar)
+        .map(([name, value]) => `${name}=${value}`)
+        .join('; ');
+    },
+    set cookie(cookieString) {
+      // Mimic browser document.cookie setter: "name=value; expires=...; path=/"
+      const firstSegment = String(cookieString || '').split(';')[0] || '';
+      const eq = firstSegment.indexOf('=');
+      if (eq <= 0) {
+        return;
+      }
+      const name = firstSegment.slice(0, eq).trim();
+      const value = firstSegment.slice(eq + 1).trim();
+      if (!name) {
+        return;
+      }
+      // expires in the past → delete (logout/clear paths)
+      const lower = String(cookieString).toLowerCase();
+      const expiresMatch = lower.match(/expires=([^;]+)/);
+      if (expiresMatch) {
+        const expiresAt = Date.parse(expiresMatch[1]);
+        if (Number.isFinite(expiresAt) && expiresAt <= Date.now()) {
+          delete cookieJar[name];
+          return;
+        }
+      }
+      cookieJar[name] = value;
+    },
     getElementById: (id) => {
       if (!elements[id]) {
         elements[id] = createElement('div');
@@ -259,6 +288,7 @@ function createMockEnvironment() {
     elements,
     documentMock,
     localStorageMock,
+    cookieJar,
     windowMock,
     InterfaceMockWebSocket,
   };
@@ -350,6 +380,22 @@ describe('Tribes Interface Client (real class)', () => {
     expect(client.currentSessionToken).toBe('test-token-123');
     expect(client.currentPlayerName).toBe('StoredPlayer');
     expect(env.elements.playerName.value).toBe('StoredPlayer');
+  });
+
+  test('marks browser logged-in in localStorage and cookies', () => {
+    expect(client.hasBrowserLoggedIn()).toBe(false);
+
+    client.storeSession('tok', 'Ada');
+
+    expect(client.hasBrowserLoggedIn()).toBe(true);
+    expect(env.localStorageMock.getItem('tribesHasLoggedIn')).toBe('1');
+    expect(env.cookieJar.tribesHasLoggedIn).toBe('1');
+
+    // Cookie-only survival (mobile localStorage wipe) still counts.
+    env.localStorageMock.removeItem('tribesHasLoggedIn');
+    expect(client.hasBrowserLoggedIn()).toBe(true);
+    // Heals localStorage from cookie.
+    expect(env.localStorageMock.getItem('tribesHasLoggedIn')).toBe('1');
   });
 
   test('updates connection status text and classes', () => {
@@ -565,13 +611,15 @@ describe('Tribes Interface Client (real class)', () => {
     expect(targetsForBob).toEqual(['Alice', 'Carol']);
   });
 
-  test('welcome orientation shows once per player across reloads', () => {
+  test('welcome orientation shows once per browser across reloads', () => {
     env.elements.playerName.value = 'Ada';
     expect(client.hasSeenOrientationMessage('Ada')).toBe(false);
     client.showLoginOrientationMessage();
     expect(client.hasSeenOrientationMessage('Ada')).toBe(true);
+    expect(env.localStorageMock.getItem('tribesOrientationShown')).toBe('1');
+    expect(env.cookieJar.tribesOrientationShown).toBe('1');
 
-    // New client instance, same browser storage (simulates mobile reload).
+    // New client instance, same browser storage (simulates reload).
     const client2 = new TribesClient();
     env.elements.playerName.value = 'Ada';
     const modal = env.documentMock.getElementById('orientationModal');
@@ -581,7 +629,42 @@ describe('Tribes Interface Client (real class)', () => {
     expect(modal.classList.contains('active')).toBe(false);
   });
 
-  test('welcome orientation still shows for a second player in the same SPA session', () => {
+  test('welcome orientation survives when only the cookie remains', () => {
+    env.elements.playerName.value = 'Ada';
+    client.showLoginOrientationMessage();
+    expect(client.hasSeenOrientationMessage('Ada')).toBe(true);
+
+    // Wipe localStorage; keep cookies (mobile quirk).
+    env.localStorageMock.clear();
+
+    const client2 = new TribesClient();
+    env.elements.playerName.value = 'Ada';
+    const modal = env.documentMock.getElementById('orientationModal');
+    modal.classList.remove('active');
+    expect(client2.hadPriorBrowserVisit).toBe(true);
+    expect(client2.hasSeenOrientationMessage('Ada')).toBe(true);
+    client2.showLoginOrientationMessage();
+    expect(modal.classList.contains('active')).toBe(false);
+  });
+
+  test('welcome orientation suppressed for returning browser with only remembered-name cookie', () => {
+    // Desktop/mobile users who never got the localStorage orientation key, but
+    // do have the remembered-name cookie that historically worked.
+    env.cookieJar.tribesLastPlayerName = 'Ada';
+    const client2 = new TribesClient();
+    expect(client2.hadPriorBrowserVisit).toBe(true);
+
+    env.elements.playerName.value = 'Ada';
+    const modal = env.documentMock.getElementById('orientationModal');
+    modal.classList.remove('active');
+    client2.showLoginOrientationMessage();
+    expect(modal.classList.contains('active')).toBe(false);
+    // Heals dual-write for next time.
+    expect(env.localStorageMock.getItem('tribesOrientationShown')).toBe('1');
+    expect(env.cookieJar.tribesOrientationShown).toBe('1');
+  });
+
+  test('welcome orientation is once per browser, not once per player', () => {
     env.elements.playerName.value = 'Ada';
     client.showLoginOrientationMessage();
     expect(client.hasSeenOrientationMessage('Ada')).toBe(true);
@@ -590,9 +673,20 @@ describe('Tribes Interface Client (real class)', () => {
     modal.classList.remove('active');
 
     env.elements.playerName.value = 'Bob';
-    expect(client.hasSeenOrientationMessage('Bob')).toBe(false);
     client.showLoginOrientationMessage();
-    expect(client.hasSeenOrientationMessage('Bob')).toBe(true);
+    expect(modal.classList.contains('active')).toBe(false);
+  });
+
+  test('first-time browser still sees welcome orientation', () => {
+    env.localStorageMock.clear();
+    Object.keys(env.cookieJar).forEach((key) => delete env.cookieJar[key]);
+    const fresh = new TribesClient();
+    expect(fresh.hadPriorBrowserVisit).toBe(false);
+
+    env.elements.playerName.value = 'Ada';
+    const modal = env.documentMock.getElementById('orientationModal');
+    modal.classList.remove('active');
+    fresh.showLoginOrientationMessage();
     expect(modal.classList.contains('active')).toBe(true);
   });
 
@@ -779,6 +873,66 @@ describe('Tribes Interface Client (real class)', () => {
     const names = items.map((item) => item.dataset.command);
     expect(names).toContain('join');
     expect(names).toContain('hunt');
+  });
+
+  test('selecting a tribe loads status without requiring login', () => {
+    client.isLoggedIn = false;
+    const refreshSpy = jest
+      .spyOn(client, 'refreshGameData')
+      .mockImplementation(() => {});
+
+    client.updateTribeDropdown({
+      bear: { name: 'bear', hidden: false },
+      bug: { name: 'bug', hidden: false },
+    });
+
+    expect(env.elements.tribeSelect.value).toBeTruthy();
+    expect(refreshSpy).toHaveBeenCalled();
+
+    refreshSpy.mockClear();
+    client.currentStatusData = { year: 1, seasonCounter: 2 };
+    client._lastStatusTribe = env.elements.tribeSelect.value;
+    client.updateTribeDropdown({
+      bear: { name: 'bear', hidden: false },
+      bug: { name: 'bug', hidden: false },
+    });
+    // Same tribe already loaded — do not spam refresh on every commandList.
+    expect(refreshSpy).not.toHaveBeenCalled();
+
+    refreshSpy.mockRestore();
+  });
+
+  test('status bar season chip includes the year', () => {
+    const seasonChip = env.documentMock.getElementById('seasonStatus');
+
+    client.updateGameStatusBarWithData({
+      workRound: true,
+      seasonCounter: 5,
+      year: 2,
+      currentLocationName: 'veldt',
+    });
+
+    expect(seasonChip.style.display).toBe('flex');
+    expect(seasonChip.innerHTML).toMatch(/Year\s*2/i);
+    expect(seasonChip.innerHTML).toMatch(/Warm Season/i);
+
+    client.updateGameStatusBarWithData({
+      workRound: true,
+      seasonCounter: 4,
+      year: 2,
+      currentLocationName: 'forest',
+    });
+    expect(seasonChip.innerHTML).toMatch(/Year\s*2/i);
+    expect(seasonChip.innerHTML).toMatch(/Cold Season/i);
+  });
+
+  test('status bar hides season until tribe game state is known', () => {
+    const seasonChip = env.documentMock.getElementById('seasonStatus');
+    seasonChip.style.display = 'flex';
+
+    client.updateGameStatusBar('Welcome to Tribes! Loading game status...');
+
+    expect(seasonChip.style.display).toBe('none');
   });
 
   test('status bar shows current tribe name when a tribe is selected', () => {

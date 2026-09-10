@@ -49,12 +49,16 @@ If the message is about a generic animal attack, use the predator that matches t
 Use animal icons that match the actual hunt result text when practical.
 
 - Small game / rabbit / hare: 🐇
-- Rodent / squirrel / small animal: 🐿️ / 🐁
+- Marsh rat / rat: 🐀
+- Otter: 🦦
+- Rodent / squirrel / mouse (non-rat): 🐿️
 - Elk: 🫎
 - Fish: 🐟
+- Waterfowl / wildfowl / duck / goose / swan: 🦆
 - Deer / antelope / gazelle / buck / doe: 🦌
 - Buffalo / large herd animal: 🦬
 - Bear / large predator: 🐻
+- Generic bird / hornbill: 🐦
 
 If the hunt result is generic, keep it simple with the base hunt message and skip the emoji rather than forcing a weak match.
 

@@ -55,6 +55,11 @@ function handleInfoRequest(ws, data, gameState, deps) {
 
     case 'status':
       const statusMessage = util.gameStateMessage(gameState);
+      const locationName = gameState.currentLocationName;
+      const locationTrack =
+        gameState.gameTrack && locationName
+          ? Number(gameState.gameTrack[locationName])
+          : NaN;
       messageData = {
         type: 'infoRequest',
         label: 'status',
@@ -66,8 +71,11 @@ function handleInfoRequest(ws, data, gameState, deps) {
           reproductionRound: gameState.reproductionRound,
           matingComplete: gameState.matingComplete === true,
           seasonCounter: gameState.seasonCounter,
-          currentLocationName: gameState.currentLocationName,
-          year: Math.floor(gameState.seasonCounter / 2),
+          currentLocationName: locationName,
+          year: Math.floor(Number(gameState.seasonCounter) / 2),
+          gameTrackValue: Number.isFinite(locationTrack)
+            ? locationTrack
+            : undefined,
           startStamp: gameState.startStamp,
           demand: gameState.demand,
           violence: gameState.violence,
