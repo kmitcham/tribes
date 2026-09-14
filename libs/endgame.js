@@ -296,10 +296,17 @@ function statusIcon(status) {
   return '❔';
 }
 
-function scoreIcon(score) {
-  if (score >= 8) {
+/**
+ * Endgame parent score badge (#214).
+ * 🏆 is first place only (most surviving kids in that gender group, ties share it).
+ * High scores that did not win get 🌟 / ✨ instead of a trophy.
+ */
+function scoreIcon(score, options) {
+  const opts = options || {};
+  if (opts.isFirstPlace && score > 0) {
     return '🏆';
   }
+  // Strong showing but not first (#214) — never a trophy.
   if (score >= 5) {
     return '🌟';
   }
@@ -307,6 +314,23 @@ function scoreIcon(score) {
     return '✨';
   }
   return '🌱';
+}
+
+/** Mark first place within each gender group (max surviving-children score). */
+function applyFirstPlaceFlags(rows) {
+  const maxByGender = {};
+  for (const row of rows || []) {
+    const g = row.gender || '?';
+    if (maxByGender[g] === undefined || row.score > maxByGender[g]) {
+      maxByGender[g] = row.score;
+    }
+  }
+  for (const row of rows || []) {
+    const g = row.gender || '?';
+    const max = maxByGender[g];
+    row.isFirstPlace = row.score > 0 && row.score === max;
+  }
+  return rows;
 }
 
 function addAdultNamesFromDictionary(dictionary, includeRecordCheck, target) {
@@ -456,7 +480,7 @@ function buildChildOutcomeRows(gameState) {
 
 function formatParentScoreLine(row) {
   return (
-    scoreIcon(row.score) +
+    scoreIcon(row.score, { isFirstPlace: !!row.isFirstPlace }) +
     ' ' +
     row.name +
     ' ' +
@@ -503,7 +527,7 @@ function formatPersonalLastGameSection(gameState, playerName) {
     return '';
   }
   const children = gameState.children || {};
-  const parentRows = buildParentRows(gameState, children);
+  const parentRows = applyFirstPlaceFlags(buildParentRows(gameState, children));
   const childRows = buildChildOutcomeRows(gameState);
   const lower = String(playerName).toLowerCase();
 
@@ -548,9 +572,11 @@ function scoreChildrenMessage(gameState) {
   const childRows = buildChildOutcomeRows(gameState);
   // Fathers stay secret until the game ends (#207).
   const showFathers = !!gameState.ended;
-  const parentRows = buildParentRows(gameState, children, {
-    countFathers: showFathers,
-  });
+  const parentRows = applyFirstPlaceFlags(
+    buildParentRows(gameState, children, {
+      countFathers: showFathers,
+    })
+  );
 
   if (childRows.length === 0) {
     return '👶 No children were found, so all individual scores are zero.';
@@ -569,13 +595,15 @@ function scoreChildrenMessage(gameState) {
   lines.push('');
   if (showFathers) {
     lines.push(
-      '👨‍👩‍👧‍👦 Parent scores (by gender, then surviving children):'
+      '👨‍👩‍👧‍👦 Parent scores (by gender, then surviving children; 🏆 = most kids in gender):'
     );
     parentRows.forEach((row) => {
       lines.push('- ' + formatParentScoreLine(row));
     });
   } else {
-    lines.push('👩 Mother scores (surviving children):');
+    lines.push(
+      '👩 Mother scores (surviving children; 🏆 = most kids among mothers):'
+    );
     parentRows
       .filter((row) => row.gender === 'f')
       .forEach((row) => {

@@ -30,6 +30,10 @@ Use these icons consistently when adding Unicode to player-facing messages. The 
 | Crafter profession | 🛠️ |
 | Injury | 🤕 |
 | Sickness | 🤢 |
+| Endgame first place (most kids in gender) | 🏆 |
+| Endgame strong showing (not first) | 🌟 |
+| Endgame some kids | ✨ |
+| Endgame zero kids | 🌱 |
 
 ## Predator Attack Icons
 

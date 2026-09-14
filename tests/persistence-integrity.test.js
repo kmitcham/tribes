@@ -43,12 +43,17 @@ describe('persistence integrity', () => {
       getGameState: jest.fn(() => gameState),
     };
 
+    const sendGameMessages = jest.fn();
+    const refreshTribeGameData = jest.fn();
+    const globalMatingCheck = jest.fn(() => 'still waiting');
+
     await requestFlow.handleRomanceRequest(
       ws,
       {
         tribe: 'bug',
         playerName: 'Alice',
         clientId: 'c1',
+        consentDict: { Bob: 'consent' },
       },
       gameState,
       {
@@ -56,13 +61,78 @@ describe('persistence integrity', () => {
         processRomance,
         savelib: { saveTribe },
         gameStateStore: store,
+        sendGameMessages,
+        refreshTribeGameData,
+        reproLib: { globalMatingCheck },
       }
     );
 
     expect(processRomance).toHaveBeenCalled();
+    expect(globalMatingCheck).not.toHaveBeenCalled(); // not reproductionRound
+    expect(sendGameMessages).toHaveBeenCalled();
+    expect(refreshTribeGameData).toHaveBeenCalled();
     expect(saveTribe).toHaveBeenCalledWith(gameState);
     expect(gameState.saveRequired).toBe(false);
     expect(sent[0]).toEqual({ type: 'romanceUpdate', ok: true });
+  });
+
+  test('romance request runs mating check during reproduction round (#186)', async () => {
+    const gameState = {
+      name: 'bug',
+      reproductionRound: true,
+      matingComplete: false,
+      population: {
+        Alice: { name: 'Alice', gender: 'female', inviteList: [] },
+        Bob: { name: 'Bob', gender: 'male', inviteList: [] },
+      },
+      messages: {},
+      saveRequired: false,
+    };
+    const sent = [];
+    const ws = {
+      send: (payload) => sent.push(JSON.parse(payload)),
+    };
+    const saveTribe = jest.fn();
+    const processRomance = jest.fn((_data, state) => {
+      state.population.Alice.consentDict = { Bob: 'consent' };
+      return { type: 'infoRequest', label: 'romance', content: {} };
+    });
+    const sendGameMessages = jest.fn();
+    const refreshTribeGameData = jest.fn();
+    const globalMatingCheck = jest.fn((state) => {
+      state.matingComplete = true;
+      state.messages.tribe = 'Reproduction is complete.';
+      return 'Reproduction is complete.';
+    });
+    const store = {
+      runExclusive: (tribe, fn) => gameStateStore.runExclusive(tribe, fn),
+      getGameState: jest.fn(() => gameState),
+    };
+
+    await requestFlow.handleRomanceRequest(
+      ws,
+      {
+        tribe: 'bug',
+        playerName: 'Alice',
+        clientId: 'c1',
+        consentDict: { Bob: 'consent' },
+      },
+      gameState,
+      {
+        validateUser: async () => true,
+        processRomance,
+        savelib: { saveTribe },
+        gameStateStore: store,
+        sendGameMessages,
+        refreshTribeGameData,
+        reproLib: { globalMatingCheck },
+      }
+    );
+
+    expect(globalMatingCheck).toHaveBeenCalled();
+    expect(sendGameMessages).toHaveBeenCalled();
+    expect(refreshTribeGameData).toHaveBeenCalledWith(gameState, 'bug');
+    expect(gameState.matingComplete).toBe(true);
   });
 
   test('command flow re-fetches game state and saves under lock', async () => {

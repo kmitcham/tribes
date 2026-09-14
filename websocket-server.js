@@ -654,6 +654,9 @@ async function handleRomanceRequest(ws, data, gameState) {
     savelib,
     gameStateStore,
     connectionStore,
+    sendGameMessages,
+    refreshTribeGameData,
+    reproLib: require('./libs/reproduction.js'),
   });
 }
 

@@ -1309,9 +1309,7 @@ test('parent scores sort by gender then surviving children', () => {
   };
 
   const msg = endLib.scoreChildrenMessage(gameState);
-  expect(msg).toContain(
-    'Parent scores (by gender, then surviving children)'
-  );
+  expect(msg).toContain('Parent scores (by gender, then surviving children');
 
   // Extract only parent score lines after the header
   const parentSection = msg.split('Parent scores')[1] || '';
@@ -1329,4 +1327,60 @@ test('parent scores sort by gender then surviving children', () => {
   });
 
   expect(namesInOrder).toEqual(['Carol', 'Alice', 'Dana', 'Bob', 'Adam']);
+});
+
+test('trophy is first place only within gender (#214)', () => {
+  const gameState = {
+    ended: true,
+    population: {
+      Carol: { name: 'Carol', gender: 'female' }, // 2 kids → 🏆 among females
+      Alice: { name: 'Alice', gender: 'female' }, // 1 kid → not trophy
+      HighLoser: { name: 'HighLoser', gender: 'female' }, // 8 kids would have been old trophy threshold but not first
+      Bob: { name: 'Bob', gender: 'male' }, // 2 kids → 🏆 among males
+      Adam: { name: 'Adam', gender: 'male' }, // 1 kid
+    },
+    banished: {},
+    graveyard: {},
+    children: {
+      C1: { name: 'C1', mother: 'Carol', father: 'Bob', gender: 'f' },
+      C2: { name: 'C2', mother: 'Carol', father: 'Bob', gender: 'm' },
+      A1: { name: 'A1', mother: 'Alice', father: 'Adam', gender: 'f' },
+      // HighLoser has many kids but fewer than Carol? Wait Carol has 2.
+      // Make HighLoser have 8 but Carol have 9 so HighLoser is "great but not first"
+      H1: { name: 'H1', mother: 'HighLoser', father: 'Bob', gender: 'f' },
+      H2: { name: 'H2', mother: 'HighLoser', father: 'Bob', gender: 'f' },
+      H3: { name: 'H3', mother: 'HighLoser', father: 'Bob', gender: 'f' },
+      H4: { name: 'H4', mother: 'HighLoser', father: 'Bob', gender: 'f' },
+      H5: { name: 'H5', mother: 'HighLoser', father: 'Bob', gender: 'f' },
+      H6: { name: 'H6', mother: 'HighLoser', father: 'Bob', gender: 'f' },
+      H7: { name: 'H7', mother: 'HighLoser', father: 'Bob', gender: 'f' },
+      H8: { name: 'H8', mother: 'HighLoser', father: 'Bob', gender: 'f' },
+      // Winner among females: WinnerMom with 9
+      W1: { name: 'W1', mother: 'WinnerMom', father: 'Bob', gender: 'f' },
+      W2: { name: 'W2', mother: 'WinnerMom', father: 'Bob', gender: 'f' },
+      W3: { name: 'W3', mother: 'WinnerMom', father: 'Bob', gender: 'f' },
+      W4: { name: 'W4', mother: 'WinnerMom', father: 'Bob', gender: 'f' },
+      W5: { name: 'W5', mother: 'WinnerMom', father: 'Bob', gender: 'f' },
+      W6: { name: 'W6', mother: 'WinnerMom', father: 'Bob', gender: 'f' },
+      W7: { name: 'W7', mother: 'WinnerMom', father: 'Bob', gender: 'f' },
+      W8: { name: 'W8', mother: 'WinnerMom', father: 'Bob', gender: 'f' },
+      W9: { name: 'W9', mother: 'WinnerMom', father: 'Bob', gender: 'f' },
+    },
+  };
+  gameState.population.WinnerMom = { name: 'WinnerMom', gender: 'female' };
+  gameState.population.HighLoser = { name: 'HighLoser', gender: 'female' };
+
+  const msg = endLib.scoreChildrenMessage(gameState);
+  const parentSection = msg.split('Parent scores')[1] || '';
+
+  const winnerLine = parentSection
+    .split('\n')
+    .find((l) => l.includes('WinnerMom'));
+  const loserLine = parentSection
+    .split('\n')
+    .find((l) => l.includes('HighLoser'));
+
+  expect(winnerLine).toContain('🏆');
+  expect(loserLine).not.toContain('🏆');
+  expect(loserLine).toContain('🌟'); // 8 kids, not first
 });

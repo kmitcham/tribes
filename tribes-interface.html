@@ -2106,6 +2106,8 @@
                 // Used so returning desktop/mobile users don't see the welcome again,
                 // without suppressing the popup on a true first login.
                 this.hadPriorBrowserVisit = false;
+                // Last seasonCounter reflected in the message feed (#188 separators).
+                this.lastMessageSeasonCounter = null;
                 // Dedupe live/replay/restored chat lines (fingerprint -> last seen ms).
                 this.messageFingerprints = new Map();
                 // Local persistence: keep a longer window so reload does not wipe the feed.
@@ -2826,6 +2828,7 @@
                         // Update status bar with structured data if available
                         if (data.gameState) {
                             this.updateGameStatusBarWithData(data.gameState);
+                            this.maybeInsertSeasonSeparator(data.gameState.seasonCounter);
                         } else {
                             this.updateGameStatusBar(data.content);
                         }
@@ -3492,7 +3495,7 @@
                     
                     const cmdNameExec = this.selectedCommand ? this.selectedCommand.name.toLowerCase() : '';
                 if (cmdNameExec === 'romance') {
-                    // Collect invite list from row order
+                    // Atomic invite + consent so mating check sees both (#186).
                     const allRomanceRows = [...parametersContainer.querySelectorAll('.romance-row')];
                     const invitedNames = allRomanceRows
                         .filter(r => r.querySelector('.romance-invite') && r.querySelector('.romance-invite').checked)
@@ -3501,12 +3504,6 @@
                     if (passCheckbox && passCheckbox.checked) {
                         invitedNames.push('!pass');
                     }
-                    this.send({
-                        type: 'command',
-                        command: 'invite',
-                        parameters: { invitelist: invitedNames.length > 0 ? invitedNames.join(',') : null }
-                    });
-                    // Collect consent dict from all rows
                     const newConsentDict = {};
                     allRomanceRows.forEach(r => {
                         const sel = r.querySelector('.romance-dropdown');
@@ -3517,6 +3514,7 @@
                     this.send({
                         type: 'romanceRequest',
                         playerName: document.getElementById('playerName').value.trim(),
+                        inviteList: invitedNames,
                         consentDict: newConsentDict
                     });
                     this.closeCommandModal();
@@ -5631,6 +5629,45 @@
                     minute: '2-digit',
                     second: '2-digit',
                 });
+            }
+
+            /**
+             * Insert a season/year divider when the observed tribe advances (#188).
+             * First status for a tribe only records the season (no divider).
+             */
+            maybeInsertSeasonSeparator(seasonCounter) {
+                const sc = Number(seasonCounter);
+                if (!Number.isFinite(sc)) {
+                    return;
+                }
+                if (this.lastMessageSeasonCounter === sc) {
+                    return;
+                }
+                const previous = this.lastMessageSeasonCounter;
+                this.lastMessageSeasonCounter = sc;
+                if (previous === null || previous === undefined) {
+                    return;
+                }
+                const year = Math.floor(sc / 2);
+                const seasonName = sc % 2 === 0 ? 'Cold Season' : 'Warm Season';
+                this.insertFeedSeparator(
+                    `--- Year ${year} · ${seasonName} ---`
+                );
+            }
+
+            insertFeedSeparator(label) {
+                const container = document.getElementById('messagesContainer');
+                if (!container) {
+                    return;
+                }
+                const separator = document.createElement('div');
+                separator.className = 'message info season-separator';
+                separator.style.cssText =
+                    'text-align: center; font-style: italic; opacity: 0.85; border-top: 1px dashed #94a3b8; border-bottom: 1px dashed #94a3b8; padding: 0.4rem 0; margin: 0.25rem 0;';
+                separator.textContent = label;
+                separator.dataset.seasonSeparator = '1';
+                container.insertBefore(separator, container.firstChild);
+                container.scrollTop = 0;
             }
 
             addMessage(
@@ -7941,6 +7978,7 @@
                     this.currentChildren = null;
                     this.currentGraveyard = null;
                     this.currentStatusData = null;
+                    this.lastMessageSeasonCounter = null;
                     this.saveSettings(); // Save the new tribe selection
                     this.updateCurrentTribeStatusChip({});
                     

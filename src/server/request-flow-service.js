@@ -53,6 +53,9 @@ async function handleRomanceRequest(ws, data, gameState, deps) {
     savelib,
     gameStateStore,
     connectionStore,
+    sendGameMessages,
+    refreshTribeGameData,
+    reproLib,
   } = deps;
   const tribeName = data.tribe || gameState?.name || 'bug';
 
@@ -89,12 +92,46 @@ async function handleRomanceRequest(ws, data, gameState, deps) {
         lockedState = gameStateStore.getGameState(tribeName, savelib);
       }
 
+      // Match command flow: collect messages from this request only.
+      lockedState.messages = {};
+
       const romanceUpdate = processRomance(data, lockedState);
       lockedState.saveRequired = true;
+
+      // #186: romance modal consent/invite must resolve mating like consent/invite commands.
+      if (
+        lockedState.reproductionRound &&
+        reproLib &&
+        typeof reproLib.globalMatingCheck === 'function'
+      ) {
+        const wasComplete = !!lockedState.matingComplete;
+        const matingResult = reproLib.globalMatingCheck(lockedState);
+        // Mirror checkmating: private status for the actor (waiting / already done).
+        // Completion tribe banners are written inside globalMatingCheck itself.
+        if (matingResult && typeof matingResult === 'string') {
+          const text = require('../../libs/textprocess.js');
+          const actor = data.playerName || (ws && ws.playerName) || '';
+          if (actor) {
+            text.addMessage(lockedState, actor, matingResult);
+          }
+        }
+        if (!wasComplete && lockedState.matingComplete) {
+          lockedState.saveRequired = true;
+        }
+      }
+
+      if (typeof sendGameMessages === 'function') {
+        await sendGameMessages(ws, lockedState, data);
+      }
 
       if (savelib && typeof savelib.saveTribe === 'function') {
         savelib.saveTribe(lockedState);
         lockedState.saveRequired = false;
+      }
+
+      // Push population/status so other clients see pregnancy without reload (#186).
+      if (typeof refreshTribeGameData === 'function') {
+        await refreshTribeGameData(lockedState, tribeName);
       }
 
       ws.send(JSON.stringify(romanceUpdate));

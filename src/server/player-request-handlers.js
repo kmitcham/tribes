@@ -278,6 +278,10 @@ function processRomance(data, gameState) {
           entry
         );
       });
+      // Same as invite command: list edits during repro restart invite walk.
+      if (gameState.reproductionRound && userData.inviteIndex) {
+        userData.inviteIndex = 0;
+      }
     }
 
     if (!userData.consentDict) {

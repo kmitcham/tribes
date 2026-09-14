@@ -902,6 +902,28 @@ describe('Tribes Interface Client (real class)', () => {
     refreshSpy.mockRestore();
   });
 
+  test('inserts a season separator when seasonCounter advances (#188)', () => {
+    const container = env.documentMock.getElementById('messagesContainer');
+    container.insertBefore = jest.fn((node) => {
+      container.children = container.children || [];
+      container.children.unshift(node);
+      return node;
+    });
+    container.firstChild = null;
+
+    client.lastMessageSeasonCounter = null;
+    client.maybeInsertSeasonSeparator(3); // first status: no divider
+    expect(container.insertBefore).not.toHaveBeenCalled();
+    expect(client.lastMessageSeasonCounter).toBe(3);
+
+    client.maybeInsertSeasonSeparator(4); // warm → cold
+    expect(container.insertBefore).toHaveBeenCalled();
+    const sep = container.insertBefore.mock.calls[0][0];
+    expect(sep.textContent).toMatch(/Year\s*2/i);
+    expect(sep.textContent).toMatch(/Cold Season/i);
+    expect(sep.dataset.seasonSeparator).toBe('1');
+  });
+
   test('status bar season chip includes the year', () => {
     const seasonChip = env.documentMock.getElementById('seasonStatus');
 
