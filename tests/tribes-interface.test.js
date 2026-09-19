@@ -420,27 +420,29 @@ describe('Tribes Interface Client (real class)', () => {
     );
   });
 
-  test('join prompt status chip shows when logged in and not a tribe member', () => {
+  test('join prompt status chip shows when logged out or logged-in non-member', () => {
     const joinChip = env.elements.joinPromptStatus;
     joinChip.style.display = 'none';
 
-    // Not logged in — hidden even if isMember is false
+    // Not logged in — register/join prompt
     client.isLoggedIn = false;
-    client.isMember = false;
+    client.isMember = null;
     client.updateJoinPromptStatusChip();
-    expect(joinChip.style.display).toBe('none');
+    expect(joinChip.style.display).toBe('flex');
+    expect(joinChip.innerHTML).toMatch(/Register as a player/i);
+    expect(joinChip.innerHTML).toMatch(/<strong>join<\/strong>/i);
 
-    // Logged in but membership unknown — still hidden
+    // Logged in but membership unknown — hide (wait for commandList)
     client.isLoggedIn = true;
     client.isMember = null;
     client.updateJoinPromptStatusChip();
     expect(joinChip.style.display).toBe('none');
 
-    // Logged in non-member — show prompt
+    // Logged in non-member — show join prompt
     client.isMember = false;
     client.updateJoinPromptStatusChip();
     expect(joinChip.style.display).toBe('flex');
-    expect(joinChip.innerHTML).toMatch(/Use.*join.*to start playing/i);
+    expect(joinChip.innerHTML).toMatch(/Click to.*join.*this tribe/i);
     expect(joinChip.innerHTML).toMatch(/<strong>join<\/strong>/i);
     expect(joinChip.classList.contains('join-prompt-attention')).toBe(true);
 
@@ -462,7 +464,7 @@ describe('Tribes Interface Client (real class)', () => {
     });
     expect(client.isMember).toBe(false);
     expect(joinChip.style.display).toBe('flex');
-    expect(joinChip.innerHTML).toMatch(/Use.*join.*to start playing/i);
+    expect(joinChip.innerHTML).toMatch(/Click to.*join.*this tribe/i);
     expect(joinChip.innerHTML).toMatch(/<strong>join<\/strong>/i);
 
     client.handleCommandList({
@@ -471,6 +473,37 @@ describe('Tribes Interface Client (real class)', () => {
     });
     expect(client.isMember).toBe(true);
     expect(joinChip.style.display).toBe('none');
+  });
+
+  test('join prompt chip opens the join command modal', () => {
+    client.isLoggedIn = true;
+    client.isMember = false;
+    client.commands = {
+      join: {
+        description: 'join a tribe',
+        options: [
+          { name: 'gender', required: true },
+          { name: 'profession', required: false },
+        ],
+      },
+    };
+    env.elements.tribeSelect.value = 'bug';
+    const selectSpy = jest.spyOn(client, 'selectCommand').mockImplementation(() => {});
+
+    client.openJoinFromStatusChip();
+
+    expect(selectSpy).toHaveBeenCalledWith('join');
+    selectSpy.mockRestore();
+  });
+
+  test('join prompt chip opens register modal when logged out', () => {
+    client.isLoggedIn = false;
+    const openSpy = jest.spyOn(client, 'openRegisterModal').mockImplementation(() => {});
+
+    client.openJoinFromStatusChip();
+
+    expect(openSpy).toHaveBeenCalled();
+    openSpy.mockRestore();
   });
 
   test('loadMessageHistory waits for tribe and player before reading storage', () => {

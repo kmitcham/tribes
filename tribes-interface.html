@@ -149,6 +149,17 @@
                 0 0 0 1px rgba(230, 126, 34, 0.45),
                 0 2px 10px rgba(196, 95, 0, 0.55);
             padding: 5px 14px;
+            cursor: pointer;
+        }
+
+        .status-item.join-prompt-indicator:hover {
+            background: #d56a00;
+            filter: brightness(1.05);
+        }
+
+        .status-item.join-prompt-indicator:focus-visible {
+            outline: 2px solid #fff;
+            outline-offset: 2px;
         }
 
         .status-item.join-prompt-indicator strong {
@@ -1827,9 +1838,9 @@
         <div class="header-icons">
             <img src="caveman.png" alt="Caveman" title="Caveman">
         </div>
-        <div class="status-item join-prompt-indicator" id="joinPromptStatus" style="display: none;">
+        <div class="status-item join-prompt-indicator" id="joinPromptStatus" style="display: none;" role="button" tabindex="0" aria-label="Register or join a tribe">
             <span class="status-icon">🚪</span>
-            <span>Use <strong>join</strong> to start playing</span>
+            <span>Register as a player, then <strong>join</strong> a tribe</span>
         </div>
         <div class="status-item" id="roundStatus">
             <span class="status-icon">⚙️</span>
@@ -2632,6 +2643,7 @@
                     }
                     this.showCommandsSection();
                     this.minimizeLoginArea();
+                    this.closeRegisterModal();
                     this.addMessage(`Welcome back, ${data.playerName}!`, 'success');
                     this.showLoginOrientationMessage();
                     this.requestCommandList();
@@ -2691,6 +2703,17 @@
                 this.updateCommandList();
                 this.initCommandSearch();
                 this.updateJoinPromptStatusChip();
+
+                if (
+                    this._pendingOpenJoinAfterCommands &&
+                    this.isLoggedIn &&
+                    this.isMember === false &&
+                    this.commands &&
+                    this.commands.join
+                ) {
+                    this._pendingOpenJoinAfterCommands = false;
+                    this.selectCommand('join');
+                }
 
                 // Show/hide referee tools based on referee status
                 const refereeSection = document.getElementById('refereeAdminSection');
@@ -2897,11 +2920,17 @@
                     this.showCommandsSection(); // Show commands after successful login
                     this.requestCommandList(); // Refresh command list in case chief status changed
                     this.minimizeLoginArea(); // Minimize login area after successful registration
+                    this.closeRegisterModal();
                     this.showLoginOrientationMessage();
                     this.updateJoinPromptStatusChip();
                     this.loadMessageHistory();
                     if (document.getElementById('tribeSelect').value) {
                         this.refreshGameData();
+                    }
+                    // Status-bar register flow: open join once commands arrive.
+                    if (this._openJoinAfterRegister) {
+                        this._openJoinAfterRegister = false;
+                        this._pendingOpenJoinAfterCommands = true;
                     }
                 }
             }
@@ -7511,8 +7540,9 @@
             }
 
             /**
-             * Show a status-bar tile when the player is logged in but not a
-             * member of the currently selected tribe.
+             * Status-bar onboarding tile:
+             * - Not logged in → register/login popup, then join
+             * - Logged in, not a member → open join modal
              */
             updateJoinPromptStatusChip() {
                 const joinPromptStatus = document.getElementById('joinPromptStatus');
@@ -7520,17 +7550,33 @@
                     return;
                 }
 
-                if (this.isLoggedIn && this.isMember === false) {
+                const showRegisterPrompt = !this.isLoggedIn;
+                const showJoinPrompt = this.isLoggedIn && this.isMember === false;
+
+                if (showRegisterPrompt || showJoinPrompt) {
                     const wasHidden = joinPromptStatus.style.display === 'none';
                     joinPromptStatus.style.display = 'flex';
-                    joinPromptStatus.innerHTML =
-                        '<span class="status-icon">🚪</span><span>Use <strong>join</strong> to start playing</span>';
-                    joinPromptStatus.title =
-                        'You are logged in but not a member of this tribe. Use the join command to start playing.';
-                    // Soft pulse a few times when the chip first appears
+                    if (showRegisterPrompt) {
+                        joinPromptStatus.innerHTML =
+                            '<span class="status-icon">🚪</span><span>Register as a player, then <strong>join</strong> a tribe</span>';
+                        joinPromptStatus.title =
+                            'Click to register or log in, then join the selected tribe.';
+                        joinPromptStatus.setAttribute(
+                            'aria-label',
+                            'Register as a player, then join a tribe'
+                        );
+                    } else {
+                        joinPromptStatus.innerHTML =
+                            '<span class="status-icon">🚪</span><span>Click to <strong>join</strong> this tribe</span>';
+                        joinPromptStatus.title =
+                            'You are logged in but not a member of this tribe. Click to open join.';
+                        joinPromptStatus.setAttribute(
+                            'aria-label',
+                            'Join the selected tribe'
+                        );
+                    }
                     if (wasHidden) {
                         joinPromptStatus.classList.remove('join-prompt-attention');
-                        // Force reflow so the animation can restart
                         void joinPromptStatus.offsetWidth;
                         joinPromptStatus.classList.add('join-prompt-attention');
                     }
@@ -7539,6 +7585,107 @@
                     joinPromptStatus.title = '';
                     joinPromptStatus.classList.remove('join-prompt-attention');
                 }
+            }
+
+            /** Click handler for the status-bar join/register tile. */
+            openJoinFromStatusChip() {
+                if (!this.isLoggedIn) {
+                    this.openRegisterModal();
+                    return;
+                }
+                if (this.isMember === true) {
+                    this.addMessage('You are already a member of this tribe.', 'info');
+                    return;
+                }
+
+                const tribeSelect = document.getElementById('tribeSelect');
+                const tribe = tribeSelect
+                    ? String(tribeSelect.value || '').trim()
+                    : '';
+                if (!tribe || tribe.toLowerCase() === 'loading...') {
+                    this.addMessage('Select a tribe first, then click join.', 'error');
+                    return;
+                }
+
+                if (!this.commands || !this.commands.join) {
+                    this.requestCommandList();
+                    this.addMessage(
+                        'Loading commands… click join again in a moment.',
+                        'info'
+                    );
+                    return;
+                }
+
+                this.selectCommand('join');
+            }
+
+            openRegisterModal() {
+                const modal = document.getElementById('registerModal');
+                if (!modal) {
+                    this.expandLoginArea();
+                    this.addMessage(
+                        'Use Register/Login in the sidebar, then join a tribe.',
+                        'info'
+                    );
+                    return;
+                }
+
+                const mainName = document.getElementById('playerName');
+                const mainPass = document.getElementById('playerPassword');
+                const mainEmail = document.getElementById('playerEmail');
+                const modalName = document.getElementById('registerModalName');
+                const modalPass = document.getElementById('registerModalPassword');
+                const modalEmail = document.getElementById('registerModalEmail');
+                if (modalName && mainName) {
+                    modalName.value = mainName.value || '';
+                }
+                if (modalPass && mainPass) {
+                    modalPass.value = mainPass.value || '';
+                }
+                if (modalEmail && mainEmail) {
+                    modalEmail.value = mainEmail.value || '';
+                }
+
+                this._openJoinAfterRegister = true;
+                modal.classList.add('active');
+                if (modalName) {
+                    modalName.focus();
+                }
+            }
+
+            closeRegisterModal() {
+                const modal = document.getElementById('registerModal');
+                if (modal) {
+                    modal.classList.remove('active');
+                }
+            }
+
+            submitRegisterModal() {
+                const modalName = document.getElementById('registerModalName');
+                const modalPass = document.getElementById('registerModalPassword');
+                const modalEmail = document.getElementById('registerModalEmail');
+                const mainName = document.getElementById('playerName');
+                const mainPass = document.getElementById('playerPassword');
+                const mainEmail = document.getElementById('playerEmail');
+
+                const name = modalName ? String(modalName.value || '').trim() : '';
+                if (!name) {
+                    this.addMessage('Player name is required', 'error');
+                    return;
+                }
+
+                if (mainName) {
+                    mainName.value = name;
+                }
+                if (mainPass && modalPass) {
+                    mainPass.value = modalPass.value || '';
+                }
+                if (mainEmail && modalEmail) {
+                    mainEmail.value = modalEmail.value || '';
+                }
+
+                this._openJoinAfterRegister = true;
+                this.registerPlayer();
             }
 
             updateCurrentTribeStatusChip(gameState) {
@@ -7971,6 +8118,33 @@
                 
                 // Clear messages button
                 document.getElementById('clearMessagesBtn').onclick = () => this.clearMessageHistory();
+
+                const joinPromptStatus = document.getElementById('joinPromptStatus');
+                if (joinPromptStatus) {
+                    joinPromptStatus.onclick = () => this.openJoinFromStatusChip();
+                    joinPromptStatus.onkeydown = (event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault();
+                            this.openJoinFromStatusChip();
+                        }
+                    };
+                }
+
+                const registerModalSubmit = document.getElementById('registerModalSubmit');
+                if (registerModalSubmit) {
+                    registerModalSubmit.onclick = () => this.submitRegisterModal();
+                }
+                const registerModalCancel = document.getElementById('registerModalCancel');
+                if (registerModalCancel) {
+                    registerModalCancel.onclick = () => this.closeRegisterModal();
+                }
+                const registerModalClose = document.getElementById('registerModalClose');
+                if (registerModalClose) {
+                    registerModalClose.onclick = () => this.closeRegisterModal();
+                }
+
+                // Show register/join tile immediately on a fresh page (before login).
+                this.updateJoinPromptStatusChip();
                 
                 // Tribe dropdown change - clear cached data when switching tribes and save setting
                 document.getElementById('tribeSelect').onchange = () => {
@@ -8684,6 +8858,37 @@
         </div>
     </div>
 
+    <!-- Register / Login Modal (from status-bar join tile when logged out) -->
+    <div class="modal-overlay" id="registerModal">
+        <div class="modal-popup" style="max-width: 420px;">
+            <div class="modal-header">
+                <div class="modal-title">Register / Login</div>
+                <button class="modal-close" id="registerModalClose" type="button">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-top: 0; color: #555;">
+                    Create or resume your player, then join the selected tribe.
+                </p>
+                <div class="form-group">
+                    <label for="registerModalName">Player Name</label>
+                    <input type="text" id="registerModalName" placeholder="Enter your name" autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <label for="registerModalPassword">Password (optional)</label>
+                    <input type="password" id="registerModalPassword" placeholder="Optional password" autocomplete="current-password">
+                </div>
+                <div class="form-group">
+                    <label for="registerModalEmail">Email (optional)</label>
+                    <input type="email" id="registerModalEmail" placeholder="Optional email" title="Email is only for account recovery">
+                </div>
+            </div>
+            <div class="modal-actions" style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+                <button class="btn" id="registerModalCancel" type="button" style="background: #6c757d;">Cancel</button>
+                <button class="btn" id="registerModalSubmit" type="button">Register / Login</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Combat Modal -->
     <div class="modal-overlay" id="combatModal">
         <div class="modal-popup" style="max-width: 600px;">
@@ -8730,6 +8935,9 @@
         <a href="https://www.sjgames.com/tribes/" title="Tribes Game">Get the real game and play with friends in person!</a>
         <p class="credits">Game Design by <b><a href="https://www.davidbrin.com">David Brin</a></b> and <a href="http://sj.sjgames.com/"><b>Steve Jackson</b></a>
         <a href="https://www.flaticon.com/free-icons/caveman" title="caveman icons">Caveman icons created by Freepik - Flaticon</a>
+        <p class="credits">
+            <a href="mailto:tribes@kevinmitcham.com" title="Email questions and support">Questions and support</a>
+        </p>
         <div class="footer-meta" id="footerUpdatedText">Updated: loading...</div>
     </div>
 
