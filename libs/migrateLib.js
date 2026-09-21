@@ -4,6 +4,31 @@ const populationLib = require('./population.js');
 const killlib = require('./kill.js');
 const text = require('./textprocess.js');
 
+/** Location chip emojis — keep in sync with tribes-interface status bar. */
+const LOCATION_EMOJI = {
+  veldt: '🌾',
+  forest: '🌲',
+  marsh: '🐸',
+  hills: '⛰️',
+};
+
+function locationLabel(locationName) {
+  const name = String(locationName || '').toLowerCase();
+  const emoji = LOCATION_EMOJI[name] || '🌍';
+  const area = name || 'unknown';
+  return area + ' ' + emoji;
+}
+
+function migrationAnnouncement(fromLocation, toLocation) {
+  return (
+    '⛺ The tribe migrates from the ' +
+    locationLabel(fromLocation) +
+    ' to the ' +
+    locationLabel(toLocation) +
+    '.'
+  );
+}
+
 // return 0 on success, error messages otherwise
 function migrate(sourceName, destination, force, gameState) {
   const access = require('./access.js');
@@ -137,10 +162,11 @@ function migrate(sourceName, destination, force, gameState) {
       }
     }
     text.addMessage(gameState, 'tribe', response);
+    const fromLocation = gameState.currentLocationName;
     text.addMessage(
       gameState,
       'tribe',
-      'The tribe migrates to the ' + destination + '.'
+      migrationAnnouncement(fromLocation, destination)
     );
     gameState.currentLocationName = destination;
     gameState.saveRequired = true;
@@ -175,3 +201,6 @@ function migrate(sourceName, destination, force, gameState) {
   return 1;
 }
 module.exports.migrate = migrate;
+module.exports.locationLabel = locationLabel;
+module.exports.migrationAnnouncement = migrationAnnouncement;
+module.exports.LOCATION_EMOJI = LOCATION_EMOJI;

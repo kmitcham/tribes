@@ -141,3 +141,24 @@ test('migration where people die', () => {
     expect.stringContaining('The following people died along the way')
   );
 });
+
+test('migration announcement includes from/to areas with emojis', () => {
+  expect(m.migrationAnnouncement('marsh', 'hills')).toBe(
+    '⛺ The tribe migrates from the marsh 🐸 to the hills ⛰️.'
+  );
+  expect(m.migrationAnnouncement('veldt', 'forest')).toBe(
+    '⛺ The tribe migrates from the veldt 🌾 to the forest 🌲.'
+  );
+});
+
+test('forced migration posts from/to announcement to the tribe', () => {
+  text.addMessage.mockClear();
+  gameState.currentLocationName = 'marsh';
+  const result = m.migrate('person1', 'hills', true, gameState);
+  expect(result).toBe(0);
+  expect(text.addMessage).toHaveBeenCalledWith(
+    expect.anything(),
+    'tribe',
+    '⛺ The tribe migrates from the marsh 🐸 to the hills ⛰️.'
+  );
+});

@@ -34,6 +34,11 @@ Use these icons consistently when adding Unicode to player-facing messages. The 
 | Endgame strong showing (not first) | 🌟 |
 | Endgame some kids | ✨ |
 | Endgame zero kids | 🌱 |
+| Veldt | 🌾 |
+| Forest | 🌲 |
+| Marsh | 🐸 |
+| Hills | ⛰️ |
+| Tribe migrates | ⛺ |
 
 ## Predator Attack Icons
 
