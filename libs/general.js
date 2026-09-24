@@ -54,20 +54,10 @@ function give(gameState, sourceName, targetName, amount, item) {
     text.addMessage(gameState, sourceName, response);
     return;
   }
-  item = String(item);
-  if (item.startsWith('g')) {
-    item = 'grain';
-  } else if (item.startsWith('f')) {
-    item = 'food';
-  } else if (item.startsWith('b')) {
-    item = 'basket';
-  } else if (item.startsWith('s')) {
-    item = 'spearhead';
-  } else {
+  item = normalizeItem(item);
+  if (!item) {
     response =
-      'Valid items are: food, grain, basket or spearhead. Unrecognized item ' +
-      item +
-      '.';
+      'Valid items are: food, grain, basket or spearhead. Unrecognized item.';
     text.addMessage(gameState, sourceName, response);
     return;
   }
@@ -112,9 +102,35 @@ function give(gameState, sourceName, targetName, amount, item) {
 }
 module.exports.give = give;
 
+function normalizeItem(item) {
+  if (item === null || item === undefined) {
+    return null;
+  }
+  const raw = String(item).trim().toLowerCase();
+  if (!raw) {
+    return null;
+  }
+  if (raw === 'grain' || raw.startsWith('g')) {
+    return 'grain';
+  }
+  if (raw === 'food' || raw.startsWith('f')) {
+    return 'food';
+  }
+  if (raw === 'basket' || raw.startsWith('b')) {
+    return 'basket';
+  }
+  if (raw === 'spearhead' || raw.startsWith('s')) {
+    return 'spearhead';
+  }
+  return null;
+}
+
 function itemIcon(item) {
   if (item === 'grain') {
     return '🌾';
+  }
+  if (item === 'food') {
+    return '🍖';
   }
   if (item === 'basket') {
     return '🧺';
@@ -125,17 +141,45 @@ function itemIcon(item) {
   return '';
 }
 
-function legalGive(gameState, sourceName, item, amount) {
+function legalGive(gameState, sourceName, item, amount, options) {
+  const opts = options || {};
+  const silent = !!opts.silent;
   let response = '';
   const sourcePerson = pop.memberByName(sourceName, gameState);
   if (!sourcePerson) {
     response = access.NOT_IN_TRIBE_MESSAGE;
-    text.addMessage(gameState, sourceName, response);
+    if (!silent) {
+      text.addMessage(gameState, sourceName, response);
+    }
+    return false;
+  }
+  amount = Number(amount);
+  if (!Number.isFinite(amount)) {
+    response = 'Amount must be a positive number.';
+    if (!silent) {
+      text.addMessage(gameState, sourcePerson.name, response);
+    }
+    return false;
+  }
+  if (amount < 0) {
+    response = 'Giving a negative amount is not valid.';
+    if (!silent) {
+      text.addMessage(gameState, sourcePerson.name, response);
+    }
+    return false;
+  }
+  if (amount < 1) {
+    response = 'Amount must be a positive number.';
+    if (!silent) {
+      text.addMessage(gameState, sourcePerson.name, response);
+    }
     return false;
   }
   if (!sourcePerson[item] || sourcePerson[item] < amount) {
     response = 'You do not have ' + amount + ' ' + item + '.';
-    text.addMessage(gameState, sourcePerson.name, response);
+    if (!silent) {
+      text.addMessage(gameState, sourcePerson.name, response);
+    }
     return false;
   }
   if (
@@ -147,16 +191,17 @@ function legalGive(gameState, sourceName, item, amount) {
   ) {
     response =
       'You already hunted with a spearhead, and cannot trade spearheads during the work round.';
-    text.addMessage(gameState, sourcePerson.name, response);
-    return false;
-  }
-  if (amount < 0) {
-    response = 'Giving a negative amount is not valid.';
-    text.addMessage(gameState, sourcePerson.name, response);
+    if (!silent) {
+      text.addMessage(gameState, sourcePerson.name, response);
+    }
     return false;
   }
   return true;
 }
+
+module.exports.normalizeItem = normalizeItem;
+module.exports.itemIcon = itemIcon;
+module.exports.legalGive = legalGive;
 
 function inventory(gameState, targetName, actorName) {
   let response = '';

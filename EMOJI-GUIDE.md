@@ -39,6 +39,7 @@ Use these icons consistently when adding Unicode to player-facing messages. The 
 | Marsh | 🐸 |
 | Hills | ⛰️ |
 | Tribe migrates | ⛺ |
+| Completed trade | 🤝 |
 
 ## Predator Attack Icons
 

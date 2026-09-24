@@ -544,4 +544,11 @@ function recoverGameTracks(gameState) {
     }
   }
   gameState.seasonCounter += 1;
+  // Pending trades are season-scoped; expire anything not from the new season.
+  try {
+    const tradeLib = require('./trade.js');
+    tradeLib.expireStaleTrades(gameState);
+  } catch (_err) {
+    // trade module optional during partial loads
+  }
 }

@@ -55,6 +55,12 @@ function kill(name, message, gameState) {
     gameState.graveyard[name] = person;
     delete population[personKey];
     removeNameFromAllRelationshipLists(name, gameState.population, false);
+    try {
+      const tradeLib = require('./trade.js');
+      tradeLib.clearTradesInvolving(gameState, name);
+    } catch (_err) {
+      // ignore
+    }
   } else if (childName in children) {
     isChildDeath = true;
     guardlib.unguardChild(childName, population);

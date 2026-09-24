@@ -3402,6 +3402,11 @@
                         selection: 'romance'
                     });
                 }
+
+                // Trade accept/reject needs fresh outgoingTrade on population.
+                if (commandName.toLowerCase() === 'trade') {
+                    this.send({ type: 'infoRequest', selection: 'population' });
+                }
                 
                 // Special case: romance command opens unified modal (no server-defined options)
                 if (commandName.toLowerCase() === 'romance') {
@@ -4931,6 +4936,247 @@
                 });
 
                 this.bindGiveAutoAmountDefaults(container, preservedValues);
+                this.setupTradeFormEnhancements(container);
+            }
+
+            /**
+             * Trade modal: for accept/reject, once a counterparty is chosen,
+             * show their single outstanding offer (at most one per person).
+             * Offer-leg fields are hidden unless action is "offer".
+             */
+            setupTradeFormEnhancements(container) {
+                if (
+                    !this.selectedCommand ||
+                    this.selectedCommand.name.toLowerCase() !== 'trade'
+                ) {
+                    return;
+                }
+
+                const actionSelect = container.querySelector('#param_action');
+                const playerSelect = container.querySelector('#param_player');
+                if (!actionSelect) {
+                    return;
+                }
+
+                let preview = container.querySelector('#tradeOfferPreview');
+                if (!preview) {
+                    preview = document.createElement('div');
+                    preview.id = 'tradeOfferPreview';
+                    preview.className = 'helper-text';
+                    preview.style.cssText =
+                        'margin-top: 0.75rem; padding: 0.65rem 0.75rem; border-radius: 6px; background: #f1f5f9; border: 1px solid #cbd5e1; white-space: pre-wrap;';
+                    container.appendChild(preview);
+                }
+
+                const offerFieldNames = [
+                    'giveitem',
+                    'giveamount',
+                    'wantitem',
+                    'wantamount',
+                ];
+                const setOfferFieldsVisible = (visible) => {
+                    offerFieldNames.forEach((name) => {
+                        const input = container.querySelector('#param_' + name);
+                        if (!input) {
+                            return;
+                        }
+                        const group = input.closest('.parameter-group');
+                        if (group) {
+                            group.style.display = visible ? '' : 'none';
+                        }
+                    });
+                };
+
+                const formatTradeItem = (item, amount) => {
+                    const icons = {
+                        food: '🍖',
+                        grain: '🌾',
+                        basket: '🧺',
+                        spearhead: '𓐬',
+                    };
+                    const icon = icons[item] || '';
+                    return (
+                        amount +
+                        ' ' +
+                        item +
+                        (icon ? ' ' + icon : '')
+                    );
+                };
+
+                const namesMatchLocal = (a, b) =>
+                    String(a || '')
+                        .trim()
+                        .toLowerCase() ===
+                    String(b || '')
+                        .trim()
+                        .toLowerCase();
+
+                const findIncomingOfferFrom = (fromName) => {
+                    if (!this.currentPopulation || !fromName) {
+                        return null;
+                    }
+                    const me =
+                        document.getElementById('playerName')?.value ||
+                        this.currentPlayerName ||
+                        '';
+                    let offerer = this.currentPopulation[fromName];
+                    if (!offerer) {
+                        const lower = String(fromName).toLowerCase();
+                        for (const [key, person] of Object.entries(
+                            this.currentPopulation
+                        )) {
+                            if (
+                                String(key).toLowerCase() === lower ||
+                                (person &&
+                                    String(person.name || '').toLowerCase() ===
+                                        lower)
+                            ) {
+                                offerer = person;
+                                break;
+                            }
+                        }
+                    }
+                    if (!offerer || !offerer.outgoingTrade) {
+                        return null;
+                    }
+                    const offer = offerer.outgoingTrade;
+                    if (!namesMatchLocal(offer.to, me)) {
+                        return null;
+                    }
+                    return offer;
+                };
+
+                const peopleWithOffersToMe = () => {
+                    if (!this.currentPopulation) {
+                        return [];
+                    }
+                    const me =
+                        document.getElementById('playerName')?.value ||
+                        this.currentPlayerName ||
+                        '';
+                    return Object.keys(this.currentPopulation).filter((name) => {
+                        const person = this.currentPopulation[name];
+                        return (
+                            person &&
+                            person.outgoingTrade &&
+                            namesMatchLocal(person.outgoingTrade.to, me)
+                        );
+                    });
+                };
+
+                const refillPlayerSelect = (names, placeholderText) => {
+                    if (!playerSelect) {
+                        return;
+                    }
+                    const previous = playerSelect.value;
+                    playerSelect.innerHTML = '';
+                    const placeholder = document.createElement('option');
+                    placeholder.value = '';
+                    placeholder.textContent = placeholderText;
+                    playerSelect.appendChild(placeholder);
+                    names.forEach((name) => {
+                        const opt = document.createElement('option');
+                        opt.value = name;
+                        opt.textContent = name;
+                        playerSelect.appendChild(opt);
+                    });
+                    if (names.includes(previous)) {
+                        playerSelect.value = previous;
+                    } else if (names.length === 1) {
+                        playerSelect.value = names[0];
+                    }
+                };
+
+                const allOtherPlayers = () => {
+                    if (!this.currentPopulation) {
+                        return [];
+                    }
+                    const me =
+                        document.getElementById('playerName')?.value ||
+                        this.currentPlayerName ||
+                        '';
+                    return Object.keys(this.currentPopulation).filter(
+                        (name) => !namesMatchLocal(name, me)
+                    );
+                };
+
+                const updateTradeForm = () => {
+                    const action = String(actionSelect.value || '').toLowerCase();
+                    const isOffer = action === 'offer';
+                    const isAcceptReject =
+                        action === 'accept' || action === 'reject';
+                    const isCancel = action === 'cancel';
+
+                    setOfferFieldsVisible(isOffer);
+
+                    if (playerSelect) {
+                        const playerGroup = playerSelect.closest(
+                            '.parameter-group'
+                        );
+                        if (playerGroup) {
+                            playerGroup.style.display = isCancel ? 'none' : '';
+                        }
+                    }
+
+                    if (!isAcceptReject) {
+                        if (isOffer && playerSelect) {
+                            refillPlayerSelect(
+                                allOtherPlayers(),
+                                'Select a player…'
+                            );
+                            preview.textContent =
+                                'Choose what you give and what you want in return.';
+                        } else if (isCancel) {
+                            preview.textContent =
+                                'Cancel will withdraw your outstanding outgoing offer (if any).';
+                        } else {
+                            preview.textContent = '';
+                        }
+                        return;
+                    }
+
+                    // Restrict player dropdown to people who offered to me.
+                    const offerers = peopleWithOffersToMe();
+                    refillPlayerSelect(
+                        offerers,
+                        offerers.length === 0
+                            ? 'No pending offers'
+                            : 'Select offerer…'
+                    );
+
+                    const fromName = playerSelect ? playerSelect.value : '';
+                    if (!fromName) {
+                        preview.textContent =
+                            'Select the tribe member whose offer you want to ' +
+                            action +
+                            '.';
+                        return;
+                    }
+
+                    const offer = findIncomingOfferFrom(fromName);
+                    if (!offer) {
+                        preview.textContent =
+                            fromName +
+                            ' does not have an outstanding offer to you.';
+                        return;
+                    }
+
+                    preview.innerHTML =
+                        '<strong>Pending offer from ' +
+                        fromName +
+                        '</strong><br>' +
+                        'They give you: ' +
+                        formatTradeItem(offer.giveItem, offer.giveAmount) +
+                        '<br>' +
+                        'You give them: ' +
+                        formatTradeItem(offer.wantItem, offer.wantAmount);
+                };
+
+                actionSelect.addEventListener('change', updateTradeForm);
+                if (playerSelect) {
+                    playerSelect.addEventListener('change', updateTradeForm);
+                }
+                updateTradeForm();
             }
 
             createUnifiedGuardInterface(container) {
