@@ -11,6 +11,7 @@ const utils = require('./util.js');
 const kill = require('./kill.js');
 const logger = require('./logger.js');
 const roundTransitionAudit = require('./roundTransitionAudit.js');
+const gameTrackLib = require('./gameTrack.js');
 
 function close(actorName, gameState) {
   if (!access.canActAsChief(actorName, gameState)) {
@@ -368,7 +369,11 @@ function doChance(rollValue, gameState) {
         message = doChance(dice.roll(3), gameState);
         return message;
       } else {
-        gameState.gameTrack[gameState.currentLocationName] = 20;
+        gameTrackLib.setGameTrack(
+          gameState,
+          gameState.currentLocationName,
+          20
+        );
       }
       break;
     case 6:
@@ -529,19 +534,19 @@ function recoverGameTracks(gameState) {
   if (utils.isColdSeason(gameState)) {
     for (const locationName in locations) {
       const modifier = locations[locationName]['game_track_recover'];
-      const oldTrack = gameState.gameTrack[locationName];
-      gameState.gameTrack[locationName] -= modifier;
-      if (gameState.gameTrack[locationName] < 1) {
-        gameState.gameTrack[locationName] = 1;
+      const oldTrack = gameTrackLib.getGameTrack(gameState, locationName);
+      let next = oldTrack - Number(modifier || 0);
+      if (next < 1) {
+        next = 1;
       }
+      gameTrackLib.setGameTrack(gameState, locationName, next);
       logger.accessLog.info(
-        locationName +
-          ' game_track moves from ' +
-          oldTrack +
-          ' to ' +
-          gameState.gameTrack[locationName]
+        locationName + ' game_track moves from ' + oldTrack + ' to ' + next
       );
     }
+  } else {
+    // Still mark dirty when season advances even if tracks are unchanged.
+    gameState.saveRequired = true;
   }
   gameState.seasonCounter += 1;
   // Pending trades are season-scoped; expire anything not from the new season.
@@ -552,3 +557,4 @@ function recoverGameTracks(gameState) {
     // trade module optional during partial loads
   }
 }
+module.exports.recoverGameTracks = recoverGameTracks;

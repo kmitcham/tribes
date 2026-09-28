@@ -3,6 +3,7 @@ const dice = require('./dice.js');
 const text = require('./textprocess.js');
 const pop = require('./population.js');
 const career = require('./career.js');
+const gameTrackLib = require('./gameTrack.js');
 
 const locationDecay = [
   30, // arrays count from 0 so add extra item
@@ -117,14 +118,14 @@ module.exports.hunt = (playername, player, rollValue, gameState) => {
   }
 
   player.worked = true;
-  // update the game track
-  gameState.gameTrack[gameState.currentLocationName] += 1;
+  // update the game track (always marks saveRequired)
+  const newTrack = gameTrackLib.bumpGameTrack(
+    gameState,
+    gameState.currentLocationName,
+    1
+  );
   message +=
-    '\nThe game track goes from ' +
-    gameTrack +
-    ' to ' +
-    gameState.gameTrack[gameState.currentLocationName] +
-    '.';
+    '\nThe game track goes from ' + gameTrack + ' to ' + newTrack + '.';
 
   player.activity = 'hunted';
   player.worked = true;

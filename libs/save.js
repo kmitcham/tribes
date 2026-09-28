@@ -5,6 +5,7 @@ const jsonUtils = require('./jsonUtils.js');
 const populationLib = require('./population.js');
 const pathSafety = require('./pathSafety.js');
 const logger = require('./logger.js');
+const gameTrackLib = require('./gameTrack.js');
 
 // NOTE: Removed unused WebSocket server creation that was causing test failures
 // const server = new WebSocket.Server({ port: 8383 });
@@ -32,7 +33,7 @@ function initGame(gameName) {
   gameState.children = {};
   gameState.messages = {};
   for (const locationName in locations) {
-    gameState.gameTrack[locationName] = 1;
+    gameTrackLib.setGameTrack(gameState, locationName, 1);
   }
   gameState.currentLocationName = 'veldt';
   gameState.round = 'work';
