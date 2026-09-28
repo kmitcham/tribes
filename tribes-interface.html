@@ -2379,7 +2379,13 @@
                 socket.onopen = () => {
                     this.updateConnectionStatus('connected');
                     this.reconnectAttempts = 0;
+                    this._sessionAuthSentForConnection = false;
+                    // Restore token/name locally, then ask for tribes. Session auth
+                    // (which flushes pending "while you were away" messages) runs once
+                    // a real tribe is selected — see tryAuthenticateSessionIfReady.
+                    this.restoreSession();
                     this.requestCommandList();
+                    this.tryAuthenticateSessionIfReady();
                 };
                 
                 socket.onmessage = (event) => {
@@ -2392,8 +2398,40 @@
                 
                 socket.onclose = () => {
                     this.updateConnectionStatus('disconnected');
+                    this._sessionAuthSentForConnection = false;
                     if (onCloseCallback) onCloseCallback();
                 };
+            }
+
+            /**
+             * After reconnect, authenticate the stored session so the server can
+             * replay queued tribe/private messages. Waits until tribeSelect has a
+             * real tribe (not "Loading...") so the pending-message key matches.
+             */
+            tryAuthenticateSessionIfReady() {
+                if (this._sessionAuthSentForConnection) {
+                    return false;
+                }
+                if (!this.currentSessionToken) {
+                    if (!this.restoreSession()) {
+                        return false;
+                    }
+                }
+                if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+                    return false;
+                }
+                const tribeSelect = document.getElementById('tribeSelect');
+                const tribe = tribeSelect
+                    ? String(tribeSelect.value || '').trim()
+                    : '';
+                if (!tribe || tribe.toLowerCase() === 'loading...') {
+                    return false;
+                }
+                if (this.authenticateWithSession()) {
+                    this._sessionAuthSentForConnection = true;
+                    return true;
+                }
+                return false;
             }
 
             isLocalDevelopmentHost(host) {
@@ -2657,6 +2695,8 @@
                     this.clearSession();
                     this.isLoggedIn = false;
                     this.isMember = null;
+                    // Allow a later login to authenticate this same socket.
+                    this._sessionAuthSentForConnection = false;
                     this.addMessage('Session expired. Please log in again.', 'error');
                     this.expandLoginArea();
                     this.updateJoinPromptStatusChip();
@@ -2768,6 +2808,8 @@
                 // Programmatic select does not fire onchange. Observers (not logged in)
                 // should still see season/year/location for the selected tribe.
                 this.ensureTribeStatusLoaded();
+                // Tribe is now known — flush pending messages via session auth if needed.
+                this.tryAuthenticateSessionIfReady();
             }
 
             ensureTribeStatusLoaded() {

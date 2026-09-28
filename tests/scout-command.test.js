@@ -42,7 +42,7 @@ describe('scout command', () => {
     expect(gameState.messages.ScoutTester).not.toContain('resources are');
   });
 
-  test('nerd=all table is personalized and lists basket/spear variants', async () => {
+  test('statistics=all table is personalized and lists basket/spear variants', async () => {
     const gameState = {
       currentLocationName: 'hills',
       seasonCounter: 1,
@@ -65,13 +65,15 @@ describe('scout command', () => {
 
     const interaction = createInteraction('ScoutTester', {
       location: 'hills',
-      nerd: 'all',
+      statistics: 'all',
     });
 
     await scoutCommand.execute(interaction, gameState);
 
     const msg = gameState.messages.ScoutTester;
-    expect(msg).toMatch(/Nerd scout for ScoutTester — hills \(game track 8/);
+    expect(msg).toMatch(
+      /Scout statistics for ScoutTester — hills \(game track 8/
+    );
     expect(msg).toMatch(/profession=hunter/);
     expect(msg).toMatch(/strength=strong/);
     expect(msg).toMatch(/gather \(no basket\)/);
@@ -81,7 +83,7 @@ describe('scout command', () => {
     expect(msg).toMatch(/game track 8/);
   });
 
-  test('nerd without tribe membership explains the requirement', async () => {
+  test('statistics without tribe membership explains the requirement', async () => {
     const gameState = {
       currentLocationName: 'veldt',
       seasonCounter: 1,
@@ -92,24 +94,24 @@ describe('scout command', () => {
 
     const interaction = createInteraction('Ghost', {
       location: 'veldt',
-      nerd: 'all',
+      statistics: 'all',
     });
 
     await scoutCommand.execute(interaction, gameState);
-    expect(gameState.messages.Ghost).toMatch(/needs you in the tribe/i);
+    expect(gameState.messages.Ghost).toMatch(/need you in the tribe/i);
   });
 
-  test('nerd option descriptions mention game track', () => {
+  test('statistics option descriptions mention game track', () => {
     const json = scoutCommand.data.toJSON();
-    const nerd = (json.options || []).find((o) => o.name === 'nerd');
-    expect(nerd).toBeTruthy();
-    expect(nerd.description.toLowerCase()).toMatch(/game track/);
-    const choiceNames = (nerd.choices || []).map((c) => c.name).join(' ');
+    const statistics = (json.options || []).find((o) => o.name === 'statistics');
+    expect(statistics).toBeTruthy();
+    expect(statistics.description.toLowerCase()).toMatch(/game track/);
+    const choiceNames = (statistics.choices || []).map((c) => c.name).join(' ');
     expect(choiceNames.toLowerCase()).toMatch(/game track/);
   });
 });
 
-describe('scout nerd player helpers', () => {
+describe('scout statistics player helpers', () => {
   const { gatherYieldOnce, huntYieldOnce, playerContext } = scoutCommand._test;
 
   test('playerContext reads profession and strength', () => {

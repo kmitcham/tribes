@@ -26,6 +26,43 @@ function resolveMotherNameFromChildren(inputName, children) {
   return null;
 }
 
+/** Exact children[] key only — no mother→unborn alias (that breaks "feed all of mom"). */
+function exactChildKey(cName, children) {
+  if (!cName || !children) {
+    return null;
+  }
+  if (children[cName]) {
+    return cName;
+  }
+  const capped = text.capitalizeFirstLetter(String(cName));
+  if (children[capped]) {
+    return capped;
+  }
+  const lower = String(cName).toLowerCase();
+  for (const key in children) {
+    if (String(key).toLowerCase() === lower) {
+      return key;
+    }
+  }
+  return null;
+}
+
+function expandHungryChildrenOfMother(motherName, children, inputChildList) {
+  for (var filterChildName in children) {
+    var filterChild = children[filterChildName];
+    if (
+      filterChild &&
+      filterChild.mother &&
+      String(filterChild.mother).toLowerCase() ===
+        String(motherName).toLowerCase() &&
+      !(filterChild.newAdult && filterChild.newAdult == true) &&
+      Number(filterChild.food || 0) < 2
+    ) {
+      inputChildList.push(filterChildName);
+    }
+  }
+}
+
 // unused is deprecated
 function feed(unused, player, amount, inputChildList, gameState) {
   const children = gameState.children;
@@ -44,52 +81,52 @@ function feed(unused, player, amount, inputChildList, gameState) {
 
   let feedAtLeastOneChild = false;
   for (const cName of inputChildList) {
-    const resolvedChildName =
-      childLib.resolveChildKey(cName, children, gameState) ||
-      text.capitalizeFirstLetter(cName);
-    const childName = resolvedChildName;
     amount = Number(amount);
-    if (!children[childName]) {
-      if (cName.toLowerCase() == '!all') {
-        showErrors = false;
-        const allHungryNote = player.name + ' feeds all the hungry children.';
-        if (!specialNotes.includes(allHungryNote)) {
-          specialNotes.push(allHungryNote);
-        }
-        for (var allChildName in children) {
-          var child = children[allChildName];
-          if (
-            child &&
-            !(child.newAdult && child.newAdult == true) &&
-            Number(child.food || 0) < 2
-          ) {
-            inputChildList.push(allChildName);
-          }
-        }
-        continue;
+
+    if (cName.toLowerCase() == '!all') {
+      showErrors = false;
+      const allHungryNote = player.name + ' feeds all the hungry children.';
+      if (!specialNotes.includes(allHungryNote)) {
+        specialNotes.push(allHungryNote);
       }
-      if (cName.toLowerCase() == '!under2') {
-        showErrors = false;
-        const underTwoNote =
-          player.name + ' feeds all hungry children under age two.';
-        if (!specialNotes.includes(underTwoNote)) {
-          specialNotes.push(underTwoNote);
+      for (var allChildName in children) {
+        var child = children[allChildName];
+        if (
+          child &&
+          !(child.newAdult && child.newAdult == true) &&
+          Number(child.food || 0) < 2
+        ) {
+          inputChildList.push(allChildName);
         }
-        for (var underTwoChildName in children) {
-          var underTwoChild = children[underTwoChildName];
-          if (
-            underTwoChild &&
-            !(underTwoChild.newAdult && underTwoChild.newAdult == true) &&
-            Number(underTwoChild.age || 0) < 4 &&
-            Number(underTwoChild.food || 0) < 2
-          ) {
-            inputChildList.push(underTwoChildName);
-            logger.accessLog.info('adding to inputChildList:' + underTwoChildName);
-          }
-        }
-        continue;
       }
-      // this seems to be feeding based on mother?
+      continue;
+    }
+    if (cName.toLowerCase() == '!under2') {
+      showErrors = false;
+      const underTwoNote =
+        player.name + ' feeds all hungry children under age two.';
+      if (!specialNotes.includes(underTwoNote)) {
+        specialNotes.push(underTwoNote);
+      }
+      for (var underTwoChildName in children) {
+        var underTwoChild = children[underTwoChildName];
+        if (
+          underTwoChild &&
+          !(underTwoChild.newAdult && underTwoChild.newAdult == true) &&
+          Number(underTwoChild.age || 0) < 4 &&
+          Number(underTwoChild.food || 0) < 2
+        ) {
+          inputChildList.push(underTwoChildName);
+          logger.accessLog.info('adding to inputChildList:' + underTwoChildName);
+        }
+      }
+      continue;
+    }
+
+    // Mother-name expansion before resolveChildKey: pregnant moms otherwise
+    // resolve to "Mom's unborn" and only that one child gets fed.
+    const exactKey = exactChildKey(cName, children);
+    if (!exactKey) {
       const motherName = resolveMotherNameFromChildren(cName, children);
       if (motherName) {
         const parentNote =
@@ -97,24 +134,17 @@ function feed(unused, player, amount, inputChildList, gameState) {
         if (!specialNotes.includes(parentNote)) {
           specialNotes.push(parentNote);
         }
-        for (var filterChildName in children) {
-          var filterChild = children[filterChildName];
-          if (
-            filterChild.mother &&
-            String(filterChild.mother).toLowerCase() ===
-              String(motherName).toLowerCase()
-          ) {
-            if (
-              filterChild &&
-              !(filterChild.newAdult && filterChild.newAdult == true) &&
-              Number(filterChild.food || 0) < 2
-            ) {
-              inputChildList.push(filterChildName);
-            }
-          }
-        }
+        expandHungryChildrenOfMother(motherName, children, inputChildList);
         continue;
       }
+    }
+
+    const resolvedChildName =
+      exactKey ||
+      childLib.resolveChildKey(cName, children, gameState) ||
+      text.capitalizeFirstLetter(cName);
+    const childName = resolvedChildName;
+    if (!children[childName]) {
       logger.accessLog.info('Feed did not find child ' + childName);
       text.addMessage(gameState, player.name, 'No such child as ' + childName + '.');
       continue;

@@ -4,7 +4,6 @@ function sendGameMessages(ws, gameState, data, deps) {
     tribeConnections,
     pop,
     normalizePlayerName,
-    hasOpenConnectionInTribe,
     queuePendingMessage,
     logWithTimestamp,
     openState,
@@ -119,6 +118,9 @@ function sendGameMessages(ws, gameState, data, deps) {
   // Send tribe-wide messages to all players in this tribe after private messages.
   if (tribeMessageContent) {
     const tribeMembers = tribeConnections.get(tribe);
+    // Track who actually got a successful send (normalized player name).
+    // Do not trust readyState alone — half-open sockets can look OPEN.
+    const deliveredPlayers = new Set();
     if (tribeMembers && tribeMembers.size > 0) {
       const tribeMessage = {
         type: 'tribeMessage',
@@ -130,6 +132,11 @@ function sendGameMessages(ws, gameState, data, deps) {
         if (tribeWs.readyState === openState) {
           try {
             tribeWs.send(JSON.stringify(tribeMessage));
+            if (tribeWs.currentPlayer) {
+              deliveredPlayers.add(
+                normalizePlayerName(tribeWs.currentPlayer)
+              );
+            }
           } catch (error) {
             console.error('Error sending tribe message:', error);
           }
@@ -137,15 +144,25 @@ function sendGameMessages(ws, gameState, data, deps) {
       }
     }
 
-    // Replay path: if a player is offline for this tribe, queue tribe-wide messages.
+    // Queue for tribe members who did not get a successful live delivery.
     if (gameState.population) {
       for (const tribePlayer of Object.keys(gameState.population)) {
-        if (!hasOpenConnectionInTribe(tribePlayer, tribe)) {
-          queuePendingMessage(tribePlayer, tribe, {
-            type: 'tribeMessage',
-            message: tribeMessageContent,
-          });
+        const member = gameState.population[tribePlayer];
+        const candidates = [
+          tribePlayer,
+          member && member.name,
+        ].filter(Boolean);
+        const wasDelivered = candidates.some((name) =>
+          deliveredPlayers.has(normalizePlayerName(name))
+        );
+        if (wasDelivered) {
+          continue;
         }
+        // Prefer queueing under the population key (stable for replay).
+        queuePendingMessage(tribePlayer, tribe, {
+          type: 'tribeMessage',
+          message: tribeMessageContent,
+        });
       }
     }
   }

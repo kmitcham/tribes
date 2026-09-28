@@ -91,6 +91,55 @@ describe('feed function', () => {
     expect(response).toContain('p1 feeds 2 to C2');
   });
 
+  test('feed by mother name expands all kids even when mother is pregnant', () => {
+    var gameState = {
+      population: {
+        Sockpuppet: {
+          name: 'Sockpuppet',
+          gender: 'male',
+          activity: 'gather',
+          food: 20,
+          grain: 10,
+        },
+        Featherfin: {
+          name: 'Featherfin',
+          gender: 'female',
+          isPregnant: "Featherfin's unborn",
+          food: 4,
+        },
+      },
+      children: {
+        Akkz: {
+          mother: 'Featherfin',
+          father: 'Sockpuppet',
+          age: 4,
+          food: 0,
+          gender: 'male',
+          name: 'Akkz',
+        },
+        "Featherfin's unborn": {
+          mother: 'Featherfin',
+          father: 'Sockpuppet',
+          age: -1,
+          food: 0,
+          gender: 'female',
+          name: "Featherfin's unborn",
+        },
+      },
+    };
+
+    feed(null, gameState.population.Sockpuppet, 2, ['Featherfin'], gameState);
+    response = gameState.messages['tribe'];
+
+    expect(response).toContain(
+      'Sockpuppet feeds all the children of Featherfin.'
+    );
+    expect(response).toContain('Sockpuppet feeds 2 to Akkz');
+    expect(response).toContain("Sockpuppet feeds 2 to Featherfin's unborn");
+    // Must not stop after only resolving mother → unborn.
+    expect((response.match(/feeds 2 to /g) || []).length).toBe(2);
+  });
+
   test('feed filtered by mother name even when mother is not in population', () => {
     var gameState = {
       population: {

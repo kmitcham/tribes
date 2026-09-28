@@ -382,6 +382,35 @@ describe('Tribes Interface Client (real class)', () => {
     expect(env.elements.playerName.value).toBe('StoredPlayer');
   });
 
+  test('tryAuthenticateSessionIfReady sends session auth once tribe is known', () => {
+    client.storeSession('tok-abc', 'Ada');
+    client.ws = { readyState: 1 }; // OPEN
+    env.elements.tribeSelect.value = 'bug';
+    const sendSpy = jest.spyOn(client, 'send').mockImplementation(() => {});
+
+    expect(client.tryAuthenticateSessionIfReady()).toBe(true);
+    expect(sendSpy).toHaveBeenCalledWith({
+      type: 'authenticateSession',
+      token: 'tok-abc',
+    });
+    // Second call is a no-op for this connection.
+    expect(client.tryAuthenticateSessionIfReady()).toBe(false);
+
+    sendSpy.mockRestore();
+  });
+
+  test('tryAuthenticateSessionIfReady waits until tribe is not Loading', () => {
+    client.storeSession('tok-abc', 'Ada');
+    client.ws = { readyState: 1 };
+    env.elements.tribeSelect.value = 'Loading...';
+    const sendSpy = jest.spyOn(client, 'send').mockImplementation(() => {});
+
+    expect(client.tryAuthenticateSessionIfReady()).toBe(false);
+    expect(sendSpy).not.toHaveBeenCalled();
+
+    sendSpy.mockRestore();
+  });
+
   test('marks browser logged-in in localStorage and cookies', () => {
     expect(client.hasBrowserLoggedIn()).toBe(false);
 

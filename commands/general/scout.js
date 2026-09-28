@@ -30,7 +30,7 @@ module.exports = {
     )
     .addStringOption((option) =>
       option
-        .setName('nerd')
+        .setName('statistics')
         .setDescription(
           'Your expected yields here (game track, profession, strength; ±basket/spear)'
         )
@@ -76,7 +76,7 @@ function normalizeLocation(raw) {
 
 function onCommand(interaction, gameState) {
   var displayName = interaction.member.displayName;
-  var nerdOption = interaction.options.getString('nerd');
+  var statisticsOption = interaction.options.getString('statistics');
   var selectedLocation = interaction.options.getString('location');
 
   let targetLocation =
@@ -106,24 +106,32 @@ function onCommand(interaction, gameState) {
   }
 
   logger.accessLog.info(
-    'scouting.  location:' + targetLocation + ' nerdOption:' + nerdOption
+    'scouting.  location:' +
+      targetLocation +
+      ' statisticsOption:' +
+      statisticsOption
   );
 
   const player = pop.memberByName(displayName, gameState);
 
   if (targetLocation === 'overview') {
     let response = formatOverview(gameState);
-    if (nerdOption) {
+    if (statisticsOption) {
       if (!player) {
         response +=
-          '\n\nNerd mode needs you in the tribe (profession/strength).';
+          '\n\nStatistics need you in the tribe (profession/strength).';
       } else {
         response +=
-          '\n\nNerd mode for overview (your mods; each area\'s own game track):\n';
+          '\n\nStatistics for overview (your mods; each area\'s own game track):\n';
         for (const locationName of Object.keys(locations)) {
           response +=
             '\n' +
-            getNerdData(locationName, nerdOption, gameState, player) +
+            getStatisticsData(
+              locationName,
+              statisticsOption,
+              gameState,
+              player
+            ) +
             '\n';
         }
       }
@@ -133,13 +141,19 @@ function onCommand(interaction, gameState) {
   }
 
   let response = huntlib.getScoutMessage(targetLocation, gameState);
-  if (nerdOption) {
+  if (statisticsOption) {
     if (!player) {
       response +=
-        '\n\nNerd mode needs you in the tribe so profession and strength apply.';
+        '\n\nStatistics need you in the tribe so profession and strength apply.';
     } else {
       response +=
-        '\n' + getNerdData(targetLocation, nerdOption, gameState, player);
+        '\n' +
+        getStatisticsData(
+          targetLocation,
+          statisticsOption,
+          gameState,
+          player
+        );
     }
   }
   text.addMessage(gameState, displayName, response);
@@ -326,7 +340,7 @@ function formatNerdTable(locationName, totals, samples, meta) {
   const colYield = 16;
   let out = '';
   out +=
-    'Nerd scout for ' +
+    'Scout statistics for ' +
     meta.playerName +
     ' — ' +
     locationName +
@@ -364,9 +378,9 @@ function formatNerdTable(locationName, totals, samples, meta) {
 
 /**
  * Expected yields for the current player in one area.
- * @param {'all'|'actual'} nerdOption
+ * @param {'all'|'actual'} statisticsOption
  */
-function getNerdData(locationName, nerdOption, gameState, player) {
+function getStatisticsData(locationName, statisticsOption, gameState, player) {
   const gameTrack = gameState.gameTrack
     ? Number(gameState.gameTrack[locationName]) || 0
     : 0;
@@ -375,7 +389,7 @@ function getNerdData(locationName, nerdOption, gameState, player) {
 
   let samples = 0;
   let methodLine = '';
-  const mode = nerdOption === 'all' ? 'all' : 'actual';
+  const mode = statisticsOption === 'all' ? 'all' : 'actual';
 
   if (mode === 'all') {
     samples = 216;
@@ -428,7 +442,7 @@ function getNerdData(locationName, nerdOption, gameState, player) {
   });
 }
 
-module.exports.getNerdData = getNerdData;
+module.exports.getStatisticsData = getStatisticsData;
 module.exports._test = {
   gatherYieldOnce,
   huntYieldOnce,
