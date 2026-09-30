@@ -133,6 +133,22 @@
             border-color: #c9a227;
         }
 
+        .status-item.trade-status-indicator {
+            background: #0b6e4f;
+            border-color: #1aad75;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .status-item.trade-status-indicator:hover {
+            filter: brightness(1.08);
+        }
+
+        .status-item.trade-status-indicator:focus-visible {
+            outline: 2px solid #fff;
+            outline-offset: 2px;
+        }
+
         .status-item.current-tribe-indicator {
             background: #8a6d00;
             border-color: #c9a227;
@@ -170,6 +186,10 @@
         }
 
         .status-item.join-prompt-indicator.join-prompt-attention {
+            animation: join-prompt-pulse 1s ease-in-out 3;
+        }
+
+        .status-item.trade-status-indicator.trade-status-attention {
             animation: join-prompt-pulse 1s ease-in-out 3;
         }
 
@@ -1694,6 +1714,11 @@
                 font-size: 0.8rem;
             }
 
+            .game-status-bar .status-item.trade-status-indicator {
+                grid-column: 1 / -1;
+                justify-content: center;
+            }
+
             .container {
                 display: flex;
                 flex-direction: column;
@@ -1856,6 +1881,10 @@
         </div>
         <div class="status-item" id="conflictStatus" style="display: none;">
             <span class="status-icon">⚖️</span>
+            <span></span>
+        </div>
+        <div class="status-item trade-status-indicator" id="tradeStatus" style="display: none;" role="button" tabindex="0" aria-label="Trade offer waiting">
+            <span class="status-icon">🤝</span>
             <span></span>
         </div>
         <div class="status-item waiting-status-indicator" id="waitingStatus" style="display: none;">
@@ -2565,12 +2594,16 @@
                 
                 switch (status) {
                     case 'connected':
+                        // Healthy connection is the default — hide to reduce status-bar clutter.
+                        statusEl.style.display = 'none';
                         statusEl.innerHTML = '<span class="status-icon">✅</span><span>Connected to server</span>';
                         break;
                     case 'connecting':
+                        statusEl.style.display = 'flex';
                         statusEl.innerHTML = '<span class="status-icon">🔄</span><span>Connecting...</span>';
                         break;
                     case 'disconnected':
+                        statusEl.style.display = 'flex';
                         statusEl.innerHTML = '<span class="status-icon">❌</span><span>Disconnected from server</span>';
                         break;
                 }
@@ -2875,6 +2908,7 @@
                         // Membership / craft / chief can change visibility — re-fetch list
                         this.requestCommandList();
                         this.updateWaitingStatusChip();
+                        this.updateTradeStatusChip();
                         this.regenerateModalFormIfDataReady('population');
                         break;
                     case 'children':
@@ -4998,6 +5032,11 @@
                 const playerSelect = container.querySelector('#param_player');
                 if (!actionSelect) {
                     return;
+                }
+
+                if (this._preferTradeAccept) {
+                    actionSelect.value = 'accept';
+                    this._preferTradeAccept = false;
                 }
 
                 let preview = container.querySelector('#tradeOfferPreview');
@@ -8046,6 +8085,96 @@
                 }
             }
 
+            getIncomingTradeOfferers() {
+                if (!this.currentPopulation) {
+                    return [];
+                }
+                const me =
+                    document.getElementById('playerName')?.value ||
+                    this.currentPlayerName ||
+                    '';
+                if (!me) {
+                    return [];
+                }
+                return Object.keys(this.currentPopulation).filter((name) => {
+                    const person = this.currentPopulation[name];
+                    return (
+                        person &&
+                        person.outgoingTrade &&
+                        this.namesMatch(person.outgoingTrade.to, me)
+                    );
+                });
+            }
+
+            formatIncomingTradeTooltip(offererNames) {
+                if (!offererNames || offererNames.length === 0) {
+                    return '';
+                }
+                return offererNames
+                    .map((name) => {
+                        const person = this.currentPopulation && this.currentPopulation[name];
+                        const offer = person && person.outgoingTrade;
+                        if (!offer) {
+                            return `${name} offered a trade`;
+                        }
+                        const give = `${offer.giveAmount} ${offer.giveItem}`;
+                        const want = `${offer.wantAmount} ${offer.wantItem}`;
+                        return `${name} offers ${give} for your ${want}`;
+                    })
+                    .join(' · ');
+            }
+
+            updateTradeStatusChip() {
+                const tradeStatus = document.getElementById('tradeStatus');
+                if (!tradeStatus) {
+                    return;
+                }
+
+                const offerers = this.getIncomingTradeOfferers();
+                if (!offerers.length) {
+                    tradeStatus.style.display = 'none';
+                    tradeStatus.title = '';
+                    tradeStatus.classList.remove('trade-status-attention');
+                    return;
+                }
+
+                const wasHidden = tradeStatus.style.display === 'none';
+                const label =
+                    offerers.length === 1
+                        ? `Trade from ${offerers[0]}`
+                        : `${offerers.length} trade offers`;
+                tradeStatus.style.display = 'flex';
+                tradeStatus.innerHTML = `<span class="status-icon">🤝</span><span>${label}</span>`;
+                tradeStatus.title =
+                    this.formatIncomingTradeTooltip(offerers) +
+                    ' — click to open trade accept/reject';
+                tradeStatus.setAttribute(
+                    'aria-label',
+                    offerers.length === 1
+                        ? `Trade offer from ${offerers[0]}`
+                        : `${offerers.length} trade offers waiting`
+                );
+                if (wasHidden) {
+                    tradeStatus.classList.remove('trade-status-attention');
+                    void tradeStatus.offsetWidth;
+                    tradeStatus.classList.add('trade-status-attention');
+                }
+            }
+
+            openTradeFromStatusChip() {
+                if (!this.commands || !this.commands.trade) {
+                    this.requestCommandList();
+                    this.addMessage(
+                        'Loading commands… click the trade tile again in a moment.',
+                        'info'
+                    );
+                    return;
+                }
+                // Tile means "someone offered TO you" — land on accept, not offer.
+                this._preferTradeAccept = true;
+                this.selectCommand('trade');
+            }
+
             updateConflictStatusChip(gameState) {
                 const conflictStatus = document.getElementById('conflictStatus');
                 if (!conflictStatus) {
@@ -8302,6 +8431,7 @@
                 this.renderStatusItemChip(locationStatus, locationIcon, locationTrackText);
                 this.updateCurrentTribeStatusChip(gameState);
                 this.updateConflictStatusChip(gameState);
+                this.updateTradeStatusChip();
                 this.updateWaitingStatusChip();
                 this.updateJoinPromptStatusChip();
             }
@@ -8418,6 +8548,17 @@
                     };
                 }
 
+                const tradeStatus = document.getElementById('tradeStatus');
+                if (tradeStatus) {
+                    tradeStatus.onclick = () => this.openTradeFromStatusChip();
+                    tradeStatus.onkeydown = (event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault();
+                            this.openTradeFromStatusChip();
+                        }
+                    };
+                }
+
                 const registerModalSubmit = document.getElementById('registerModalSubmit');
                 if (registerModalSubmit) {
                     registerModalSubmit.onclick = () => this.submitRegisterModal();
@@ -8443,6 +8584,7 @@
                     this.lastMessageSeasonCounter = null;
                     this.saveSettings(); // Save the new tribe selection
                     this.updateCurrentTribeStatusChip({});
+                    this.updateTradeStatusChip();
                     
                     // Refresh game data for the new tribe (population, children, status).
                     // Works without login so people can observe a tribe's game state.
@@ -8469,6 +8611,7 @@
                     this.requestCommandList(); // Refresh command list in case chief status changed
                     this.updateCommandList(); // Update command list immediately for chief status
                     this.updateWaitingStatusChip();
+                    this.updateTradeStatusChip();
                     
                     // Clear message display when switching players  
                     const container = document.getElementById('messagesContainer');

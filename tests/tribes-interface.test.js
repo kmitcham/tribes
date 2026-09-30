@@ -431,18 +431,21 @@ describe('Tribes Interface Client (real class)', () => {
     const statusEl = env.elements.connectionStatus;
 
     client.updateConnectionStatus('connecting');
+    expect(statusEl.style.display).toBe('flex');
     expect(statusEl.innerHTML).toContain('Connecting...');
     expect(statusEl.className).toBe(
       'status-item connection-status-indicator connecting'
     );
 
     client.updateConnectionStatus('connected');
+    expect(statusEl.style.display).toBe('none');
     expect(statusEl.innerHTML).toContain('Connected to server');
     expect(statusEl.className).toBe(
       'status-item connection-status-indicator connected'
     );
 
     client.updateConnectionStatus('disconnected');
+    expect(statusEl.style.display).toBe('flex');
     expect(statusEl.innerHTML).toContain('Disconnected from server');
     expect(statusEl.className).toBe(
       'status-item connection-status-indicator disconnected'
@@ -1041,6 +1044,92 @@ describe('Tribes Interface Client (real class)', () => {
     env.elements.tribeSelect.selectedOptions = [];
     client.updateCurrentTribeStatusChip({});
     expect(tribeChip.style.display).toBe('none');
+  });
+
+  test('opening trade from status chip prefers accept action', () => {
+    client.commands = {
+      trade: {
+        name: 'trade',
+        description: 'trade',
+        options: [],
+      },
+    };
+    const selectSpy = jest
+      .spyOn(client, 'selectCommand')
+      .mockImplementation(() => {});
+
+    client.openTradeFromStatusChip();
+    expect(client._preferTradeAccept).toBe(true);
+    expect(selectSpy).toHaveBeenCalledWith('trade');
+
+    const container = env.documentMock.getElementById('modalCommandParameters');
+    const actionEl = createElement('select');
+    actionEl.id = 'param_action';
+    actionEl.value = 'offer';
+    container.querySelector = (sel) => {
+      if (sel === '#param_action') return actionEl;
+      if (sel === '#param_player') return null;
+      if (sel === '#tradeOfferPreview') return null;
+      return null;
+    };
+    container.addEventListener = jest.fn();
+    actionEl.addEventListener = jest.fn();
+
+    client.selectedCommand = { name: 'trade', ...client.commands.trade };
+    client.setupTradeFormEnhancements(container);
+
+    expect(actionEl.value).toBe('accept');
+    expect(client._preferTradeAccept).toBe(false);
+    selectSpy.mockRestore();
+  });
+
+  test('trade status chip shows for incoming offers only', () => {
+    const tradeChip = env.documentMock.getElementById('tradeStatus');
+    env.elements.playerName.value = 'TestPlayer';
+
+    client.currentPopulation = {
+      Ada: {
+        name: 'Ada',
+        outgoingTrade: {
+          to: 'TestPlayer',
+          giveItem: 'meat',
+          giveAmount: 2,
+          wantItem: 'spear',
+          wantAmount: 1,
+        },
+      },
+      Bob: { name: 'Bob' },
+      TestPlayer: { name: 'TestPlayer' },
+    };
+
+    client.updateTradeStatusChip();
+    expect(tradeChip.style.display).toBe('flex');
+    expect(tradeChip.innerHTML).toMatch(/Trade from Ada/i);
+    expect(tradeChip.title).toMatch(/Ada offers 2 meat/i);
+    expect(tradeChip.title).toMatch(/1 spear/i);
+
+    // Offer aimed at someone else — hide
+    client.currentPopulation.Ada.outgoingTrade.to = 'Bob';
+    client.updateTradeStatusChip();
+    expect(tradeChip.style.display).toBe('none');
+
+    // Multiple incoming
+    client.currentPopulation.Ada.outgoingTrade.to = 'TestPlayer';
+    client.currentPopulation.Bob.outgoingTrade = {
+      to: 'TestPlayer',
+      giveItem: 'basket',
+      giveAmount: 1,
+      wantItem: 'meat',
+      wantAmount: 3,
+    };
+    client.updateTradeStatusChip();
+    expect(tradeChip.style.display).toBe('flex');
+    expect(tradeChip.innerHTML).toMatch(/2 trade offers/i);
+
+    // No population / no offers — hide
+    client.currentPopulation = null;
+    client.updateTradeStatusChip();
+    expect(tradeChip.style.display).toBe('none');
   });
 
   test('join form lists all tribes with the current tribe selected', () => {
