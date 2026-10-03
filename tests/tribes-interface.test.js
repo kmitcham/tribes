@@ -1046,6 +1046,146 @@ describe('Tribes Interface Client (real class)', () => {
     expect(tribeChip.style.display).toBe('none');
   });
 
+  test('trade giveitem choices only include owned items', () => {
+    env.elements.playerName.value = 'TestPlayer';
+    client.currentPopulation = {
+      TestPlayer: {
+        name: 'TestPlayer',
+        food: 5,
+        grain: 0,
+        basket: 2,
+        spearhead: 0,
+        activity: 'idle',
+      },
+    };
+    client.currentStatusData = { workRound: true };
+    client.selectedCommand = { name: 'trade' };
+
+    const choices = client.getOwnedTradeGiveChoices([
+      { name: 'food', value: 'food' },
+      { name: 'grain', value: 'grain' },
+      { name: 'basket', value: 'basket' },
+      { name: 'spearhead', value: 'spearhead' },
+    ]);
+    expect(choices.map((c) => c.value)).toEqual(['food', 'basket']);
+    expect(choices[0].name).toMatch(/food \(5\)/);
+    expect(choices[1].name).toMatch(/basket \(2\)/);
+
+    // Spearhead owned but blocked after hunt in work round
+    client.currentPopulation.TestPlayer.spearhead = 1;
+    client.currentPopulation.TestPlayer.activity = 'hunted';
+    const afterHunt = client.getOwnedTradeGiveChoices([]);
+    expect(afterHunt.map((c) => c.value)).toEqual(['food', 'basket']);
+  });
+
+  test('trade modal lists incoming and outgoing offers with actions', () => {
+    env.elements.playerName.value = 'TestPlayer';
+    client.currentPopulation = {
+      TestPlayer: {
+        name: 'TestPlayer',
+        outgoingTrades: [
+          {
+            to: 'Bob',
+            giveItem: 'grain',
+            giveAmount: 2,
+            wantItem: 'basket',
+            wantAmount: 1,
+          },
+          {
+            to: 'Ada',
+            giveItem: 'food',
+            giveAmount: 1,
+            wantItem: 'spearhead',
+            wantAmount: 1,
+          },
+        ],
+      },
+      Ada: {
+        name: 'Ada',
+        outgoingTrades: [
+          {
+            to: 'TestPlayer',
+            giveItem: 'meat',
+            giveAmount: 2,
+            wantItem: 'spearhead',
+            wantAmount: 1,
+          },
+        ],
+      },
+      Bob: { name: 'Bob' },
+    };
+
+    const container = env.documentMock.getElementById('modalCommandParameters');
+    container.children = [];
+    container.firstChild = null;
+    container.insertBefore = (child, _ref) => {
+      child.parentNode = container;
+      container.children.unshift(child);
+      container.firstChild = container.children[0] || null;
+      return child;
+    };
+    container.appendChild = (child) => {
+      child.parentNode = container;
+      container.children.push(child);
+      container.firstChild = container.children[0] || null;
+      return child;
+    };
+    container.querySelector = (sel) => {
+      if (sel === '#tradeOffersPanel') {
+        return (
+          container.children.find((c) => c.id === 'tradeOffersPanel') || null
+        );
+      }
+      return null;
+    };
+
+    client.renderOpenTradesPanel(container);
+
+    const panel = container.children.find((c) => c.id === 'tradeOffersPanel');
+    expect(panel).toBeTruthy();
+    const text = panel.children.map((c) => c.textContent || '').join(' ');
+    // Walk nested text more thoroughly
+    const collectText = (node) => {
+      let out = node.textContent || '';
+      (node.children || []).forEach((child) => {
+        out += ' ' + collectText(child);
+      });
+      return out;
+    };
+    const fullText = collectText(panel);
+    expect(fullText).toMatch(/Offers to you/i);
+    expect(fullText).toMatch(/Ada/i);
+    expect(fullText).toMatch(/Accept/i);
+    expect(fullText).toMatch(/Reject/i);
+    expect(fullText).toMatch(/Your offers/i);
+    expect(fullText).toMatch(/Bob/i);
+    expect(fullText).toMatch(/Cancel/i);
+    // Two Cancel buttons for two outgoing offers
+    const cancelCount = (fullText.match(/Cancel/g) || []).length;
+    expect(cancelCount).toBeGreaterThanOrEqual(2);
+
+    const sendSpy = jest.spyOn(client, 'send').mockImplementation(() => {});
+    const closeSpy = jest
+      .spyOn(client, 'closeCommandModal')
+      .mockImplementation(() => {});
+    const clearSpy = jest
+      .spyOn(client, 'clearCommandEntry')
+      .mockImplementation(() => {});
+
+    client.submitTradeQuickAction('accept', 'Ada');
+    expect(sendSpy).toHaveBeenCalledWith({
+      type: 'command',
+      command: 'trade',
+      parameters: { action: 'accept', player: 'Ada' },
+    });
+    expect(closeSpy).toHaveBeenCalled();
+    expect(clearSpy).toHaveBeenCalled();
+
+    sendSpy.mockRestore();
+    closeSpy.mockRestore();
+    clearSpy.mockRestore();
+  });
+
   test('opening trade from status chip prefers accept action', () => {
     client.commands = {
       trade: {

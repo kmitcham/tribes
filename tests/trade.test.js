@@ -56,7 +56,7 @@ test('disallows same-item trades (e.g. food for food)', () => {
   expect(
     tradeLib.offerTrade(gs, 'Ada', 'Bob', 'food', 2, 'food', 1)
   ).toBe(false);
-  expect(gs.population.Ada.outgoingTrade).toBeFalsy();
+  expect(tradeLib.listOutgoingTrades(gs.population.Ada)).toHaveLength(0);
   expect(gs.messages.Ada).toMatch(/different items/i);
 });
 
@@ -67,14 +67,16 @@ test('offer does not move inventory until accept', () => {
   ).toBe(true);
   expect(gs.population.Ada.food).toBe(5);
   expect(gs.population.Bob.basket).toBe(2);
-  expect(gs.population.Ada.outgoingTrade).toMatchObject({
-    to: 'Bob',
-    giveItem: 'food',
-    giveAmount: 2,
-    wantItem: 'basket',
-    wantAmount: 1,
-    season: 4,
-  });
+  expect(tradeLib.listOutgoingTrades(gs.population.Ada)).toEqual([
+    expect.objectContaining({
+      to: 'Bob',
+      giveItem: 'food',
+      giveAmount: 2,
+      wantItem: 'basket',
+      wantAmount: 1,
+      season: 4,
+    }),
+  ]);
 });
 
 test('accept swaps both items and announces to tribe', () => {
@@ -85,7 +87,7 @@ test('accept swaps both items and announces to tribe', () => {
   expect(gs.population.Ada.basket).toBe(2);
   expect(gs.population.Bob.food).toBe(5);
   expect(gs.population.Bob.basket).toBe(1);
-  expect(gs.population.Ada.outgoingTrade).toBeFalsy();
+  expect(tradeLib.listOutgoingTrades(gs.population.Ada)).toHaveLength(0);
   expect(gs.messages.tribe).toMatch(/🤝/);
   expect(gs.messages.tribe).toMatch(/Ada trades/);
 });
@@ -95,19 +97,90 @@ test('accept leaves offer open if a side can no longer pay', () => {
   tradeLib.offerTrade(gs, 'Ada', 'Bob', 'food', 2, 'basket', 1);
   gs.population.Ada.food = 0;
   expect(tradeLib.acceptTrade(gs, 'Bob', 'Ada')).toBe(false);
-  expect(gs.population.Ada.outgoingTrade).toBeTruthy();
+  expect(tradeLib.listOutgoingTrades(gs.population.Ada)).toHaveLength(1);
   expect(gs.population.Bob.basket).toBe(2);
 });
 
-test('only one outstanding outgoing offer at a time', () => {
+test('allows two outstanding offers to different players', () => {
   const gs = baseState();
   expect(
     tradeLib.offerTrade(gs, 'Ada', 'Bob', 'food', 1, 'grain', 1)
   ).toBe(true);
   expect(
     tradeLib.offerTrade(gs, 'Ada', 'Cal', 'food', 1, 'spearhead', 1)
+  ).toBe(true);
+  const open = tradeLib.listOutgoingTrades(gs.population.Ada);
+  expect(open).toHaveLength(2);
+  expect(open.map((o) => o.to).sort()).toEqual(['Bob', 'Cal']);
+});
+
+test('blocks a third open offer and a second open offer to the same player', () => {
+  const gs = baseState();
+  expect(
+    tradeLib.offerTrade(gs, 'Ada', 'Bob', 'food', 1, 'grain', 1)
+  ).toBe(true);
+  expect(
+    tradeLib.offerTrade(gs, 'Ada', 'Bob', 'food', 1, 'basket', 1)
   ).toBe(false);
-  expect(gs.population.Ada.outgoingTrade.to).toBe('Bob');
+  expect(gs.messages.Ada).toMatch(/already have an outstanding trade offer to Bob/i);
+
+  expect(
+    tradeLib.offerTrade(gs, 'Ada', 'Cal', 'food', 1, 'spearhead', 1)
+  ).toBe(true);
+  // Need a fourth player for a third distinct target — reuse Bob after cancel instead:
+  // with Bob+Cal open, cannot open a third even to a free peer if we had one.
+  // Drop Cal and verify Bob+Cal still capped at 2 by attempting when both open:
+  gs.population.Dan = {
+    name: 'Dan',
+    food: 2,
+    grain: 2,
+    basket: 1,
+    spearhead: 1,
+    activity: 'idle',
+  };
+  expect(
+    tradeLib.offerTrade(gs, 'Ada', 'Dan', 'grain', 1, 'basket', 1)
+  ).toBe(false);
+  expect(gs.messages.Ada).toMatch(/only have 2 outstanding/i);
+  expect(tradeLib.listOutgoingTrades(gs.population.Ada)).toHaveLength(2);
+});
+
+test('accepting one of two open offers leaves the other', () => {
+  const gs = baseState();
+  tradeLib.offerTrade(gs, 'Ada', 'Bob', 'food', 1, 'grain', 1);
+  tradeLib.offerTrade(gs, 'Ada', 'Cal', 'food', 1, 'spearhead', 1);
+  expect(tradeLib.acceptTrade(gs, 'Bob', 'Ada')).toBe(true);
+  const open = tradeLib.listOutgoingTrades(gs.population.Ada);
+  expect(open).toHaveLength(1);
+  expect(open[0].to).toBe('Cal');
+});
+
+test('cancel with multiple open offers requires naming the player', () => {
+  const gs = baseState();
+  tradeLib.offerTrade(gs, 'Ada', 'Bob', 'food', 1, 'grain', 1);
+  tradeLib.offerTrade(gs, 'Ada', 'Cal', 'food', 1, 'spearhead', 1);
+  expect(tradeLib.cancelTrade(gs, 'Ada')).toBe(false);
+  expect(gs.messages.Ada).toMatch(/multiple outstanding/i);
+  expect(tradeLib.cancelTrade(gs, 'Ada', 'Bob')).toBe(true);
+  const open = tradeLib.listOutgoingTrades(gs.population.Ada);
+  expect(open).toHaveLength(1);
+  expect(open[0].to).toBe('Cal');
+});
+
+test('legacy single outgoingTrade is still readable and clearable', () => {
+  const gs = baseState();
+  gs.population.Ada.outgoingTrade = {
+    season: 4,
+    to: 'Bob',
+    giveItem: 'food',
+    giveAmount: 1,
+    wantItem: 'grain',
+    wantAmount: 1,
+  };
+  expect(tradeLib.listOutgoingTrades(gs.population.Ada)).toHaveLength(1);
+  expect(tradeLib.acceptTrade(gs, 'Bob', 'Ada')).toBe(true);
+  expect(tradeLib.listOutgoingTrades(gs.population.Ada)).toHaveLength(0);
+  expect(gs.population.Ada.outgoingTrade).toBeFalsy();
 });
 
 test('max two offers to the same person per season', () => {
@@ -129,7 +202,7 @@ test('new season resets pair cap; stale pending offers expire', () => {
   // season advances
   gs.seasonCounter = 5;
   tradeLib.expireStaleTrades(gs);
-  expect(gs.population.Ada.outgoingTrade).toBeFalsy();
+  expect(tradeLib.listOutgoingTrades(gs.population.Ada)).toHaveLength(0);
   expect(
     tradeLib.offerTrade(gs, 'Ada', 'Bob', 'food', 1, 'grain', 1)
   ).toBe(true);
@@ -144,29 +217,40 @@ test('spearhead blocked after hunt in work round', () => {
   ).toBe(false);
 });
 
-test('reject notifies and frees outstanding slot', () => {
+test('reject notifies offerer, rejecter, and tribe', () => {
   const gs = baseState();
   tradeLib.offerTrade(gs, 'Ada', 'Bob', 'food', 1, 'grain', 1);
   expect(tradeLib.rejectTrade(gs, 'Bob', 'Ada')).toBe(true);
-  expect(gs.population.Ada.outgoingTrade).toBeFalsy();
-  expect(gs.messages.Ada).toMatch(/rejected/i);
+  expect(tradeLib.listOutgoingTrades(gs.population.Ada)).toHaveLength(0);
+  expect(gs.messages.Ada).toMatch(/Bob rejected your trade offer/i);
+  expect(gs.messages.Bob).toMatch(/You rejected the trade offer from Ada/i);
+  expect(gs.messages.tribe).toMatch(/🚫/);
+  expect(gs.messages.tribe).toMatch(/Bob rejected Ada's trade offer/i);
   expect(
     tradeLib.offerTrade(gs, 'Ada', 'Cal', 'food', 1, 'spearhead', 1)
   ).toBe(true);
 });
 
-test('cancel notifies peer', () => {
+test('cancel notifies offerer, peer, and tribe', () => {
   const gs = baseState();
   tradeLib.offerTrade(gs, 'Ada', 'Bob', 'food', 1, 'grain', 1);
   expect(tradeLib.cancelTrade(gs, 'Ada')).toBe(true);
-  expect(gs.population.Ada.outgoingTrade).toBeFalsy();
-  expect(gs.messages.Bob).toMatch(/cancelled/i);
+  expect(tradeLib.listOutgoingTrades(gs.population.Ada)).toHaveLength(0);
+  expect(gs.messages.Ada).toMatch(/You cancelled your trade offer to Bob/i);
+  expect(gs.messages.Bob).toMatch(/Ada cancelled their trade offer to you/i);
+  expect(gs.messages.tribe).toMatch(/🚫/);
+  expect(gs.messages.tribe).toMatch(
+    /Ada cancelled their trade offer to Bob/i
+  );
 });
 
 test('clearTradesInvolving removes offers to a departed player', () => {
   const gs = baseState();
   tradeLib.offerTrade(gs, 'Ada', 'Bob', 'food', 1, 'grain', 1);
+  tradeLib.offerTrade(gs, 'Ada', 'Cal', 'food', 1, 'spearhead', 1);
   delete gs.population.Bob;
   tradeLib.clearTradesInvolving(gs, 'Bob');
-  expect(gs.population.Ada.outgoingTrade).toBeFalsy();
+  const open = tradeLib.listOutgoingTrades(gs.population.Ada);
+  expect(open).toHaveLength(1);
+  expect(open[0].to).toBe('Cal');
 });

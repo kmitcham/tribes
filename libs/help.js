@@ -7,6 +7,8 @@ function playerHelpBasic() {
     ' children [parent name] shows the ages and food of children, optionally filtered to descendants of specified parent\n';
   text +=
     ' give <item> <amount> <player> transfer food, grain, basket, or spearhead to a tribe member (UI order: item -> amount -> player; default amount is 4 for food/grain, 1 for basket/spearhead)\n';
+  text +=
+    ' trade offer|accept|reject|cancel  propose or resolve an item trade (food, grain, basket, spearhead). Up to 2 open offers at a time (to different players); max 2 offers to the same person per season; must exchange different items; outstanding offers expire at season change. Accept/reject for offers to you; cancel withdraws your own offer (name the player if you have more than one).\n';
   text += ' graveyard list of all deceased members and children\n';
   text +=
     ' inventory <target>  show inventory and character info. No arg means show inventory for entire tribe\n';

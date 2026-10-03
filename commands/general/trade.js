@@ -7,7 +7,11 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('trade')
     .setDescription(
-      'Offer, accept, reject, or cancel an item trade (food, grain, basket, spearhead)'
+      'Trade food, grain, basket, or spearhead with a tribe member. ' +
+        'Offer creates an outstanding deal; they Accept or Reject, or you Cancel. ' +
+        'Limits: up to 2 open offers at a time (to different players); ' +
+        'max 2 offers to the same person per season; ' +
+        'must exchange different items; offers expire when the season changes.'
     )
     .addStringOption((option) =>
       option

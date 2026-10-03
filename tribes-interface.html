@@ -366,6 +366,82 @@
             transform: translateY(0);
         }
 
+        .trade-offers-panel {
+            margin: 0 0 1rem;
+            padding: 0.75rem 0.85rem;
+            border-radius: 8px;
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+        }
+
+        .trade-offers-panel h4 {
+            margin: 0 0 0.5rem;
+            font-size: 0.95rem;
+            color: #0f172a;
+        }
+
+        .trade-offers-section-label {
+            margin: 0.65rem 0 0.35rem;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            color: #475569;
+        }
+
+        .trade-offer-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+            padding: 0.55rem 0.6rem;
+            margin-bottom: 0.4rem;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+        }
+
+        .trade-offer-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .trade-offer-summary {
+            flex: 1 1 12rem;
+            font-size: 0.9rem;
+            color: #1e293b;
+            line-height: 1.35;
+        }
+
+        .trade-offer-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.35rem;
+        }
+
+        .trade-offer-actions .btn {
+            padding: 0.35rem 0.7rem;
+            font-size: 0.8rem;
+        }
+
+        .trade-offer-actions .btn-accept {
+            background: #0b6e4f;
+        }
+
+        .trade-offer-actions .btn-reject {
+            background: #a71d2a;
+        }
+
+        .trade-offer-actions .btn-cancel {
+            background: #9a7200;
+        }
+
+        .trade-offers-empty {
+            font-size: 0.85rem;
+            color: #64748b;
+            font-style: italic;
+        }
+
         .btn-small {
             padding: 0.5rem 0.75rem;
             font-size: 0.9rem;
@@ -3435,6 +3511,9 @@
                         <div class="command-name">${name}${isChiefCommand ? ' 👑' : ''}</div>
                         <div class="command-desc">${command.description || ''}</div>
                     `;
+                    if (command.description) {
+                        item.title = command.description;
+                    }
                     item.onclick = () => {
                         const searchInput = document.getElementById('commandSearchInput');
                         const goBtn = document.getElementById('commandGoBtn');
@@ -3524,6 +3603,11 @@
                 if (this.selectedCommand.name.toLowerCase() === 'romance') {
                     title.textContent = 'Romance — Invite & Respond';
                     description.textContent = 'Set who you want to invite and how you respond to invitations from others.';
+                } else if (this.selectedCommand.name.toLowerCase() === 'trade') {
+                    title.textContent = 'Trade';
+                    description.textContent =
+                        this.selectedCommand.description ||
+                        'Open trades are listed below with Accept / Reject / Cancel. Use action "offer" to propose a new deal.';
                 } else {
                     title.textContent = this.selectedCommand.name;
                     description.textContent = this.selectedCommand.description;
@@ -4139,6 +4223,56 @@
                 return cmdName === 'history' && String(option.name || '').toLowerCase() === 'years_back';
             }
 
+            isSpearheadTradeBlockedForPerson(person) {
+                if (!person) {
+                    return false;
+                }
+                const state = this.currentStatusData || {};
+                const inWorkRound =
+                    state.workRound === true ||
+                    String(state.round || '')
+                        .toLowerCase()
+                        .includes('work');
+                const activity = String(person.activity || '').toLowerCase();
+                return inWorkRound && activity.includes('hunt');
+            }
+
+            getOwnedTradeGiveChoices(baseChoices) {
+                const entry = this.getCurrentPlayerPopulationEntry();
+                const person = entry && entry.person;
+                const fallback = Array.isArray(baseChoices) ? baseChoices.slice() : [];
+                if (!person) {
+                    return fallback;
+                }
+
+                const icons = {
+                    food: '🍖',
+                    grain: '🌾',
+                    basket: '🧺',
+                    spearhead: '𓐬',
+                };
+                const itemOrder = ['food', 'grain', 'basket', 'spearhead'];
+                const owned = [];
+                itemOrder.forEach((item) => {
+                    const qty = Number(person[item]) || 0;
+                    if (qty < 1) {
+                        return;
+                    }
+                    if (
+                        item === 'spearhead' &&
+                        this.isSpearheadTradeBlockedForPerson(person)
+                    ) {
+                        return;
+                    }
+                    const icon = icons[item] ? ` ${icons[item]}` : '';
+                    owned.push({
+                        name: `${item} (${qty})${icon}`,
+                        value: item,
+                    });
+                });
+                return owned;
+            }
+
             getChoicesForOption(option) {
                 if (!option) {
                     return [];
@@ -4160,6 +4294,16 @@
                         }
                     });
                     return keywordChoices;
+                }
+
+                const cmdName = String(
+                    (this.selectedCommand && this.selectedCommand.name) || ''
+                ).toLowerCase();
+                if (
+                    cmdName === 'trade' &&
+                    String(option.name || '').toLowerCase() === 'giveitem'
+                ) {
+                    return this.getOwnedTradeGiveChoices(option.choices || []);
                 }
 
                 return option.choices || [];
@@ -5015,10 +5159,227 @@
                 this.setupTradeFormEnhancements(container);
             }
 
+            formatTradeItemAmount(item, amount) {
+                const icons = {
+                    food: '🍖',
+                    grain: '🌾',
+                    basket: '🧺',
+                    spearhead: '𓐬',
+                };
+                const icon = icons[item] || '';
+                return amount + ' ' + item + (icon ? ' ' + icon : '');
+            }
+
+            listPersonOutgoingTrades(person) {
+                if (!person) {
+                    return [];
+                }
+                if (
+                    Array.isArray(person.outgoingTrades) &&
+                    person.outgoingTrades.length > 0
+                ) {
+                    return person.outgoingTrades.filter(Boolean);
+                }
+                if (person.outgoingTrade) {
+                    return [person.outgoingTrade];
+                }
+                return [];
+            }
+
+            getMyOutgoingTrades() {
+                const entry = this.getCurrentPlayerPopulationEntry();
+                if (!entry || !entry.person) {
+                    return [];
+                }
+                return this.listPersonOutgoingTrades(entry.person).map(
+                    (offer) => ({
+                        key: entry.key,
+                        person: entry.person,
+                        offer,
+                    })
+                );
+            }
+
             /**
-             * Trade modal: for accept/reject, once a counterparty is chosen,
-             * show their single outstanding offer (at most one per person).
-             * Offer-leg fields are hidden unless action is "offer".
+             * Submit accept / reject / cancel from the open-trades list
+             * without requiring the modal form fields.
+             */
+            submitTradeQuickAction(action, playerName) {
+                const parameters = { action: String(action || '').toLowerCase() };
+                if (playerName) {
+                    parameters.player = playerName;
+                }
+                this.send({
+                    type: 'command',
+                    command: 'trade',
+                    parameters,
+                });
+                this.closeCommandModal();
+                this.clearCommandEntry();
+            }
+
+            renderOpenTradesPanel(container) {
+                let panel = container.querySelector('#tradeOffersPanel');
+                if (!panel) {
+                    panel = document.createElement('div');
+                    panel.id = 'tradeOffersPanel';
+                    panel.className = 'trade-offers-panel';
+                    container.insertBefore(panel, container.firstChild);
+                }
+                panel.innerHTML = '';
+
+                const heading = document.createElement('h4');
+                heading.textContent = 'Open trades involving you';
+                panel.appendChild(heading);
+
+                const incomingNames = this.getIncomingTradeOfferers();
+                const outgoingList = this.getMyOutgoingTrades();
+
+                if (incomingNames.length === 0 && outgoingList.length === 0) {
+                    const empty = document.createElement('div');
+                    empty.className = 'trade-offers-empty';
+                    empty.textContent =
+                        'No open offers to or from you. Use action "offer" below to propose a trade.';
+                    panel.appendChild(empty);
+                    return;
+                }
+
+                const appendRow = (summaryEl, actions) => {
+                    const row = document.createElement('div');
+                    row.className = 'trade-offer-row';
+                    row.appendChild(summaryEl);
+                    const actionsEl = document.createElement('div');
+                    actionsEl.className = 'trade-offer-actions';
+                    actions.forEach(({ label, className, onClick }) => {
+                        const btn = document.createElement('button');
+                        btn.type = 'button';
+                        btn.className = 'btn ' + className;
+                        btn.textContent = label;
+                        btn.onclick = onClick;
+                        actionsEl.appendChild(btn);
+                    });
+                    row.appendChild(actionsEl);
+                    panel.appendChild(row);
+                };
+
+                const buildSummary = (parts) => {
+                    const summary = document.createElement('div');
+                    summary.className = 'trade-offer-summary';
+                    parts.forEach((part) => {
+                        if (part && part.bold) {
+                            const strong = document.createElement('strong');
+                            strong.textContent = part.text;
+                            summary.appendChild(strong);
+                        } else {
+                            const span = document.createElement('span');
+                            span.textContent = String(part || '');
+                            summary.appendChild(span);
+                        }
+                    });
+                    return summary;
+                };
+
+                if (incomingNames.length > 0) {
+                    const label = document.createElement('div');
+                    label.className = 'trade-offers-section-label';
+                    label.textContent = 'Offers to you';
+                    panel.appendChild(label);
+
+                    incomingNames.forEach((fromName) => {
+                        const person =
+                            this.currentPopulation &&
+                            this.currentPopulation[fromName];
+                        const me =
+                            document.getElementById('playerName')?.value ||
+                            this.currentPlayerName ||
+                            '';
+                        const offer = this.listPersonOutgoingTrades(person).find(
+                            (o) => this.namesMatch(o.to, me)
+                        );
+                        if (!offer) {
+                            return;
+                        }
+                        const summary = buildSummary([
+                            { bold: true, text: fromName },
+                            ' offers you ',
+                            this.formatTradeItemAmount(
+                                offer.giveItem,
+                                offer.giveAmount
+                            ),
+                            ' for your ',
+                            this.formatTradeItemAmount(
+                                offer.wantItem,
+                                offer.wantAmount
+                            ),
+                        ]);
+                        appendRow(summary, [
+                            {
+                                label: 'Accept',
+                                className: 'btn-accept',
+                                onClick: () =>
+                                    this.submitTradeQuickAction(
+                                        'accept',
+                                        fromName
+                                    ),
+                            },
+                            {
+                                label: 'Reject',
+                                className: 'btn-reject',
+                                onClick: () =>
+                                    this.submitTradeQuickAction(
+                                        'reject',
+                                        fromName
+                                    ),
+                            },
+                        ]);
+                    });
+                }
+
+                if (outgoingList.length > 0) {
+                    const label = document.createElement('div');
+                    label.className = 'trade-offers-section-label';
+                    label.textContent =
+                        outgoingList.length === 1
+                            ? 'Your offer'
+                            : 'Your offers';
+                    panel.appendChild(label);
+
+                    outgoingList.forEach((outgoing) => {
+                        const offer = outgoing.offer;
+                        const toName = offer.to || 'someone';
+                        const summary = buildSummary([
+                            'You offered ',
+                            { bold: true, text: toName },
+                            ' ',
+                            this.formatTradeItemAmount(
+                                offer.giveItem,
+                                offer.giveAmount
+                            ),
+                            ' for their ',
+                            this.formatTradeItemAmount(
+                                offer.wantItem,
+                                offer.wantAmount
+                            ),
+                        ]);
+                        appendRow(summary, [
+                            {
+                                label: 'Cancel',
+                                className: 'btn-cancel',
+                                onClick: () =>
+                                    this.submitTradeQuickAction(
+                                        'cancel',
+                                        toName
+                                    ),
+                            },
+                        ]);
+                    });
+                }
+            }
+
+            /**
+             * Trade modal: list open to/from offers with quick actions,
+             * hide offer-leg fields unless action is "offer", and preview
+             * the selected incoming offer for accept/reject.
              */
             setupTradeFormEnhancements(container) {
                 if (
@@ -5038,6 +5399,8 @@
                     actionSelect.value = 'accept';
                     this._preferTradeAccept = false;
                 }
+
+                this.renderOpenTradesPanel(container);
 
                 let preview = container.querySelector('#tradeOfferPreview');
                 if (!preview) {
@@ -5068,29 +5431,95 @@
                     });
                 };
 
-                const formatTradeItem = (item, amount) => {
-                    const icons = {
-                        food: '🍖',
-                        grain: '🌾',
-                        basket: '🧺',
-                        spearhead: '𓐬',
-                    };
-                    const icon = icons[item] || '';
-                    return (
-                        amount +
-                        ' ' +
-                        item +
-                        (icon ? ' ' + icon : '')
-                    );
+                const giveItemSelect = container.querySelector('#param_giveitem');
+                const giveAmountInput = container.querySelector('#param_giveamount');
+
+                const ownedQtyFor = (item) => {
+                    const entry = this.getCurrentPlayerPopulationEntry();
+                    const person = entry && entry.person;
+                    if (!person) {
+                        return 0;
+                    }
+                    return Number(person[item]) || 0;
                 };
 
-                const namesMatchLocal = (a, b) =>
-                    String(a || '')
-                        .trim()
-                        .toLowerCase() ===
-                    String(b || '')
-                        .trim()
-                        .toLowerCase();
+                const refreshGiveItemChoices = () => {
+                    if (!giveItemSelect) {
+                        return;
+                    }
+                    const previous = String(giveItemSelect.value || '');
+                    const choices = this.getOwnedTradeGiveChoices(
+                        (this.selectedCommand.options || []).find(
+                            (opt) =>
+                                String(opt.name || '').toLowerCase() ===
+                                'giveitem'
+                        )?.choices || []
+                    );
+                    giveItemSelect.innerHTML = '';
+                    if (!choices.length) {
+                        const empty = document.createElement('option');
+                        empty.value = '';
+                        empty.textContent = 'No tradeable items in inventory';
+                        giveItemSelect.appendChild(empty);
+                        return;
+                    }
+                    if (
+                        !(
+                            this.selectedCommand.options || []
+                        ).find(
+                            (opt) =>
+                                String(opt.name || '').toLowerCase() ===
+                                'giveitem'
+                        )?.required
+                    ) {
+                        const blank = document.createElement('option');
+                        blank.value = '';
+                        blank.textContent = 'No selection';
+                        giveItemSelect.appendChild(blank);
+                    }
+                    choices.forEach((choice) => {
+                        const opt = document.createElement('option');
+                        opt.value = choice.value;
+                        opt.textContent = choice.name;
+                        giveItemSelect.appendChild(opt);
+                    });
+                    const stillValid = choices.some(
+                        (c) => String(c.value) === previous
+                    );
+                    giveItemSelect.value = stillValid
+                        ? previous
+                        : choices[0].value;
+                };
+
+                const applyGiveAmountMax = () => {
+                    if (!giveAmountInput || !giveItemSelect) {
+                        return;
+                    }
+                    const item = String(giveItemSelect.value || '').toLowerCase();
+                    const max = ownedQtyFor(item);
+                    if (max > 0) {
+                        giveAmountInput.max = String(max);
+                        giveAmountInput.placeholder = `1–${max}`;
+                        const current = Number(giveAmountInput.value);
+                        if (Number.isFinite(current) && current > max) {
+                            giveAmountInput.value = String(max);
+                        }
+                        if (
+                            !String(giveAmountInput.value || '').trim() ||
+                            Number(giveAmountInput.value) < 1
+                        ) {
+                            giveAmountInput.value =
+                                item === 'food' || item === 'grain' ? String(Math.min(4, max)) : '1';
+                        }
+                    } else {
+                        giveAmountInput.removeAttribute('max');
+                        giveAmountInput.placeholder = '';
+                    }
+                };
+
+                if (giveItemSelect) {
+                    giveItemSelect.addEventListener('change', applyGiveAmountMax);
+                }
 
                 const findIncomingOfferFrom = (fromName) => {
                     if (!this.currentPopulation || !fromName) {
@@ -5117,32 +5546,13 @@
                             }
                         }
                     }
-                    if (!offerer || !offerer.outgoingTrade) {
+                    if (!offerer) {
                         return null;
                     }
-                    const offer = offerer.outgoingTrade;
-                    if (!namesMatchLocal(offer.to, me)) {
-                        return null;
-                    }
-                    return offer;
-                };
-
-                const peopleWithOffersToMe = () => {
-                    if (!this.currentPopulation) {
-                        return [];
-                    }
-                    const me =
-                        document.getElementById('playerName')?.value ||
-                        this.currentPlayerName ||
-                        '';
-                    return Object.keys(this.currentPopulation).filter((name) => {
-                        const person = this.currentPopulation[name];
-                        return (
-                            person &&
-                            person.outgoingTrade &&
-                            namesMatchLocal(person.outgoingTrade.to, me)
-                        );
-                    });
+                    const offer = this.listPersonOutgoingTrades(offerer).find(
+                        (o) => this.namesMatch(o.to, me)
+                    );
+                    return offer || null;
                 };
 
                 const refillPlayerSelect = (names, placeholderText) => {
@@ -5177,7 +5587,7 @@
                         this.currentPlayerName ||
                         '';
                     return Object.keys(this.currentPopulation).filter(
-                        (name) => !namesMatchLocal(name, me)
+                        (name) => !this.namesMatch(name, me)
                     );
                 };
 
@@ -5200,24 +5610,54 @@
                     }
 
                     if (!isAcceptReject) {
-                        if (isOffer && playerSelect) {
-                            refillPlayerSelect(
-                                allOtherPlayers(),
-                                'Select a player…'
-                            );
-                            preview.textContent =
-                                'Choose what you give and what you want in return.';
+                        if (isOffer) {
+                            refreshGiveItemChoices();
+                            applyGiveAmountMax();
+                            if (playerSelect) {
+                                refillPlayerSelect(
+                                    allOtherPlayers(),
+                                    'Select a player…'
+                                );
+                            }
+                            const ownedChoices = this.getOwnedTradeGiveChoices([]);
+                            preview.textContent = ownedChoices.length
+                                ? 'Choose what you give (only items you own) and what you want in return. Or use Accept / Reject / Cancel above for open trades.'
+                                : 'You have nothing tradeable to offer right now.';
                         } else if (isCancel) {
-                            preview.textContent =
-                                'Cancel will withdraw your outstanding outgoing offer (if any).';
+                            const mine = this.getMyOutgoingTrades();
+                            if (mine.length === 0) {
+                                preview.textContent =
+                                    'You have no outstanding outgoing offer to cancel.';
+                            } else if (mine.length === 1) {
+                                preview.textContent =
+                                    'Cancel will withdraw your offer to ' +
+                                    (mine[0].offer.to || 'the other player') +
+                                    '.';
+                            } else {
+                                preview.textContent =
+                                    'You have ' +
+                                    mine.length +
+                                    ' open offers. Choose which player to cancel (or use Cancel above).';
+                                if (playerSelect) {
+                                    const playerGroup = playerSelect.closest(
+                                        '.parameter-group'
+                                    );
+                                    if (playerGroup) {
+                                        playerGroup.style.display = '';
+                                    }
+                                    refillPlayerSelect(
+                                        mine.map((m) => m.offer.to).filter(Boolean),
+                                        'Select offer to cancel…'
+                                    );
+                                }
+                            }
                         } else {
                             preview.textContent = '';
                         }
                         return;
                     }
 
-                    // Restrict player dropdown to people who offered to me.
-                    const offerers = peopleWithOffersToMe();
+                    const offerers = this.getIncomingTradeOfferers();
                     refillPlayerSelect(
                         offerers,
                         offerers.length === 0
@@ -5228,9 +5668,11 @@
                     const fromName = playerSelect ? playerSelect.value : '';
                     if (!fromName) {
                         preview.textContent =
-                            'Select the tribe member whose offer you want to ' +
-                            action +
-                            '.';
+                            offerers.length === 0
+                                ? 'No one has an open offer to you. Use the buttons above if any appear, or switch to offer.'
+                                : 'Select the tribe member whose offer you want to ' +
+                                  action +
+                                  ', or use Accept / Reject above.';
                         return;
                     }
 
@@ -5247,10 +5689,16 @@
                         fromName +
                         '</strong><br>' +
                         'They give you: ' +
-                        formatTradeItem(offer.giveItem, offer.giveAmount) +
+                        this.formatTradeItemAmount(
+                            offer.giveItem,
+                            offer.giveAmount
+                        ) +
                         '<br>' +
                         'You give them: ' +
-                        formatTradeItem(offer.wantItem, offer.wantAmount);
+                        this.formatTradeItemAmount(
+                            offer.wantItem,
+                            offer.wantAmount
+                        );
                 };
 
                 actionSelect.addEventListener('change', updateTradeForm);
@@ -8098,10 +8546,8 @@
                 }
                 return Object.keys(this.currentPopulation).filter((name) => {
                     const person = this.currentPopulation[name];
-                    return (
-                        person &&
-                        person.outgoingTrade &&
-                        this.namesMatch(person.outgoingTrade.to, me)
+                    return this.listPersonOutgoingTrades(person).some((offer) =>
+                        this.namesMatch(offer.to, me)
                     );
                 });
             }
@@ -8112,8 +8558,15 @@
                 }
                 return offererNames
                     .map((name) => {
-                        const person = this.currentPopulation && this.currentPopulation[name];
-                        const offer = person && person.outgoingTrade;
+                        const person =
+                            this.currentPopulation && this.currentPopulation[name];
+                        const me =
+                            document.getElementById('playerName')?.value ||
+                            this.currentPlayerName ||
+                            '';
+                        const offer = this.listPersonOutgoingTrades(person).find(
+                            (o) => this.namesMatch(o.to, me)
+                        );
                         if (!offer) {
                             return `${name} offered a trade`;
                         }

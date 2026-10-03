@@ -42,6 +42,14 @@ describe('Help Module', () => {
       expect(result).toContain('UI order: item -> amount -> player');
     });
 
+    test('should include trade command rules', () => {
+      const result = help.playerHelpBasic();
+      expect(result).toContain('trade offer|accept|reject|cancel');
+      expect(result).toContain('Up to 2 open offers at a time');
+      expect(result).toContain('different players');
+      expect(result).toContain('max 2 offers');
+    });
+
     test('should include inventory command', () => {
       const result = help.playerHelpBasic();
       expect(result).toContain('inventory');
