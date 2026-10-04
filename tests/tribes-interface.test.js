@@ -1046,6 +1046,87 @@ describe('Tribes Interface Client (real class)', () => {
     expect(tribeChip.style.display).toBe('none');
   });
 
+  test('trade open board lists fillable anyone-offers with Accept only', () => {
+    env.elements.playerName.value = 'TestPlayer';
+    client.currentPopulation = {
+      TestPlayer: {
+        name: 'TestPlayer',
+        food: 1,
+        grain: 0,
+        basket: 2,
+        spearhead: 0,
+      },
+      Ada: {
+        name: 'Ada',
+        outgoingTrades: [
+          {
+            to: '!anyone',
+            open: true,
+            giveItem: 'food',
+            giveAmount: 2,
+            wantItem: 'basket',
+            wantAmount: 1,
+          },
+        ],
+      },
+      Bob: {
+        name: 'Bob',
+        outgoingTrades: [
+          {
+            to: '!anyone',
+            open: true,
+            giveItem: 'grain',
+            giveAmount: 1,
+            wantItem: 'spearhead',
+            wantAmount: 1,
+          },
+        ],
+      },
+    };
+
+    const fillable = client.getFillableOpenBoardOffers();
+    expect(fillable.map((f) => f.offererKey)).toEqual(['Ada']);
+
+    const container = env.documentMock.getElementById('modalCommandParameters');
+    container.children = [];
+    container.firstChild = null;
+    container.insertBefore = (child) => {
+      child.parentNode = container;
+      container.children.unshift(child);
+      container.firstChild = container.children[0] || null;
+      return child;
+    };
+    container.appendChild = (child) => {
+      child.parentNode = container;
+      container.children.push(child);
+      container.firstChild = container.children[0] || null;
+      return child;
+    };
+    container.querySelector = (sel) => {
+      if (sel === '#tradeOffersPanel') {
+        return (
+          container.children.find((c) => c.id === 'tradeOffersPanel') || null
+        );
+      }
+      return null;
+    };
+
+    client.renderOpenTradesPanel(container);
+    const panel = container.children.find((c) => c.id === 'tradeOffersPanel');
+    const collectText = (node) => {
+      let out = node.textContent || '';
+      (node.children || []).forEach((child) => {
+        out += ' ' + collectText(child);
+      });
+      return out;
+    };
+    const fullText = collectText(panel);
+    expect(fullText).toMatch(/Open board/i);
+    expect(fullText).toMatch(/Ada/i);
+    expect(fullText).toMatch(/Accept/i);
+    expect(fullText).not.toMatch(/Reject/i);
+  });
+
   test('trade giveitem choices only include owned items', () => {
     env.elements.playerName.value = 'TestPlayer';
     client.currentPopulation = {

@@ -47,7 +47,8 @@ describe('Help Module', () => {
       expect(result).toContain('trade offer|accept|reject|cancel');
       expect(result).toContain('Up to 2 open offers at a time');
       expect(result).toContain('different players');
-      expect(result).toContain('max 2 offers');
+      expect(result).toContain('!anyone');
+      expect(result).toContain('first eligible Accept');
     });
 
     test('should include inventory command', () => {

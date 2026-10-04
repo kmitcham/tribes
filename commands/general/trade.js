@@ -8,9 +8,10 @@ module.exports = {
     .setName('trade')
     .setDescription(
       'Trade food, grain, basket, or spearhead with a tribe member. ' +
-        'Offer creates an outstanding deal; they Accept or Reject, or you Cancel. ' +
-        'Limits: up to 2 open offers at a time (to different players); ' +
-        'max 2 offers to the same person per season; ' +
+        'Offer to a named player or to Anyone (first eligible Accept wins). ' +
+        'They Accept or Reject directed offers; open board offers are Accept-only. Cancel withdraws your offer. ' +
+        'Limits: up to 2 open offers at a time (to different players / one Anyone); ' +
+        'max 2 directed offers to the same person per season; ' +
         'must exchange different items; offers expire when the season changes.'
     )
     .addStringOption((option) =>
@@ -29,7 +30,7 @@ module.exports = {
       option
         .setName('player')
         .setDescription(
-          'Counterparty (required for offer/accept/reject; optional for cancel)'
+          'Counterparty, or !anyone for an open board offer (required for offer/accept/reject; optional for cancel)'
         )
         .setRequired(false)
     )

@@ -5186,6 +5186,24 @@
                 return [];
             }
 
+            isOpenTradeOffer(offer) {
+                if (!offer) {
+                    return false;
+                }
+                if (offer.open === true) {
+                    return true;
+                }
+                const to = String(offer.to || '')
+                    .trim()
+                    .toLowerCase();
+                return (
+                    to === '!anyone' ||
+                    to === 'anyone' ||
+                    to === '!any' ||
+                    to === '__anyone__'
+                );
+            }
+
             getMyOutgoingTrades() {
                 const entry = this.getCurrentPlayerPopulationEntry();
                 if (!entry || !entry.person) {
@@ -5198,6 +5216,66 @@
                         offer,
                     })
                 );
+            }
+
+            /**
+             * Public board offers from others that the current player can fill
+             * (holds wantItem × wantAmount).
+             */
+            getFillableOpenBoardOffers() {
+                if (!this.currentPopulation) {
+                    return [];
+                }
+                const me =
+                    document.getElementById('playerName')?.value ||
+                    this.currentPlayerName ||
+                    '';
+                const myEntry = this.getCurrentPlayerPopulationEntry();
+                const mePerson = myEntry && myEntry.person;
+                if (!mePerson) {
+                    return [];
+                }
+                const results = [];
+                Object.keys(this.currentPopulation).forEach((name) => {
+                    if (this.namesMatch(name, me)) {
+                        return;
+                    }
+                    const person = this.currentPopulation[name];
+                    this.listPersonOutgoingTrades(person).forEach((offer) => {
+                        if (!this.isOpenTradeOffer(offer)) {
+                            return;
+                        }
+                        const need = Number(offer.wantAmount) || 0;
+                        const have = Number(mePerson[offer.wantItem]) || 0;
+                        if (have < need) {
+                            return;
+                        }
+                        results.push({
+                            offererKey: name,
+                            offerer: person,
+                            offer,
+                        });
+                    });
+                });
+                return results;
+            }
+
+            listEligibleNamesForWant(wantItem, wantAmount) {
+                if (!this.currentPopulation || !wantItem) {
+                    return [];
+                }
+                const me =
+                    document.getElementById('playerName')?.value ||
+                    this.currentPlayerName ||
+                    '';
+                const need = Number(wantAmount) || 0;
+                return Object.keys(this.currentPopulation).filter((name) => {
+                    if (this.namesMatch(name, me)) {
+                        return false;
+                    }
+                    const person = this.currentPopulation[name];
+                    return (Number(person && person[wantItem]) || 0) >= need;
+                });
             }
 
             /**
@@ -5234,12 +5312,17 @@
 
                 const incomingNames = this.getIncomingTradeOfferers();
                 const outgoingList = this.getMyOutgoingTrades();
+                const boardOffers = this.getFillableOpenBoardOffers();
 
-                if (incomingNames.length === 0 && outgoingList.length === 0) {
+                if (
+                    incomingNames.length === 0 &&
+                    outgoingList.length === 0 &&
+                    boardOffers.length === 0
+                ) {
                     const empty = document.createElement('div');
                     empty.className = 'trade-offers-empty';
                     empty.textContent =
-                        'No open offers to or from you. Use action "offer" below to propose a trade.';
+                        'No open offers to or from you. Use action "offer" below to propose a trade (including Anyone).';
                     panel.appendChild(empty);
                     return;
                 }
@@ -5335,6 +5418,41 @@
                     });
                 }
 
+                if (boardOffers.length > 0) {
+                    const label = document.createElement('div');
+                    label.className = 'trade-offers-section-label';
+                    label.textContent = 'Open board (anyone)';
+                    panel.appendChild(label);
+
+                    boardOffers.forEach(({ offererKey, offer }) => {
+                        const summary = buildSummary([
+                            { bold: true, text: offererKey },
+                            ' offers anyone ',
+                            this.formatTradeItemAmount(
+                                offer.giveItem,
+                                offer.giveAmount
+                            ),
+                            ' for ',
+                            this.formatTradeItemAmount(
+                                offer.wantItem,
+                                offer.wantAmount
+                            ),
+                            ' (first accept wins)',
+                        ]);
+                        appendRow(summary, [
+                            {
+                                label: 'Accept',
+                                className: 'btn-accept',
+                                onClick: () =>
+                                    this.submitTradeQuickAction(
+                                        'accept',
+                                        offererKey
+                                    ),
+                            },
+                        ]);
+                    });
+                }
+
                 if (outgoingList.length > 0) {
                     const label = document.createElement('div');
                     label.className = 'trade-offers-section-label';
@@ -5346,21 +5464,39 @@
 
                     outgoingList.forEach((outgoing) => {
                         const offer = outgoing.offer;
-                        const toName = offer.to || 'someone';
-                        const summary = buildSummary([
-                            'You offered ',
-                            { bold: true, text: toName },
-                            ' ',
-                            this.formatTradeItemAmount(
-                                offer.giveItem,
-                                offer.giveAmount
-                            ),
-                            ' for their ',
-                            this.formatTradeItemAmount(
-                                offer.wantItem,
-                                offer.wantAmount
-                            ),
-                        ]);
+                        const isOpen = this.isOpenTradeOffer(offer);
+                        const toName = isOpen
+                            ? '!anyone'
+                            : offer.to || 'someone';
+                        const summary = isOpen
+                            ? buildSummary([
+                                  'You offered ',
+                                  { bold: true, text: 'anyone' },
+                                  ' ',
+                                  this.formatTradeItemAmount(
+                                      offer.giveItem,
+                                      offer.giveAmount
+                                  ),
+                                  ' for ',
+                                  this.formatTradeItemAmount(
+                                      offer.wantItem,
+                                      offer.wantAmount
+                                  ),
+                              ])
+                            : buildSummary([
+                                  'You offered ',
+                                  { bold: true, text: toName },
+                                  ' ',
+                                  this.formatTradeItemAmount(
+                                      offer.giveItem,
+                                      offer.giveAmount
+                                  ),
+                                  ' for their ',
+                                  this.formatTradeItemAmount(
+                                      offer.wantItem,
+                                      offer.wantAmount
+                                  ),
+                              ]);
                         appendRow(summary, [
                             {
                                 label: 'Cancel',
@@ -5555,26 +5691,32 @@
                     return offer || null;
                 };
 
-                const refillPlayerSelect = (names, placeholderText) => {
+                const refillPlayerSelect = (entries, placeholderText) => {
                     if (!playerSelect) {
                         return;
                     }
                     const previous = playerSelect.value;
+                    const normalized = (entries || []).map((entry) =>
+                        typeof entry === 'string'
+                            ? { value: entry, label: entry }
+                            : entry
+                    );
                     playerSelect.innerHTML = '';
                     const placeholder = document.createElement('option');
                     placeholder.value = '';
                     placeholder.textContent = placeholderText;
                     playerSelect.appendChild(placeholder);
-                    names.forEach((name) => {
+                    normalized.forEach(({ value, label }) => {
                         const opt = document.createElement('option');
-                        opt.value = name;
-                        opt.textContent = name;
+                        opt.value = value;
+                        opt.textContent = label || value;
                         playerSelect.appendChild(opt);
                     });
-                    if (names.includes(previous)) {
+                    const values = normalized.map((e) => e.value);
+                    if (values.includes(previous)) {
                         playerSelect.value = previous;
-                    } else if (names.length === 1) {
-                        playerSelect.value = names[0];
+                    } else if (values.length === 1) {
+                        playerSelect.value = values[0];
                     }
                 };
 
@@ -5589,6 +5731,43 @@
                     return Object.keys(this.currentPopulation).filter(
                         (name) => !this.namesMatch(name, me)
                     );
+                };
+
+                const updateOfferEligibilityPreview = () => {
+                    if (!playerSelect) {
+                        return;
+                    }
+                    const target = String(playerSelect.value || '');
+                    const isAnyone =
+                        target.toLowerCase() === '!anyone' ||
+                        target.toLowerCase() === 'anyone';
+                    if (!isAnyone) {
+                        return;
+                    }
+                    const wantItem = String(
+                        container.querySelector('#param_wantitem')?.value || ''
+                    ).toLowerCase();
+                    const wantAmount = Number(
+                        container.querySelector('#param_wantamount')?.value
+                    );
+                    if (!wantItem || !Number.isFinite(wantAmount) || wantAmount < 1) {
+                        preview.textContent =
+                            'Open offer to anyone: pick what you want in return to see who is eligible.';
+                        return;
+                    }
+                    const eligible = this.listEligibleNamesForWant(
+                        wantItem,
+                        wantAmount
+                    );
+                    preview.textContent = eligible.length
+                        ? 'Eligible now: ' +
+                          eligible.join(', ') +
+                          '. First Accept wins.'
+                        : 'Nobody currently has ' +
+                          wantAmount +
+                          ' ' +
+                          wantItem +
+                          '.';
                 };
 
                 const updateTradeForm = () => {
@@ -5615,29 +5794,47 @@
                             applyGiveAmountMax();
                             if (playerSelect) {
                                 refillPlayerSelect(
-                                    allOtherPlayers(),
+                                    [
+                                        {
+                                            value: '!anyone',
+                                            label: 'Anyone (who has what you want)',
+                                        },
+                                        ...allOtherPlayers(),
+                                    ],
                                     'Select a player…'
                                 );
                             }
                             const ownedChoices = this.getOwnedTradeGiveChoices([]);
-                            preview.textContent = ownedChoices.length
-                                ? 'Choose what you give (only items you own) and what you want in return. Or use Accept / Reject / Cancel above for open trades.'
-                                : 'You have nothing tradeable to offer right now.';
+                            const target = String(
+                                (playerSelect && playerSelect.value) || ''
+                            ).toLowerCase();
+                            if (
+                                target === '!anyone' ||
+                                target === 'anyone'
+                            ) {
+                                updateOfferEligibilityPreview();
+                            } else {
+                                preview.textContent = ownedChoices.length
+                                    ? 'Choose what you give (only items you own) and what you want in return. Or use Accept / Reject / Cancel above for open trades.'
+                                    : 'You have nothing tradeable to offer right now.';
+                            }
                         } else if (isCancel) {
                             const mine = this.getMyOutgoingTrades();
                             if (mine.length === 0) {
                                 preview.textContent =
                                     'You have no outstanding outgoing offer to cancel.';
                             } else if (mine.length === 1) {
-                                preview.textContent =
-                                    'Cancel will withdraw your offer to ' +
-                                    (mine[0].offer.to || 'the other player') +
-                                    '.';
+                                const only = mine[0].offer;
+                                preview.textContent = this.isOpenTradeOffer(only)
+                                    ? 'Cancel will withdraw your open (anyone) offer.'
+                                    : 'Cancel will withdraw your offer to ' +
+                                      (only.to || 'the other player') +
+                                      '.';
                             } else {
                                 preview.textContent =
                                     'You have ' +
                                     mine.length +
-                                    ' open offers. Choose which player to cancel (or use Cancel above).';
+                                    ' open offers. Choose which to cancel (or use Cancel above).';
                                 if (playerSelect) {
                                     const playerGroup = playerSelect.closest(
                                         '.parameter-group'
@@ -5646,7 +5843,15 @@
                                         playerGroup.style.display = '';
                                     }
                                     refillPlayerSelect(
-                                        mine.map((m) => m.offer.to).filter(Boolean),
+                                        mine.map((m) => {
+                                            if (this.isOpenTradeOffer(m.offer)) {
+                                                return {
+                                                    value: '!anyone',
+                                                    label: 'Anyone (open board)',
+                                                };
+                                            }
+                                            return m.offer.to;
+                                        }).filter(Boolean),
                                         'Select offer to cancel…'
                                     );
                                 }
@@ -5657,7 +5862,14 @@
                         return;
                     }
 
-                    const offerers = this.getIncomingTradeOfferers();
+                    // Accept: directed offerers + open-board offerers you can fill
+                    const directed = this.getIncomingTradeOfferers();
+                    const board = this.getFillableOpenBoardOffers().map(
+                        (b) => b.offererKey
+                    );
+                    const offerers = Array.from(
+                        new Set([...directed, ...board])
+                    );
                     refillPlayerSelect(
                         offerers,
                         offerers.length === 0
@@ -5704,6 +5916,30 @@
                 actionSelect.addEventListener('change', updateTradeForm);
                 if (playerSelect) {
                     playerSelect.addEventListener('change', updateTradeForm);
+                }
+                const wantItemSelect = container.querySelector('#param_wantitem');
+                const wantAmountInput = container.querySelector(
+                    '#param_wantamount'
+                );
+                if (wantItemSelect) {
+                    wantItemSelect.addEventListener('change', () => {
+                        if (
+                            String(actionSelect.value || '').toLowerCase() ===
+                            'offer'
+                        ) {
+                            updateOfferEligibilityPreview();
+                        }
+                    });
+                }
+                if (wantAmountInput) {
+                    wantAmountInput.addEventListener('input', () => {
+                        if (
+                            String(actionSelect.value || '').toLowerCase() ===
+                            'offer'
+                        ) {
+                            updateOfferEligibilityPreview();
+                        }
+                    });
                 }
                 updateTradeForm();
             }

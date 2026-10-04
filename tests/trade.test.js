@@ -254,3 +254,61 @@ test('clearTradesInvolving removes offers to a departed player', () => {
   expect(open).toHaveLength(1);
   expect(open[0].to).toBe('Cal');
 });
+
+test('open anyone-offer posts to tribe and counts as one slot', () => {
+  const gs = baseState();
+  expect(
+    tradeLib.offerTrade(gs, 'Ada', '!anyone', 'food', 2, 'basket', 1)
+  ).toBe(true);
+  const open = tradeLib.listOutgoingTrades(gs.population.Ada);
+  expect(open).toHaveLength(1);
+  expect(tradeLib.isOpenOffer(open[0])).toBe(true);
+  expect(open[0].to).toBe(tradeLib.OPEN_OFFER_TO);
+  expect(gs.messages.tribe).toMatch(/anyone who has it may Accept/i);
+  // Still room for one directed offer
+  expect(
+    tradeLib.offerTrade(gs, 'Ada', 'Bob', 'food', 1, 'grain', 1)
+  ).toBe(true);
+  expect(tradeLib.listOutgoingTrades(gs.population.Ada)).toHaveLength(2);
+});
+
+test('open offer requires at least one eligible peer', () => {
+  const gs = baseState();
+  // Nobody has 99 baskets
+  expect(
+    tradeLib.offerTrade(gs, 'Ada', 'anyone', 'food', 1, 'basket', 99)
+  ).toBe(false);
+  expect(gs.messages.Ada).toMatch(/Nobody else currently has/i);
+});
+
+test('open offer first accept wins; second fails; reject blocked', () => {
+  const gs = baseState();
+  tradeLib.offerTrade(gs, 'Ada', '!anyone', 'food', 2, 'basket', 1);
+  expect(tradeLib.rejectTrade(gs, 'Bob', 'Ada')).toBe(false);
+  expect(gs.messages.Bob).toMatch(/cannot be rejected/i);
+  expect(tradeLib.acceptTrade(gs, 'Bob', 'Ada')).toBe(true);
+  expect(gs.population.Ada.food).toBe(3);
+  expect(gs.population.Bob.basket).toBe(1);
+  expect(tradeLib.listOutgoingTrades(gs.population.Ada)).toHaveLength(0);
+  expect(tradeLib.acceptTrade(gs, 'Cal', 'Ada')).toBe(false);
+  expect(gs.messages.Cal).toMatch(/already been taken|No outstanding/i);
+});
+
+test('cannot stack two open anyone-offers', () => {
+  const gs = baseState();
+  expect(
+    tradeLib.offerTrade(gs, 'Ada', '!anyone', 'food', 1, 'basket', 1)
+  ).toBe(true);
+  expect(
+    tradeLib.offerTrade(gs, 'Ada', '!anyone', 'grain', 1, 'spearhead', 1)
+  ).toBe(false);
+  expect(gs.messages.Ada).toMatch(/already have an open/i);
+});
+
+test('cancel open offer by !anyone notifies tribe', () => {
+  const gs = baseState();
+  tradeLib.offerTrade(gs, 'Ada', '!anyone', 'food', 1, 'basket', 1);
+  expect(tradeLib.cancelTrade(gs, 'Ada', '!anyone')).toBe(true);
+  expect(tradeLib.listOutgoingTrades(gs.population.Ada)).toHaveLength(0);
+  expect(gs.messages.tribe).toMatch(/cancelled their open trade offer/i);
+});

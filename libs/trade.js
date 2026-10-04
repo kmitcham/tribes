@@ -7,6 +7,24 @@ const access = require('./access.js');
 
 const MAX_OFFERS_PER_PAIR_PER_SEASON = 2;
 const MAX_OPEN_OUTGOING_OFFERS = 2;
+/** Sentinel counterparty for public first-accept-wins offers. */
+const OPEN_OFFER_TO = '!anyone';
+
+function isAnyoneTarget(name) {
+  const raw = String(name || '')
+    .trim()
+    .toLowerCase();
+  return (
+    raw === OPEN_OFFER_TO ||
+    raw === 'anyone' ||
+    raw === '!any' ||
+    raw === '__anyone__'
+  );
+}
+
+function isOpenOffer(offer) {
+  return !!(offer && (offer.open === true || isAnyoneTarget(offer.to)));
+}
 
 function currentSeason(gameState) {
   const n = Number(gameState && gameState.seasonCounter);
@@ -68,6 +86,12 @@ function offerMatchesPeer(offer, peerName, peerPerson, gameState) {
   if (!offer) {
     return false;
   }
+  if (isOpenOffer(offer) && isAnyoneTarget(peerName)) {
+    return true;
+  }
+  if (isOpenOffer(offer)) {
+    return false;
+  }
   const to = String(offer.to || '');
   if (namesEqual(to, peerName)) {
     return true;
@@ -79,6 +103,41 @@ function offerMatchesPeer(offer, peerName, peerPerson, gameState) {
     }
   }
   return false;
+}
+
+function findOpenOutgoingOffer(person) {
+  return listOutgoingTrades(person).find((offer) => isOpenOffer(offer)) || null;
+}
+
+/**
+ * Living tribe members (excluding offerer) who currently hold wantAmount of wantItem.
+ */
+function listEligibleForOpenOffer(
+  gameState,
+  offerer,
+  wantItem,
+  wantAmount,
+  offererName
+) {
+  const population = gameState && gameState.population;
+  if (!population || !wantItem) {
+    return [];
+  }
+  const need = Number(wantAmount) || 0;
+  const eligible = [];
+  for (const key of Object.keys(population)) {
+    const person = population[key];
+    if (!person || person === offerer) {
+      continue;
+    }
+    if (offererName && namesEqual(person.name || key, offererName)) {
+      continue;
+    }
+    if ((Number(person[wantItem]) || 0) >= need) {
+      eligible.push(person.name || key);
+    }
+  }
+  return eligible;
 }
 
 function findOutgoingTradeTo(person, peerName, gameState) {
@@ -147,11 +206,18 @@ function findIncomingOfferFrom(gameState, recipientName, offererName) {
   if (!offerer || !recipient) {
     return null;
   }
-  const offer = findOutgoingTradeTo(offerer, recipientName, gameState);
+  // Directed offer to this recipient takes priority; else their open board offer.
+  let offer = findOutgoingTradeTo(offerer, recipientName, gameState);
+  if (!offer) {
+    offer = findOpenOutgoingOffer(offerer);
+  }
   if (!offer) {
     return null;
   }
   if (Number(offer.season) !== currentSeason(gameState)) {
+    return null;
+  }
+  if (isOpenOffer(offer) && offerer === recipient) {
     return null;
   }
   return { offerer: offerer, offer: offer };
@@ -183,23 +249,38 @@ function expireStaleTrades(gameState) {
         kept.push(offer);
         continue;
       }
-      const peer = offer.to;
       cleared += 1;
-      text.addMessage(
-        gameState,
-        person.name || key,
-        'Your trade offer to ' +
-          (peer || 'someone') +
-          ' expired at the season change.'
-      );
-      if (peer) {
+      if (isOpenOffer(offer)) {
         text.addMessage(
           gameState,
-          peer,
-          'A trade offer from ' +
+          person.name || key,
+          'Your open trade offer expired at the season change.'
+        );
+        text.addMessage(
+          gameState,
+          'tribe',
+          'An open trade offer from ' +
             (person.name || key) +
             ' expired at the season change.'
         );
+      } else {
+        const peer = offer.to;
+        text.addMessage(
+          gameState,
+          person.name || key,
+          'Your trade offer to ' +
+            (peer || 'someone') +
+            ' expired at the season change.'
+        );
+        if (peer) {
+          text.addMessage(
+            gameState,
+            peer,
+            'A trade offer from ' +
+              (person.name || key) +
+              ' expired at the season change.'
+          );
+        }
       }
     }
     if (kept.length !== trades.length) {
@@ -250,6 +331,65 @@ function clearTradesInvolving(gameState, playerName) {
   }
 }
 
+function validateOfferLegs(
+  gameState,
+  sourceName,
+  giveItemRaw,
+  giveAmountRaw,
+  wantItemRaw,
+  wantAmountRaw
+) {
+  const giveItem = general.normalizeItem(giveItemRaw);
+  const wantItem = general.normalizeItem(wantItemRaw);
+  if (!giveItem || !wantItem) {
+    text.addMessage(
+      gameState,
+      sourceName,
+      'Valid items are: food, grain, basket or spearhead.'
+    );
+    return null;
+  }
+  if (giveItem === wantItem) {
+    text.addMessage(
+      gameState,
+      sourceName,
+      'Trades must exchange different items (not ' +
+        giveItem +
+        ' for ' +
+        wantItem +
+        ').'
+    );
+    return null;
+  }
+
+  const giveAmount = Number(giveAmountRaw);
+  const wantAmount = Number(wantAmountRaw);
+  if (
+    !Number.isFinite(giveAmount) ||
+    giveAmount < 1 ||
+    !Number.isFinite(wantAmount) ||
+    wantAmount < 1
+  ) {
+    text.addMessage(
+      gameState,
+      sourceName,
+      'Both give and want amounts must be positive numbers.'
+    );
+    return null;
+  }
+
+  if (!general.legalGive(gameState, sourceName, giveItem, giveAmount)) {
+    return null;
+  }
+
+  return {
+    giveItem: giveItem,
+    giveAmount: giveAmount,
+    wantItem: wantItem,
+    wantAmount: wantAmount,
+  };
+}
+
 function offerTrade(
   gameState,
   sourceName,
@@ -273,6 +413,92 @@ function offerTrade(
     text.addMessage(gameState, sourceName, access.NOT_IN_TRIBE_MESSAGE);
     return false;
   }
+
+  const openTrades = listOutgoingTrades(source);
+  if (openTrades.length >= MAX_OPEN_OUTGOING_OFFERS) {
+    text.addMessage(
+      gameState,
+      sourceName,
+      'You may only have ' +
+        MAX_OPEN_OUTGOING_OFFERS +
+        ' outstanding trade offers at a time (to different players). Cancel one first.'
+    );
+    return false;
+  }
+
+  const legs = validateOfferLegs(
+    gameState,
+    sourceName,
+    giveItemRaw,
+    giveAmountRaw,
+    wantItemRaw,
+    wantAmountRaw
+  );
+  if (!legs) {
+    return false;
+  }
+  const { giveItem, giveAmount, wantItem, wantAmount } = legs;
+  const season = currentSeason(gameState);
+  const sourceLabel = source.name || sourceName;
+  const sourceKey = personKey(source, gameState) || sourceLabel;
+
+  // --- Open (anyone) offer ---
+  if (isAnyoneTarget(targetName)) {
+    if (findOpenOutgoingOffer(source)) {
+      text.addMessage(
+        gameState,
+        sourceName,
+        'You already have an open (anyone) trade offer. Cancel it first.'
+      );
+      return false;
+    }
+    const eligible = listEligibleForOpenOffer(
+      gameState,
+      source,
+      wantItem,
+      wantAmount,
+      sourceName
+    );
+    if (eligible.length === 0) {
+      text.addMessage(
+        gameState,
+        sourceName,
+        'Nobody else currently has ' +
+          wantAmount +
+          ' ' +
+          wantItem +
+          ' to trade.'
+      );
+      return false;
+    }
+
+    const next = openTrades.slice();
+    next.push({
+      season: season,
+      to: OPEN_OFFER_TO,
+      open: true,
+      giveItem: giveItem,
+      giveAmount: giveAmount,
+      wantItem: wantItem,
+      wantAmount: wantAmount,
+    });
+    setOutgoingTrades(source, next);
+    gameState.saveRequired = true;
+
+    const summary =
+      sourceLabel +
+      ' offers ' +
+      formatItemAmount(giveItem, giveAmount) +
+      ' for ' +
+      formatItemAmount(wantItem, wantAmount) +
+      ' — anyone who has it may Accept.';
+
+    text.addMessage(gameState, sourceKey, 'Open offer posted. ' + summary);
+    text.addMessage(gameState, 'tribe', '📢 ' + summary);
+    return true;
+  }
+
+  // --- Directed offer ---
   const target = pop.memberByName(targetName, gameState);
   if (!target) {
     text.addMessage(
@@ -291,7 +517,6 @@ function offerTrade(
     return false;
   }
 
-  const openTrades = listOutgoingTrades(source);
   const peerKey = personKey(target, gameState);
   if (findOutgoingTradeTo(source, peerKey, gameState)) {
     text.addMessage(
@@ -303,57 +528,7 @@ function offerTrade(
     );
     return false;
   }
-  if (openTrades.length >= MAX_OPEN_OUTGOING_OFFERS) {
-    text.addMessage(
-      gameState,
-      sourceName,
-      'You may only have ' +
-        MAX_OPEN_OUTGOING_OFFERS +
-        ' outstanding trade offers at a time (to different players). Cancel one first.'
-    );
-    return false;
-  }
 
-  const giveItem = general.normalizeItem(giveItemRaw);
-  const wantItem = general.normalizeItem(wantItemRaw);
-  if (!giveItem || !wantItem) {
-    text.addMessage(
-      gameState,
-      sourceName,
-      'Valid items are: food, grain, basket or spearhead.'
-    );
-    return false;
-  }
-  if (giveItem === wantItem) {
-    text.addMessage(
-      gameState,
-      sourceName,
-      'Trades must exchange different items (not ' +
-        giveItem +
-        ' for ' +
-        wantItem +
-        ').'
-    );
-    return false;
-  }
-
-  const giveAmount = Number(giveAmountRaw);
-  const wantAmount = Number(wantAmountRaw);
-  if (
-    !Number.isFinite(giveAmount) ||
-    giveAmount < 1 ||
-    !Number.isFinite(wantAmount) ||
-    wantAmount < 1
-  ) {
-    text.addMessage(
-      gameState,
-      sourceName,
-      'Both give and want amounts must be positive numbers.'
-    );
-    return false;
-  }
-
-  const season = currentSeason(gameState);
   const made = offersMadeToPeer(source, peerKey, season);
   if (made >= MAX_OFFERS_PER_PAIR_PER_SEASON) {
     text.addMessage(
@@ -365,10 +540,6 @@ function offerTrade(
         (target.name || peerKey) +
         ' this season.'
     );
-    return false;
-  }
-
-  if (!general.legalGive(gameState, sourceName, giveItem, giveAmount)) {
     return false;
   }
 
@@ -402,7 +573,7 @@ function offerTrade(
   gameState.saveRequired = true;
 
   const summary =
-    (source.name || sourceName) +
+    sourceLabel +
     ' offers ' +
     formatItemAmount(giveItem, giveAmount) +
     ' for ' +
@@ -411,14 +582,14 @@ function offerTrade(
     formatItemAmount(wantItem, wantAmount) +
     '.';
 
-  text.addMessage(gameState, sourceName, 'Offer sent. ' + summary);
+  text.addMessage(gameState, sourceKey, 'Offer sent. ' + summary);
   text.addMessage(
     gameState,
     peerKey,
     'Trade offer received. ' +
       summary +
       ' Use trade accept/reject with player ' +
-      (source.name || sourceName) +
+      sourceLabel +
       '.'
   );
   return true;
@@ -434,8 +605,8 @@ function acceptTrade(gameState, accepterName, offererName) {
     return false;
   }
 
-  const found = findIncomingOfferFrom(gameState, accepterName, offererName);
-  if (!found) {
+  const offerer = pop.memberByName(offererName, gameState);
+  if (!offerer) {
     text.addMessage(
       gameState,
       accepterName,
@@ -444,8 +615,37 @@ function acceptTrade(gameState, accepterName, offererName) {
     return false;
   }
 
-  const { offerer, offer } = found;
+  // Prefer directed-to-me; else open board from that offerer.
+  let offer = findOutgoingTradeTo(offerer, accepterName, gameState);
+  let fromOpenBoard = false;
+  if (!offer) {
+    offer = findOpenOutgoingOffer(offerer);
+    fromOpenBoard = !!offer;
+  }
+  if (!offer || Number(offer.season) !== currentSeason(gameState)) {
+    text.addMessage(
+      gameState,
+      accepterName,
+      'No outstanding trade offer from ' +
+        (offererName || 'that player') +
+        ' (it may have already been taken or expired).'
+    );
+    return false;
+  }
+  if (fromOpenBoard && namesEqual(offerer.name || offererName, accepterName)) {
+    text.addMessage(
+      gameState,
+      accepterName,
+      'You cannot accept your own open trade offer.'
+    );
+    return false;
+  }
+
   const accepter = pop.memberByName(accepterName, gameState);
+  if (!accepter) {
+    text.addMessage(gameState, accepterName, access.NOT_IN_TRIBE_MESSAGE);
+    return false;
+  }
 
   // Re-validate both legs; leave offer open if either fails.
   if (
@@ -522,6 +722,14 @@ function rejectTrade(gameState, rejecterName, offererName) {
     return false;
   }
   const { offerer, offer } = found;
+  if (isOpenOffer(offer)) {
+    text.addMessage(
+      gameState,
+      rejecterName,
+      'Open (anyone) trades cannot be rejected — ignore them, or wait for the offerer to cancel / the season to change.'
+    );
+    return false;
+  }
   removeOutgoingTrade(offerer, offer);
   gameState.saveRequired = true;
 
@@ -575,7 +783,11 @@ function cancelTrade(gameState, sourceName, optionalTargetName) {
 
   let offer = null;
   if (optionalTargetName) {
-    offer = findOutgoingTradeTo(source, optionalTargetName, gameState);
+    if (isAnyoneTarget(optionalTargetName)) {
+      offer = findOpenOutgoingOffer(source);
+    } else {
+      offer = findOutgoingTradeTo(source, optionalTargetName, gameState);
+    }
     if (!offer) {
       const targets = openTrades
         .map((o) => o.to)
@@ -602,15 +814,11 @@ function cancelTrade(gameState, sourceName, optionalTargetName) {
       sourceName,
       'You have multiple outstanding offers (' +
         targets +
-        '). Specify which player to cancel.'
+        '). Specify which player to cancel (or !anyone for an open offer).'
     );
     return false;
   }
 
-  const peerName = offer.to;
-  const peer = pop.memberByName(peerName, gameState);
-  const peerKey = peer ? personKey(peer, gameState) || peerName : peerName;
-  const peerLabel = (peer && peer.name) || peerName;
   const sourceLabel = source.name || sourceName;
   const sourceKey = personKey(source, gameState) || sourceName;
   const deal =
@@ -620,6 +828,25 @@ function cancelTrade(gameState, sourceName, optionalTargetName) {
 
   removeOutgoingTrade(source, offer);
   gameState.saveRequired = true;
+
+  if (isOpenOffer(offer)) {
+    text.addMessage(
+      gameState,
+      sourceKey,
+      'You cancelled your open trade offer (' + deal + ').'
+    );
+    text.addMessage(
+      gameState,
+      'tribe',
+      '🚫 ' + sourceLabel + ' cancelled their open trade offer (' + deal + ').'
+    );
+    return true;
+  }
+
+  const peerName = offer.to;
+  const peer = pop.memberByName(peerName, gameState);
+  const peerKey = peer ? personKey(peer, gameState) || peerName : peerName;
+  const peerLabel = (peer && peer.name) || peerName;
 
   text.addMessage(
     gameState,
@@ -695,6 +922,10 @@ module.exports = {
   expireStaleTrades,
   clearTradesInvolving,
   listOutgoingTrades,
+  listEligibleForOpenOffer,
+  isOpenOffer,
+  isAnyoneTarget,
+  OPEN_OFFER_TO,
   MAX_OFFERS_PER_PAIR_PER_SEASON,
   MAX_OPEN_OUTGOING_OFFERS,
 };
