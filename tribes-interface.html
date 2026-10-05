@@ -411,6 +411,23 @@
             font-size: 0.9rem;
             color: #1e293b;
             line-height: 1.35;
+            min-width: 0;
+        }
+
+        .trade-offer-summary .trade-offer-who {
+            display: block;
+            font-weight: 700;
+            margin-bottom: 0.2rem;
+        }
+
+        .trade-offer-summary .trade-offer-terms {
+            display: block;
+            color: #334155;
+            font-size: 0.88rem;
+        }
+
+        .trade-offer-summary .trade-offer-terms-line {
+            display: block;
         }
 
         .trade-offer-actions {
@@ -2963,6 +2980,12 @@
 
                 if (isGuardIgnore || waitingForPopulation || waitingForChildren) {
                     this.generateCommandFormInModal(paramsContainer);
+                    return;
+                }
+
+                // Trade panel/dropdowns need fresh offer terms when population arrives.
+                if (cmd === 'trade' && dataLabel === 'population') {
+                    this.setupTradeFormEnhancements(paramsContainer);
                 }
             }
 
@@ -4130,6 +4153,8 @@
                 });
 
                 container.innerHTML = '';
+                // Drop stale trade refresh hook bound to the previous form DOM.
+                container._tradeUpdateForm = null;
 
                 // Check if this command needs player data and fetch it
                 const needsPlayerData = (isModal ? 
@@ -5166,8 +5191,70 @@
                     basket: '🧺',
                     spearhead: '𓐬',
                 };
-                const icon = icons[item] || '';
-                return amount + ' ' + item + (icon ? ' ' + icon : '');
+                const itemName = String(item || '').trim() || '?';
+                const qty = Number(amount);
+                const qtyText = Number.isFinite(qty) ? String(qty) : '?';
+                const icon = icons[itemName] || '';
+                return qtyText + ' ' + itemName + (icon ? ' ' + icon : '');
+            }
+
+            /** Brief deal text: "2 food 🍖 for 1 basket 🧺" */
+            formatTradeDealBrief(offer) {
+                if (!offer) {
+                    return '';
+                }
+                return (
+                    this.formatTradeItemAmount(
+                        offer.giveItem,
+                        offer.giveAmount
+                    ) +
+                    ' for ' +
+                    this.formatTradeItemAmount(
+                        offer.wantItem,
+                        offer.wantAmount
+                    )
+                );
+            }
+
+            getIncomingOfferFrom(fromName) {
+                if (!this.currentPopulation || !fromName) {
+                    return null;
+                }
+                const me =
+                    document.getElementById('playerName')?.value ||
+                    this.currentPlayerName ||
+                    '';
+                let offerer = this.currentPopulation[fromName];
+                if (!offerer) {
+                    const lower = String(fromName).toLowerCase();
+                    for (const [key, person] of Object.entries(
+                        this.currentPopulation
+                    )) {
+                        if (
+                            String(key).toLowerCase() === lower ||
+                            (person &&
+                                String(person.name || '').toLowerCase() ===
+                                    lower)
+                        ) {
+                            offerer = person;
+                            break;
+                        }
+                    }
+                }
+                if (!offerer) {
+                    return null;
+                }
+                const directed = this.listPersonOutgoingTrades(offerer).find(
+                    (o) => this.namesMatch(o.to, me)
+                );
+                if (directed) {
+                    return directed;
+                }
+                return (
+                    this.listPersonOutgoingTrades(offerer).find((o) =>
+                        this.isOpenTradeOffer(o)
+                    ) || null
+                );
             }
 
             listPersonOutgoingTrades(person) {
@@ -5345,20 +5432,47 @@
                     panel.appendChild(row);
                 };
 
-                const buildSummary = (parts) => {
+                const buildOfferSummary = (whoText, offer, perspective) => {
                     const summary = document.createElement('div');
                     summary.className = 'trade-offer-summary';
-                    parts.forEach((part) => {
-                        if (part && part.bold) {
-                            const strong = document.createElement('strong');
-                            strong.textContent = part.text;
-                            summary.appendChild(strong);
-                        } else {
-                            const span = document.createElement('span');
-                            span.textContent = String(part || '');
-                            summary.appendChild(span);
-                        }
-                    });
+
+                    const who = document.createElement('span');
+                    who.className = 'trade-offer-who';
+                    who.textContent = whoText;
+                    summary.appendChild(who);
+
+                    const terms = document.createElement('span');
+                    terms.className = 'trade-offer-terms';
+
+                    const giveLine = document.createElement('span');
+                    giveLine.className = 'trade-offer-terms-line';
+                    const wantLine = document.createElement('span');
+                    wantLine.className = 'trade-offer-terms-line';
+
+                    const giveText = this.formatTradeItemAmount(
+                        offer && offer.giveItem,
+                        offer && offer.giveAmount
+                    );
+                    const wantText = this.formatTradeItemAmount(
+                        offer && offer.wantItem,
+                        offer && offer.wantAmount
+                    );
+
+                    if (perspective === 'incoming') {
+                        giveLine.textContent = 'They give you: ' + giveText;
+                        wantLine.textContent = 'You give them: ' + wantText;
+                    } else if (perspective === 'board') {
+                        giveLine.textContent = 'They give: ' + giveText;
+                        wantLine.textContent =
+                            'They want: ' + wantText + ' (first accept wins)';
+                    } else {
+                        giveLine.textContent = 'You give: ' + giveText;
+                        wantLine.textContent = 'You want: ' + wantText;
+                    }
+
+                    terms.appendChild(giveLine);
+                    terms.appendChild(wantLine);
+                    summary.appendChild(terms);
                     return summary;
                 };
 
@@ -5369,52 +5483,37 @@
                     panel.appendChild(label);
 
                     incomingNames.forEach((fromName) => {
-                        const person =
-                            this.currentPopulation &&
-                            this.currentPopulation[fromName];
-                        const me =
-                            document.getElementById('playerName')?.value ||
-                            this.currentPlayerName ||
-                            '';
-                        const offer = this.listPersonOutgoingTrades(person).find(
-                            (o) => this.namesMatch(o.to, me)
-                        );
-                        if (!offer) {
+                        const offer = this.getIncomingOfferFrom(fromName);
+                        if (!offer || this.isOpenTradeOffer(offer)) {
                             return;
                         }
-                        const summary = buildSummary([
-                            { bold: true, text: fromName },
-                            ' offers you ',
-                            this.formatTradeItemAmount(
-                                offer.giveItem,
-                                offer.giveAmount
+                        appendRow(
+                            buildOfferSummary(
+                                fromName + ' offers you a trade',
+                                offer,
+                                'incoming'
                             ),
-                            ' for your ',
-                            this.formatTradeItemAmount(
-                                offer.wantItem,
-                                offer.wantAmount
-                            ),
-                        ]);
-                        appendRow(summary, [
-                            {
-                                label: 'Accept',
-                                className: 'btn-accept',
-                                onClick: () =>
-                                    this.submitTradeQuickAction(
-                                        'accept',
-                                        fromName
-                                    ),
-                            },
-                            {
-                                label: 'Reject',
-                                className: 'btn-reject',
-                                onClick: () =>
-                                    this.submitTradeQuickAction(
-                                        'reject',
-                                        fromName
-                                    ),
-                            },
-                        ]);
+                            [
+                                {
+                                    label: 'Accept',
+                                    className: 'btn-accept',
+                                    onClick: () =>
+                                        this.submitTradeQuickAction(
+                                            'accept',
+                                            fromName
+                                        ),
+                                },
+                                {
+                                    label: 'Reject',
+                                    className: 'btn-reject',
+                                    onClick: () =>
+                                        this.submitTradeQuickAction(
+                                            'reject',
+                                            fromName
+                                        ),
+                                },
+                            ]
+                        );
                     });
                 }
 
@@ -5425,31 +5524,24 @@
                     panel.appendChild(label);
 
                     boardOffers.forEach(({ offererKey, offer }) => {
-                        const summary = buildSummary([
-                            { bold: true, text: offererKey },
-                            ' offers anyone ',
-                            this.formatTradeItemAmount(
-                                offer.giveItem,
-                                offer.giveAmount
+                        appendRow(
+                            buildOfferSummary(
+                                offererKey + ' — open board offer',
+                                offer,
+                                'board'
                             ),
-                            ' for ',
-                            this.formatTradeItemAmount(
-                                offer.wantItem,
-                                offer.wantAmount
-                            ),
-                            ' (first accept wins)',
-                        ]);
-                        appendRow(summary, [
-                            {
-                                label: 'Accept',
-                                className: 'btn-accept',
-                                onClick: () =>
-                                    this.submitTradeQuickAction(
-                                        'accept',
-                                        offererKey
-                                    ),
-                            },
-                        ]);
+                            [
+                                {
+                                    label: 'Accept',
+                                    className: 'btn-accept',
+                                    onClick: () =>
+                                        this.submitTradeQuickAction(
+                                            'accept',
+                                            offererKey
+                                        ),
+                                },
+                            ]
+                        );
                     });
                 }
 
@@ -5468,46 +5560,23 @@
                         const toName = isOpen
                             ? '!anyone'
                             : offer.to || 'someone';
-                        const summary = isOpen
-                            ? buildSummary([
-                                  'You offered ',
-                                  { bold: true, text: 'anyone' },
-                                  ' ',
-                                  this.formatTradeItemAmount(
-                                      offer.giveItem,
-                                      offer.giveAmount
-                                  ),
-                                  ' for ',
-                                  this.formatTradeItemAmount(
-                                      offer.wantItem,
-                                      offer.wantAmount
-                                  ),
-                              ])
-                            : buildSummary([
-                                  'You offered ',
-                                  { bold: true, text: toName },
-                                  ' ',
-                                  this.formatTradeItemAmount(
-                                      offer.giveItem,
-                                      offer.giveAmount
-                                  ),
-                                  ' for their ',
-                                  this.formatTradeItemAmount(
-                                      offer.wantItem,
-                                      offer.wantAmount
-                                  ),
-                              ]);
-                        appendRow(summary, [
-                            {
-                                label: 'Cancel',
-                                className: 'btn-cancel',
-                                onClick: () =>
-                                    this.submitTradeQuickAction(
-                                        'cancel',
-                                        toName
-                                    ),
-                            },
-                        ]);
+                        const whoText = isOpen
+                            ? 'Your open offer to anyone'
+                            : 'Your offer to ' + toName;
+                        appendRow(
+                            buildOfferSummary(whoText, offer, 'outgoing'),
+                            [
+                                {
+                                    label: 'Cancel',
+                                    className: 'btn-cancel',
+                                    onClick: () =>
+                                        this.submitTradeQuickAction(
+                                            'cancel',
+                                            toName
+                                        ),
+                                },
+                            ]
+                        );
                     });
                 }
             }
@@ -5537,6 +5606,13 @@
                 }
 
                 this.renderOpenTradesPanel(container);
+
+                // Population refresh while modal is open: refresh panel/dropdowns
+                // without stacking duplicate listeners.
+                if (typeof container._tradeUpdateForm === 'function') {
+                    container._tradeUpdateForm();
+                    return;
+                }
 
                 let preview = container.querySelector('#tradeOfferPreview');
                 if (!preview) {
@@ -5657,38 +5733,13 @@
                     giveItemSelect.addEventListener('change', applyGiveAmountMax);
                 }
 
-                const findIncomingOfferFrom = (fromName) => {
-                    if (!this.currentPopulation || !fromName) {
-                        return null;
-                    }
-                    const me =
-                        document.getElementById('playerName')?.value ||
-                        this.currentPlayerName ||
-                        '';
-                    let offerer = this.currentPopulation[fromName];
-                    if (!offerer) {
-                        const lower = String(fromName).toLowerCase();
-                        for (const [key, person] of Object.entries(
-                            this.currentPopulation
-                        )) {
-                            if (
-                                String(key).toLowerCase() === lower ||
-                                (person &&
-                                    String(person.name || '').toLowerCase() ===
-                                        lower)
-                            ) {
-                                offerer = person;
-                                break;
-                            }
-                        }
-                    }
-                    if (!offerer) {
-                        return null;
-                    }
-                    const offer = this.listPersonOutgoingTrades(offerer).find(
-                        (o) => this.namesMatch(o.to, me)
-                    );
-                    return offer || null;
+                const findIncomingOfferFrom = (fromName) =>
+                    this.getIncomingOfferFrom(fromName);
+
+                const labelForIncomingOfferer = (fromName) => {
+                    const offer = this.getIncomingOfferFrom(fromName);
+                    const deal = this.formatTradeDealBrief(offer);
+                    return deal ? `${fromName} — ${deal}` : fromName;
                 };
 
                 const refillPlayerSelect = (entries, placeholderText) => {
@@ -5843,15 +5894,36 @@
                                         playerGroup.style.display = '';
                                     }
                                     refillPlayerSelect(
-                                        mine.map((m) => {
-                                            if (this.isOpenTradeOffer(m.offer)) {
+                                        mine
+                                            .map((m) => {
+                                                const deal =
+                                                    this.formatTradeDealBrief(
+                                                        m.offer
+                                                    );
+                                                if (
+                                                    this.isOpenTradeOffer(
+                                                        m.offer
+                                                    )
+                                                ) {
+                                                    return {
+                                                        value: '!anyone',
+                                                        label: deal
+                                                            ? `Anyone — ${deal}`
+                                                            : 'Anyone (open board)',
+                                                    };
+                                                }
+                                                const toName = m.offer.to;
+                                                if (!toName) {
+                                                    return null;
+                                                }
                                                 return {
-                                                    value: '!anyone',
-                                                    label: 'Anyone (open board)',
+                                                    value: toName,
+                                                    label: deal
+                                                        ? `${toName} — ${deal}`
+                                                        : toName,
                                                 };
-                                            }
-                                            return m.offer.to;
-                                        }).filter(Boolean),
+                                            })
+                                            .filter(Boolean),
                                         'Select offer to cancel…'
                                     );
                                 }
@@ -5871,7 +5943,10 @@
                         new Set([...directed, ...board])
                     );
                     refillPlayerSelect(
-                        offerers,
+                        offerers.map((name) => ({
+                            value: name,
+                            label: labelForIncomingOfferer(name),
+                        })),
                         offerers.length === 0
                             ? 'No pending offers'
                             : 'Select offerer…'
@@ -5913,6 +5988,7 @@
                         );
                 };
 
+                container._tradeUpdateForm = updateTradeForm;
                 actionSelect.addEventListener('change', updateTradeForm);
                 if (playerSelect) {
                     playerSelect.addEventListener('change', updateTradeForm);
@@ -6710,6 +6786,44 @@
                 container.scrollTop = 0;
             }
 
+            isWelcomeBackMessage(text) {
+                return (
+                    typeof text === 'string' &&
+                    text.trim().startsWith('Welcome back,')
+                );
+            }
+
+            removeExistingWelcomeBackMessages() {
+                const container = document.getElementById('messagesContainer');
+                if (!container) {
+                    return;
+                }
+                Array.from(container.children || []).forEach((el) => {
+                    const body = el.querySelector
+                        ? el.querySelector('.message-body')
+                        : null;
+                    const raw = body ? body.textContent : el.textContent;
+                    const withoutTs = String(raw || '').replace(
+                        /^\[[^\]]+\]\s*/,
+                        ''
+                    );
+                    if (withoutTs.startsWith('Welcome back,')) {
+                        if (el.parentNode) {
+                            el.parentNode.removeChild(el);
+                        }
+                    }
+                });
+                // Drop fingerprints so the new welcome isn't blocked as a duplicate
+                // of the one we just removed.
+                if (this.messageFingerprints) {
+                    for (const key of Array.from(this.messageFingerprints.keys())) {
+                        if (String(key).includes('Welcome back,')) {
+                            this.messageFingerprints.delete(key);
+                        }
+                    }
+                }
+            }
+
             addMessage(
                 text,
                 type = 'info',
@@ -6732,6 +6846,10 @@
                 const eventMs = Number.isFinite(Number(eventTimestampMs))
                     ? Number(eventTimestampMs)
                     : Date.now();
+
+                if (this.isWelcomeBackMessage(text)) {
+                    this.removeExistingWelcomeBackMessages();
+                }
 
                 if (
                     this.isDuplicateMessage(text, type, typeLabel, {
@@ -8794,21 +8912,11 @@
                 }
                 return offererNames
                     .map((name) => {
-                        const person =
-                            this.currentPopulation && this.currentPopulation[name];
-                        const me =
-                            document.getElementById('playerName')?.value ||
-                            this.currentPlayerName ||
-                            '';
-                        const offer = this.listPersonOutgoingTrades(person).find(
-                            (o) => this.namesMatch(o.to, me)
-                        );
+                        const offer = this.getIncomingOfferFrom(name);
                         if (!offer) {
                             return `${name} offered a trade`;
                         }
-                        const give = `${offer.giveAmount} ${offer.giveItem}`;
-                        const want = `${offer.wantAmount} ${offer.wantItem}`;
-                        return `${name} offers ${give} for your ${want}`;
+                        return `${name}: ${this.formatTradeDealBrief(offer)}`;
                     })
                     .join(' · ');
             }
@@ -8828,10 +8936,17 @@
                 }
 
                 const wasHidden = tradeStatus.style.display === 'none';
-                const label =
-                    offerers.length === 1
-                        ? `Trade from ${offerers[0]}`
-                        : `${offerers.length} trade offers`;
+                let label;
+                if (offerers.length === 1) {
+                    const deal = this.formatTradeDealBrief(
+                        this.getIncomingOfferFrom(offerers[0])
+                    );
+                    label = deal
+                        ? `Trade from ${offerers[0]}: ${deal}`
+                        : `Trade from ${offerers[0]}`;
+                } else {
+                    label = `${offerers.length} trade offers`;
+                }
                 tradeStatus.style.display = 'flex';
                 tradeStatus.innerHTML = `<span class="status-icon">🤝</span><span>${label}</span>`;
                 tradeStatus.title =

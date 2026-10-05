@@ -832,6 +832,28 @@ describe('Tribes Interface Client (real class)', () => {
     expect(bottomText).toContain('older message');
   });
 
+  test('only the latest Welcome back message stays in the messages window', () => {
+    const container = env.elements.messagesContainer;
+    container.children = [];
+
+    client.addMessage('Welcome back, Ada! 🏕️', 'info');
+    client.addMessage('Some other message', 'info');
+    client.addMessage('Welcome back, Ada!', 'success');
+
+    const welcomeCount = container.children.filter((el) => {
+      const body = el.querySelector('.message-body');
+      const raw = body ? body.textContent : el.textContent;
+      return /Welcome back,/.test(String(raw || ''));
+    }).length;
+    expect(welcomeCount).toBe(1);
+    expect(container.children.length).toBe(2);
+
+    const topText =
+      container.children[0].querySelector('.message-body')?.textContent || '';
+    expect(topText).toMatch(/Welcome back, Ada!/);
+    expect(topText).not.toMatch(/🏕️/);
+  });
+
   test('replayed tribe messages use server event timestamp not delivery time', () => {
     env.elements.messagesContainer.children = [];
     const eventMs = Date.now() - 90 * 60 * 1000; // 90 minutes ago
@@ -1127,6 +1149,17 @@ describe('Tribes Interface Client (real class)', () => {
     expect(fullText).not.toMatch(/Reject/i);
   });
 
+  test('formatTradeDealBrief summarizes offered and wanted items', () => {
+    expect(
+      client.formatTradeDealBrief({
+        giveItem: 'food',
+        giveAmount: 2,
+        wantItem: 'basket',
+        wantAmount: 1,
+      })
+    ).toMatch(/2 food.*for.*1 basket/i);
+  });
+
   test('trade giveitem choices only include owned items', () => {
     env.elements.playerName.value = 'TestPlayer';
     client.currentPopulation = {
@@ -1236,9 +1269,13 @@ describe('Tribes Interface Client (real class)', () => {
     const fullText = collectText(panel);
     expect(fullText).toMatch(/Offers to you/i);
     expect(fullText).toMatch(/Ada/i);
+    expect(fullText).toMatch(/They give you:/i);
+    expect(fullText).toMatch(/You give them:/i);
     expect(fullText).toMatch(/Accept/i);
     expect(fullText).toMatch(/Reject/i);
     expect(fullText).toMatch(/Your offers/i);
+    expect(fullText).toMatch(/You give:/i);
+    expect(fullText).toMatch(/You want:/i);
     expect(fullText).toMatch(/Bob/i);
     expect(fullText).toMatch(/Cancel/i);
     // Two Cancel buttons for two outgoing offers
@@ -1326,7 +1363,10 @@ describe('Tribes Interface Client (real class)', () => {
     client.updateTradeStatusChip();
     expect(tradeChip.style.display).toBe('flex');
     expect(tradeChip.innerHTML).toMatch(/Trade from Ada/i);
-    expect(tradeChip.title).toMatch(/Ada offers 2 meat/i);
+    expect(tradeChip.innerHTML).toMatch(/2 meat/i);
+    expect(tradeChip.innerHTML).toMatch(/1 spear/i);
+    expect(tradeChip.title).toMatch(/Ada:/i);
+    expect(tradeChip.title).toMatch(/2 meat/i);
     expect(tradeChip.title).toMatch(/1 spear/i);
 
     // Offer aimed at someone else — hide
