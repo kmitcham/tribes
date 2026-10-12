@@ -389,10 +389,13 @@ describe('Tribes Interface Client (real class)', () => {
     const sendSpy = jest.spyOn(client, 'send').mockImplementation(() => {});
 
     expect(client.tryAuthenticateSessionIfReady()).toBe(true);
-    expect(sendSpy).toHaveBeenCalledWith({
-      type: 'authenticateSession',
-      token: 'tok-abc',
-    });
+    expect(sendSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'authenticateSession',
+        token: 'tok-abc',
+        lastMessageTimestamp: expect.any(Number),
+      })
+    );
     // Second call is a no-op for this connection.
     expect(client.tryAuthenticateSessionIfReady()).toBe(false);
 
@@ -832,6 +835,40 @@ describe('Tribes Interface Client (real class)', () => {
     expect(bottomText).toContain('older message');
   });
 
+  test('getLastStoredMessageTimestamp returns newest local history time', () => {
+    env.elements.tribeSelect.value = 'bug';
+    env.elements.playerName.value = 'Ada';
+    const key = client.getMessageHistoryKey();
+    sandbox.window.TribesStorage.setItem(
+      key,
+      JSON.stringify([
+        { text: 'older', type: 'info', timestamp: 1000 },
+        { text: 'newer', type: 'tribe', timestamp: 5000 },
+        { text: 'mid', type: 'info', timestamp: 3000 },
+      ])
+    );
+    expect(client.getLastStoredMessageTimestamp()).toBe(5000);
+  });
+
+  test('send attaches lastMessageTimestamp for catch-up sync', () => {
+    env.elements.tribeSelect.value = 'bug';
+    env.elements.playerName.value = 'Ada';
+    const key = client.getMessageHistoryKey();
+    sandbox.window.TribesStorage.setItem(
+      key,
+      JSON.stringify([{ text: 'x', type: 'info', timestamp: 42 }])
+    );
+    client.ws = {
+      readyState: env.InterfaceMockWebSocket.OPEN,
+      send: jest.fn(),
+    };
+
+    client.send({ type: 'authenticateSession', token: 't' });
+    expect(client.ws.send).toHaveBeenCalled();
+    const payload = JSON.parse(client.ws.send.mock.calls[0][0]);
+    expect(payload.lastMessageTimestamp).toBe(42);
+  });
+
   test('only the latest Welcome back message stays in the messages window', () => {
     const container = env.elements.messagesContainer;
     container.children = [];
@@ -1147,6 +1184,26 @@ describe('Tribes Interface Client (real class)', () => {
     expect(fullText).toMatch(/Ada/i);
     expect(fullText).toMatch(/Accept/i);
     expect(fullText).not.toMatch(/Reject/i);
+  });
+
+  test('trade parameter labels use Offered and Desired wording', () => {
+    client.selectedCommand = { name: 'trade' };
+    expect(
+      client.getParameterDisplayName({ name: 'giveitem' })
+    ).toBe('Offered Item');
+    expect(
+      client.getParameterDisplayName({ name: 'giveamount' })
+    ).toBe('Offered Amount');
+    expect(
+      client.getParameterDisplayName({ name: 'wantitem' })
+    ).toBe('Desired Item');
+    expect(
+      client.getParameterDisplayName({ name: 'wantamount' })
+    ).toBe('Desired Amount');
+    client.selectedCommand = { name: 'give' };
+    expect(client.getParameterDisplayName({ name: 'giveitem' })).toBe(
+      'giveitem'
+    );
   });
 
   test('formatTradeDealBrief summarizes offered and wanted items', () => {

@@ -57,9 +57,12 @@ describe('sendGameMessages tribe delivery', () => {
 
     expect(sent).toHaveLength(1);
     expect(sent[0].type).toBe('tribeMessage');
-    // Ada got the live send; Bob and Cal should be queued.
-    expect(queued.map((q) => q.player).sort()).toEqual(['Bob', 'Cal']);
+    expect(sent[0].timestamp).toEqual(expect.any(Number));
+    // Always record for every member (multi-device catch-up), including Ada
+    // who already got the live send.
+    expect(queued.map((q) => q.player).sort()).toEqual(['Ada', 'Bob', 'Cal']);
     expect(queued[0].payload.message).toMatch(/No game/);
+    expect(queued[0].payload.timestamp).toEqual(expect.any(Number));
     expect(gameState.messages).toEqual({});
   });
 

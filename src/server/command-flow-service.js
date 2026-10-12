@@ -102,11 +102,13 @@ async function handleCommandRequest(ws, data, gameState, deps) {
 
     lockedState = prepareGameStateForJoin(commandName, data, lockedState);
 
+    // Catch up only messages newer than this socket's last sync / client watermark.
     replayPendingMessages(
       ws,
       data.playerName,
       data.tribe || 'bug',
-      data.clientId
+      data.clientId,
+      data.lastMessageTimestamp
     );
 
     try {

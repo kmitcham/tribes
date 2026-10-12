@@ -1,3 +1,5 @@
+'use strict';
+
 function sendGameMessages(ws, gameState, data, deps) {
   const {
     connectedClients,
@@ -47,13 +49,43 @@ function sendGameMessages(ws, gameState, data, deps) {
   }
 
   if (playerMessage) {
-    ws.send(
-      JSON.stringify({
-        type: 'privateMessage',
-        message: playerMessage,
-        clientId: data.clientId,
-      })
-    );
+    const timestamp = Date.now();
+    const payload = {
+      type: 'privateMessage',
+      message: playerMessage,
+      timestamp,
+      clientId: data.clientId,
+    };
+    // Live to the commanding socket.
+    ws.send(JSON.stringify(payload));
+    // Also fan out to this player's other open same-tribe connections (multi-device).
+    const selfConnections = connectedClients.get(playerName);
+    if (selfConnections && selfConnections.size > 0) {
+      for (const otherWs of selfConnections) {
+        if (otherWs === ws) {
+          continue;
+        }
+        const sameTribe =
+          normalizePlayerName(otherWs.currentTribe || 'bug') ===
+          normalizePlayerName(tribe || 'bug');
+        if (otherWs.readyState === openState && sameTribe) {
+          try {
+            otherWs.send(JSON.stringify(payload));
+          } catch (error) {
+            console.error(
+              `Error fan-out private message to ${playerName}:`,
+              error
+            );
+          }
+        }
+      }
+    }
+    // Always record for catch-up on devices that were offline.
+    queuePendingMessage(playerName, tribe, {
+      type: 'privateMessage',
+      message: playerMessage,
+      timestamp,
+    });
     if (playerMessageKey) {
       delete gameState.messages[playerMessageKey];
     }
@@ -81,6 +113,14 @@ function sendGameMessages(ws, gameState, data, deps) {
       }
     }
 
+    const timestamp = Date.now();
+    const payload = {
+      type: 'privateMessage',
+      message: message,
+      timestamp,
+      clientId: data.clientId,
+    };
+
     let deliveredToAnyConnection = false;
     if (recipientConnections && recipientConnections.size > 0) {
       for (const recipientWs of recipientConnections) {
@@ -90,13 +130,7 @@ function sendGameMessages(ws, gameState, data, deps) {
 
         if (recipientWs.readyState === openState && sameTribeConnection) {
           try {
-            recipientWs.send(
-              JSON.stringify({
-                type: 'privateMessage',
-                message: message,
-                clientId: data.clientId,
-              })
-            );
+            recipientWs.send(JSON.stringify(payload));
             deliveredToAnyConnection = true;
           } catch (error) {
             console.error(`Error sending message to ${recipient}:`, error);
@@ -107,27 +141,31 @@ function sendGameMessages(ws, gameState, data, deps) {
       logWithTimestamp(`Message for offline player ${recipient}: ${message}`);
     }
 
+    // Always record — even when live-delivered — so other devices can catch up.
+    queuePendingMessage(recipient, tribe, {
+      type: 'privateMessage',
+      message,
+      timestamp,
+    });
+
     if (!deliveredToAnyConnection) {
-      queuePendingMessage(recipient, tribe, {
-        type: 'privateMessage',
-        message,
-      });
+      // Already recorded above; keep log line for visibility.
     }
   }
 
   // Send tribe-wide messages to all players in this tribe after private messages.
   if (tribeMessageContent) {
+    const timestamp = Date.now();
     const tribeMembers = tribeConnections.get(tribe);
-    // Track who actually got a successful send (normalized player name).
-    // Do not trust readyState alone — half-open sockets can look OPEN.
     const deliveredPlayers = new Set();
-    if (tribeMembers && tribeMembers.size > 0) {
-      const tribeMessage = {
-        type: 'tribeMessage',
-        message: tribeMessageContent,
-        clientId: data.clientId,
-      };
+    const tribeMessage = {
+      type: 'tribeMessage',
+      message: tribeMessageContent,
+      timestamp,
+      clientId: data.clientId,
+    };
 
+    if (tribeMembers && tribeMembers.size > 0) {
       for (const tribeWs of tribeMembers) {
         if (tribeWs.readyState === openState) {
           try {
@@ -144,24 +182,13 @@ function sendGameMessages(ws, gameState, data, deps) {
       }
     }
 
-    // Queue for tribe members who did not get a successful live delivery.
+    // Record for every tribe member so offline/other devices catch up by timestamp.
     if (gameState.population) {
       for (const tribePlayer of Object.keys(gameState.population)) {
-        const member = gameState.population[tribePlayer];
-        const candidates = [
-          tribePlayer,
-          member && member.name,
-        ].filter(Boolean);
-        const wasDelivered = candidates.some((name) =>
-          deliveredPlayers.has(normalizePlayerName(name))
-        );
-        if (wasDelivered) {
-          continue;
-        }
-        // Prefer queueing under the population key (stable for replay).
         queuePendingMessage(tribePlayer, tribe, {
           type: 'tribeMessage',
           message: tribeMessageContent,
+          timestamp,
         });
       }
     }

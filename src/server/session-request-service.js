@@ -54,7 +54,8 @@ function handleSessionAuthentication(ws, data, deps) {
     ws,
     session.playerName,
     ws.currentTribe || data.tribe || 'bug',
-    data.clientId
+    data.clientId,
+    data.lastMessageTimestamp
   );
 }
 

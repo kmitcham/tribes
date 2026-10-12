@@ -1760,6 +1760,37 @@
             text-decoration: underline;
         }
 
+        .discord-help-link {
+            margin: 0.75rem 0 0;
+            font-size: 0.85rem;
+            line-height: 1.35;
+        }
+
+        .discord-help-link a {
+            color: #5865f2;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .discord-help-link a:hover {
+            text-decoration: underline;
+        }
+
+        .orientation-discord-link {
+            margin-top: 0.85rem;
+            font-size: 0.95rem;
+        }
+
+        .orientation-discord-link a {
+            color: #5865f2;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .orientation-discord-link a:hover {
+            text-decoration: underline;
+        }
+
         @media (max-width: 768px) {
             .tribes-logo {
                 display: none;
@@ -2092,6 +2123,9 @@
                 <div class="help-content" id="helpContent">
                     Click on a help tab above to see information about different aspects of the game.
                 </div>
+                <p class="discord-help-link">
+                    <a href="https://discord.gg/qbE2BFyYWr" target="_blank" rel="noopener noreferrer" title="Join the Tribes Discord">Discord — ask questions &amp; find tribe-mates</a>
+                </p>
             </div>
         </div>
 
@@ -2296,11 +2330,56 @@
                 window.TribesStorage.clearSession();
             }
             
+            /**
+             * Newest timestamp in local message history for the current tribe+player.
+             * Sent on reconnect so the server can catch this device up.
+             */
+            getLastStoredMessageTimestamp() {
+                try {
+                    const tribeSelect = document.getElementById('tribeSelect');
+                    const playerInput = document.getElementById('playerName');
+                    const tribe = tribeSelect
+                        ? String(tribeSelect.value || '').trim()
+                        : '';
+                    const player = playerInput
+                        ? String(playerInput.value || '').trim()
+                        : '';
+                    if (
+                        !tribe ||
+                        tribe.toLowerCase() === 'loading...' ||
+                        !player ||
+                        player.toLowerCase() === 'anonymous'
+                    ) {
+                        return 0;
+                    }
+                    const key = this.getMessageHistoryKey();
+                    const raw = window.TribesStorage.getItem(key);
+                    if (!raw) {
+                        return 0;
+                    }
+                    const messages = JSON.parse(raw);
+                    if (!Array.isArray(messages) || messages.length === 0) {
+                        return 0;
+                    }
+                    let maxTs = 0;
+                    for (const msg of messages) {
+                        const ts = Number(msg && msg.timestamp);
+                        if (Number.isFinite(ts) && ts > maxTs) {
+                            maxTs = ts;
+                        }
+                    }
+                    return maxTs;
+                } catch (error) {
+                    return 0;
+                }
+            }
+
             authenticateWithSession() {
                 if (this.currentSessionToken && this.ws && this.ws.readyState === WebSocket.OPEN) {
                     this.send({
                         type: 'authenticateSession',
-                        token: this.currentSessionToken
+                        token: this.currentSessionToken,
+                        lastMessageTimestamp: this.getLastStoredMessageTimestamp(),
                     });
                     return true;
                 }
@@ -2720,6 +2799,11 @@
                     data.tribe = document.getElementById('tribeSelect').value;
                     data.playerName = document.getElementById('playerName').value;
                     data.password = document.getElementById('playerPassword').value;
+                    // Multi-device catch-up: server returns messages after this time.
+                    if (data.lastMessageTimestamp == null) {
+                        data.lastMessageTimestamp =
+                            this.getLastStoredMessageTimestamp();
+                    }
                     
                     this.ws.send(JSON.stringify(data));
                 } else {
@@ -3256,16 +3340,33 @@
                     'Start here: choose a tribe from the Tribe menu, then use Join to enter that tribe. ' +
                     'You can play with friends by joining the same tribe, or join an open tribe to meet new players. ' +
                     'Some tribes are closed and require an invite before you can join. ' +
-                    'Tribes is not a social platform, so coordinating with other players through tools like Discord is encouraged.';
+                    'Tribes is not a social platform, so coordinating with other players on Discord is encouraged.';
 
                 const modal = document.getElementById('orientationModal');
                 const body = document.getElementById('orientationModalBody');
                 if (modal && body) {
-                    body.textContent = orientationMessage;
+                    body.textContent = '';
+                    const text = document.createElement('div');
+                    text.textContent = orientationMessage;
+                    body.appendChild(text);
+                    const discord = document.createElement('p');
+                    discord.className = 'orientation-discord-link';
+                    const link = document.createElement('a');
+                    link.href = 'https://discord.gg/qbE2BFyYWr';
+                    link.target = '_blank';
+                    link.rel = 'noopener noreferrer';
+                    link.textContent = 'Join the Tribes Discord — ask questions & find tribe-mates';
+                    discord.appendChild(link);
+                    body.appendChild(discord);
                     modal.classList.add('active');
                 } else {
                     // Fallback to inline message if modal is unavailable.
-                    this.addMessage(orientationMessage, 'info', '[START HERE]');
+                    this.addMessage(
+                        orientationMessage +
+                            ' Discord: https://discord.gg/qbE2BFyYWr',
+                        'info',
+                        '[START HERE]'
+                    );
                 }
             }
 
@@ -4232,6 +4333,26 @@
                 );
             }
 
+            getParameterDisplayName(option) {
+                const rawName = String((option && option.name) || '');
+                const key = rawName.toLowerCase();
+                const cmdName = String(
+                    (this.selectedCommand && this.selectedCommand.name) || ''
+                ).toLowerCase();
+                if (cmdName === 'trade') {
+                    const tradeLabels = {
+                        giveitem: 'Offered Item',
+                        giveamount: 'Offered Amount',
+                        wantitem: 'Desired Item',
+                        wantamount: 'Desired Amount',
+                    };
+                    if (tradeLabels[key]) {
+                        return tradeLabels[key];
+                    }
+                }
+                return rawName;
+            }
+
             isHistorySubjectOption(option) {
                 if (!this.selectedCommand || !option) {
                     return false;
@@ -4814,7 +4935,7 @@
                     group.className = 'parameter-group';
                     
                     const label = document.createElement('label');
-                    label.textContent = `${option.name} ${option.required ? '*' : ''}:`;
+                    label.textContent = `${this.getParameterDisplayName(option)} ${option.required ? '*' : ''}:`;
                     group.appendChild(label);
                     
                     let input;
@@ -10172,6 +10293,8 @@
         <a href="https://www.flaticon.com/free-icons/caveman" title="caveman icons">Caveman icons created by Freepik - Flaticon</a>
         <p class="credits">
             <a href="mailto:tribes@kevinmitcham.com" title="Email questions and support">Questions and support</a>
+            ·
+            <a href="https://discord.gg/qbE2BFyYWr" target="_blank" rel="noopener noreferrer" title="Join the Tribes Discord">Discord — ask questions &amp; find tribe-mates</a>
         </p>
         <div class="footer-meta" id="footerUpdatedText">Updated: loading...</div>
     </div>

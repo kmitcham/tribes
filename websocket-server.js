@@ -222,16 +222,38 @@ function queuePendingMessage(playerName, tribeName, payload) {
   );
 }
 
-function replayPendingMessages(ws, playerName, tribeName, clientId) {
-  pendingMessageStore.replayPendingMessages(
+function resolveMessageSyncSince(ws, sinceTimestamp) {
+  const fromClient = Number(sinceTimestamp);
+  const fromWs = Number(ws && ws.lastMessageSyncAt);
+  const candidates = [];
+  if (Number.isFinite(fromClient) && fromClient > 0) {
+    candidates.push(fromClient);
+  }
+  if (Number.isFinite(fromWs) && fromWs > 0) {
+    candidates.push(fromWs);
+  }
+  return candidates.length ? Math.max(...candidates) : 0;
+}
+
+function replayPendingMessages(ws, playerName, tribeName, clientId, sinceTimestamp) {
+  const since = resolveMessageSyncSince(ws, sinceTimestamp);
+  const newest = pendingMessageStore.replayPendingMessages(
     ws,
     playerName,
     tribeName,
     clientId,
     normalizePlayerName,
     logWithTimestamp,
-    WebSocket.OPEN
+    WebSocket.OPEN,
+    since
   );
+  const newestNum = Number(newest);
+  if (Number.isFinite(newestNum) && newestNum > 0) {
+    const prev = Number(ws.lastMessageSyncAt) || 0;
+    ws.lastMessageSyncAt = Math.max(prev, newestNum, since);
+  } else if (since > 0) {
+    ws.lastMessageSyncAt = Math.max(Number(ws.lastMessageSyncAt) || 0, since);
+  }
 }
 
 function loadCommands() {

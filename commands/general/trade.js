@@ -37,7 +37,9 @@ module.exports = {
     .addStringOption((option) =>
       option
         .setName('giveitem')
-        .setDescription('Item you give (offer only): food, grain, basket, spearhead')
+        .setDescription(
+          'Offered item (offer only): food, grain, basket, spearhead'
+        )
         .addChoices(
           { name: 'food', value: 'food' },
           { name: 'grain', value: 'grain' },
@@ -49,14 +51,14 @@ module.exports = {
     .addIntegerOption((option) =>
       option
         .setName('giveamount')
-        .setDescription('Amount you give (offer only)')
+        .setDescription('Offered amount (offer only)')
         .setRequired(false)
     )
     .addStringOption((option) =>
       option
         .setName('wantitem')
         .setDescription(
-          'Item you want from them (offer only): food, grain, basket, spearhead'
+          'Desired item from them (offer only): food, grain, basket, spearhead'
         )
         .addChoices(
           { name: 'food', value: 'food' },
@@ -69,7 +71,7 @@ module.exports = {
     .addIntegerOption((option) =>
       option
         .setName('wantamount')
-        .setDescription('Amount you want from them (offer only)')
+        .setDescription('Desired amount from them (offer only)')
         .setRequired(false)
     ),
   async execute(interaction, gameState) {

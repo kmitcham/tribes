@@ -30,7 +30,8 @@ async function handleRegisterRequest(ws, data, gameState, deps) {
         ws,
         result.playerName,
         ws.currentTribe || data.tribe || 'bug',
-        data.clientId
+        data.clientId,
+        data.lastMessageTimestamp
       );
       sendSecrets(ws, data, gameState);
     }
